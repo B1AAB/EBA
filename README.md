@@ -1,0 +1,1 @@
+Blockchain data represented as graph, making it suitable for graph machine learning tasks.
