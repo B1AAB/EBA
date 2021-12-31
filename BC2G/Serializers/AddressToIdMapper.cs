@@ -1,49 +1,76 @@
-﻿namespace BC2G.Serializers
+﻿using System.Collections.Concurrent;
+using System.Text;
+
+namespace BC2G.Serializers
 {
-    internal class AddressToIdMapper : Dictionary<string, int>
+    public class AddressToIdMapper : ConcurrentDictionary<string, int>, IDisposable
     {
-        private readonly string _filename;
         private const string _delimiter = "\t";
+        private const string _tmpFilenamePostfix = ".tmp";
+        private readonly string _filename = string.Empty;
+        private bool disposed = false;
+
+        public AddressToIdMapper()
+        { }
 
         public AddressToIdMapper(string filename)
         {
             _filename = filename;
-            if (!File.Exists(filename))
-                File.Create(filename).Dispose();
-            Load();
+            if (!string.IsNullOrEmpty(filename) && File.Exists(filename))
+                Deserialize(filename);
         }
 
         public int GetId(string address)
         {
-            // This approach writes to the file everytime a key is not found, 
-            // this is not ideal solution and should be very slow. 
-            // TODO: improve on this.
-            if (!TryGetValue(address, out int id))
-            {
-                id = Count;
-                Add(address, id);
-                WriteMapping(address, id);
-            }
-
-            return id;
+            return GetOrAdd(address, Count);
         }
 
-        private void Load()
+        public void Serialize(string filename)
         {
-            using var reader = new StreamReader(_filename);
+            var builder = new StringBuilder();
+            var e = GetEnumerator();
+            while (e.MoveNext())
+                builder.AppendLine(
+                    $"{e.Current.Value}{_delimiter}{e.Current.Key}");
+
+            File.WriteAllText(filename, builder.ToString());
+        }
+
+        public void Deserialize(string filename)
+        {
+            using var reader = new StreamReader(filename);
             string? line;
-            string[] sLine;
             while ((line = reader.ReadLine()) != null)
             {
-                sLine = line.Split(_delimiter);
-                Add(sLine[1], int.Parse(sLine[0]));
+                var sLine = line.Split(_delimiter);
+                TryAdd(sLine[1], int.Parse(sLine[0]));
             }
         }
 
-        private void WriteMapping(string address, int id)
+        // The IDisposable interface is implemented following .NET docs:
+        // https://docs.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0
+        public void Dispose()
         {
-            using var writer = new StreamWriter(_filename, append: true);
-            writer.WriteLine($"{id}{_delimiter}{address}");
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    if (!string.IsNullOrEmpty(_filename))
+                    {
+                        var tmpMF = _filename + _tmpFilenamePostfix;
+                        Serialize(tmpMF);
+                        File.Move(tmpMF, _filename);
+                    }
+                }
+            }
+
+            disposed = true;
         }
     }
 }

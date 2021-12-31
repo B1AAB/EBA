@@ -13,7 +13,6 @@ namespace BC2G
         public Uri BaseUri { set; get; } = new Uri("http://127.0.0.1:8332/rest/");
 
         private readonly HttpClient _client;
-        private const string coinbaseTxLabel = "Coinbase";
 
         public BitcoinAgent(HttpClient client)
         {
@@ -87,9 +86,9 @@ namespace BC2G
                 ?? throw new Exception("Invalid transaction.");
         }
 
-        public async Task<BlockGraph> GetGraph(Block block)
+        public async Task<GraphBase> GetGraph(Block block)
         {
-            var blockGraph = new BlockGraph();
+            var g = new GraphBase();
 
             /// Why using "mediantime" and not "time"? see the following BIP:
             /// https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
@@ -99,20 +98,20 @@ namespace BC2G
             /// reward of the miner. Hence, this should never raise an 
             /// exception if the block is not corrupt.
             var coinbaseTx = block.Transactions.First(x => x.IsCoinbase);
-            var coinbaseTxGraph = new CoinbaseTransactionGraph(coinbaseTxLabel, coinbaseTx.Outputs.Count);
             var rewardAddresses = new List<string>();
             foreach (var output in coinbaseTx.Outputs.Where(x => x.IsValueTransfer))
             {
                 if (!output.TryGetAddress(out string address))
                     continue;
                 rewardAddresses.Add(address);
-                coinbaseTxGraph.AddTarget(address, output.Value);
+                
+                g.AddTarget(address, output.Value);
             }
-            blockGraph.AddGraph(coinbaseTxGraph);
+
+            g.UpdateGraph();
 
             foreach (var tx in block.Transactions.Where(x => !x.IsCoinbase))
             {
-                var txGraph = new TransactionGraph(tx.Inputs.Count, tx.Outputs.Count, rewardAddresses);
                 foreach (var input in tx.Inputs)
                 {
                     if (input.TxId != null)
@@ -129,7 +128,7 @@ namespace BC2G
                         {
 
                         }
-                        txGraph.AddSource(address, vout.Value);
+                        g.AddSource(address, vout.Value);
                     }
                     else
                     {
@@ -140,13 +139,13 @@ namespace BC2G
 
                 foreach (var output in tx.Outputs.Where(x => x.IsValueTransfer))
                     if (output.TryGetAddress(out string address))
-                        txGraph.AddTarget(address, output.Value);
-
-                blockGraph.AddGraph(txGraph);
+                        g.AddTarget(address, output.Value);
+                    
+                g.UpdateGraph(rewardAddresses);
             }
 
             // TODO: exclude change transaction.
-            return blockGraph;
+            return g;//blockGraph;
         }
 
         private async Task<Stream> GetResource(string endpoint, string hash)

@@ -5,6 +5,9 @@ namespace BC2G
 {
     internal class Utilities
     {
+        // To be consistent with Bitcoin client. 
+        public const int FractionalDigitsCount = 8;
+
         public static readonly char[] chars =
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".ToCharArray();
 
@@ -32,6 +35,13 @@ namespace BC2G
             }
 
             return result.ToString();
+        }
+
+        public static double Round(double input)
+        {
+            // Regarding the motivation behind this, read the following:
+            // https://stackoverflow.com/q/588004/947889
+            return Math.Round(input, digits: FractionalDigitsCount);
         }
     }
 }
