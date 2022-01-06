@@ -4,6 +4,7 @@
     {
         Transfer,
         Generation,
+        Change,
         Fee
     }
 }

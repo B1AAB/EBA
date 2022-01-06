@@ -101,15 +101,15 @@ namespace BC2G
             var rewardAddresses = new List<string>();
             foreach (var output in coinbaseTx.Outputs.Where(x => x.IsValueTransfer))
             {
-                if (!output.TryGetAddress(out string address))
-                    continue;
+                output.TryGetAddress(out string address);
+                address = g.AddTarget(address, output.Value);
                 rewardAddresses.Add(address);
-                
-                g.AddTarget(address, output.Value);
             }
 
             g.UpdateGraph();
 
+            // Updating graph (UpdateGraph()) is not thread safe, 
+            // hence, cannot process transactions in parallel.
             foreach (var tx in block.Transactions.Where(x => !x.IsCoinbase))
             {
                 foreach (var input in tx.Inputs)
@@ -123,11 +123,7 @@ namespace BC2G
                             // TODO: check when this can be null, or if it would ever happen.
                             throw new NotImplementedException();
 
-                        var s = vout.TryGetAddress(out string address);
-                        if(s == false)
-                        {
-
-                        }
+                        vout.TryGetAddress(out string address);
                         g.AddSource(address, vout.Value);
                     }
                     else
@@ -138,14 +134,16 @@ namespace BC2G
                 }
 
                 foreach (var output in tx.Outputs.Where(x => x.IsValueTransfer))
-                    if (output.TryGetAddress(out string address))
-                        g.AddTarget(address, output.Value);
-                    
+                {
+                    output.TryGetAddress(out string address);
+                    g.AddTarget(address, output.Value);
+                }
+
                 g.UpdateGraph(rewardAddresses);
             }
 
             // TODO: exclude change transaction.
-            return g;//blockGraph;
+            return g;
         }
 
         private async Task<Stream> GetResource(string endpoint, string hash)
