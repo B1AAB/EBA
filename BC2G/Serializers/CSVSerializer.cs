@@ -137,7 +137,8 @@ namespace BC2G.Serializers
                     foreach (var filename in _createdFiles)
                         File.Move(
                             filename,
-                            filename[..filename.LastIndexOf(_tmpFilenamePostfix)]);
+                            filename[..filename.LastIndexOf(_tmpFilenamePostfix)],
+                            true);
                 }
 
                 disposed = true;

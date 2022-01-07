@@ -80,9 +80,9 @@ namespace BC2G
 
         public async Task<Transaction> GetTransaction(string hash)
         {
-            return 
+            return
                 await JsonSerializer.DeserializeAsync<Transaction>(
-                    await GetResource("tx", hash)) 
+                    await GetResource("tx", hash))
                 ?? throw new Exception("Invalid transaction.");
         }
 
@@ -142,7 +142,6 @@ namespace BC2G
                 g.UpdateGraph(rewardAddresses);
             }
 
-            // TODO: exclude change transaction.
             return g;
         }
 

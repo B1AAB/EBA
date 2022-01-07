@@ -24,7 +24,7 @@ namespace BC2G
             byte[] data = new byte[4 * length];
             using (var crypto = RandomNumberGenerator.Create())
                 crypto.GetBytes(data);
-            
+
             var result = new StringBuilder(length);
             for (int i = 0; i < length; i++)
             {

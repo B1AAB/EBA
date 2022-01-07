@@ -25,6 +25,7 @@
         witness_v0_scripthash,
         witness_v1_taproot,
         multisig,
+        nonstandard, // e.g., block #71036
 
         /// <summary>
         /// A script with this is often used to 

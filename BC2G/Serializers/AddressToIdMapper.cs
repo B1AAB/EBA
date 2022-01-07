@@ -43,6 +43,9 @@ namespace BC2G.Serializers
             while ((line = reader.ReadLine()) != null)
             {
                 var sLine = line.Split(_delimiter);
+                if (sLine.Length != 2)
+                    throw new FormatException(
+                        $"Expected two columns, found {sLine.Length}: {line}");
                 TryAdd(sLine[1], int.Parse(sLine[0]));
             }
         }
@@ -65,7 +68,7 @@ namespace BC2G.Serializers
                     {
                         var tmpMF = _filename + _tmpFilenamePostfix;
                         Serialize(tmpMF);
-                        File.Move(tmpMF, _filename);
+                        File.Move(tmpMF, _filename, true);
                     }
                 }
             }

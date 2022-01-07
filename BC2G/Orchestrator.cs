@@ -32,7 +32,9 @@ namespace BC2G
             _client = client;
         }
 
-        public async Task RunAsync(int? from = null, int? to = null)
+        public async Task RunAsync(
+            CancellationToken cancellationToken,
+            int? from = null, int? to = null)
         {
             CanWriteToOutputDir();
             var status = await LoadStatus();
@@ -43,14 +45,18 @@ namespace BC2G
 
             var chaininfo = await AssertChain(agent);
 
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
             from ??= status.LastBlockHeight + 1;
             to ??= chaininfo.Blocks;
             if (to > from)
-                await TraverseBlocks(
+                await TraverseBlocksAsync(
                     agent,
                     status,
                     (int)from,
-                    (int)to);
+                    (int)to,
+                    cancellationToken);
         }
 
         private void CanWriteToOutputDir()
@@ -82,7 +88,7 @@ namespace BC2G
             return status;
         }
 
-        private async Task<ChainInfo> AssertChain(BitcoinAgent agent)
+        private static async Task<ChainInfo> AssertChain(BitcoinAgent agent)
         {
             var chaininfo = await agent.GetChainInfoAsync();
             if (string.IsNullOrEmpty(chaininfo.Chain))
@@ -97,20 +103,36 @@ namespace BC2G
             return chaininfo;
         }
 
-        private async Task TraverseBlocks(BitcoinAgent agent, Status status, int from, int to)
+        private async Task TraverseBlocksAsync(
+            BitcoinAgent agent, Status status,
+            int from, int to,
+            CancellationToken cancellationToken)
         {
             using var mapper = new AddressToIdMapper(AddressIdFilename);
             for (int height = from; height < to; height++)
             {
+                if (cancellationToken.IsCancellationRequested)
+                    return;
+                Console.WriteLine($"Processing block {height}");
                 var blockHash = await agent.GetBlockHash(height);
+
+                if (cancellationToken.IsCancellationRequested)
+                    return;
                 var block = await agent.GetBlock(blockHash);
+
+                if (cancellationToken.IsCancellationRequested)
+                    return;
                 var graph = await agent.GetGraph(block);
+
+                if (cancellationToken.IsCancellationRequested)
+                    return;
                 // the serializers is embeded in a `using` statement,
-                // in order to ensure `Dispose` is called.
+                // in order to ensure its `Dispose` method is called.
                 using (var serializer = new CSVSerializer(mapper))
                     serializer.Serialize(graph, Path.Combine(_outputDir, $"{height}"));
-                status.LastBlockHeight += 1;
+                status.LastBlockHeight = height;
                 await JsonSerializer<Status>.SerializeAsync(status, StatusFilename);
+                Console.WriteLine($"Block {height} processed.");
             }
         }
     }

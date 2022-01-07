@@ -2,7 +2,7 @@
 
 namespace BC2G.Model
 {
-    public class ScriptPubKey : BasePaymentType
+    public class ScriptPubKey : BasePaymentType, IBase64Serializable
     {
         [JsonPropertyName("asm")]
         public string Asm { get; set; } = string.Empty;
@@ -31,6 +31,23 @@ namespace BC2G.Model
         public override string GetAddress()
         {
             return Address;
+        }
+
+        public string ToBase64String()
+        {
+            using var stream = new MemoryStream();
+            using (var writer = new BinaryWriter(stream))
+            {
+                writer.Write(Asm);
+                writer.Write(Hex);
+                writer.Write(Address);
+                writer.Write(Type);
+            }
+            return Convert.ToBase64String(stream.ToArray());
+        }
+        public void FromBase64String(string base64String)
+        {
+            throw new NotImplementedException();
         }
     }
 }
