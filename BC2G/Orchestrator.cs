@@ -109,6 +109,7 @@ namespace BC2G
             CancellationToken cancellationToken)
         {
             using var mapper = new AddressToIdMapper(AddressIdFilename);
+            using var txCache = new TxCache(_outputDir);
             for (int height = from; height < to; height++)
             {
                 if (cancellationToken.IsCancellationRequested)
@@ -122,7 +123,7 @@ namespace BC2G
 
                 if (cancellationToken.IsCancellationRequested)
                     return;
-                var graph = await agent.GetGraph(block);
+                var graph = await agent.GetGraph(block, txCache);
 
                 if (cancellationToken.IsCancellationRequested)
                     return;

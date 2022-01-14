@@ -86,7 +86,7 @@ namespace BC2G
                 ?? throw new Exception("Invalid transaction.");
         }
 
-        public async Task<GraphBase> GetGraph(Block block)
+        public async Task<GraphBase> GetGraph(Block block, TxCache txCache)
         {
             var g = new GraphBase();
 
@@ -104,6 +104,7 @@ namespace BC2G
                 output.TryGetAddress(out string address);
                 address = g.AddTarget(address, output.Value);
                 rewardAddresses.Add(address);
+                txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
             }
 
             g.UpdateGraph();
@@ -116,15 +117,20 @@ namespace BC2G
                 {
                     if (input.TxId != null)
                     {
-                        // Extended transaction: details of the transaction are retrieved from the bitcoin client.
-                        var exTx = await GetTransaction(input.TxId);
-                        var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
-                        if (vout == null)
-                            // TODO: check when this can be null, or if it would ever happen.
-                            throw new NotImplementedException();
+                        if (!txCache.TryGet(input.TxId, input.OutputIndex, out string address, out double value))
+                        {
+                            // Extended transaction: details of the transaction are retrieved from the bitcoin client.
+                            var exTx = await GetTransaction(input.TxId);
+                            var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
+                            if (vout == null)
+                                // TODO: check when this can be null, or if it would ever happen.
+                                throw new NotImplementedException();
 
-                        vout.TryGetAddress(out string address);
-                        g.AddSource(address, vout.Value);
+                            vout.TryGetAddress(out address);
+                            value = vout.Value;
+                        }
+
+                        g.AddSource(address, value);
                     }
                     else
                     {
@@ -137,6 +143,7 @@ namespace BC2G
                 {
                     output.TryGetAddress(out string address);
                     g.AddTarget(address, output.Value);
+                    txCache.Add(tx.Txid, output.Index, address, output.Value);
                 }
 
                 g.UpdateGraph(rewardAddresses);

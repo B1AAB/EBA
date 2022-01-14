@@ -8,10 +8,10 @@ namespace BC2G.Model
         public string Coinbase { get; set; } = string.Empty;
 
         [JsonPropertyName("txid")]
-        public string? TxId { get; set; }
+        public string TxId { get; set; } = string.Empty;
 
         [JsonPropertyName("vout")]
-        public int? OutputIndex { get; set; }
+        public int OutputIndex { get; set; }
 
         [JsonPropertyName("scriptSig")]
         public ScriptSig? ScriptSig { get; set; }

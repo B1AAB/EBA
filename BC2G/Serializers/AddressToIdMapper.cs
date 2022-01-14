@@ -8,7 +8,7 @@ namespace BC2G.Serializers
         private const string _delimiter = "\t";
         private const string _tmpFilenamePostfix = ".tmp";
         private readonly string _filename = string.Empty;
-        private bool disposed = false;
+        private bool _disposed = false;
 
         public AddressToIdMapper()
         { }
@@ -60,7 +60,7 @@ namespace BC2G.Serializers
 
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (!_disposed)
             {
                 if (disposing)
                 {
@@ -73,7 +73,7 @@ namespace BC2G.Serializers
                 }
             }
 
-            disposed = true;
+            _disposed = true;
         }
     }
 }
