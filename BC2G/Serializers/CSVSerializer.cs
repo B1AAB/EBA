@@ -1,4 +1,5 @@
 ﻿using BC2G.Graph;
+using System.Collections.Concurrent;
 using System.Text;
 
 namespace BC2G.Serializers
@@ -32,6 +33,35 @@ namespace BC2G.Serializers
             _createdFiles.Add(edgeFilename);
         }
 
+        public void Serialize(ConcurrentQueue<GraphBase> graphsBuffer, string edgesFilename)
+        {
+            // TODO: Note that this approach is not using a staging 
+            // file to first write to that, and then replace the 
+            // staging file with the expected one (as is done by 
+            // the other serializer methods). This mainly becuase this
+            // approach appends to an existing file, hence if the 
+            // existing file is very big, it will endup copying 
+            // the big file to a temporary path, add a few lines
+            // to the temporary file, then replace the original
+            // file with the temporary file. This approach is not
+            // efficient, hence it would need a better/optimized alternative.
+            var csvBuilder = new StringBuilder();
+            foreach (var g in graphsBuffer)
+                foreach (var edge in g.Edges)
+                    csvBuilder.AppendLine(
+                        string.Join(_delimiter, new string[]
+                        {
+                            _mapper.GetId(edge.Source).ToString(),
+                            _mapper.GetId(edge.Target).ToString(),
+                            edge.Value.ToString(),
+                            ((byte)edge.Type).ToString(),
+                            edge.Timestamp.ToString()
+                        }));
+            
+            File.WriteAllText(edgesFilename, csvBuilder.ToString());
+        }
+
+
         public override GraphBase Deserialize(string path, int blockHeight)
         {
             var nodeIds = ReadNodes(Path.Combine(path, $"{blockHeight}_nodes.csv"));
@@ -43,9 +73,7 @@ namespace BC2G.Serializers
             var csvBuilder = new StringBuilder();
             csvBuilder.AppendLine(
                 string.Join(_delimiter, new string[]
-                {
-                    "Id", "Label"
-                }));
+                { "Id", "Label" }));
 
             foreach (var node in g.Nodes)
                 csvBuilder.AppendLine(string.Join(_delimiter, new string[]
@@ -77,9 +105,7 @@ namespace BC2G.Serializers
             var csvBuilder = new StringBuilder();
             csvBuilder.AppendLine(
                 string.Join(_delimiter, new string[]
-                {
-                    "Source", "Target", "Weight", "EdgeType", "Timestamp"
-                }));
+                { "Source", "Target", "Weight", "EdgeType", "Timestamp" }));
 
             // Do NOT refactor "EdgeType" to "Type", since
             // some tools such as Gephi will fail to visualize

@@ -1,6 +1,8 @@
 ﻿using BC2G.Exceptions;
+using BC2G.Graph;
 using BC2G.Model;
 using BC2G.Serializers;
+using System.Collections.Concurrent;
 
 namespace BC2G
 {
@@ -108,25 +110,29 @@ namespace BC2G
             int from, int to,
             CancellationToken cancellationToken)
         {
+            var graphsBuffer = new ConcurrentQueue<GraphBase>();
+
             using var mapper = new AddressToIdMapper(AddressIdFilename);
             using var txCache = new TxCache(_outputDir);
             for (int height = from; height < to; height++)
             {
                 if (cancellationToken.IsCancellationRequested)
-                    return;
+                    break;
                 Console.WriteLine($"Processing block {height}");
                 var blockHash = await agent.GetBlockHash(height);
 
                 if (cancellationToken.IsCancellationRequested)
-                    return;
+                    break;
                 var block = await agent.GetBlock(blockHash);
 
                 if (cancellationToken.IsCancellationRequested)
-                    return;
+                    break;
                 var graph = await agent.GetGraph(block, txCache);
 
                 if (cancellationToken.IsCancellationRequested)
-                    return;
+                    break;
+
+                graphsBuffer.Enqueue(graph);
                 // the serializers is embeded in a `using` statement,
                 // in order to ensure its `Dispose` method is called.
                 using (var serializer = new CSVSerializer(mapper))
@@ -135,6 +141,9 @@ namespace BC2G
                 await JsonSerializer<Status>.SerializeAsync(status, StatusFilename);
                 Console.WriteLine($"Block {height} processed.");
             }
+
+            using var s = new CSVSerializer();
+            s.Serialize(graphsBuffer, Path.Combine(_outputDir, "edges.csv"));
         }
     }
 }
