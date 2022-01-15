@@ -6,38 +6,32 @@
         public string Target { get; }
         public double Value { get; }
         public EdgeType Type { get; }
+        public uint Timestamp { get; }
+
 
         public Edge(
             string source, string target,
-            double value, EdgeType type)
+            double value, EdgeType type,
+            uint timestamp)
         {
             Source = source;
             Target = target;
             Value = value;
             Type = type;
+            Timestamp = timestamp;
         }
 
         public int GetHashCode(bool ignoreValue)
         {
             if (ignoreValue)
-                return HashCode.Combine(Source, Target, Type);
+                return HashCode.Combine(Source, Target, Type, Timestamp);
             else
                 return GetHashCode();
         }
 
         public override int GetHashCode()
         {
-            // implemented based on https://stackoverflow.com/a/263416/947889
-            unchecked // Overflow is fine, just wrap
-            {
-                int hash = 17;
-                // Suitable nullity checks etc, of course :)
-                hash = hash * 29 + Source.GetHashCode();
-                hash = hash * 29 + Target.GetHashCode();
-                hash = hash * 29 + Value.GetHashCode();
-                hash = hash * 29 + Type.GetHashCode();
-                return hash;
-            }
+            return HashCode.Combine(Source, Target, Value, Type, Timestamp);
         }
     }
 }

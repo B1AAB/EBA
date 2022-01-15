@@ -46,18 +46,18 @@ namespace BC2G.Graph
         private double _totalInputValue;
         private double _totalOutputValue;
 
-        public void UpdateGraph(List<string>? rewardAddresses = null)
+        public void UpdateGraph(uint timestamp, List<string>? rewardAddresses = null)
         {
             if (_sources.IsEmpty)
-                BuildGenerativeTxGraph();
+                BuildGenerativeTxGraph(timestamp);
             else
             {
                 if (rewardAddresses == null)
                     throw new ArgumentNullException(
-                        nameof(rewardAddresses), 
+                        nameof(rewardAddresses),
                         $"{nameof(rewardAddresses)} cannot be null");
                 else
-                    BuildTxGraph(rewardAddresses);
+                    BuildTxGraph(rewardAddresses, timestamp);
             }
 
             _sources.Clear();
@@ -77,7 +77,8 @@ namespace BC2G.Graph
                     edge.Source,
                     edge.Target,
                     edge.Value + oldValue.Value,
-                    edge.Type));
+                    edge.Type,
+                    edge.Timestamp));
 
             _nodes.TryAdd(edge.Source, 0);
             _nodes.TryAdd(edge.Target, 0);
@@ -113,17 +114,18 @@ namespace BC2G.Graph
             return address;
         }
 
-        private void BuildGenerativeTxGraph()
+        private void BuildGenerativeTxGraph(uint timestamp)
         {
             foreach (var item in _targets)
                 AddEdge(new Edge(
                     CoinbaseTxLabel,
                     item.Key,
                     item.Value,
-                    EdgeType.Generation));
+                    EdgeType.Generation,
+                    timestamp));
         }
 
-        private void BuildTxGraph(List<string> rewardAddresses)
+        private void BuildTxGraph(List<string> rewardAddresses, uint timestamp)
         {
             double fee = Utilities.Round(_totalInputValue - _totalOutputValue);
             if (fee > 0.0)
@@ -145,13 +147,14 @@ namespace BC2G.Graph
                         s.Key, t.Key,
                         Utilities.Round(t.Value * Utilities.Round(
                             s.Value / _totalInputValue)),
-                        s.Key == t.Key ? EdgeType.Change : EdgeType.Transfer));
+                        s.Key == t.Key ? EdgeType.Change : EdgeType.Transfer,
+                        timestamp));
 
                 foreach (var m in rewardAddresses)
                 {
                     var feeShare = Utilities.Round(fee / rewardAddresses.Count);
                     if (feeShare > 0.0)
-                        AddEdge(new Edge(s.Key, m, feeShare, EdgeType.Fee));
+                        AddEdge(new Edge(s.Key, m, feeShare, EdgeType.Fee, timestamp));
                 }
             }
         }

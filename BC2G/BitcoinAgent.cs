@@ -88,11 +88,11 @@ namespace BC2G
 
         public async Task<GraphBase> GetGraph(Block block, TxCache txCache)
         {
-            var g = new GraphBase();
-
             /// Why using "mediantime" and not "time"? see the following BIP:
             /// https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
             uint timestamp = block.MedianTime;
+
+            var g = new GraphBase();
 
             /// By definition, each block has a generative block that is the 
             /// reward of the miner. Hence, this should never raise an 
@@ -107,7 +107,7 @@ namespace BC2G
                 txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
             }
 
-            g.UpdateGraph();
+            g.UpdateGraph(timestamp);
 
             // Updating graph (UpdateGraph()) is not thread safe, 
             // hence, cannot process transactions in parallel.
@@ -146,7 +146,7 @@ namespace BC2G
                     txCache.Add(tx.Txid, output.Index, address, output.Value);
                 }
 
-                g.UpdateGraph(rewardAddresses);
+                g.UpdateGraph(timestamp, rewardAddresses);
             }
 
             return g;

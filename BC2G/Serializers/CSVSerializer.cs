@@ -78,8 +78,12 @@ namespace BC2G.Serializers
             csvBuilder.AppendLine(
                 string.Join(_delimiter, new string[]
                 {
-                    "Source", "Target", "Weight", "EdgeType" // Do not name this as "Type"
+                    "Source", "Target", "Weight", "EdgeType", "Timestamp"
                 }));
+
+            // Do NOT refactor "EdgeType" to "Type", since
+            // some tools such as Gephi will fail to visualize
+            // the graph if this is labeled as "Type".
 
             foreach (var edge in g.Edges)
                 csvBuilder.AppendLine(
@@ -88,7 +92,8 @@ namespace BC2G.Serializers
                         _mapper.GetId(edge.Source).ToString(),
                         _mapper.GetId(edge.Target).ToString(),
                         edge.Value.ToString(),
-                        ((byte)edge.Type).ToString()
+                        ((byte)edge.Type).ToString(),
+                        edge.Timestamp.ToString()
                     }));
 
             File.WriteAllText(filename, csvBuilder.ToString());
@@ -97,19 +102,18 @@ namespace BC2G.Serializers
         private static GraphBase ReadEdges(string filename, Dictionary<string, string> nodeIds)
         {
             var g = new GraphBase();
-
-            using var reader = new StreamReader(filename);
             string? line;
-            string[] x;
+            using var reader = new StreamReader(filename);
             reader.ReadLine(); // skip the header.
             while ((line = reader.ReadLine()) != null)
             {
-                x = line.Split(_delimiter);
+                var x = line.Split(_delimiter);
                 g.AddEdge(new Model.Edge(
                     nodeIds[x[0]],
                     nodeIds[x[1]],
                     double.Parse(x[2]),
-                    (Model.EdgeType)int.Parse(x[3])));
+                    (Model.EdgeType)int.Parse(x[3]),
+                    uint.Parse(x[4])));
             }
 
             return g;
