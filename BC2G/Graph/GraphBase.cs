@@ -23,6 +23,8 @@ namespace BC2G.Graph
     {
         public const string CoinbaseTxLabel = "Coinbase";
 
+        public BlockStatistics Stats { get; } = new(0);
+
         public ReadOnlyCollection<Edge> Edges
         {
             get
@@ -45,6 +47,12 @@ namespace BC2G.Graph
         protected readonly ConcurrentDictionary<string, double> _targets = new();
         private double _totalInputValue;
         private double _totalOutputValue;
+
+        public GraphBase(BlockStatistics stats) : this()
+        {
+            Stats = stats;
+        }
+        public GraphBase() { }
 
         public void UpdateGraph(uint timestamp, List<string>? rewardAddresses = null)
         {
@@ -92,13 +100,13 @@ namespace BC2G.Graph
 
         public string AddSource(string source, double value)
         {
-            _totalInputValue = ThreadsafeAdd(ref _totalInputValue, value);
+            _totalInputValue = Utilities.ThreadsafeAdd(ref _totalInputValue, value);
             return AddInOrOut(_sources, source, value);
         }
 
         public string AddTarget(string target, double value)
         {
-            _totalOutputValue = ThreadsafeAdd(ref _totalOutputValue, value);
+            _totalOutputValue = Utilities.ThreadsafeAdd(ref _totalOutputValue, value);
             return AddInOrOut(_targets, target, value);
         }
 
@@ -159,21 +167,7 @@ namespace BC2G.Graph
             }
         }
 
-        private static double ThreadsafeAdd(ref double location1, double value)
-        {
-            // This is implemented based on the following Stackoverflow answer.
-            // https://stackoverflow.com/a/16893641/947889
 
-            double newCurrentValue = location1; // non-volatile read, so may be stale
-            while (true)
-            {
-                double currentValue = newCurrentValue;
-                double newValue = Utilities.Round(currentValue + value);
-                newCurrentValue = Interlocked.CompareExchange(ref location1, newValue, currentValue);
-                if (newCurrentValue == currentValue)
-                    return newValue;
-            }
-        }
 
         public bool Equals(GraphBase? other)
         {

@@ -1,4 +1,5 @@
 ﻿using BC2G.Graph;
+using BC2G.Model;
 using System.Collections.Concurrent;
 using System.Text;
 
@@ -13,12 +14,14 @@ namespace BC2G.Serializers
         private readonly string _mapperFilename = string.Empty;
         private readonly List<string> _createdFiles = new();
         private readonly AddressToIdMapper _mapper = new();
+        private readonly BlockStatistics _stats;
 
         public CSVSerializer() { }
 
-        public CSVSerializer(AddressToIdMapper mapper)
+        public CSVSerializer(AddressToIdMapper mapper, BlockStatistics stats)
         {
             _mapper = mapper;
+            _stats = stats;
         }
 
         public override void Serialize(GraphBase g, string baseFilename)
@@ -112,15 +115,19 @@ namespace BC2G.Serializers
             // the graph if this is labeled as "Type".
 
             foreach (var edge in g.Edges)
+            {
                 csvBuilder.AppendLine(
                     string.Join(_delimiter, new string[]
                     {
                         _mapper.GetId(edge.Source).ToString(),
                         _mapper.GetId(edge.Target).ToString(),
                         edge.Value.ToString(),
-                        ((byte)edge.Type).ToString(),
+                        ((int)edge.Type).ToString(),
                         edge.Timestamp.ToString()
                     }));
+
+                _stats.IncrementEdgeType(edge.Type);
+            }
 
             File.WriteAllText(filename, csvBuilder.ToString());
         }
@@ -134,11 +141,11 @@ namespace BC2G.Serializers
             while ((line = reader.ReadLine()) != null)
             {
                 var x = line.Split(_delimiter);
-                g.AddEdge(new Model.Edge(
+                g.AddEdge(new Edge(
                     nodeIds[x[0]],
                     nodeIds[x[1]],
                     double.Parse(x[2]),
-                    (Model.EdgeType)int.Parse(x[3]),
+                    (EdgeType)int.Parse(x[3]),
                     uint.Parse(x[4])));
             }
 

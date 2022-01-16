@@ -43,5 +43,37 @@ namespace BC2G
             // https://stackoverflow.com/q/588004/947889
             return Math.Round(input, digits: FractionalDigitsCount);
         }
+
+        public static double ThreadsafeAdd(ref double location1, double value)
+        {
+            // This is implemented based on the following Stackoverflow answer.
+            // https://stackoverflow.com/a/16893641/947889
+
+            double newCurrentValue = location1; // non-volatile read, so may be stale
+            while (true)
+            {
+                double currentValue = newCurrentValue;
+                double newValue = Round(currentValue + value);
+                newCurrentValue = Interlocked.CompareExchange(ref location1, newValue, currentValue);
+                if (newCurrentValue == currentValue)
+                    return newValue;
+            }
+        }
+
+        public static uint ThreadsafeAdd(ref uint location, uint value)
+        {
+            // This is implemented based on the following Stackoverflow answer.
+            // https://stackoverflow.com/a/16893641/947889
+
+            uint newCurrentValue = location; // non-volatile read, so may be stale
+            while (true)
+            {
+                uint currentValue = newCurrentValue;
+                uint newValue = currentValue + value;
+                newCurrentValue = Interlocked.CompareExchange(ref location, newValue, currentValue);
+                if (newCurrentValue == currentValue)
+                    return newValue;
+            }
+        }
     }
 }

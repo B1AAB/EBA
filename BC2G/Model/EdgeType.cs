@@ -1,10 +1,10 @@
 ﻿namespace BC2G.Model
 {
-    public enum EdgeType : byte
+    public enum EdgeType
     {
-        Transfer,
-        Generation,
-        Change,
-        Fee
+        Generation = 0,
+        Transfer = 1,
+        Change = 2,
+        Fee = 3
     }
 }

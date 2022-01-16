@@ -3,6 +3,7 @@ using BC2G.Graph;
 using BC2G.Model;
 using BC2G.Serializers;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace BC2G
 {
@@ -16,6 +17,8 @@ namespace BC2G
         /// Should be fully quantifying path
         /// </summary>
         public string StatusFilename { set; get; } = "status.json";
+
+        public ConcurrentQueue<BlockStatistics> BlocksStatistics { set; get; } = new();
 
         private readonly string _outputDir;
 
@@ -118,7 +121,11 @@ namespace BC2G
             {
                 if (cancellationToken.IsCancellationRequested)
                     break;
+                var stopwatch = new Stopwatch();
+                stopwatch.Start();
+
                 Console.WriteLine($"Processing block {height}");
+                var blockStats = new BlockStatistics(height);
                 var blockHash = await agent.GetBlockHash(height);
 
                 if (cancellationToken.IsCancellationRequested)
@@ -133,17 +140,27 @@ namespace BC2G
                     break;
 
                 graphsBuffer.Enqueue(graph);
+
                 // the serializers is embeded in a `using` statement,
                 // in order to ensure its `Dispose` method is called.
-                using (var serializer = new CSVSerializer(mapper))
+                using (var serializer = new CSVSerializer(mapper, blockStats))
                     serializer.Serialize(graph, Path.Combine(_outputDir, $"{height}"));
                 status.LastBlockHeight = height;
                 await JsonSerializer<Status>.SerializeAsync(status, StatusFilename);
+
+                stopwatch.Stop();
+                blockStats.Runtime = stopwatch.Elapsed;
+                BlocksStatistics.Enqueue(blockStats);
+
                 Console.WriteLine($"Block {height} processed.");
             }
 
             using var s = new CSVSerializer();
             s.Serialize(graphsBuffer, Path.Combine(_outputDir, "edges.csv"));
+
+            BlocksStatisticsSerializer.Serialize(
+                BlocksStatistics,
+                Path.Combine(_outputDir, "blocks_stats.tsv"));
         }
     }
 }
