@@ -15,14 +15,16 @@ client.DefaultRequestHeaders.Accept.Clear();
 client.DefaultRequestHeaders.UserAgent.Clear();
 client.DefaultRequestHeaders.Add("User-Agent", "BitcoinAgent");
 
-var orchestrator = new Orchestrator(".", client);
-
 try
 {
-    await orchestrator.RunAsync(cancellationToken);
+    var orchestrator = new Orchestrator(".", client);
+    var success = await orchestrator.RunAsync(cancellationToken);
+    if (!success)
+        Environment.ExitCode = 1;
 }
 catch (Exception ex)
 {
+    Environment.ExitCode = 1;
     Console.Error.WriteLine(ex.Message);
 }
 
