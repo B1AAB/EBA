@@ -138,7 +138,7 @@ namespace BC2G
 
                 if (cancellationToken.IsCancellationRequested)
                     break;
-                var graph = await agent.GetGraph(block, txCache);
+                var graph = await agent.GetGraph(block, txCache, cancellationToken);
 
                 if (cancellationToken.IsCancellationRequested)
                     break;

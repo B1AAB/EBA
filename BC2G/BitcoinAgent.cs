@@ -87,7 +87,9 @@ namespace BC2G
                 ?? throw new Exception("Invalid transaction.");
         }
 
-        public async Task<GraphBase> GetGraph(Block block, TxCache txCache)
+        public async Task<GraphBase> GetGraph(
+            Block block, TxCache txCache, 
+            CancellationToken cancellationToken)
         {
             /// Why using "mediantime" and not "time"? see the following BIP:
             /// https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
@@ -114,8 +116,14 @@ namespace BC2G
             // hence, cannot process transactions in parallel.
             foreach (var tx in block.Transactions.Where(x => !x.IsCoinbase))
             {
+                if (cancellationToken.IsCancellationRequested)
+                    break;
+
                 foreach (var input in tx.Inputs)
                 {
+                    if (cancellationToken.IsCancellationRequested)
+                        break;
+
                     if (input.TxId != null)
                     {
                         if (!txCache.TryGet(input.TxId, input.OutputIndex, out string address, out double value))
@@ -142,6 +150,9 @@ namespace BC2G
 
                 foreach (var output in tx.Outputs.Where(x => x.IsValueTransfer))
                 {
+                    if (cancellationToken.IsCancellationRequested)
+                        break;
+
                     output.TryGetAddress(out string address);
                     g.AddTarget(address, output.Value);
                     txCache.Add(tx.Txid, output.Index, address, output.Value);
