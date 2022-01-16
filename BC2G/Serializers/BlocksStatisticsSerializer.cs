@@ -12,16 +12,17 @@ namespace BC2G.Serializers
         {
             var strBuilder = new StringBuilder();
 
-            strBuilder.Append(string.Join("\t", new string[]
-            {
-                "BlockHeight", "Runtime",
-                string.Join("\t", (string[]) Enum.GetValues(typeof(EdgeType)))
-            }));
+            if (!File.Exists(filename))
+                strBuilder.AppendLine(string.Join("\t", new string[]
+                {
+                    "BlockHeight", "Runtime",
+                    string.Join("\t", (EdgeType[]) Enum.GetValues(typeof(EdgeType)))
+                }));
 
             foreach (var x in blocksStats)
                 strBuilder.AppendLine(x.ToString());
 
-            File.WriteAllText(filename, strBuilder.ToString());
+            File.AppendAllText(filename, strBuilder.ToString());
         }
     }
 }

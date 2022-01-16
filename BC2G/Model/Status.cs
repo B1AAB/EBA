@@ -2,6 +2,8 @@
 {
     internal class Status
     {
-        public int LastBlockHeight { get; set; }
+        public int StartBlock { get; set; }
+        public int LastProcessedBlock { get; set; } = -1;
+        public int EndBlock { get; set; }
     }
 }

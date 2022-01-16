@@ -14,23 +14,21 @@ namespace BC2G.Serializers
         private readonly string _mapperFilename = string.Empty;
         private readonly List<string> _createdFiles = new();
         private readonly AddressToIdMapper _mapper = new();
-        private readonly BlockStatistics _stats;
 
         public CSVSerializer() { }
 
-        public CSVSerializer(AddressToIdMapper mapper, BlockStatistics stats)
+        public CSVSerializer(AddressToIdMapper mapper)
         {
             _mapper = mapper;
-            _stats = stats;
         }
 
-        public override void Serialize(GraphBase g, string baseFilename)
+        public override void Serialize(GraphBase g, string baseFilename, BlockStatistics stats)
         {
             var nodesFilename = baseFilename + "_nodes.csv" + _tmpFilenamePostfix;
             var edgeFilename = baseFilename + "_edges.csv" + _tmpFilenamePostfix;
 
             WriteNodes(g, nodesFilename);
-            WriteEdges(g, edgeFilename);
+            WriteEdges(g, edgeFilename, stats);
 
             _createdFiles.Add(nodesFilename);
             _createdFiles.Add(edgeFilename);
@@ -49,6 +47,13 @@ namespace BC2G.Serializers
             // file with the temporary file. This approach is not
             // efficient, hence it would need a better/optimized alternative.
             var csvBuilder = new StringBuilder();
+
+            if (!File.Exists(edgesFilename))
+                csvBuilder.AppendLine(string.Join(_delimiter, new string[]
+                {
+                    "Source", "Target", "Value", "EdgeType", "Timestamp"
+                }));
+
             foreach (var g in graphsBuffer)
                 foreach (var edge in g.Edges)
                     csvBuilder.AppendLine(
@@ -61,7 +66,7 @@ namespace BC2G.Serializers
                             edge.Timestamp.ToString()
                         }));
             
-            File.WriteAllText(edgesFilename, csvBuilder.ToString());
+            File.AppendAllText(edgesFilename, csvBuilder.ToString());
         }
 
 
@@ -103,7 +108,7 @@ namespace BC2G.Serializers
             return nodeIds;
         }
 
-        private void WriteEdges(GraphBase g, string filename)
+        private void WriteEdges(GraphBase g, string filename, BlockStatistics stats)
         {
             var csvBuilder = new StringBuilder();
             csvBuilder.AppendLine(
@@ -126,7 +131,7 @@ namespace BC2G.Serializers
                         edge.Timestamp.ToString()
                     }));
 
-                _stats.IncrementEdgeType(edge.Type);
+                stats.IncrementEdgeType(edge.Type);
             }
 
             File.WriteAllText(filename, csvBuilder.ToString());
@@ -166,11 +171,9 @@ namespace BC2G.Serializers
             {
                 if (disposing)
                 {
-                    /// rename temporary files since the 
-                    /// method is executed successfully.
-                    /// Rename pattern:
-                    ///     from: abc.csv.tmp
-                    ///       to: abc.csv
+                    /// rename temporary files as the following.
+                    ///   rom: abc.csv.tmp
+                    ///    to: abc.csv
                     foreach (var filename in _createdFiles)
                         File.Move(
                             filename,
