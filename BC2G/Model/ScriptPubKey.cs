@@ -45,9 +45,5 @@ namespace BC2G.Model
             }
             return Convert.ToBase64String(stream.ToArray());
         }
-        public void FromBase64String(string base64String)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

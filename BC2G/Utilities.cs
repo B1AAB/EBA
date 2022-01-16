@@ -75,5 +75,18 @@ namespace BC2G
                     return newValue;
             }
         }
+
+        public static string GetSHA256(string input)
+        {
+            var builder = new StringBuilder();
+            using (var sha256 = SHA256.Create())
+            {
+                byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+                foreach (var b in bytes)
+                    builder.Append(b.ToString("x2"));
+                // x2: format string as hexadecimal
+            }
+            return builder.ToString();
+        }
     }
 }
