@@ -303,11 +303,62 @@ namespace BC2G.Graph
         private double _totalInputValue;
         private double _totalOutputValue;
 
+        public uint Timestamp { get; set; }
+
+        public List<string> RewardsAddresses = new();
+
         public GraphBase(BlockStatistics stats) : this()
         {
             Stats = stats;
         }
         public GraphBase() { }
+
+        public void Merge(TransactionGraph txGraph)
+        {
+            if (txGraph.sources.IsEmpty)
+            {
+                // build generative graph
+                foreach (var item in txGraph.targets)
+                    AddEdge(new Edge(
+                        CoinbaseTxLabel,
+                        item.Key,
+                        item.Value,
+                        EdgeType.Generation,
+                        Timestamp));
+            }
+            else
+            {
+                double fee = Utilities.Round(txGraph.TotalInputValue - txGraph.TotalOutputValue);
+                if (fee > 0.0)
+                    foreach (var s in txGraph.sources)
+                        txGraph.sources.AddOrUpdate(
+                            s.Key, txGraph.sources[s.Key],
+                            (_, oldValue) => Utilities.Round(
+                                oldValue - Utilities.Round(
+                                    oldValue * Utilities.Round(
+                                        fee / txGraph.TotalInputValue))));
+                /// The AddOrUpdate method is only expected to update, 
+                /// adding a new key is not expected to happen. 
+
+                foreach (var s in txGraph.sources)
+                {
+                    foreach (var t in txGraph.targets)
+                        AddEdge(new Edge(
+                            s.Key, t.Key,
+                            Utilities.Round(t.Value * Utilities.Round(
+                                s.Value / txGraph.TotalInputValue)),
+                            s.Key == t.Key ? EdgeType.Change : EdgeType.Transfer,
+                            Timestamp));
+
+                    foreach (var m in RewardsAddresses)
+                    {
+                        var feeShare = Utilities.Round(fee / RewardsAddresses.Count);
+                        if (feeShare > 0.0)
+                            AddEdge(new Edge(s.Key, m, feeShare, EdgeType.Fee, Timestamp));
+                    }
+                }
+            }
+        }
 
         public void UpdateGraph(uint timestamp, List<string>? rewardAddresses = null)
         {

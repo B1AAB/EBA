@@ -2,7 +2,7 @@
 {
     public class MovingAverage
     {
-        private double _average;
+        private double _average = 1;
         public double Average { get { return _average; } }
 
         /// <summary>

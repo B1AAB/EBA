@@ -1,4 +1,4 @@
-﻿using BC2G.Model;
+using BC2G.Model;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

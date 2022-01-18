@@ -1,5 +1,6 @@
 ﻿using BC2G.Exceptions;
 using BC2G.Graph;
+using BC2G.Logging;
 using BC2G.Model;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -16,9 +17,12 @@ namespace BC2G
 
         private readonly HttpClient _client;
 
-        public BitcoinAgent(HttpClient client)
+        private Logger _logger;
+
+        public BitcoinAgent(HttpClient client, Logger logger)
         {
             _client = client;
+            _logger = logger;
         }
 
         /// <summary>
@@ -102,6 +106,8 @@ namespace BC2G
                 ?? throw new Exception("Invalid transaction.");*/
         }
 
+
+
         public async Task<GraphBase> GetGraph(
     Block block, TxCache txCache,
     CancellationToken cancellationToken)
@@ -112,7 +118,9 @@ namespace BC2G
 
             var g = new GraphBase();
 
-            /// By definition, each block has a generative block that is the 
+            var txGraph = new TransactionGraph();
+
+            /// By definition, each block has a generative block that is the
             /// reward of the miner. Hence, this should never raise an 
             /// exception if the block is not corrupt.
             var coinbaseTx = block.Transactions.First(x => x.IsCoinbase);
@@ -120,63 +128,85 @@ namespace BC2G
             foreach (var output in coinbaseTx.Outputs.Where(x => x.IsValueTransfer))
             {
                 output.TryGetAddress(out string address);
-                address = g.AddTarget(address, output.Value);
+                //address = g.AddTarget(address, output.Value);
+                address = txGraph.AddTarget(address, output.Value);
                 rewardAddresses.Add(address);
                 txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
             }
 
-            g.UpdateGraph(timestamp);
+            g.RewardsAddresses = rewardAddresses;
+            g.Merge(txGraph);
+            //g.UpdateGraph(timestamp);
 
-            // Updating graph (UpdateGraph()) is not thread safe, 
-            // hence, cannot process transactions in parallel.
-            foreach (var tx in block.Transactions.Where(x => !x.IsCoinbase))
+
+            await Parallel.ForEachAsync(
+                block.Transactions.Where(x => !x.IsCoinbase),
+                async (tx, state) =>
+                {
+                    var threadID = Environment.CurrentManagedThreadId;
+                    _logger.LogTraverse(threadID, $"Thread {threadID}\tstarted", BlockTraverseState.Started);
+                    await RunParallel(tx, g, txCache, cancellationToken);
+                    _logger.LogTraverse(threadID, $"Thread {threadID}\tfinished", BlockTraverseState.Succeeded);
+                });
+
+            return g;
+        }
+
+        private async Task RunParallel(
+            Transaction tx,
+            GraphBase g,
+            TxCache txCache,
+            CancellationToken cancellationToken)
+        {
+            var txGraph2 = new TransactionGraph();
+
+            if (cancellationToken.IsCancellationRequested)
+                //break;
+                return;
+
+            foreach (var input in tx.Inputs)
             {
                 if (cancellationToken.IsCancellationRequested)
                     break;
 
-                foreach (var input in tx.Inputs)
+                if (input.TxId != null)
                 {
-                    if (cancellationToken.IsCancellationRequested)
-                        break;
-
-                    if (input.TxId != null)
+                    if (!txCache.TryGet(input.TxId, input.OutputIndex, out string address, out double value))
                     {
-                        if (!txCache.TryGet(input.TxId, input.OutputIndex, out string address, out double value))
-                        {
-                            // Extended transaction: details of the transaction are retrieved from the bitcoin client.
-                            var exTx = await GetTransaction(input.TxId);
-                            var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
-                            if (vout == null)
-                                // TODO: check when this can be null, or if it would ever happen.
-                                throw new NotImplementedException();
+                        // Extended transaction: details of the transaction are retrieved from the bitcoin client.
+                        var exTx = await GetTransaction(input.TxId);
+                        var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
+                        if (vout == null)
+                            // TODO: check when this can be null, or if it would ever happen.
+                            throw new NotImplementedException();
 
-                            vout.TryGetAddress(out address);
-                            value = vout.Value;
-                        }
+                        vout.TryGetAddress(out address);
+                        value = vout.Value;
+                    }
 
-                        g.AddSource(address, value);
-                    }
-                    else
-                    {
-                        // TODO: check if this is ever possible.
-                        throw new NotImplementedException();
-                    }
+                    txGraph2.AddSource(address, value);
+                    //g.AddSource(address, value);
                 }
-
-                foreach (var output in tx.Outputs.Where(x => x.IsValueTransfer))
+                else
                 {
-                    if (cancellationToken.IsCancellationRequested)
-                        break;
-
-                    output.TryGetAddress(out string address);
-                    g.AddTarget(address, output.Value);
-                    txCache.Add(tx.Txid, output.Index, address, output.Value);
+                    // TODO: check if this is ever possible.
+                    throw new NotImplementedException();
                 }
-
-                g.UpdateGraph(timestamp, rewardAddresses);
             }
 
-            return g;
+            foreach (var output in tx.Outputs.Where(x => x.IsValueTransfer))
+            {
+                if (cancellationToken.IsCancellationRequested)
+                    break;
+
+                output.TryGetAddress(out string address);
+                //g.AddTarget(address, output.Value);
+                txGraph2.AddTarget(address, output.Value);
+                txCache.Add(tx.Txid, output.Index, address, output.Value);
+            }
+
+            g.Merge(txGraph2);
+            //g.UpdateGraph(timestamp, rewardAddresses);
         }
 
         public async Task<GraphBase> GetGraph_old(
@@ -195,8 +225,8 @@ namespace BC2G
 
             var txGraph = new TransactionGraph();
 
-            /// By definition, each block has a generative block that is the 
-            /// reward of the miner. Hence, this should never raise an 
+            /// By definition, each block has a generative block that is the
+            /// reward of the miner. Hence, this should never raise an
             /// exception if the block is not corrupt.
             var coinbaseTx = block.Transactions.First(x => x.IsCoinbase);
             var rewardAddresses = new List<string>();
@@ -238,7 +268,7 @@ namespace BC2G
 
 
 
-            // Updating graph (UpdateGraph()) is not thread safe, 
+            // Updating graph (UpdateGraph()) is not thread safe,
             // hence, cannot process transactions in parallel.
             foreach (var tx in block.Transactions.Where(x => !x.IsCoinbase))
             {

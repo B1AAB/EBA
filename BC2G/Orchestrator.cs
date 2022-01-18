@@ -30,16 +30,16 @@ namespace BC2G
         private bool disposed = false;
 
         public Orchestrator(
-            string outputDir, HttpClient client, 
-            string statusFilename = "status.json", 
+            string outputDir, HttpClient client,
+            string statusFilename = "status.json",
             string addressIdFilename = "address_id.csv")
         {
             _outputDir = outputDir;
 
-            _loggerRepository = 
-                _defaultLoggerRepoName + "_" + 
+            _loggerRepository =
+                _defaultLoggerRepoName + "_" +
                 DateTime.Now.ToString(
-                    _loggerTimeStampFormat, 
+                    _loggerTimeStampFormat,
                     CultureInfo.InvariantCulture);
             LogFile = Path.Join(_outputDir, _loggerRepository + ".txt");
 
@@ -110,11 +110,11 @@ namespace BC2G
                 File.Delete(tmpFile);
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
                 Logger.LogExceptionStatic(
                     $"Require write access to the path {_outputDir}: " +
-                    $"{ex.Message}");
+                    $"{e.Message}");
 
                 return false;
             }
@@ -142,7 +142,7 @@ namespace BC2G
             status = new();
 
             try
-            {   
+            {
                 status = JsonSerializer<Status>.DeserializeAsync(StatusFilename).Result;
                 return true;
             }
@@ -157,13 +157,13 @@ namespace BC2G
         private bool TryGetBitCoinAgent(out BitcoinAgent agent)
         {
             // Cannot convert null literal to non-nullable reference type.
-            #pragma warning disable CS8625
+#pragma warning disable CS8625
             agent = null;
-            #pragma warning restore CS8625
+#pragma warning restore CS8625
 
             try
             {
-                agent = new BitcoinAgent(_client);
+                agent = new BitcoinAgent(_client, _logger);
                 if (!agent.IsConnected)
                     throw new ClientInaccessible();
                 return true;
@@ -224,144 +224,6 @@ namespace BC2G
             using var txCache = new TxCache(_outputDir);
             using var serializer = new CSVSerializer(mapper);
 
-
-            /*
-            var AbortAction = (int threadID, ParallelLoopState state) =>
-            {
-                state.Stop();
-                _logger.LogTraverse(threadID, "aborting", 0, BlockTraverseState.Aborted);
-            };*/
-            
-            /*
-            var myList = new List<string>(new string[0]);
-            Parallel.ForEach(myList, (item, state) => {
-                var threadID = Thread.CurrentThread.ManagedThreadId;
-
-                if (cancellationToken.IsCancellationRequested)
-                    state.Stop();
-
-                _logger.LogTraverse(threadID, $"{threadID}_phase_1", 0, BlockTraverseState.Started);
-                Thread.Sleep(new Random().Next(1000));
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    //state.Stop();
-                    //_logger.LogTraverse(threadID, $"{threadID}_aborting", 0, BlockTraverseState.Aborted);
-                    AbortAction(threadID, state);
-                    return;
-                }
-
-                _logger.LogTraverse(threadID, $"{threadID}_phase_2", 0, BlockTraverseState.Running);
-                Thread.Sleep(new Random().Next(1000));
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    //state.Stop();
-                    //_logger.LogTraverse(threadID, $"{threadID}_aborting", 0, BlockTraverseState.Aborted);
-                    AbortAction(threadID, state);
-                    return;
-                }
-
-                _logger.LogTraverse(threadID, $"{threadID}_phase_3", 0, BlockTraverseState.Running);
-                Thread.Sleep(new Random().Next(1000));
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    //state.Stop();
-                    //_logger.LogTraverse(threadID, $"{threadID}_aborting", 0, BlockTraverseState.Aborted);
-                    AbortAction(threadID, state);
-                    return;
-                }
-
-                _logger.LogTraverse(threadID, $"{threadID}_phase_4", 0, BlockTraverseState.Running);
-                Thread.Sleep(new Random().Next(1000));
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    //state.Stop();
-                    //_logger.LogTraverse(threadID, $"{threadID}_aborting", 0, BlockTraverseState.Aborted);
-                    AbortAction(threadID, state);
-                    return;
-                }
-
-                _logger.LogTraverse(threadID, $"{threadID}_phase_5", 0, BlockTraverseState.Running);
-                Thread.Sleep(new Random().Next(1000));
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    //state.Stop();
-                    //_logger.LogTraverse(threadID, $"{threadID}_aborting", 0, BlockTraverseState.Aborted);
-                    AbortAction(threadID, state);
-                    return;
-                }
-
-                _logger.LogTraverse(Thread.CurrentThread.ManagedThreadId, threadID + "end ########################", 0, BlockTraverseState.Succeeded);
-            });
-
-            var xyz = _logger.TempGetState();
-            var zyx = _logger.TempGetMessages();/*
-            /*
-            Parallel.For(status.FromInclusive, status.ToExclusive, (height, state) =>
-            {
-                var threadID = Environment.CurrentManagedThreadId;
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    AbortAction(threadID, state);
-                    return;
-                }
-
-                var stopwatch = new Stopwatch();
-                stopwatch.Start();
-
-                //_logger.Log($"\rProcessing block {height}", newLine: false);
-                _logger.LogTraverse(threadID, height.ToString(), 0, BlockTraverseState.Started);
-                var blockStats = new BlockStatistics(height);
-                var blockHash = agent.GetBlockHash(height).Result;
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    AbortAction(threadID, state);
-                    return;
-                }
-
-                _logger.LogTraverse(threadID, height.ToString(), 0, BlockTraverseState.Running);
-                var block = agent.GetBlock(blockHash).Result;
-
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    AbortAction(threadID, state);
-                    return;
-                }
-
-                _logger.LogTraverse(threadID, height.ToString(), 0, BlockTraverseState.Running);
-                var graph = agent.GetGraph(block, txCache, cancellationToken).Result;
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    AbortAction(threadID, state);
-                    return;
-                }
-
-                graphsBuffer.Enqueue(graph);
-
-                serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"), blockStats);
-                status.LastProcessedBlock = height;
-                
-
-                stopwatch.Stop();
-                blockStats.Runtime = stopwatch.Elapsed;
-                BlocksStatistics.Enqueue(blockStats);
-                _logger.LogTraverse(threadID, height.ToString(), 0, BlockTraverseState.Succeeded);
-                //_logger.LogTraverse(0, "", blockStats.Runtime.TotalSeconds);
-
-                //Console.WriteLine($"Block {height} processed.");
-
-            });
-
-            JsonSerializer<Status>.SerializeAsync(status, StatusFilename).Wait();*/
-
             // Parallelizing block traversal has more disadvantages than
             // advantages it could bring. One draw back is related to
             // caching transactions, where of a block are cached for faster
@@ -374,12 +236,15 @@ namespace BC2G
             // be in cache yet, hence, BitCoinAgent will need to query
             // Bitcoin client for those transactions, which is considerably
             // slower than using the built-in cache. Partitioner can be
-            // adjusted to assign threads as thread_1:0, thread_2:1, 
+            // adjusted to assign threads as thread_1:0, thread_2:1,
             // thread_1:2, thread_2:3, and so on. This might suffer less
             // than the previous partitioning, and a good techniuqe to
             // implement it is TPL. However, it needs to be tested
             // if/how-much performance optimization it delivers and if
-            // it balaces with complications of implementing it. 
+            // it balaces with complications of implementing it.
+
+            var cursorTop = Console.CursorTop;
+            _logger.CursorTop = cursorTop;
 
             for (int height = status.FromInclusive; height < status.ToExclusive; height++)
             {

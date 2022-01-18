@@ -23,9 +23,14 @@ namespace BC2G.Logging
         private const int maxRuntimes = 5;
         private ConcurrentQueue<int> _runtimes = new();
 
+        public int CursorTop { get; set; }
+
+        // TODO: any more efficient approach?
+        private readonly BlockingCollection<string> msgQueue = new();
+
         public Logger(
-            string logFilename, string repository, 
-            string name, string exportPath, 
+            string logFilename, string repository,
+            string name, string exportPath,
             string maxLogFileSize)
         {
             MaxLogFileSize = maxLogFileSize;
@@ -63,6 +68,19 @@ namespace BC2G.Logging
             hierarchy.Configured = true;
             log = LogManager.GetLogger(_repository, _name);
 
+
+            var thread = new Thread(() =>
+            {
+                while (true)
+                {
+                    Console.CursorTop = CursorTop;
+                    Console.Write(msgQueue.Take());
+                }
+            });
+            thread.IsBackground = true;
+            thread.Start();
+
+
             log.Info("NOTE THAT THE LOG PATTERN IS: <Date> <#Thread> <Level> <Message>");
             Log($"Export Directory: {exportPath}", ConsoleColor.DarkGray);
         }
@@ -88,18 +106,28 @@ namespace BC2G.Logging
             return _progressBar.tempMessages;
         }
 
+        
         public void LogTraverse(int block, double runtime)
         {
             _runtimeMovingAverage.Add(runtime);
             Console.Write($"\r{block}\t{_runtimeMovingAverage.Speed}");
         }
 
-
-        public void LogTraverse(int threadId, string status, double runtime, BlockTraverseState state)
+        public void LogTraverse(int height, string status, double runtime=-1)
         {
-            _runtimeMovingAverage.Add(runtime);
+            if (runtime != -1)
+                _runtimeMovingAverage.Add(runtime);
+
+            msgQueue.Add($"\r{height}\t (Rate: {_runtimeMovingAverage.Speed}B/sec)");
+            //Console.Write($"\r{height}\t (Rate: {_runtimeMovingAverage.Speed}B/sec)");
+        }
+
+
+        public void LogTraverse(int threadId, string status, BlockTraverseState state)
+        {
+            //_runtimeMovingAverage.Add(runtime);
             //Console.Write($"\t{_runtimeMovingAverage.Speed}");
-            _progressBar.Update(threadId, status, state);
+            _progressBar.Update(threadId, status, state, CursorTop + 1);
         }
 
         public void LogException(Exception e)

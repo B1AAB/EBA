@@ -13,8 +13,6 @@ namespace BC2G.Logging
         private readonly Dictionary<int, int> _idRowMapping = new();
         private object _locker = new object();
 
-        private int startRow = 1;
-
         public Dictionary<int, List<string>> tempRecord = new();
         public Dictionary<int, List<string>> tempMessages = new();
 
@@ -97,7 +95,7 @@ namespace BC2G.Logging
             }
         }
 
-        public void Update(int id, string message, BlockTraverseState state)
+        public void Update(int id, string message, BlockTraverseState state, int cursorTop)
         {
             lock (_locker)
             {
@@ -112,7 +110,7 @@ namespace BC2G.Logging
                 else
                 {
                     if (!_availableRows.TryDequeue(out row))
-                        row = _idRowMapping.Count + startRow;
+                        row = _idRowMapping.Count + cursorTop;
 
                     _idRowMapping.Add(id, row);
                 }

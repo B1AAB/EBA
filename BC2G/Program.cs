@@ -20,7 +20,7 @@ client.DefaultRequestHeaders.Add("User-Agent", "BitcoinAgent");
 try
 {
     var orchestrator = new Orchestrator(".", client);
-    var success = await orchestrator.RunAsync(cancellationToken);
+    var success = await orchestrator.RunAsync(cancellationToken, 719000, 719010);
     if (!success)
         Environment.ExitCode = 1;
 }
