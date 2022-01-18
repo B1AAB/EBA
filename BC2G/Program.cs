@@ -1,4 +1,5 @@
 ﻿using BC2G;
+//using System.Net;
 
 var tokenSource = new CancellationTokenSource();
 var cancellationToken = tokenSource.Token;
@@ -14,6 +15,7 @@ var client = new HttpClient();
 client.DefaultRequestHeaders.Accept.Clear();
 client.DefaultRequestHeaders.UserAgent.Clear();
 client.DefaultRequestHeaders.Add("User-Agent", "BitcoinAgent");
+//ServicePointManager.DefaultConnectionLimit = 500;
 
 try
 {

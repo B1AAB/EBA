@@ -2,8 +2,8 @@
 {
     internal class Status
     {
-        public int StartBlock { get; set; }
+        public int FromInclusive { get; set; }
         public int LastProcessedBlock { get; set; } = -1;
-        public int EndBlock { get; set; }
+        public int ToExclusive { get; set; }
     }
 }
