@@ -243,8 +243,7 @@ namespace BC2G
             // if/how-much performance optimization it delivers and if
             // it balaces with complications of implementing it.
 
-            var cursorTop = Console.CursorTop;
-            _logger.CursorTop = cursorTop;
+            _logger.CursorTop = Console.CursorTop;
 
             for (int height = status.FromInclusive; height < status.ToExclusive; height++)
             {
@@ -253,32 +252,45 @@ namespace BC2G
                 var stopwatch = new Stopwatch();
                 stopwatch.Start();
 
+                _logger.LogStartProcessingBlock(height);
                 //_logger.Log($"\rProcessing block {height}", newLine: false);
                 var blockStats = new BlockStatistics(height);
+                _logger.LogStatusProcessingBlock(BlockProcessStatus.GetBlockHash);
                 var blockHash = await agent.GetBlockHash(height);
+                _logger.LogStatusProcessingBlock(BlockProcessStatus.GetBlockHash, false, stopwatch.Elapsed.TotalSeconds);
 
                 if (cancellationToken.IsCancellationRequested)
                     break;
+
+                _logger.LogStatusProcessingBlock(BlockProcessStatus.GetBlock);
                 var block = await agent.GetBlock(blockHash);
+                _logger.LogStatusProcessingBlock(BlockProcessStatus.GetBlock, false, stopwatch.Elapsed.TotalSeconds);
+
 
                 if (cancellationToken.IsCancellationRequested)
                     break;
+
+                _logger.LogStatusProcessingBlock(BlockProcessStatus.ProcessTransactions);
                 var graph = await agent.GetGraph(block, txCache, cancellationToken);
+                _logger.LogStatusProcessingBlock(BlockProcessStatus.ProcessTransactions, false, stopwatch.Elapsed.TotalSeconds);
 
                 if (cancellationToken.IsCancellationRequested)
                     break;
 
                 graphsBuffer.Enqueue(graph);
 
+                _logger.LogStatusProcessingBlock(BlockProcessStatus.Serialize);
                 serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"), blockStats);
                 status.LastProcessedBlock = height;
                 await JsonSerializer<Status>.SerializeAsync(status, StatusFilename);
+                _logger.LogStatusProcessingBlock(BlockProcessStatus.Serialize, false, stopwatch.Elapsed.TotalSeconds);
 
                 stopwatch.Stop();
                 blockStats.Runtime = stopwatch.Elapsed;
                 BlocksStatistics.Enqueue(blockStats);
-                _logger.LogTraverse(height, blockStats.Runtime.TotalSeconds);
+                //_logger.LogTraverse(height, blockStats.Runtime.TotalSeconds);
 
+                _logger.LogFinishProcessingBlock(height, blockStats.Runtime.TotalSeconds);
                 //Console.WriteLine($"Block {height} processed.");
             }
 
