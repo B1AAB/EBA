@@ -4,7 +4,8 @@ namespace BC2G.Logging
 {
     public static class AsyncConsole
     {
-        private static readonly BlockingCollection<(string, int?, int?)> _queue = new();
+        private static readonly BlockingCollection<
+            (string, int?, int?, ConsoleColor?, bool)> _queue = new();
 
         static AsyncConsole()
         {
@@ -12,10 +13,18 @@ namespace BC2G.Logging
             {
                 while (true)
                 {
-                    (string value, int? left, int? top) = _queue.Take();
+                    (string value, int? left, int? top, 
+                    ConsoleColor? color, bool newLine) = _queue.Take();
                     if (left != null && top != null)
                         Console.SetCursorPosition((int)left, (int)top);
-                    Console.Write(value);
+                    if (color != null)
+                        Console.ForegroundColor = (ConsoleColor)color;
+                    if (newLine)
+                        Console.WriteLine(value);
+                    else
+                        Console.Write(value);
+                    if (color != null)
+                        Console.ResetColor();
                 }
             })
             {
@@ -25,11 +34,14 @@ namespace BC2G.Logging
         }
 
         public static void WriteAsync(
-            string value, 
-            int? cursorPositionLeft = null, 
-            int? cursorPositionTop = null)
+            string value,
+            int? cursorPositionLeft = null,
+            int? cursorPositionTop = null,
+            ConsoleColor? color = null,
+            bool newLine = false)
         {
-            _queue.Add((value, cursorPositionLeft, cursorPositionTop));
+            _queue.Add((value, cursorPositionLeft, 
+                cursorPositionTop, color, newLine));
         }
     }
 }

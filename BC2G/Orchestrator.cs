@@ -81,6 +81,10 @@ namespace BC2G
                     status.FromInclusive = (int)from;
                     status.ToExclusive = (int)to;
                     await TraverseBlocksAsync(agent, status, cancellationToken);
+                    _logger.Log(
+                        "All process finished successfully.", 
+                        newLine: true, 
+                        color: ConsoleColor.Green);
                 }
                 catch (Exception e)
                 {
@@ -243,6 +247,9 @@ namespace BC2G
             // if/how-much performance optimization it delivers and if
             // it balaces with complications of implementing it.
 
+            _logger.Log(
+                $"Traversing blocks [{status.FromInclusive:n0}, " +
+                $"{status.ToExclusive:n0}):", newLine: true);
             _logger.CursorTop = Console.CursorTop;
 
             for (int height = status.FromInclusive; height < status.ToExclusive; height++)
@@ -253,8 +260,8 @@ namespace BC2G
                 stopwatch.Start();
 
                 _logger.LogStartProcessingBlock(height);
-                //_logger.Log($"\rProcessing block {height}", newLine: false);
                 var blockStats = new BlockStatistics(height);
+
                 _logger.LogStatusProcessingBlock(BlockProcessStatus.GetBlockHash);
                 var blockHash = await agent.GetBlockHash(height);
                 _logger.LogStatusProcessingBlock(BlockProcessStatus.GetBlockHash, false, stopwatch.Elapsed.TotalSeconds);
@@ -265,7 +272,6 @@ namespace BC2G
                 _logger.LogStatusProcessingBlock(BlockProcessStatus.GetBlock);
                 var block = await agent.GetBlock(blockHash);
                 _logger.LogStatusProcessingBlock(BlockProcessStatus.GetBlock, false, stopwatch.Elapsed.TotalSeconds);
-
 
                 if (cancellationToken.IsCancellationRequested)
                     break;
@@ -288,17 +294,23 @@ namespace BC2G
                 stopwatch.Stop();
                 blockStats.Runtime = stopwatch.Elapsed;
                 BlocksStatistics.Enqueue(blockStats);
-                //_logger.LogTraverse(height, blockStats.Runtime.TotalSeconds);
 
                 _logger.LogFinishProcessingBlock(height, blockStats.Runtime.TotalSeconds);
-                //Console.WriteLine($"Block {height} processed.");
             }
 
-            serializer.Serialize(graphsBuffer, Path.Combine(_outputDir, "edges.csv"));
+            var graphsBufferFilename = Path.Combine(_outputDir, "edges.csv");
+            _logger.Log($"Serializing all edges in `{graphsBufferFilename}`.", newLine: true);
+            serializer.Serialize(graphsBuffer, graphsBufferFilename);
 
+            _logger.Log("Serializing block status", newLine: true);
             BlocksStatisticsSerializer.Serialize(
                 BlocksStatistics,
                 Path.Combine(_outputDir, "blocks_stats.tsv"));
+
+            // At this method's exist, the dispose method of
+            // the types wrapped in `using` will be called that
+            // finalizes persisting output.
+            _logger.Log("Finalizing serialized files.", newLine: true);
         }
 
         // The IDisposable interface is implemented following .NET docs:
