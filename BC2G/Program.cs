@@ -1,5 +1,5 @@
 ﻿using BC2G;
-//using System.Net;
+using BC2G.CLI;
 
 var tokenSource = new CancellationTokenSource();
 var cancellationToken = tokenSource.Token;
@@ -10,24 +10,38 @@ AppDomain.CurrentDomain.ProcessExit +=
 Console.CancelKeyPress += new ConsoleCancelEventHandler(
     (sender, e) => CancelKeyPressHandler(sender, e, tokenSource));
 
-
 var client = new HttpClient();
 client.DefaultRequestHeaders.Accept.Clear();
 client.DefaultRequestHeaders.UserAgent.Clear();
 client.DefaultRequestHeaders.Add("User-Agent", "BitcoinAgent");
-//ServicePointManager.DefaultConnectionLimit = 500;
 
 try
 {
-    var orchestrator = new Orchestrator(".", client);
-    var success = await orchestrator.RunAsync(cancellationToken, 719000, 719010);
+    var cliOptions = new CommandLineOptions();
+    var options = cliOptions.Parse(args, out bool helpOrVersionIsDisplayed);
+    if (helpOrVersionIsDisplayed)
+        return;
+
+    Orchestrator orchestrator;
+    try
+    {
+        orchestrator = new Orchestrator(
+            options, client, cliOptions.StatusFilename);
+    }
+    catch
+    {
+        Environment.Exit(1);
+        return;
+    }
+
+    var success = await orchestrator.RunAsync(cancellationToken);
     if (!success)
-        Environment.ExitCode = 1;
+        Environment.Exit(1);
 }
-catch (Exception ex)
+catch (Exception e)
 {
-    Environment.ExitCode = 1;
-    Console.Error.WriteLine(ex.Message);
+    Environment.Exit(1);
+    Console.Error.WriteLine(e.Message);
 }
 
 static void ProcessExit(
