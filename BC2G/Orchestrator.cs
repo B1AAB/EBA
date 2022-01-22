@@ -89,23 +89,7 @@ namespace BC2G
             if (_options.ToExclusive == -1)
                 _options.ToExclusive = chaininfo.Blocks;
 
-            if (_options.ToExclusive > _options.FromInclusive)
-            {
-                try
-                {
-                    await TraverseBlocksAsync(agent, cancellationToken);
-                    _logger.Log(
-                        "All process finished successfully.",
-                        newLine: true,
-                        color: ConsoleColor.Green);
-                }
-                catch (Exception e)
-                {
-                    _logger.LogException(e);
-                    return false;
-                }
-            }
-            else
+            if (_options.ToExclusive <= _options.FromInclusive)
             {
                 _logger.LogWarning(
                     $"The Start block height must be smaller than the end " +
@@ -114,15 +98,28 @@ namespace BC2G
                 return false;
             }
 
+            try
+            {
+                await TraverseBlocksAsync(agent, cancellationToken);
+                _logger.Log(
+                    "All process finished successfully.",
+                    newLine: true,
+                    color: ConsoleColor.Green);
+            }
+            catch (Exception e)
+            {
+                _logger.LogException(e);
+                return false;
+            }
+
             return true;
         }
 
         private bool TryGetBitCoinAgent(out BitcoinAgent agent)
         {
-            // Cannot convert null literal to non-nullable reference type.
-#pragma warning disable CS8625
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             agent = null;
-#pragma warning restore CS8625
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             try
             {
