@@ -1,14 +1,9 @@
 ﻿using BC2G;
 using BC2G.CLI;
+using BC2G.Logging;
 
 var tokenSource = new CancellationTokenSource();
 var cancellationToken = tokenSource.Token;
-
-AppDomain.CurrentDomain.ProcessExit +=
-(sender, e) => ProcessExit(sender, e, tokenSource);
-
-Console.CancelKeyPress += new ConsoleCancelEventHandler(
-    (sender, e) => CancelKeyPressHandler(sender, e, tokenSource));
 
 var client = new HttpClient();
 client.DefaultRequestHeaders.Accept.Clear();
@@ -27,6 +22,14 @@ try
     {
         orchestrator = new Orchestrator(
             options, client, cliOptions.StatusFilename);
+
+        AppDomain.CurrentDomain.ProcessExit +=
+            (sender, e) => ProcessExit(
+                sender, e, tokenSource, orchestrator.Logger);
+
+        Console.CancelKeyPress += new ConsoleCancelEventHandler(
+            (sender, e) => CancelKeyPressHandler(
+                sender, e, tokenSource, orchestrator.Logger));
     }
     catch
     {
@@ -45,20 +48,24 @@ catch (Exception e)
 }
 
 static void ProcessExit(
-    object? sender, EventArgs e,
-    CancellationTokenSource tokenSource)
+    object? sender, 
+    EventArgs e,
+    CancellationTokenSource tokenSource,
+    Logger logger)
 {
     if (!tokenSource.IsCancellationRequested)
         tokenSource.Cancel();
-    
-    Console.WriteLine("Exiting application.");
+
+    logger.Log("Exiting application.");
 }
 
 static void CancelKeyPressHandler(
-    object? sender, ConsoleCancelEventArgs e,
-    CancellationTokenSource tokenSource)
+    object? sender, 
+    ConsoleCancelEventArgs e,
+    CancellationTokenSource tokenSource,
+    Logger logger)
 {
     tokenSource.Cancel();
     e.Cancel = true;
-    Console.WriteLine("Cancelling ... do not turn off your computer.");
+    logger.LogCancelleing();
 }

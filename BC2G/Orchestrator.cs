@@ -18,7 +18,7 @@ namespace BC2G
         private readonly string _statusFilename;
         private readonly Options _options;
 
-        private readonly Logger _logger;
+        public Logger Logger { set; get; }
         private const string _defaultLoggerRepoName = "EventsLog";
         private readonly string _loggerTimeStampFormat = "yyyyMMdd_HHmmssfffffff";
         private readonly string _maxLogfileSize = "2GB";
@@ -59,7 +59,7 @@ namespace BC2G
                         _loggerTimeStampFormat, 
                         CultureInfo.InvariantCulture);
 
-                _logger = new Logger(
+                Logger = new Logger(
                     Path.Join(_options.OutputDir, _loggerRepository + ".txt"),
                     _loggerRepository,
                     Guid.NewGuid().ToString(),
@@ -75,6 +75,7 @@ namespace BC2G
 
         public async Task<bool> RunAsync(CancellationToken cancellationToken)
         {
+            Console.CursorVisible = false;
             if (!TryGetBitCoinAgent(out var agent))
                 return false;
 
@@ -91,27 +92,45 @@ namespace BC2G
 
             if (_options.ToExclusive <= _options.FromInclusive)
             {
-                _logger.LogWarning(
+                Logger.LogWarning(
                     $"The Start block height must be smaller than the end " +
                     $"block height: `{_options.FromInclusive}` is not less " +
                     $"than `{_options.ToExclusive}`.");
                 return false;
             }
 
+            var stopwatch = new Stopwatch();
             try
             {
+                stopwatch.Start();
                 await TraverseBlocksAsync(agent, cancellationToken);
-                _logger.Log(
-                    "All process finished successfully.",
-                    newLine: true,
-                    color: ConsoleColor.Green);
+                stopwatch.Stop();
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    Logger.Log(
+                        $"Cancelled successfully.", 
+                        writeLine: true, 
+                        color: ConsoleColor.Yellow);
+                }
+                else
+                {
+                    Logger.Log(
+                        $"All process finished successfully in {stopwatch.Elapsed}.",
+                        writeLine: true,
+                        color: ConsoleColor.Green);
+                }
             }
             catch (Exception e)
             {
-                _logger.LogException(e);
+                Logger.LogException(e);
                 return false;
             }
+            finally
+            {
+                stopwatch.Stop();
+            }
 
+            Console.CursorVisible = true;
             return true;
         }
 
@@ -123,14 +142,14 @@ namespace BC2G
 
             try
             {
-                agent = new BitcoinAgent(_client, _logger);
+                agent = new BitcoinAgent(_client, Logger);
                 if (!agent.IsConnected)
                     throw new ClientInaccessible();
                 return true;
             }
             catch (Exception e)
             {
-                _logger.LogException(
+                Logger.LogException(
                     $"Failed to create/access BitcoinAgent: " +
                     $"{e.Message}");
                 return false;
@@ -146,7 +165,7 @@ namespace BC2G
                 chainInfo = agent.GetChainInfoAsync().Result;
                 if (string.IsNullOrEmpty(chainInfo.Chain))
                 {
-                    _logger.LogException(
+                    Logger.LogException(
                         "Received empty string as chain name " +
                         "from the chaininfo endpoint.");
                     return false;
@@ -154,7 +173,7 @@ namespace BC2G
 
                 if (chainInfo.Chain != "main")
                 {
-                    _logger.LogException(
+                    Logger.LogException(
                         $"Required to be on the `main` chain, " +
                         $"but the bitcoin client is on the " +
                         $"`{chainInfo.Chain}` chain.");
@@ -165,7 +184,7 @@ namespace BC2G
             }
             catch (Exception e)
             {
-                _logger.LogException($"Failed getting chain info: {e.Message}");
+                Logger.LogException($"Failed getting chain info: {e.Message}");
                 return false;
             }
         }
@@ -203,10 +222,11 @@ namespace BC2G
             // if/how-much performance optimization it delivers and if
             // it balaces with complications of implementing it.
 
-            _logger.Log(
+            Logger.Log(
                 $"Traversing blocks [{_options.FromInclusive:n0}, " +
-                $"{_options.ToExclusive:n0}):", newLine: true);
-            _logger.CursorTop = Console.CursorTop;
+                $"{_options.ToExclusive:n0}):", writeLine: true);
+            Logger.InitBlocksTraverseLog(_options.FromInclusive, _options.ToExclusive);
+            AsyncConsole.BookmarkCurrentLine();
 
             for (int height = _options.FromInclusive; height < _options.ToExclusive; height++)
             {
@@ -215,50 +235,51 @@ namespace BC2G
                 var stopwatch = new Stopwatch();
                 stopwatch.Start();
 
-                _logger.LogStartProcessingBlock(height);
+                Logger.LogStartProcessingBlock(height);
                 var blockStats = new BlockStatistics(height);
 
-                _logger.LogStatusProcessingBlock(BlockProcessStatus.GetBlockHash);
+                Logger.LogBlockProcessStatus(BlockProcessStatus.GetBlockHash);
                 var blockHash = await agent.GetBlockHash(height);
-                _logger.LogStatusProcessingBlock(BlockProcessStatus.GetBlockHash, false, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogBlockProcessStatus(BlockProcessStatus.GetBlockHash, false, stopwatch.Elapsed.TotalSeconds);
 
                 if (cancellationToken.IsCancellationRequested)
                     break;
 
-                _logger.LogStatusProcessingBlock(BlockProcessStatus.GetBlock);
+                Logger.LogBlockProcessStatus(BlockProcessStatus.GetBlock);
                 var block = await agent.GetBlock(blockHash);
-                _logger.LogStatusProcessingBlock(BlockProcessStatus.GetBlock, false, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogBlockProcessStatus(BlockProcessStatus.GetBlock, false, stopwatch.Elapsed.TotalSeconds);
 
                 if (cancellationToken.IsCancellationRequested)
                     break;
 
-                _logger.LogStatusProcessingBlock(BlockProcessStatus.ProcessTransactions);
+                Logger.LogBlockProcessStatus(BlockProcessStatus.ProcessTransactions);
                 var graph = await agent.GetGraph(block, txCache, cancellationToken);
-                _logger.LogStatusProcessingBlock(BlockProcessStatus.ProcessTransactions, false, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogBlockProcessStatus(BlockProcessStatus.ProcessTransactions, false, stopwatch.Elapsed.TotalSeconds);
 
                 if (cancellationToken.IsCancellationRequested)
                     break;
 
                 graphsBuffer.Enqueue(graph);
 
-                _logger.LogStatusProcessingBlock(BlockProcessStatus.Serialize);
+                Logger.LogBlockProcessStatus(BlockProcessStatus.Serialize);
                 serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"), blockStats);
                 _options.LastProcessedBlock = height;
                 await JsonSerializer<Options>.SerializeAsync(_options, _statusFilename);
-                _logger.LogStatusProcessingBlock(BlockProcessStatus.Serialize, false, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogBlockProcessStatus(BlockProcessStatus.Serialize, false, stopwatch.Elapsed.TotalSeconds);
 
                 stopwatch.Stop();
                 blockStats.Runtime = stopwatch.Elapsed;
                 blocksStatistics.Enqueue(blockStats);
 
-                _logger.LogFinishProcessingBlock(height, blockStats.Runtime.TotalSeconds);
+                Logger.LogFinishProcessingBlock(height, blockStats.Runtime.TotalSeconds);
             }
 
+            AsyncConsole.WriteLineAsync("");
             var graphsBufferFilename = Path.Combine(_options.OutputDir, "edges.csv");
-            _logger.Log($"Serializing all edges in `{graphsBufferFilename}`.", newLine: true);
+            Logger.Log($"Serializing all edges in `{graphsBufferFilename}`.", true);
             serializer.Serialize(graphsBuffer, graphsBufferFilename);
 
-            _logger.Log("Serializing block status", newLine: true);
+            Logger.Log("Serializing block status", true);
             BlocksStatisticsSerializer.Serialize(
                 blocksStatistics,
                 Path.Combine(_options.OutputDir, "blocks_stats.tsv"));
@@ -266,7 +287,7 @@ namespace BC2G
             // At this method's exist, the dispose method of
             // the types wrapped in `using` will be called that
             // finalizes persisting output.
-            _logger.Log("Finalizing serialized files.", newLine: true);
+            Logger.Log("Finalizing serialized files.", true);
         }
 
         // The IDisposable interface is implemented following .NET docs:
@@ -282,7 +303,7 @@ namespace BC2G
             if (!disposed)
             {
                 if (disposing)
-                    _logger.Dispose();
+                    Logger.Dispose();
 
                 disposed = true;
             }

@@ -4,28 +4,16 @@ namespace BC2G.Logging
 {
     public static class AsyncConsole
     {
-        private static readonly BlockingCollection<
-            (string, int?, int?, ConsoleColor?, bool)> _queue = new();
+        private static readonly BlockingCollection<Action> _actions = new();
+
+        private static int _bookmarkedLine;
+        private static int _addedLines = 0;
 
         static AsyncConsole()
         {
             var thread = new Thread(() =>
             {
-                while (true)
-                {
-                    (string value, int? left, int? top, 
-                    ConsoleColor? color, bool newLine) = _queue.Take();
-                    if (left != null && top != null)
-                        Console.SetCursorPosition((int)left, (int)top);
-                    if (color != null)
-                        Console.ForegroundColor = (ConsoleColor)color;
-                    if (newLine)
-                        Console.WriteLine(value);
-                    else
-                        Console.Write(value);
-                    if (color != null)
-                        Console.ResetColor();
-                }
+                while (true) { _actions.Take()(); }
             })
             {
                 IsBackground = true
@@ -33,15 +21,74 @@ namespace BC2G.Logging
             thread.Start();
         }
 
-        public static void WriteAsync(
-            string value,
-            int? cursorPositionLeft = null,
-            int? cursorPositionTop = null,
-            ConsoleColor? color = null,
-            bool newLine = false)
+        public static void WriteAsync(string value)
         {
-            _queue.Add((value, cursorPositionLeft, 
-                cursorPositionTop, color, newLine));
+            _actions.Add(() =>
+            {
+                Console.Write(value);
+            });
+        }
+
+        public static void WriteAsync(string value, ConsoleColor color)
+        {
+            _actions.Add(() =>
+            {
+                Console.ForegroundColor = color;
+                Console.Write(value);
+                Console.ResetColor();
+            });
+        }
+
+        public static void WriteLineAsync(string value)
+        {
+            _actions.Add(() =>
+            {
+                Console.WriteLine(value);
+                _addedLines++;
+            });
+        }
+
+        public static void WriteLineAsync(string value, ConsoleColor color)
+        {
+            _actions.Add(() =>
+            {
+                Console.ForegroundColor = color;
+                Console.WriteLine(value);
+                Console.ResetColor();
+                _addedLines++;
+            });
+        }
+
+        public static void WriteLineAsyncAfterAddedLines(string value, ConsoleColor color)
+        {
+            _actions.Add(() =>
+            {
+                var (Left, Top) = Console.GetCursorPosition();
+                Console.SetCursorPosition(0, _bookmarkedLine + _addedLines + 2);
+                Console.ForegroundColor = color;
+                Console.WriteLine(value);
+                Console.ResetColor();
+                Console.SetCursorPosition(Left, Top);
+            });
+        }
+
+        public static void BookmarkCurrentLine()
+        {
+            _actions.Add(() => _bookmarkedLine = Console.CursorTop);
+        }
+
+        public static void EraseToBookmarkedLine()
+        {
+            _actions.Add(() =>
+            {
+                for (int line = _bookmarkedLine + _addedLines; line >= _bookmarkedLine; line--)
+                {
+                    Console.CursorTop = line;
+                    Console.Write(new string(' ', Console.WindowWidth - 1) + "\r");
+                }
+
+                _addedLines = 0;
+            });
         }
     }
 }
