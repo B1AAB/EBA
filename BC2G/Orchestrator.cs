@@ -251,7 +251,7 @@ namespace BC2G
 
                 Logger.LogBlockProcessStatus(BPS.GetBlockHash);
                 var blockHash = await agent.GetBlockHash(height);
-                Logger.LogBlockProcessStatus(BPS.GetBlockHashDone, false, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogBlockProcessStatus(BPS.GetBlockHashDone, stopwatch.Elapsed.TotalSeconds);
 
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -268,7 +268,7 @@ namespace BC2G
 
                 Logger.LogBlockProcessStatus(BPS.GetBlock);
                 var block = await agent.GetBlock(blockHash);
-                Logger.LogBlockProcessStatus(BPS.GetBlockDone, false, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogBlockProcessStatus(BPS.GetBlockDone, stopwatch.Elapsed.TotalSeconds);
 
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -287,7 +287,7 @@ namespace BC2G
                 try
                 {
                     graph = await agent.GetGraph(block, txCache, cancellationToken);
-                    Logger.LogBlockProcessStatus(BPS.ProcessTransactionsDone, false, stopwatch.Elapsed.TotalSeconds);
+                    Logger.LogBlockProcessStatus(BPS.ProcessTransactionsDone, stopwatch.Elapsed.TotalSeconds);
                 }
                 catch (OperationCanceledException)
                 {
@@ -318,13 +318,13 @@ namespace BC2G
                 serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"), blockStats);
                 _options.LastProcessedBlock = height;
                 await JsonSerializer<Options>.SerializeAsync(_options, _statusFilename);
-                Logger.LogBlockProcessStatus(BPS.SerializeDone, false, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogBlockProcessStatus(BPS.SerializeDone, stopwatch.Elapsed.TotalSeconds);
 
                 stopwatch.Stop();
                 blockStats.Runtime = stopwatch.Elapsed;
                 blocksStatistics.Enqueue(blockStats);
 
-                Logger.LogFinishProcessingBlock(height, blockStats.Runtime.TotalSeconds);
+                Logger.LogFinishProcessingBlock(blockStats.Runtime.TotalSeconds);
             }
 
             Logger.LogFinishTraverse(cancellationToken.IsCancellationRequested);

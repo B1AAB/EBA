@@ -21,7 +21,7 @@ namespace BC2G.Logging
             thread.Start();
         }
 
-        public static void WriteAsync(string value)
+        public static void Write(string value)
         {
             _actions.Add(() =>
             {
@@ -29,7 +29,7 @@ namespace BC2G.Logging
             });
         }
 
-        public static void WriteAsync(string value, ConsoleColor color)
+        public static void Write(string value, ConsoleColor color)
         {
             _actions.Add(() =>
             {
@@ -39,7 +39,7 @@ namespace BC2G.Logging
             });
         }
 
-        public static void WriteLineAsync(string value)
+        public static void WriteLine(string value)
         {
             _actions.Add(() =>
             {
@@ -47,7 +47,7 @@ namespace BC2G.Logging
             });
         }
 
-        public static void WriteLineAsync(string value, ConsoleColor color)
+        public static void WriteLine(string value, ConsoleColor color)
         {
             _actions.Add(() =>
             {
@@ -57,7 +57,7 @@ namespace BC2G.Logging
             });
         }
 
-        public static void WriteLineAsync(string value, int lineOffset, ConsoleColor color)
+        public static void WriteLine(string value, int lineOffset, ConsoleColor color)
         {
             _actions.Add(() =>
             {
@@ -70,7 +70,7 @@ namespace BC2G.Logging
             });
         }
 
-        public static void WriteLineAsync(string value, int cursorTopOffset, int cursorLeft, ConsoleColor color)
+        public static void WriteLine(string value, int cursorTopOffset, int cursorLeft, ConsoleColor color)
         {
             _actions.Add(() =>
             {
@@ -80,6 +80,16 @@ namespace BC2G.Logging
                 Console.WriteLine(value);
                 Console.ResetColor();
                 Console.SetCursorPosition(currentLeft, currentTop);
+            });
+        }
+
+        public static void WriteErrorLine(string value, ConsoleColor color = ConsoleColor.Red)
+        {
+            _actions.Add(() =>
+            {
+                Console.ForegroundColor = color;
+                Console.Error.WriteLine(value);
+                Console.ResetColor();
             });
         }
 
