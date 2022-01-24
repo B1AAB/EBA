@@ -85,7 +85,6 @@ namespace BC2G
                 case EventType.CTRL_SHUTDOWN_EVENT:
                 case EventType.CTRL_CLOSE_EVENT:
                     _tokenSource.Cancel();
-                    //tokenSource.Cancel();
                     break;
                 default:
                     return false;

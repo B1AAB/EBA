@@ -342,8 +342,7 @@ namespace BC2G.Graph
 
                 foreach (var s in txGraph.sources)
                 {
-                    if (cancellationToken.IsCancellationRequested)
-                        return;
+                    cancellationToken.ThrowIfCancellationRequested();
 
                     foreach (var t in txGraph.targets)
                         AddEdge(new Edge(

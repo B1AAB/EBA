@@ -91,7 +91,7 @@ namespace BC2G
         }
 
         public async Task<GraphBase> GetGraph(
-            Block block, 
+            Block block,
             TxCache txCache,
             CancellationToken cancellationToken)
         {
@@ -122,17 +122,25 @@ namespace BC2G
             double txCount = block.Transactions.Count;
             int pTxCount = 1;
 
-            await Parallel.ForEachAsync(
-                block.Transactions.Where(x => !x.IsCoinbase),
-                async (tx, state) =>
-                {
-                    if (cancellationToken.IsCancellationRequested)
-                        return;
-
-                    await RunParallel(tx, g, txCache, cancellationToken);
-                    Interlocked.Increment(ref pTxCount);
-                    _logger.LogTransaction((pTxCount / txCount).ToString("P2"));
-                });
+            try
+            {
+                var options = new ParallelOptions() { CancellationToken = cancellationToken };
+                await Parallel.ForEachAsync(
+                    block.Transactions.Where(x => !x.IsCoinbase),
+                    async (tx, _cancellationToken) =>
+                    {
+                        _cancellationToken.ThrowIfCancellationRequested();
+                        await RunParallel(tx, g, txCache, cancellationToken);
+                        Interlocked.Increment(ref pTxCount);
+                        _logger.LogTransaction((pTxCount / txCount).ToString("P2"));
+                        _cancellationToken.ThrowIfCancellationRequested();
+                    });
+            }
+            catch (OperationCanceledException)
+            {
+                // The loop is cancelled, it should be already logged,
+                // so no further action is required.
+            }
 
             return g;
         }
@@ -144,14 +152,11 @@ namespace BC2G
             CancellationToken cancellationToken)
         {
             var txGraph = new TransactionGraph();
-
-            if (cancellationToken.IsCancellationRequested)
-                return;
+            cancellationToken.ThrowIfCancellationRequested();
 
             foreach (var input in tx.Inputs)
             {
-                if (cancellationToken.IsCancellationRequested)
-                    return;
+                cancellationToken.ThrowIfCancellationRequested();
 
                 if (!txCache.TryGet(
                     input.TxId, 
@@ -177,8 +182,7 @@ namespace BC2G
 
             foreach (var output in tx.Outputs.Where(x => x.IsValueTransfer))
             {
-                if (cancellationToken.IsCancellationRequested)
-                    return;
+                cancellationToken.ThrowIfCancellationRequested();
 
                 output.TryGetAddress(out string address);
                 txGraph.AddTarget(address, output.Value);
