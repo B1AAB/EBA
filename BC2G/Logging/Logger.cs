@@ -21,7 +21,29 @@ namespace BC2G.Logging
 
         private bool disposed = false;
 
-        private readonly string[] _messages;
+        // The order is dependent on the BlockProcessStatus.
+        private static readonly (int cursorTopOffset, int cursorLeft, string template)[] _messages = new[]
+        {
+            /* 00 */ (0, 4, "In progress: {0:n0}\tCompleted: {1:n0}/{2:n0} ({3:f1}%)\tRate: {4} B/sec"),
+            /* 01 */ (1, 8, "└  Getting block hash     ... "),
+            /* 02 */ (1, 8, "└  Getting block hash     ... Done ({0:f2} sec)"),
+            /* 03 */ (1, 8, "└  Getting block hash     ... Cancelled"),
+            /* 04 */ (2, 8, "└  Getting block          ... "),
+            /* 05 */ (2, 8, "└  Getting block          ... Done ({0:f2} sec)"),
+            /* 06 */ (2, 8, "└  Getting block          ... Cancelled"),
+            /* 07 */ (3, 8, "└  Processing Transaction ... "),
+            /* 08 */ (3, 8, "└  Processing Transaction ... {0}"),
+            /* 09 */ (3, 8, "└  Processing Transaction ... Done ({0:f2} sec)"),
+            /* 10 */ (3, 8, "└  Processing Transaction ... Cancelled"),
+            /* 11 */ (4, 8, "└  Serializing            ... "),
+            /* 12 */ (4, 8, "└  Serializing            ... Done ({0:f2} sec)"),
+            /* 13 */ (4, 8, "└  Serializing            ... Cancelled"),
+            /* 14 */ (5, 8, "*  Finished successfully  in  {0:f2} seconds."),
+            /* 15 */ (5, 8, "-  Cancelled!"),
+            /* 16 */ (7, 0, "Cancelling ... do not turn off your computer.")
+        };
+        private static readonly int _blockProgressLinesCount = 5;
+        private static readonly int _firstLineAfterBlockProgress = 10;
 
         public Logger(
             string logFilename, string repository,
@@ -29,6 +51,7 @@ namespace BC2G.Logging
             string maxLogFileSize)
         {
             MaxLogFileSize = maxLogFileSize;
+            AsyncConsole.BlockProgressLinesCount = _blockProgressLinesCount;
             _runtimeMovingAverage = new MovingAverage(10);
 
             _name = name;
@@ -63,15 +86,6 @@ namespace BC2G.Logging
             hierarchy.Configured = true;
             log = LogManager.GetLogger(_repository, _name);
 
-            _messages = new string[]
-            {
-                "Cancelling",
-                "Getting block hash\t",
-                "Getting block\t",
-                "Procesing Transactions",
-                "Serializing\t"
-            };
-
             log.Info("NOTE THAT THE LOG PATTERN IS: <Date> <#Thread> <Level> <Message>");
             Log($"Export Directory: {exportPath}", true, ConsoleColor.DarkGray);
         }
@@ -105,60 +119,109 @@ namespace BC2G.Logging
 
         public void LogStartProcessingBlock(int blockHeight)
         {
-            AsyncConsole.EraseToBookmarkedLine();
+            //AsyncConsole.EraseToBookmarkedLine();
+            AsyncConsole.EraseBlockProgressReport();
 
             int completed = blockHeight - _from;
             double percentage = (completed / (double)(_to - _from)) * 100.0;
+            var (cursorTopOffset, cursorLeft, template) = _messages[(int)BlockProcessStatus.StartBlock];
+
+            var msg = string.Format(template, blockHeight, completed, _to - _from, percentage, _runtimeMovingAverage.Speed);
+            AsyncConsole.WriteLineAsync(msg, cursorTopOffset, cursorLeft, ConsoleColor.Cyan);
+
+            /*
             AsyncConsole.WriteLineAsync(
                 $"\r\tIn progress: {blockHeight:n0}" +
                 $"\tCompleted: {completed:n0}/{_to - _from:n0} ({percentage:f1}%)" +
                 $"\tRate: {_runtimeMovingAverage.Speed} B/sec", 
-                ConsoleColor.Cyan);
+                ConsoleColor.Cyan);*/
         }
 
         public void LogFinishProcessingBlock(int blockHeight, double runtime)
         {
             _runtimeMovingAverage.Add(runtime);
-            var msg = $"\t  *  Successfully finished processing " +
+            var (cursorTopOffset, cursorLeft, template) = _messages[(byte)BlockProcessStatus.Successful];
+            var msg2 = string.Format(template, runtime);
+            AsyncConsole.WriteLineAsync(msg2, cursorTopOffset, cursorLeft, ConsoleColor.DarkCyan);
+            log.Info(msg2);
+            /*
+            var (message, offset) = _messages2[(int)BlockProcessStatus.Successful];
+            var msg = $"\t  *  {message} " +
                 $"block in {Math.Round(runtime, 2)} seconds.";
-            AsyncConsole.WriteLineAsync(msg, ConsoleColor.DarkGray);
-            log.Info(msg);
+            AsyncConsole.WriteLineAsync(msg, offset, ConsoleColor.DarkCyan);*/
+            //log.Info(msg);
+        }
+
+        public static void LogFinishTraverse(bool cancelled)
+        {
+            var offset = _firstLineAfterBlockProgress;
+            if (cancelled)
+                offset++;
+            AsyncConsole.MoveCursorTo(0, offset);
         }
 
         public void LogBlockProcessStatus(BlockProcessStatus status, bool started = true, double runtime = 0)
         {
             string msg;
+            //var (message, offset) = _messages2[(byte)status];
+            var (cursorTopOffset, cursorLeft, template) = _messages[(byte)status];
             if (status == BlockProcessStatus.ProcessTransactions && !started)
             {
-                msg = "\r\t  └  " + _messages[(byte)status] + "\t... " + $"Done ({Math.Round(runtime, 2)} sec)";
-                AsyncConsole.WriteLineAsync(msg, color: ConsoleColor.DarkCyan);
+                //msg = "\r\t  └  " + message + "\t... " + $"Done ({Math.Round(runtime, 2)} sec)";
+                msg = string.Format(template, Math.Round(runtime, 2));
+                //AsyncConsole.WriteLineAsync(msg, color: ConsoleColor.DarkCyan);
             }
             else if (started)
             {
-                msg = "\t  └  " + _messages[(byte)status] + "\t... ";
-                AsyncConsole.WriteAsync(msg, color: ConsoleColor.DarkCyan);
+                msg = template;
+                //msg = "\t  └  " + message + "\t... ";
+                //AsyncConsole.WriteAsync(msg, color: ConsoleColor.DarkCyan);
             }
             else
             {
-                msg = $"Done ({Math.Round(runtime, 2)} sec)";
-                AsyncConsole.WriteLineAsync(msg, color: ConsoleColor.DarkCyan);
+                msg = string.Format(template, Math.Round(runtime, 2));
+
+                //msg = $"Done ({Math.Round(runtime, 2)} sec)";
+                //AsyncConsole.WriteLineAsync(msg, color: ConsoleColor.DarkCyan);
             }
+
+            //AsyncConsole.WriteLineAsync(msg, offset, ConsoleColor.DarkCyan);
+            AsyncConsole.WriteLineAsync(msg, cursorTopOffset, cursorLeft, ConsoleColor.DarkCyan);
 
             log.Info(msg);
         }
 
         public void LogTransaction(string msg)
         {
-            msg = "\r\t  └  " + _messages[(byte)BlockProcessStatus.ProcessTransactions] + "\t... " + msg;
-            AsyncConsole.WriteAsync(msg, color: ConsoleColor.DarkCyan);
+            //var (message, offset) = _messages2[(byte)BlockProcessStatus.ProcessTransactions];
+            var (cursorTopOffset, cursorLeft, template) = _messages[(byte)BlockProcessStatus.ProcessTransactionsStatus];
+            msg = String.Format(template, msg);
+
+            AsyncConsole.WriteLineAsync(msg, cursorTopOffset, cursorLeft, ConsoleColor.DarkCyan);
+
+            //msg = "\r\t  └  " + message + "\t... " + msg;
+            //AsyncConsole.WriteAsync(msg, ConsoleColor.DarkCyan, offset);
             log.Info(msg);
         }
 
         public void LogCancelleing()
         {
-            var msg = "Cancelling ... do not turn off your computer.";
-            AsyncConsole.WriteLineAsyncAfterAddedLines(msg, ConsoleColor.Yellow);
-            log.Info(msg);
+            var (cursorTopOffset, cursorLeft, template) = _messages[(byte)BlockProcessStatus.Cancelling];
+            //var msg = "Cancelling ... do not turn off your computer.";
+            //AsyncConsole.WriteLineAsyncAfterAddedLines(msg, ConsoleColor.Yellow);
+            AsyncConsole.MoveCursorToOffset(cursorLeft,  cursorTopOffset);
+            AsyncConsole.WriteLineAsync(template, ConsoleColor.Yellow);
+            //log.Info(msg);
+            log.Info(template);
+        }
+
+        public static void LogCancelledTasks(BlockProcessStatus[] tasks)
+        {
+            foreach(var task in tasks)
+            {
+                var (cursorTopOffset, cursorLeft, template) = _messages[(byte)task];
+                AsyncConsole.WriteLineAsync(template, cursorTopOffset, cursorLeft, ConsoleColor.DarkGray);
+            }
         }
 
         public void LogException(Exception e)

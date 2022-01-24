@@ -24,8 +24,8 @@ namespace BC2G
         private readonly string _maxLogfileSize = "2GB";
 
         public Orchestrator(
-            Options options, 
-            HttpClient client, 
+            Options options,
+            HttpClient client,
             string statusFilename)
         {
             _client = client;
@@ -53,17 +53,17 @@ namespace BC2G
             // Set up logger. 
             try
             {
-                var _loggerRepository = 
-                    _defaultLoggerRepoName + "_" + 
+                var _loggerRepository =
+                    _defaultLoggerRepoName + "_" +
                     DateTime.Now.ToString(
-                        _loggerTimeStampFormat, 
+                        _loggerTimeStampFormat,
                         CultureInfo.InvariantCulture);
 
                 Logger = new Logger(
                     Path.Join(_options.OutputDir, _loggerRepository + ".txt"),
                     _loggerRepository,
                     Guid.NewGuid().ToString(),
-                    _options.OutputDir, 
+                    _options.OutputDir,
                     _maxLogfileSize);
             }
             catch (Exception e)
@@ -108,8 +108,8 @@ namespace BC2G
                 if (cancellationToken.IsCancellationRequested)
                 {
                     Logger.Log(
-                        $"Cancelled successfully.", 
-                        writeLine: true, 
+                        $"Cancelled successfully.",
+                        writeLine: true,
                         color: ConsoleColor.Yellow);
                 }
                 else
@@ -231,7 +231,18 @@ namespace BC2G
             for (int height = _options.FromInclusive; height < _options.ToExclusive; height++)
             {
                 if (cancellationToken.IsCancellationRequested)
+                {
+                    Logger.LogCancelledTasks(
+                        new BlockProcessStatus[]
+                        {
+                            BlockProcessStatus.GetBlockHashCancelled,
+                            BlockProcessStatus.GetBlockCancelled,
+                            BlockProcessStatus.ProcessTransactionsCancelled,
+                            BlockProcessStatus.SerializeCancelled,
+                            BlockProcessStatus.Cancelled
+                        });
                     break;
+                }
                 var stopwatch = new Stopwatch();
                 stopwatch.Start();
 
@@ -240,24 +251,51 @@ namespace BC2G
 
                 Logger.LogBlockProcessStatus(BlockProcessStatus.GetBlockHash);
                 var blockHash = await agent.GetBlockHash(height);
-                Logger.LogBlockProcessStatus(BlockProcessStatus.GetBlockHash, false, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogBlockProcessStatus(BlockProcessStatus.GetBlockHashDone, false, stopwatch.Elapsed.TotalSeconds);
 
                 if (cancellationToken.IsCancellationRequested)
+                {
+                    Logger.LogCancelledTasks(
+                        new BlockProcessStatus[]
+                        {
+                            BlockProcessStatus.GetBlockCancelled,
+                            BlockProcessStatus.ProcessTransactionsCancelled,
+                            BlockProcessStatus.SerializeCancelled,
+                            BlockProcessStatus.Cancelled
+                        });
                     break;
+                }
 
                 Logger.LogBlockProcessStatus(BlockProcessStatus.GetBlock);
                 var block = await agent.GetBlock(blockHash);
-                Logger.LogBlockProcessStatus(BlockProcessStatus.GetBlock, false, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogBlockProcessStatus(BlockProcessStatus.GetBlockDone, false, stopwatch.Elapsed.TotalSeconds);
 
                 if (cancellationToken.IsCancellationRequested)
+                {
+                    Logger.LogCancelledTasks(
+                        new BlockProcessStatus[]
+                        {
+                            BlockProcessStatus.ProcessTransactionsCancelled,
+                            BlockProcessStatus.SerializeCancelled,
+                            BlockProcessStatus.Cancelled
+                        });
                     break;
+                }
 
                 Logger.LogBlockProcessStatus(BlockProcessStatus.ProcessTransactions);
                 var graph = await agent.GetGraph(block, txCache, cancellationToken);
-                Logger.LogBlockProcessStatus(BlockProcessStatus.ProcessTransactions, false, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogBlockProcessStatus(BlockProcessStatus.ProcessTransactionsDone, false, stopwatch.Elapsed.TotalSeconds);
 
                 if (cancellationToken.IsCancellationRequested)
+                {
+                    Logger.LogCancelledTasks(
+                        new BlockProcessStatus[]
+                        {
+                            BlockProcessStatus.SerializeCancelled,
+                            BlockProcessStatus.Cancelled
+                        });
                     break;
+                }
 
                 graphsBuffer.Enqueue(graph);
 
@@ -265,7 +303,7 @@ namespace BC2G
                 serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"), blockStats);
                 _options.LastProcessedBlock = height;
                 await JsonSerializer<Options>.SerializeAsync(_options, _statusFilename);
-                Logger.LogBlockProcessStatus(BlockProcessStatus.Serialize, false, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogBlockProcessStatus(BlockProcessStatus.SerializeDone, false, stopwatch.Elapsed.TotalSeconds);
 
                 stopwatch.Stop();
                 blockStats.Runtime = stopwatch.Elapsed;
@@ -274,7 +312,7 @@ namespace BC2G
                 Logger.LogFinishProcessingBlock(height, blockStats.Runtime.TotalSeconds);
             }
 
-            AsyncConsole.WriteLineAsync("");
+            Logger.LogFinishTraverse(cancellationToken.IsCancellationRequested);
             var graphsBufferFilename = Path.Combine(_options.OutputDir, "edges.csv");
             Logger.Log($"Serializing all edges in `{graphsBufferFilename}`.", true);
             serializer.Serialize(graphsBuffer, graphsBufferFilename);

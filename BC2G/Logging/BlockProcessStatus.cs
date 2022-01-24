@@ -6,10 +6,22 @@
 
     public enum BlockProcessStatus : byte
     {
-        Cancelling = 0,
+        StartBlock = 0,
         GetBlockHash = 1,
-        GetBlock = 2,
-        ProcessTransactions = 3,
-        Serialize = 4
+        GetBlockHashDone = 2,
+        GetBlockHashCancelled = 3,
+        GetBlock = 4,
+        GetBlockDone = 5,
+        GetBlockCancelled = 6,
+        ProcessTransactions = 7,
+        ProcessTransactionsStatus = 8,
+        ProcessTransactionsDone = 9,
+        ProcessTransactionsCancelled = 10,
+        Serialize = 11,
+        SerializeDone = 12,
+        SerializeCancelled = 13,
+        Successful = 14,
+        Cancelled = 15,
+        Cancelling = 16
     }
 }

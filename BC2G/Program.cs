@@ -1,71 +1,107 @@
-﻿using BC2G;
-using BC2G.CLI;
+﻿using BC2G.CLI;
 using BC2G.Logging;
+using System.Runtime.InteropServices;
 
-var tokenSource = new CancellationTokenSource();
-var cancellationToken = tokenSource.Token;
-
-var client = new HttpClient();
-client.DefaultRequestHeaders.Accept.Clear();
-client.DefaultRequestHeaders.UserAgent.Clear();
-client.DefaultRequestHeaders.Add("User-Agent", "BitcoinAgent");
-
-try
+namespace BC2G
 {
-    var cliOptions = new CommandLineOptions();
-    var options = cliOptions.Parse(args, out bool helpOrVersionIsDisplayed);
-    if (helpOrVersionIsDisplayed)
-        return;
-
-    Orchestrator orchestrator;
-    try
+    internal class Program
     {
-        orchestrator = new Orchestrator(
-            options, client, cliOptions.StatusFilename);
+        // See the following SO topics handeling resource
+        // clean-up on console exits:
+        // - https://stackoverflow.com/a/474743/947889
+        // - https://stackoverflow.com/a/4647168/947889
+        // Platform Invoke
+        [DllImport("Kernel32")]
+        private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
+        private delegate bool EventHandler(EventType eventType);
+        private static EventHandler _handler;
+        enum EventType
+        {
+            CTRL_C_EVENT = 0,
+            CTRL_BREAK_EVENT = 1,
+            CTRL_CLOSE_EVENT = 2,
+            CTRL_LOGOFF_EVENT = 5,
+            CTRL_SHUTDOWN_EVENT = 6
+        }
 
-        AppDomain.CurrentDomain.ProcessExit +=
-            (sender, e) => ProcessExit(
-                sender, e, tokenSource, orchestrator.Logger);
+        private static readonly CancellationTokenSource _tokenSource = new();
 
-        Console.CancelKeyPress += new ConsoleCancelEventHandler(
-            (sender, e) => CancelKeyPressHandler(
-                sender, e, tokenSource, orchestrator.Logger));
+        static void Main(string[] args)
+        {
+            var cancellationToken = _tokenSource.Token;
+
+            _handler += new EventHandler(ConsoleEventCallback);
+            SetConsoleCtrlHandler(_handler, true);
+
+            var client = new HttpClient();
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.UserAgent.Clear();
+            client.DefaultRequestHeaders.Add("User-Agent", "BitcoinAgent");
+
+            try
+            {
+                var cliOptions = new CommandLineOptions();
+                var options = cliOptions.Parse(args, out bool helpOrVersionIsDisplayed);
+                if (helpOrVersionIsDisplayed)
+                    return;
+
+                Orchestrator orchestrator;
+                try
+                {
+                    orchestrator = new Orchestrator(
+                        options, client, cliOptions.StatusFilename);
+
+                    Console.CancelKeyPress += new ConsoleCancelEventHandler(
+                        (sender, e) => CancelKeyPressHandler(
+                            sender, e, _tokenSource, orchestrator.Logger));
+                }
+                catch
+                {
+                    Environment.Exit(1);
+                    return;
+                }
+
+                var success = orchestrator.RunAsync(cancellationToken).Result;
+                if (!success)
+                    Environment.Exit(1);
+            }
+            catch (Exception e)
+            {
+                Environment.Exit(1);
+                Console.Error.WriteLine(e.Message);
+            }
+        }
+
+        private static bool ConsoleEventCallback(
+            EventType eventType)
+        {
+            // NOTE THAT THIS METHOD NEEDS TO WRAP UP IN 5 SECONDS, 
+            // OR IT WILL BE FORCE-TERMINATED BY HOST.
+
+            switch (eventType)
+            {
+                case EventType.CTRL_C_EVENT:
+                case EventType.CTRL_LOGOFF_EVENT:
+                case EventType.CTRL_SHUTDOWN_EVENT:
+                case EventType.CTRL_CLOSE_EVENT:
+                    _tokenSource.Cancel();
+                    //tokenSource.Cancel();
+                    break;
+                default:
+                    return false;
+            }
+            return true;
+        }
+
+        static void CancelKeyPressHandler(
+            object? sender,
+            ConsoleCancelEventArgs e,
+            CancellationTokenSource tokenSource,
+            Logger logger)
+        {
+            tokenSource.Cancel();
+            e.Cancel = true;
+            logger.LogCancelleing();
+        }
     }
-    catch
-    {
-        Environment.Exit(1);
-        return;
-    }
-
-    var success = await orchestrator.RunAsync(cancellationToken);
-    if (!success)
-        Environment.Exit(1);
-}
-catch (Exception e)
-{
-    Environment.Exit(1);
-    Console.Error.WriteLine(e.Message);
-}
-
-static void ProcessExit(
-    object? sender, 
-    EventArgs e,
-    CancellationTokenSource tokenSource,
-    Logger logger)
-{
-    if (!tokenSource.IsCancellationRequested)
-        tokenSource.Cancel();
-
-    logger.Log("Exiting application.");
-}
-
-static void CancelKeyPressHandler(
-    object? sender, 
-    ConsoleCancelEventArgs e,
-    CancellationTokenSource tokenSource,
-    Logger logger)
-{
-    tokenSource.Cancel();
-    e.Cancel = true;
-    logger.LogCancelleing();
 }

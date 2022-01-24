@@ -313,7 +313,7 @@ namespace BC2G.Graph
         }
         public GraphBase() { }
 
-        public void Merge(TransactionGraph txGraph)
+        public void Merge(TransactionGraph txGraph, CancellationToken cancellationToken)
         {
             if (txGraph.sources.IsEmpty)
             {
@@ -338,10 +338,13 @@ namespace BC2G.Graph
                                     oldValue * Utilities.Round(
                                         fee / txGraph.TotalInputValue))));
                 /// The AddOrUpdate method is only expected to update, 
-                /// adding a new key is not expected to happen. 
+                /// adding a new key is not expected to happen.
 
                 foreach (var s in txGraph.sources)
                 {
+                    if (cancellationToken.IsCancellationRequested)
+                        return;
+
                     foreach (var t in txGraph.targets)
                         AddEdge(new Edge(
                             s.Key, t.Key,

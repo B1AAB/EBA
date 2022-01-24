@@ -117,7 +117,7 @@ namespace BC2G
             }
 
             g.RewardsAddresses = rewardAddresses;
-            g.Merge(txGraph);
+            g.Merge(txGraph, cancellationToken);
 
             double txCount = block.Transactions.Count;
             int pTxCount = 1;
@@ -126,6 +126,9 @@ namespace BC2G
                 block.Transactions.Where(x => !x.IsCoinbase),
                 async (tx, state) =>
                 {
+                    if (cancellationToken.IsCancellationRequested)
+                        return;
+
                     await RunParallel(tx, g, txCache, cancellationToken);
                     Interlocked.Increment(ref pTxCount);
                     _logger.LogTransaction((pTxCount / txCount).ToString("P2"));
@@ -148,7 +151,7 @@ namespace BC2G
             foreach (var input in tx.Inputs)
             {
                 if (cancellationToken.IsCancellationRequested)
-                    break;
+                    return;
 
                 if (!txCache.TryGet(
                     input.TxId, 
@@ -175,14 +178,14 @@ namespace BC2G
             foreach (var output in tx.Outputs.Where(x => x.IsValueTransfer))
             {
                 if (cancellationToken.IsCancellationRequested)
-                    break;
+                    return;
 
                 output.TryGetAddress(out string address);
                 txGraph.AddTarget(address, output.Value);
                 txCache.Add(tx.Txid, output.Index, address, output.Value);
             }
 
-            g.Merge(txGraph);
+            g.Merge(txGraph, cancellationToken);
         }
 
         private async Task<Stream> GetResource(string endpoint, string hash)
