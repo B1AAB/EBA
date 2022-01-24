@@ -4,7 +4,10 @@
     // changed, _messages array in Logger needs to be updated
     // to reflect changes.
 
-    public enum BlockProcessStatus : byte
+    /// <summary>
+    /// Block Processing Status.
+    /// </summary>
+    public enum BPS : byte
     {
         StartBlock = 0,
         GetBlockHash = 1,

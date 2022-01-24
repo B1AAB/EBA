@@ -122,25 +122,19 @@ namespace BC2G
             double txCount = block.Transactions.Count;
             int pTxCount = 1;
 
-            try
-            {
-                var options = new ParallelOptions() { CancellationToken = cancellationToken };
-                await Parallel.ForEachAsync(
-                    block.Transactions.Where(x => !x.IsCoinbase),
-                    async (tx, _cancellationToken) =>
-                    {
-                        _cancellationToken.ThrowIfCancellationRequested();
-                        await RunParallel(tx, g, txCache, cancellationToken);
-                        Interlocked.Increment(ref pTxCount);
-                        _logger.LogTransaction((pTxCount / txCount).ToString("P2"));
-                        _cancellationToken.ThrowIfCancellationRequested();
-                    });
-            }
-            catch (OperationCanceledException)
-            {
-                // The loop is cancelled, it should be already logged,
-                // so no further action is required.
-            }
+            var options = new ParallelOptions() { CancellationToken = cancellationToken };
+            // If cancelled, the following will throw the OperationCanceledException exception
+            // which is caught at the orchestrator in order to better handle logging.
+            await Parallel.ForEachAsync(
+                block.Transactions.Where(x => !x.IsCoinbase),
+                async (tx, _cancellationToken) =>
+                {
+                    _cancellationToken.ThrowIfCancellationRequested();
+                    await RunParallel(tx, g, txCache, cancellationToken);
+                    Interlocked.Increment(ref pTxCount);
+                    _logger.LogTransaction($"{pTxCount}/{txCount} ({pTxCount / txCount:p2})");
+                    _cancellationToken.ThrowIfCancellationRequested();
+                });
 
             return g;
         }

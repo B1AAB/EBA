@@ -233,13 +233,13 @@ namespace BC2G
                 if (cancellationToken.IsCancellationRequested)
                 {
                     Logger.LogCancelledTasks(
-                        new BlockProcessStatus[]
+                        new BPS[]
                         {
-                            BlockProcessStatus.GetBlockHashCancelled,
-                            BlockProcessStatus.GetBlockCancelled,
-                            BlockProcessStatus.ProcessTransactionsCancelled,
-                            BlockProcessStatus.SerializeCancelled,
-                            BlockProcessStatus.Cancelled
+                            BPS.GetBlockHashCancelled,
+                            BPS.GetBlockCancelled,
+                            BPS.ProcessTransactionsCancelled,
+                            BPS.SerializeCancelled,
+                            BPS.Cancelled
                         });
                     break;
                 }
@@ -249,61 +249,76 @@ namespace BC2G
                 Logger.LogStartProcessingBlock(height);
                 var blockStats = new BlockStatistics(height);
 
-                Logger.LogBlockProcessStatus(BlockProcessStatus.GetBlockHash);
+                Logger.LogBlockProcessStatus(BPS.GetBlockHash);
                 var blockHash = await agent.GetBlockHash(height);
-                Logger.LogBlockProcessStatus(BlockProcessStatus.GetBlockHashDone, false, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogBlockProcessStatus(BPS.GetBlockHashDone, false, stopwatch.Elapsed.TotalSeconds);
 
                 if (cancellationToken.IsCancellationRequested)
                 {
                     Logger.LogCancelledTasks(
-                        new BlockProcessStatus[]
+                        new BPS[]
                         {
-                            BlockProcessStatus.GetBlockCancelled,
-                            BlockProcessStatus.ProcessTransactionsCancelled,
-                            BlockProcessStatus.SerializeCancelled,
-                            BlockProcessStatus.Cancelled
+                            BPS.GetBlockCancelled,
+                            BPS.ProcessTransactionsCancelled,
+                            BPS.SerializeCancelled,
+                            BPS.Cancelled
                         });
                     break;
                 }
 
-                Logger.LogBlockProcessStatus(BlockProcessStatus.GetBlock);
+                Logger.LogBlockProcessStatus(BPS.GetBlock);
                 var block = await agent.GetBlock(blockHash);
-                Logger.LogBlockProcessStatus(BlockProcessStatus.GetBlockDone, false, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogBlockProcessStatus(BPS.GetBlockDone, false, stopwatch.Elapsed.TotalSeconds);
 
                 if (cancellationToken.IsCancellationRequested)
                 {
                     Logger.LogCancelledTasks(
-                        new BlockProcessStatus[]
+                        new BPS[]
                         {
-                            BlockProcessStatus.ProcessTransactionsCancelled,
-                            BlockProcessStatus.SerializeCancelled,
-                            BlockProcessStatus.Cancelled
+                            BPS.ProcessTransactionsCancelled,
+                            BPS.SerializeCancelled,
+                            BPS.Cancelled
                         });
                     break;
                 }
 
-                Logger.LogBlockProcessStatus(BlockProcessStatus.ProcessTransactions);
-                var graph = await agent.GetGraph(block, txCache, cancellationToken);
-                Logger.LogBlockProcessStatus(BlockProcessStatus.ProcessTransactionsDone, false, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogBlockProcessStatus(BPS.ProcessTransactions);
+                GraphBase graph = new();
+                try
+                {
+                    graph = await agent.GetGraph(block, txCache, cancellationToken);
+                    Logger.LogBlockProcessStatus(BPS.ProcessTransactionsDone, false, stopwatch.Elapsed.TotalSeconds);
+                }
+                catch (OperationCanceledException)
+                {
+                    Logger.LogCancelledTasks(
+                        new BPS[]
+                        {
+                            BPS.ProcessTransactionsCancelled,
+                            BPS.SerializeCancelled,
+                            BPS.Cancelled
+                        });
+                    break;
+                }
 
                 if (cancellationToken.IsCancellationRequested)
                 {
                     Logger.LogCancelledTasks(
-                        new BlockProcessStatus[]
+                        new BPS[]
                         {
-                            BlockProcessStatus.SerializeCancelled,
-                            BlockProcessStatus.Cancelled
+                            BPS.SerializeCancelled,
+                            BPS.Cancelled
                         });
                     break;
                 }
 
                 graphsBuffer.Enqueue(graph);
 
-                Logger.LogBlockProcessStatus(BlockProcessStatus.Serialize);
+                Logger.LogBlockProcessStatus(BPS.Serialize);
                 serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"), blockStats);
                 _options.LastProcessedBlock = height;
                 await JsonSerializer<Options>.SerializeAsync(_options, _statusFilename);
-                Logger.LogBlockProcessStatus(BlockProcessStatus.SerializeDone, false, stopwatch.Elapsed.TotalSeconds);
+                Logger.LogBlockProcessStatus(BPS.SerializeDone, false, stopwatch.Elapsed.TotalSeconds);
 
                 stopwatch.Stop();
                 blockStats.Runtime = stopwatch.Elapsed;

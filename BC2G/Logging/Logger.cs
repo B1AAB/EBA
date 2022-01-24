@@ -25,20 +25,20 @@ namespace BC2G.Logging
         private static readonly (int cursorTopOffset, int cursorLeft, string template)[] _messages = new[]
         {
             /* 00 */ (0, 4, "In progress: {0:n0}\tCompleted: {1:n0}/{2:n0} ({3:f1}%)\tRate: {4} B/sec"),
-            /* 01 */ (1, 8, "└  Getting block hash     ... "),
-            /* 02 */ (1, 8, "└  Getting block hash     ... Done ({0:f2} sec)"),
-            /* 03 */ (1, 8, "└  Getting block hash     ... Cancelled"),
-            /* 04 */ (2, 8, "└  Getting block          ... "),
-            /* 05 */ (2, 8, "└  Getting block          ... Done ({0:f2} sec)"),
-            /* 06 */ (2, 8, "└  Getting block          ... Cancelled"),
-            /* 07 */ (3, 8, "└  Processing Transaction ... "),
-            /* 08 */ (3, 8, "└  Processing Transaction ... {0}"),
-            /* 09 */ (3, 8, "└  Processing Transaction ... Done ({0:f2} sec)"),
-            /* 10 */ (3, 8, "└  Processing Transaction ... Cancelled"),
-            /* 11 */ (4, 8, "└  Serializing            ... "),
-            /* 12 */ (4, 8, "└  Serializing            ... Done ({0:f2} sec)"),
-            /* 13 */ (4, 8, "└  Serializing            ... Cancelled"),
-            /* 14 */ (5, 8, "*  Finished successfully  in  {0:f2} seconds."),
+            /* 01 */ (1, 8, "└  Getting block hash      ... "),
+            /* 02 */ (1, 8, "└  Getting block hash      ... Done ({0:f2} sec)"),
+            /* 03 */ (1, 8, "└  Getting block hash      ... Cancelled"),
+            /* 04 */ (2, 8, "└  Getting block           ... "),
+            /* 05 */ (2, 8, "└  Getting block           ... Done ({0:f2} sec)"),
+            /* 06 */ (2, 8, "└  Getting block           ... Cancelled"),
+            /* 07 */ (3, 8, "└  Processing Transactions ... "),
+            /* 08 */ (3, 8, "└  Processing Transactions ... {0}"),
+            /* 09 */ (3, 8, "└  Processing Transactions ... Done ({0:f2} sec)       "),
+            /* 10 */ (3, 8, "└  Processing Transactions ... Cancelled               "),
+            /* 11 */ (4, 8, "└  Serializing             ... "),
+            /* 12 */ (4, 8, "└  Serializing             ... Done ({0:f2} sec)"),
+            /* 13 */ (4, 8, "└  Serializing             ... Cancelled"),
+            /* 14 */ (5, 8, "*  Finished successfully in    {0:f2} seconds."),
             /* 15 */ (5, 8, "-  Cancelled!"),
             /* 16 */ (7, 0, "Cancelling ... do not turn off your computer.")
         };
@@ -124,7 +124,7 @@ namespace BC2G.Logging
 
             int completed = blockHeight - _from;
             double percentage = (completed / (double)(_to - _from)) * 100.0;
-            var (cursorTopOffset, cursorLeft, template) = _messages[(int)BlockProcessStatus.StartBlock];
+            var (cursorTopOffset, cursorLeft, template) = _messages[(int)BPS.StartBlock];
 
             var msg = string.Format(template, blockHeight, completed, _to - _from, percentage, _runtimeMovingAverage.Speed);
             AsyncConsole.WriteLineAsync(msg, cursorTopOffset, cursorLeft, ConsoleColor.Cyan);
@@ -140,7 +140,7 @@ namespace BC2G.Logging
         public void LogFinishProcessingBlock(int blockHeight, double runtime)
         {
             _runtimeMovingAverage.Add(runtime);
-            var (cursorTopOffset, cursorLeft, template) = _messages[(byte)BlockProcessStatus.Successful];
+            var (cursorTopOffset, cursorLeft, template) = _messages[(byte)BPS.Successful];
             var msg2 = string.Format(template, runtime);
             AsyncConsole.WriteLineAsync(msg2, cursorTopOffset, cursorLeft, ConsoleColor.DarkCyan);
             log.Info(msg2);
@@ -160,12 +160,12 @@ namespace BC2G.Logging
             AsyncConsole.MoveCursorTo(0, offset);
         }
 
-        public void LogBlockProcessStatus(BlockProcessStatus status, bool started = true, double runtime = 0)
+        public void LogBlockProcessStatus(BPS status, bool started = true, double runtime = 0)
         {
             string msg;
             //var (message, offset) = _messages2[(byte)status];
             var (cursorTopOffset, cursorLeft, template) = _messages[(byte)status];
-            if (status == BlockProcessStatus.ProcessTransactions && !started)
+            if (status == BPS.ProcessTransactions && !started)
             {
                 //msg = "\r\t  └  " + message + "\t... " + $"Done ({Math.Round(runtime, 2)} sec)";
                 msg = string.Format(template, Math.Round(runtime, 2));
@@ -194,8 +194,8 @@ namespace BC2G.Logging
         public void LogTransaction(string msg)
         {
             //var (message, offset) = _messages2[(byte)BlockProcessStatus.ProcessTransactions];
-            var (cursorTopOffset, cursorLeft, template) = _messages[(byte)BlockProcessStatus.ProcessTransactionsStatus];
-            msg = String.Format(template, msg);
+            var (cursorTopOffset, cursorLeft, template) = _messages[(byte)BPS.ProcessTransactionsStatus];
+            msg = string.Format(template, msg);
 
             AsyncConsole.WriteLineAsync(msg, cursorTopOffset, cursorLeft, ConsoleColor.DarkCyan);
 
@@ -206,7 +206,7 @@ namespace BC2G.Logging
 
         public void LogCancelleing()
         {
-            var (cursorTopOffset, cursorLeft, template) = _messages[(byte)BlockProcessStatus.Cancelling];
+            var (cursorTopOffset, cursorLeft, template) = _messages[(byte)BPS.Cancelling];
             //var msg = "Cancelling ... do not turn off your computer.";
             //AsyncConsole.WriteLineAsyncAfterAddedLines(msg, ConsoleColor.Yellow);
             AsyncConsole.MoveCursorToOffset(cursorLeft,  cursorTopOffset);
@@ -215,7 +215,7 @@ namespace BC2G.Logging
             log.Info(template);
         }
 
-        public static void LogCancelledTasks(BlockProcessStatus[] tasks)
+        public static void LogCancelledTasks(BPS[] tasks)
         {
             foreach(var task in tasks)
             {
