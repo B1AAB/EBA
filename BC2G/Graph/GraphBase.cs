@@ -66,10 +66,10 @@ namespace BC2G.Graph
 
         private void Merge(TransactionGraph txGraph, CancellationToken cancellationToken)
         {
-            if (txGraph.sources.IsEmpty)
+            if (txGraph.Sources.IsEmpty)
             {
                 // build generative graph
-                foreach (var item in txGraph.targets)
+                foreach (var item in txGraph.Targets)
                     AddEdge(new Edge(
                         CoinbaseTxLabel,
                         item.Key,
@@ -81,9 +81,9 @@ namespace BC2G.Graph
             {
                 double fee = Utilities.Round(txGraph.TotalInputValue - txGraph.TotalOutputValue);
                 if (fee > 0.0)
-                    foreach (var s in txGraph.sources)
-                        txGraph.sources.AddOrUpdate(
-                            s.Key, txGraph.sources[s.Key],
+                    foreach (var s in txGraph.Sources)
+                        txGraph.Sources.AddOrUpdate(
+                            s.Key, txGraph.Sources[s.Key],
                             (_, oldValue) => Utilities.Round(
                                 oldValue - Utilities.Round(
                                     oldValue * Utilities.Round(
@@ -91,12 +91,12 @@ namespace BC2G.Graph
                 /// The AddOrUpdate method is only expected to update, 
                 /// adding a new key is not expected to happen.
 
-                foreach (var s in txGraph.sources)
+                foreach (var s in txGraph.Sources)
                 {
                     if (cancellationToken.IsCancellationRequested)
                         return;
 
-                    foreach (var t in txGraph.targets)
+                    foreach (var t in txGraph.Targets)
                         AddEdge(new Edge(
                             s.Key, t.Key,
                             Utilities.Round(t.Value * Utilities.Round(

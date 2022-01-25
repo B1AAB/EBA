@@ -1,35 +1,28 @@
-using BC2G.Model;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BC2G.Graph
 {
     public class TransactionGraph : GraphBase
     {
-        public double TotalInputValue;
-        public double TotalOutputValue;
+        public double TotalInputValue { set; get; }
+        public double TotalOutputValue { set; get; }
 
-        // Using the AddOrUpdate method is the main reason to use a concurrent collection.
-        public readonly ConcurrentDictionary<string, double> sources = new();
-        public readonly ConcurrentDictionary<string, double> targets = new();
+        public ConcurrentDictionary<string, double> Sources { set; get; } = new();
+        public ConcurrentDictionary<string, double> Targets { set; get; } = new();
 
-        public new string AddSource(string source, double value)
+        public string AddSource(string source, double value)
         {
             TotalInputValue += value;
-            return AddInOrOut(sources, source, value);
+            return AddOrUpdate(Sources, source, value);
         }
 
-        public new string AddTarget(string target, double value)
+        public string AddTarget(string target, double value)
         {
             TotalOutputValue += value;
-            return AddInOrOut(targets, target, value);
+            return AddOrUpdate(Targets, target, value);
         }
 
-        private static string AddInOrOut(
+        private static string AddOrUpdate(
             ConcurrentDictionary<string, double> collection,
             string address,
             double value)
