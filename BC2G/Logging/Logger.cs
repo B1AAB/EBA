@@ -79,10 +79,6 @@ namespace BC2G.Logging
             roller.ActivateOptions();
             hierarchy.Root.AddAppender(roller);
 
-            var memory = new MemoryAppender();
-            memory.ActivateOptions();
-            hierarchy.Root.AddAppender(memory);
-
             hierarchy.Root.Level = Level.Info;
             hierarchy.Configured = true;
             log = LogManager.GetLogger(_repository, _name);
@@ -135,10 +131,10 @@ namespace BC2G.Logging
         public void LogFinishProcessingBlock(double runtime)
         {
             _runtimeMovingAverage.Add(runtime);
-            var (cursorTopOffset, cursorLeft, template) = _messages[(byte)BPS.Successful];
-            var msg = string.Format(template, runtime);
-            AsyncConsole.WriteLine(msg, cursorTopOffset, cursorLeft, ConsoleColor.DarkCyan);
-            log.Info(msg);
+           // var (cursorTopOffset, cursorLeft, template) = _messages[(byte)BPS.Successful];
+           // var msg = string.Format(template, runtime);
+            //AsyncConsole.WriteLine(msg, cursorTopOffset, cursorLeft, ConsoleColor.DarkCyan);
+            //log.Info(msg);
         }
 
         public static void LogFinishTraverse(bool cancelled)

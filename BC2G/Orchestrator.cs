@@ -7,6 +7,7 @@ using BC2G.Serializers;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace BC2G
 {
@@ -243,6 +244,7 @@ namespace BC2G
                         });
                     break;
                 }
+
                 var stopwatch = new Stopwatch();
                 stopwatch.Start();
 
