@@ -32,8 +32,6 @@ namespace BC2G.Graph
 
         protected readonly ConcurrentDictionary<string, double> _sources = new();
         protected readonly ConcurrentDictionary<string, double> _targets = new();
-        private double _totalInputValue;
-        private double _totalOutputValue;
 
         public uint Timestamp { get; set; }
 

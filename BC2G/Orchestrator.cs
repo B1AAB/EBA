@@ -204,6 +204,8 @@ namespace BC2G
             using var txCache = new TxCache(_options.OutputDir);
             using var serializer = new CSVSerializer(mapper);
 
+            var graphsBuffer2 = new AutoPersistent(Path.Combine(_options.OutputDir, "edges.csv"), mapper, cancellationToken);
+
             // Parallelizing block traversal has more disadvantages than
             // advantages it could bring. One draw back is related to
             // caching transactions, where of a block are cached for faster
@@ -314,7 +316,9 @@ namespace BC2G
                     break;
                 }
 
-                graphsBuffer.Enqueue(graph);
+                //graphsBuffer.Enqueue(graph);
+                graphsBuffer2.Enqueue(graph);
+
 
                 Logger.LogBlockProcessStatus(BPS.Serialize);
                 serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"), blockStats);
@@ -330,9 +334,9 @@ namespace BC2G
             }
 
             Logger.LogFinishTraverse(cancellationToken.IsCancellationRequested);
-            var graphsBufferFilename = Path.Combine(_options.OutputDir, "edges.csv");
-            Logger.Log($"Serializing all edges in `{graphsBufferFilename}`.", true);
-            serializer.Serialize(graphsBuffer, graphsBufferFilename);
+            //var graphsBufferFilename = Path.Combine(_options.OutputDir, "edges.csv");
+            //Logger.Log($"Serializing all edges in `{graphsBufferFilename}`.", true);
+            //serializer.Serialize(graphsBuffer, graphsBufferFilename);
 
             Logger.Log("Serializing block status", true);
             BlocksStatisticsSerializer.Serialize(
