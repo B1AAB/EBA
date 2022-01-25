@@ -67,8 +67,8 @@ namespace BC2G
             }
             catch (Exception e)
             {
-                Environment.Exit(1);
                 Console.Error.WriteLine(e.Message);
+                Environment.Exit(1);
             }
         }
 

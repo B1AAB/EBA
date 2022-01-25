@@ -228,7 +228,7 @@ namespace BC2G
             Logger.InitBlocksTraverseLog(_options.FromInclusive, _options.ToExclusive);
             AsyncConsole.BookmarkCurrentLine();
 
-            for (int height = _options.FromInclusive; height < _options.ToExclusive; height++)
+            for (int height = _options.LastProcessedBlock + 1; height < _options.ToExclusive; height++)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
