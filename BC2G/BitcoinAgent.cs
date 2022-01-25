@@ -101,7 +101,7 @@ namespace BC2G
 
             var g = new GraphBase();
 
-            var txGraph = new TransactionGraph();
+            var generationTxGraph = new TransactionGraph();
 
             /// By definition, each block has a generative block that is the
             /// reward of the miner. Hence, this should never raise an 
@@ -111,13 +111,13 @@ namespace BC2G
             foreach (var output in coinbaseTx.Outputs.Where(x => x.IsValueTransfer))
             {
                 output.TryGetAddress(out string address);
-                address = txGraph.AddTarget(address, output.Value);
+                address = generationTxGraph.AddTarget(address, output.Value);
                 rewardAddresses.Add(address);
                 txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
             }
 
             g.RewardsAddresses = rewardAddresses;
-            g.Merge(txGraph, cancellationToken);
+            g.Enqueue(generationTxGraph);
 
             double txCount = block.Transactions.Count;
             int pTxCount = 1;
@@ -183,7 +183,7 @@ namespace BC2G
                 txCache.Add(tx.Txid, output.Index, address, output.Value);
             }
 
-            g.Merge(txGraph, cancellationToken);
+            g.Enqueue(txGraph);
         }
 
         private async Task<Stream> GetResource(string endpoint, string hash)
