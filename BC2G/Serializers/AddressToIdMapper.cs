@@ -1,43 +1,70 @@
 ﻿using System.Collections.Concurrent;
-using System.Text;
 
 namespace BC2G.Serializers
 {
-    public class AddressToIdMapper : ConcurrentDictionary<string, int>, IDisposable
+    public class AddressToIdMapper : IDisposable
     {
         private const string _delimiter = "\t";
-        private const string _tmpFilenamePostfix = ".tmp";
-        private readonly string _filename = string.Empty;
         private bool _disposed = false;
 
-        public AddressToIdMapper()
-        { }
+        private readonly object _locker = new();
 
-        public AddressToIdMapper(string filename)
+        private readonly ConcurrentDictionary<string, int> _mappings;
+        private readonly BlockingCollection<(string, int)> _buffer = new();
+        private readonly StreamWriter _stream;
+
+        public AddressToIdMapper(
+            string filename,
+            CancellationToken cancellationToken)
         {
-            _filename = filename;
-            if (!string.IsNullOrEmpty(filename) && File.Exists(filename))
-                Deserialize(filename);
+            if (string.IsNullOrEmpty(filename))
+                throw new ArgumentException("Filename cannot be null or empty.");
+
+            if (File.Exists(filename))
+            {
+                _mappings = Deserialize(filename);
+            }
+            else
+            {
+                _mappings = new();
+                File.Create(filename).Dispose();
+            }
+
+            _stream = File.AppendText(filename);
+
+            var thread = new Thread(() =>
+            {
+                while (true)
+                {
+                    (string address, int id) mapping;
+
+                    try { mapping = _buffer.Take(cancellationToken); }
+                    catch (OperationCanceledException) { break; }
+
+                    _stream.WriteLine($"{mapping.id}{_delimiter}{mapping.address}");
+                }
+            })
+            {
+                IsBackground = false
+            };
+            thread.Start();
         }
 
         public int GetId(string address)
         {
-            return GetOrAdd(address, Count);
+            lock (_locker)
+            {
+                var id = _mappings.GetOrAdd(address, _mappings.Count);
+                if (id == _mappings.Count)
+                    _buffer.Add((address, id));
+                return id;
+            }
         }
 
-        public void Serialize(string filename)
+        private static ConcurrentDictionary<string, int> Deserialize(string filename)
         {
-            var builder = new StringBuilder();
-            var e = GetEnumerator();
-            while (e.MoveNext())
-                builder.AppendLine(
-                    $"{e.Current.Value}{_delimiter}{e.Current.Key}");
+            var mappings = new ConcurrentDictionary<string, int>();
 
-            File.WriteAllText(filename, builder.ToString());
-        }
-
-        public void Deserialize(string filename)
-        {
             using var reader = new StreamReader(filename);
             string? line;
             while ((line = reader.ReadLine()) != null)
@@ -46,8 +73,10 @@ namespace BC2G.Serializers
                 if (sLine.Length != 2)
                     throw new FormatException(
                         $"Expected two columns, found {sLine.Length}: {line}");
-                TryAdd(sLine[1], int.Parse(sLine[0]));
+                mappings.TryAdd(sLine[1], int.Parse(sLine[0]));
             }
+
+            return mappings;
         }
 
         // The IDisposable interface is implemented following .NET docs:
@@ -64,12 +93,7 @@ namespace BC2G.Serializers
             {
                 if (disposing)
                 {
-                    if (!string.IsNullOrEmpty(_filename))
-                    {
-                        var tmpMF = _filename + _tmpFilenamePostfix;
-                        Serialize(tmpMF);
-                        File.Move(tmpMF, _filename, true);
-                    }
+                    _stream.Dispose();
                 }
             }
 

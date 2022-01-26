@@ -13,7 +13,7 @@ namespace BC2G.Serializers
 
         private readonly string _mapperFilename = string.Empty;
         private readonly List<string> _createdFiles = new();
-        private readonly AddressToIdMapper _mapper = new();
+        private readonly AddressToIdMapper _mapper;
 
         public CSVSerializer() { }
 

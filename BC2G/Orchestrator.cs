@@ -193,18 +193,23 @@ namespace BC2G
         private async Task TraverseBlocksAsync(
             BitcoinAgent agent, CancellationToken cancellationToken)
         {
-            var graphsBuffer = new ConcurrentQueue<GraphBase>();
             var blocksStatistics = new ConcurrentQueue<BlockStatistics>();
 
             var individualBlocksDir = Path.Combine(_options.OutputDir, "individual_blocks");
             if (!Directory.Exists(individualBlocksDir))
                 Directory.CreateDirectory(individualBlocksDir);
 
-            using var mapper = new AddressToIdMapper(_options.AddressIdMappingFilename);
+            using var mapper = new AddressToIdMapper(
+                _options.AddressIdMappingFilename, 
+                cancellationToken);
+
             using var txCache = new TxCache(_options.OutputDir);
             using var serializer = new CSVSerializer(mapper);
 
-            var graphsBuffer2 = new AutoPersistent(Path.Combine(_options.OutputDir, "edges.csv"), mapper, cancellationToken);
+            var graphsBuffer = new AutoPersistent(
+                Path.Combine(_options.OutputDir, "edges.csv"),
+                mapper, 
+                cancellationToken);
 
             // Parallelizing block traversal has more disadvantages than
             // advantages it could bring. One draw back is related to
@@ -317,7 +322,7 @@ namespace BC2G
                 }
 
                 //graphsBuffer.Enqueue(graph);
-                graphsBuffer2.Enqueue(graph);
+                graphsBuffer.Enqueue(graph);
 
 
                 Logger.LogBlockProcessStatus(BPS.Serialize);
