@@ -200,13 +200,14 @@ namespace BC2G
                 Directory.CreateDirectory(individualBlocksDir);
 
             using var mapper = new AddressToIdMapper(
-                _options.AddressIdMappingFilename, 
+                _options.AddressIdMappingFilename,
+                AddressToIdMapper.Deserialize(_options.AddressIdMappingFilename),
                 cancellationToken);
 
             using var txCache = new TxCache(_options.OutputDir);
             using var serializer = new CSVSerializer(mapper);
 
-            var graphsBuffer = new AutoPersistent(
+            var gBuffer = new PersistentGraphBuffer(
                 Path.Combine(_options.OutputDir, "edges.csv"),
                 mapper, 
                 cancellationToken);
@@ -321,8 +322,7 @@ namespace BC2G
                     break;
                 }
 
-                //graphsBuffer.Enqueue(graph);
-                graphsBuffer.Enqueue(graph);
+                gBuffer.Enqueue(graph);
 
 
                 Logger.LogBlockProcessStatus(BPS.Serialize);

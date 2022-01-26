@@ -2,52 +2,31 @@
 
 namespace BC2G.Serializers
 {
-    public class AddressToIdMapper : IDisposable
+    public class AddressToIdMapper : PersistentObject<(int, string)>
     {
         private const string _delimiter = "\t";
-        private bool _disposed = false;
 
         private readonly object _locker = new();
 
         private readonly ConcurrentDictionary<string, int> _mappings;
-        private readonly BlockingCollection<(string, int)> _buffer = new();
-        private readonly StreamWriter _stream;
+
+        // Cannot take the filename and call the Deserializers
+        // from the constructor, because the base type needs to
+        // create a write stream to the file, and since that
+        // handle will be created before running the constructor
+        // body, it will fail complaning the file is open in 
+        // another process. There are a few hacky workarounds, 
+        // but probably the most intuitive approach is to 
+        // require the mappings in the constructor.
 
         public AddressToIdMapper(
             string filename,
-            CancellationToken cancellationToken)
+            ConcurrentDictionary<string, int> mappings,
+            CancellationToken cancellationToken) : base(
+                filename,
+                cancellationToken)
         {
-            if (string.IsNullOrEmpty(filename))
-                throw new ArgumentException("Filename cannot be null or empty.");
-
-            if (File.Exists(filename))
-            {
-                _mappings = Deserialize(filename);
-            }
-            else
-            {
-                _mappings = new();
-                File.Create(filename).Dispose();
-            }
-
-            _stream = File.AppendText(filename);
-
-            var thread = new Thread(() =>
-            {
-                while (true)
-                {
-                    (string address, int id) mapping;
-
-                    try { mapping = _buffer.Take(cancellationToken); }
-                    catch (OperationCanceledException) { break; }
-
-                    _stream.WriteLine($"{mapping.id}{_delimiter}{mapping.address}");
-                }
-            })
-            {
-                IsBackground = false
-            };
-            thread.Start();
+            _mappings = mappings;
         }
 
         public int GetId(string address)
@@ -55,15 +34,18 @@ namespace BC2G.Serializers
             lock (_locker)
             {
                 var id = _mappings.GetOrAdd(address, _mappings.Count);
-                if (id == _mappings.Count)
-                    _buffer.Add((address, id));
+                if (id == _mappings.Count - 1)
+                    Enqueue((id, address));
                 return id;
             }
         }
 
-        private static ConcurrentDictionary<string, int> Deserialize(string filename)
+        public static ConcurrentDictionary<string, int> Deserialize(string filename)
         {
             var mappings = new ConcurrentDictionary<string, int>();
+
+            if (!File.Exists(filename))
+                return mappings;
 
             using var reader = new StreamReader(filename);
             string? line;
@@ -79,25 +61,9 @@ namespace BC2G.Serializers
             return mappings;
         }
 
-        // The IDisposable interface is implemented following .NET docs:
-        // https://docs.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0
-        public void Dispose()
+        public override string Serialize((int, string) obj, CancellationToken cancellationToken)
         {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
-                    _stream.Dispose();
-                }
-            }
-
-            _disposed = true;
+            return $"{obj.Item1}{_delimiter}{obj.Item2}{Environment.NewLine}";
         }
     }
 }
