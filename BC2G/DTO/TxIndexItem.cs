@@ -1,6 +1,6 @@
 ﻿namespace BC2G.DTO
 {
-    public class TransactionIndexItem
+    public class TxIndexItem
     {
         public string TxId { get; }
         public int VOut { get; }
@@ -9,11 +9,11 @@
 
         private const string _delimiter = "\t";
 
-        public TransactionIndexItem(
-            string txid,
-            int vout,
+        public TxIndexItem(
             string address,
-            double value)
+            double value,
+            string txid = "",
+            int vout = -1)
         {
             TxId = txid;
             VOut = vout;
@@ -26,6 +26,16 @@
             return string.Join(
                 _delimiter,
                 new string[] { "txid", "vout", "address", "value" });
+        }
+
+        public static TxIndexItem Deserialize(string value)
+        {
+            var cols = value.Split(_delimiter);
+            return new TxIndexItem(
+                txid: cols[0],
+                vout: int.Parse(cols[1]),
+                address: cols[2],
+                value: double.Parse(cols[3]));
         }
 
         public override string ToString()

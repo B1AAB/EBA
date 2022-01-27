@@ -204,7 +204,7 @@ namespace BC2G
                 AddressToIdMapper.Deserialize(_options.AddressIdMappingFilename),
                 cancellationToken);
 
-            using var txCache = new TxCache(_options.OutputDir, cancellationToken);
+            using var txCache = new TxIndex(_options.OutputDir, cancellationToken);
             using var serializer = new CSVSerializer(mapper);
 
             var gBuffer = new PersistentGraphBuffer(

@@ -92,7 +92,7 @@ namespace BC2G
 
         public async Task<GraphBase> GetGraph(
             Block block,
-            TxCache txCache,
+            TxIndex txCache,
             CancellationToken cancellationToken)
         {
             /// Why using "mediantime" and not "time"? see the following BIP:
@@ -142,7 +142,7 @@ namespace BC2G
         private async Task RunParallel(
             Transaction tx,
             GraphBase g,
-            TxCache txCache,
+            TxIndex txCache,
             CancellationToken cancellationToken)
         {
             var txGraph = new TransactionGraph();

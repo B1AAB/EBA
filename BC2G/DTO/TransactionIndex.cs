@@ -6,18 +6,18 @@
     // but if it turns out not necessary, it should
     // be safe to delete this type. 
 
-    public class TransactionIndex : PersistentObject<TransactionIndexItem>
+    public class TransactionIndex : PersistentObject<TxIndexItem>
     {
         public TransactionIndex(
             string filename,
             CancellationToken cancellationToken) : base(
                 filename,
                 cancellationToken,
-                TransactionIndexItem.GetHeader())
+                TxIndexItem.GetHeader())
         { }
 
         public override string Serialize(
-            TransactionIndexItem obj,
+            TxIndexItem obj,
             CancellationToken cancellationToken)
         {
             return obj.ToString();

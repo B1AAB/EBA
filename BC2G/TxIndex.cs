@@ -4,11 +4,9 @@ using System.Text;
 
 namespace BC2G
 {
-    public class TxCache : IDisposable
+    public class TxIndex : IDisposable
     {
-        public ConcurrentDictionary<string, OutputDTO> Utxo = new();
-
-        private readonly string _utxoFilename = "utxo.csv";
+        private readonly string _utxoIndexFilename = "utxo.csv";
         private readonly string _txIndexFilename = "tx_index.csv";
         private const string _tmpFilenamePostfix = ".tmp";
 
@@ -18,34 +16,27 @@ namespace BC2G
         private const char _delimiter = '\t';
 
         private readonly TransactionIndex _txIndex;
+        private readonly ConcurrentDictionary<string, TxIndexItem> _utxoIdx = new();
 
-        public TxCache(string outputDir, CancellationToken cancellationToken)
+        public TxIndex(string outputDir, CancellationToken cancellationToken)
         {
             _outputDir = outputDir;
-            _utxoFilename = Path.Combine(outputDir, _utxoFilename);
-            if (File.Exists(_utxoFilename))
+            _utxoIndexFilename = Path.Combine(outputDir, _utxoIndexFilename);
+            if (File.Exists(_utxoIndexFilename))
                 Deserialize();
             else
-                File.Create(_utxoFilename).Dispose();
+                File.Create(_utxoIndexFilename).Dispose();
 
             _txIndexFilename = Path.Combine(_outputDir, _txIndexFilename);
-            if (!File.Exists(_txIndexFilename))
-            {
-                var builder = new StringBuilder();
-                builder.AppendLine(
-                    $"txid{_delimiter}" +
-                    $"vout{_delimiter}" +
-                    $"address{_delimiter}" +
-                    $"value");
-                File.WriteAllText(_txIndexFilename, builder.ToString());
-            }
-
             _txIndex = new TransactionIndex(_txIndexFilename, cancellationToken);
         }
 
         public bool TryGet(string txid, int outputIndex, out string address, out double value)
         {
-            var res = Utxo.TryRemove(ComposeId(txid, outputIndex), out OutputDTO output);
+            var res = _utxoIdx.TryRemove(
+                ComposeId(txid, outputIndex), 
+                out TxIndexItem output);
+
             if (res)
             {
                 address = output.Address;
@@ -61,11 +52,11 @@ namespace BC2G
 
         public void Add(string txid, int outputIndex, string address, double value)
         {
-            Utxo.TryAdd(
+            _utxoIdx.TryAdd(
                 ComposeId(txid, outputIndex),
-                new OutputDTO(address, value));
+                new TxIndexItem(address, value));
 
-            _txIndex.Enqueue(new TransactionIndexItem(txid, outputIndex, address, value));
+            _txIndex.Enqueue(new TxIndexItem(address, value, txid, outputIndex));
         }
 
         private static string ComposeId(string txid, int outputIndex)
@@ -76,22 +67,34 @@ namespace BC2G
         private void Serialize(string filename)
         {
             var builder = new StringBuilder();
-            foreach (var item in Utxo)
+            foreach (var item in _utxoIdx)
                 builder.AppendLine(
-                    $"{item.Key}{_delimiter}" +
-                    $"{item.Value.Address}{_delimiter}" +
-                    $"{item.Value.Value}");
+                    new TxIndexItem(
+                        address: item.Value.Address,
+                        value: item.Value.Value,
+                        txid: item.Key)
+                    .ToString());
+
             File.WriteAllText(filename, builder.ToString());
         }
 
         private void Deserialize()
         {
-            using var reader = new StreamReader(_utxoFilename);
+            using var reader = new StreamReader(_utxoIndexFilename);
             string? line;
             while ((line = reader.ReadLine()) != null)
             {
-                var sLine = line.Split(_delimiter);
-                Utxo.TryAdd(sLine[0], new OutputDTO(sLine[1], double.Parse(sLine[2])));
+                var item = TxIndexItem.Deserialize(line);
+                
+                // Note that the deserialized item will be different
+                // from the item in that the item before serialization 
+                // had its `txid=""` and txid was the key of the collection,
+                // however, after it is deserialized, txid is set to 
+                // the transaction ID. Hence, the size of the deserialized
+                // object is larger than when it was at serialization. 
+                // If this turns out to be an issue, should rework
+                // deserialization.
+                _utxoIdx.TryAdd(item.TxId, item);
             }
         }
 
@@ -109,9 +112,9 @@ namespace BC2G
             {
                 if (disposing)
                 {
-                    var tmpMF = _utxoFilename + _tmpFilenamePostfix;
+                    var tmpMF = _utxoIndexFilename + _tmpFilenamePostfix;
                     Serialize(tmpMF);
-                    File.Move(tmpMF, _utxoFilename, true);
+                    File.Move(tmpMF, _utxoIndexFilename, true);
                 }
             }
 
