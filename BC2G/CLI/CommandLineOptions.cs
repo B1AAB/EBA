@@ -60,6 +60,14 @@ namespace BC2G.CLI
             "on the given status filename."
         };
 
+        private readonly CommandOption _createPerBlockFilesOption = new(
+            "-p | --create-per-block-files",
+            CommandOptionType.NoValue)
+        {
+            Description = "If provided, for each block it traverses, " +
+            "it creates `[block_height]_edges.csv` and `[block_height]_nodes.csv. "
+        };
+
         //from = 719000;
         //to = 719010;
         private int _from = -1;
@@ -68,6 +76,7 @@ namespace BC2G.CLI
         private string _statusFilename = "status.json";
         private string _addressIdMappingFilename = "address_id_mapping.csv";
         private string? _resumeFrom = null;
+        private bool _createPerBlockFiles = false;
 
         public static string HelpOption
         {
@@ -87,6 +96,7 @@ namespace BC2G.CLI
             _cla.Options.Add(_outputOption);
             _cla.Options.Add(_statusFilenameOption);
             _cla.Options.Add(_resumeFromOption);
+            _cla.Options.Add(_createPerBlockFilesOption);
 
             var version = "Unknown (Called from unmanaged code)";
             if (Assembly.GetEntryAssembly() != null)
@@ -122,6 +132,7 @@ namespace BC2G.CLI
                     ToExclusive = _to,
                     OutputDir = _output,
                     AddressIdMappingFilename = _addressIdMappingFilename,
+                    CreatePerBlockFiles = _createPerBlockFiles
                 };
             }
             else
@@ -261,6 +272,9 @@ namespace BC2G.CLI
                         $"argument: {ex.Message}");
                 }
             }
+
+            if (_createPerBlockFilesOption.HasValue())
+                _createPerBlockFiles = true;
         }
     }
 }

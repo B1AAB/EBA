@@ -7,5 +7,6 @@
         public int ToExclusive { get; set; }
         public string OutputDir { get; set; } = string.Empty;
         public string AddressIdMappingFilename { set; get; } = string.Empty;
+        public bool CreatePerBlockFiles { get; set; }
     }
 }

@@ -99,7 +99,7 @@ namespace BC2G
             /// https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
             uint timestamp = block.MedianTime;
 
-            var g = new GraphBase();
+            var g = new GraphBase() { Timestamp = timestamp };
 
             var generationTxGraph = new TransactionGraph();
 

@@ -196,7 +196,7 @@ namespace BC2G
             var blocksStatistics = new ConcurrentQueue<BlockStatistics>();
 
             var individualBlocksDir = Path.Combine(_options.OutputDir, "individual_blocks");
-            if (!Directory.Exists(individualBlocksDir))
+            if (_options.CreatePerBlockFiles && !Directory.Exists(individualBlocksDir))
                 Directory.CreateDirectory(individualBlocksDir);
 
             using var mapper = new AddressToIdMapper(
@@ -324,11 +324,13 @@ namespace BC2G
 
                 gBuffer.Enqueue(graph);
 
+                if (_options.CreatePerBlockFiles)
+                {
+                    Logger.LogBlockProcessStatus(BPS.Serialize);
+                    serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"), blockStats);
+                }
 
-                Logger.LogBlockProcessStatus(BPS.Serialize);
-                serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"), blockStats);
                 _options.LastProcessedBlock = height;
-                await JsonSerializer<Options>.SerializeAsync(_options, _statusFilename);
                 Logger.LogBlockProcessStatus(BPS.SerializeDone, stopwatch.Elapsed.TotalSeconds);
 
                 stopwatch.Stop();
@@ -352,6 +354,8 @@ namespace BC2G
             // the types wrapped in `using` will be called that
             // finalizes persisting output.
             Logger.Log("Finalizing serialized files.", true);
+
+            await JsonSerializer<Options>.SerializeAsync(_options, _statusFilename);
         }
 
         // The IDisposable interface is implemented following .NET docs:
