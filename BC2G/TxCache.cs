@@ -8,10 +8,8 @@ namespace BC2G
     {
         public ConcurrentDictionary<string, OutputDTO> Utxo = new();
 
-        public ConcurrentBag<string> RecentTx = new();
-
         private readonly string _utxoFilename = "utxo.csv";
-        private readonly string _txCacheFilename = "tx_dto.csv";
+        private readonly string _txIndexFilename = "tx_index.csv";
         private const string _tmpFilenamePostfix = ".tmp";
 
         private readonly string _outputDir;
@@ -19,7 +17,9 @@ namespace BC2G
         private const string _txidVoutDelimiter = "___";
         private const char _delimiter = '\t';
 
-        public TxCache(string outputDir)
+        private readonly TransactionIndex _txIndex;
+
+        public TxCache(string outputDir, CancellationToken cancellationToken)
         {
             _outputDir = outputDir;
             _utxoFilename = Path.Combine(outputDir, _utxoFilename);
@@ -28,8 +28,8 @@ namespace BC2G
             else
                 File.Create(_utxoFilename).Dispose();
 
-            _txCacheFilename = Path.Combine(_outputDir, _txCacheFilename);
-            if (!File.Exists(_txCacheFilename))
+            _txIndexFilename = Path.Combine(_outputDir, _txIndexFilename);
+            if (!File.Exists(_txIndexFilename))
             {
                 var builder = new StringBuilder();
                 builder.AppendLine(
@@ -37,8 +37,10 @@ namespace BC2G
                     $"vout{_delimiter}" +
                     $"address{_delimiter}" +
                     $"value");
-                File.WriteAllText(_txCacheFilename, builder.ToString());
+                File.WriteAllText(_txIndexFilename, builder.ToString());
             }
+
+            _txIndex = new TransactionIndex(_txIndexFilename, cancellationToken);
         }
 
         public bool TryGet(string txid, int outputIndex, out string address, out double value)
@@ -63,11 +65,7 @@ namespace BC2G
                 ComposeId(txid, outputIndex),
                 new OutputDTO(address, value));
 
-            RecentTx.Add(
-                $"{txid}{_delimiter}" +
-                $"{outputIndex}{_delimiter}" +
-                $"{address}{_delimiter}" +
-                $"{value}");
+            _txIndex.Enqueue(new TransactionIndexItem(txid, outputIndex, address, value));
         }
 
         private static string ComposeId(string txid, int outputIndex)
@@ -84,14 +82,6 @@ namespace BC2G
                     $"{item.Value.Address}{_delimiter}" +
                     $"{item.Value.Value}");
             File.WriteAllText(filename, builder.ToString());
-        }
-
-        private void SerializeCache(string filename)
-        {
-            var builder = new StringBuilder();
-            foreach (var item in RecentTx)
-                builder.AppendLine(item);
-            File.AppendAllText(filename, builder.ToString());
         }
 
         private void Deserialize()
@@ -122,10 +112,6 @@ namespace BC2G
                     var tmpMF = _utxoFilename + _tmpFilenamePostfix;
                     Serialize(tmpMF);
                     File.Move(tmpMF, _utxoFilename, true);
-
-                    var tmpCache = _txCacheFilename + _tmpFilenamePostfix;
-                    SerializeCache(tmpCache);
-                    File.Move(tmpCache, _txCacheFilename, true);
                 }
             }
 
