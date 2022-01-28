@@ -37,11 +37,10 @@ namespace BC2G.Graph
 
         public List<string> RewardsAddresses = new();
 
-        public GraphBase(BlockStatistics stats) : this()
+        public GraphBase(BlockStatistics stats)
         {
             BlockStatistics = stats;
         }
-        public GraphBase() { }
 
         public void Enqueue(TransactionGraph g)
         {

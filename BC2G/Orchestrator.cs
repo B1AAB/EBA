@@ -198,8 +198,6 @@ namespace BC2G
             // the Persistent* types, and give a more natural flow to the
             // current process.
 
-            //var blocksStatistics = new ConcurrentQueue<BlockStatistics>();
-
             var individualBlocksDir = Path.Combine(_options.OutputDir, "individual_blocks");
             if (_options.CreatePerBlockFiles && !Directory.Exists(individualBlocksDir))
                 Directory.CreateDirectory(individualBlocksDir);
@@ -303,7 +301,7 @@ namespace BC2G
                 }
 
                 Logger.LogBlockProcessStatus(BPS.ProcessTransactions);
-                GraphBase graph = new();
+                GraphBase graph = new(blockStats);
                 try
                 {
                     graph = await agent.GetGraph(block, txCache, blockStats, cancellationToken);
@@ -351,24 +349,10 @@ namespace BC2G
                 }
 
                 _options.LastProcessedBlock = height;
-                Logger.LogBlockProcessStatus(BPS.SerializeDone, stopwatch.Elapsed.TotalSeconds);
-
-
-                //blocksStatistics.Enqueue(blockStats);
-
                 Logger.LogFinishProcessingBlock(blockStats.Runtime.TotalSeconds);
             }
 
             Logger.LogFinishTraverse(cancellationToken.IsCancellationRequested);
-            //var graphsBufferFilename = Path.Combine(_options.OutputDir, "edges.csv");
-            //Logger.Log($"Serializing all edges in `{graphsBufferFilename}`.", true);
-            //serializer.Serialize(graphsBuffer, graphsBufferFilename);
-
-            Logger.Log("Serializing block status", true);
-            /*
-            BlocksStatisticsSerializer.Serialize(
-                blocksStatistics,
-                Path.Combine(_options.OutputDir, "blocks_stats.tsv"));*/
 
             // At this method's exist, the dispose method of
             // the types wrapped in `using` will be called that

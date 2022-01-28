@@ -13,7 +13,6 @@ namespace BC2G
         private readonly string _outputDir;
         private bool _disposed = false;
         private const string _txidVoutDelimiter = "___";
-        private const char _delimiter = '\t';
 
         private readonly TransactionIndex _txIndex;
         private readonly ConcurrentDictionary<string, TxIndexItem> _utxoIdx = new();

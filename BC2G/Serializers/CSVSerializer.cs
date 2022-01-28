@@ -22,13 +22,13 @@ namespace BC2G.Serializers
             _mapper = mapper;
         }
 
-        public override void Serialize(GraphBase g, string baseFilename)//, BlockStatistics stats)
+        public override void Serialize(GraphBase g, string baseFilename)
         {
             var nodesFilename = baseFilename + "_nodes.csv" + _tmpFilenamePostfix;
             var edgeFilename = baseFilename + "_edges.csv" + _tmpFilenamePostfix;
 
             WriteNodes(g, nodesFilename);
-            WriteEdges(g, edgeFilename);//, stats);
+            WriteEdges(g, edgeFilename);
 
             _createdFiles.Add(nodesFilename);
             _createdFiles.Add(edgeFilename);
@@ -73,7 +73,7 @@ namespace BC2G.Serializers
         public override GraphBase Deserialize(string path, int blockHeight)
         {
             var nodeIds = ReadNodes(Path.Combine(path, $"{blockHeight}_nodes.csv"));
-            return ReadEdges(Path.Combine(path, $"{blockHeight}_edges.csv"), nodeIds);
+            return ReadEdges(Path.Combine(path, $"{blockHeight}_edges.csv"), blockHeight, nodeIds);
         }
 
         private void WriteNodes(GraphBase g, string filename)
@@ -108,7 +108,7 @@ namespace BC2G.Serializers
             return nodeIds;
         }
 
-        private void WriteEdges(GraphBase g, string filename)//, BlockStatistics stats)
+        private void WriteEdges(GraphBase g, string filename)
         {
             var csvBuilder = new StringBuilder();
             csvBuilder.AppendLine(
@@ -130,16 +130,14 @@ namespace BC2G.Serializers
                         ((int)edge.Type).ToString(),
                         edge.Timestamp.ToString()
                     }));
-
-                //stats.IncrementEdgeType(edge.Type);
             }
 
             File.WriteAllText(filename, csvBuilder.ToString());
         }
 
-        private static GraphBase ReadEdges(string filename, Dictionary<string, string> nodeIds)
+        private static GraphBase ReadEdges(string filename, int height, Dictionary<string, string> nodeIds)
         {
-            var g = new GraphBase();
+            var g = new GraphBase(new BlockStatistics(height));
             string? line;
             using var reader = new StreamReader(filename);
             reader.ReadLine(); // skip the header.

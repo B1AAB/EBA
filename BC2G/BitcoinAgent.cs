@@ -102,7 +102,7 @@ namespace BC2G
 
             var g = new GraphBase(blockStatistics) { Timestamp = timestamp };
 
-            var generationTxGraph = new TransactionGraph();
+            var generationTxGraph = new TransactionGraph(blockStatistics);
 
             /// By definition, each block has a generative block that is the
             /// reward of the miner. Hence, this should never raise an 
@@ -131,7 +131,7 @@ namespace BC2G
                 async (tx, _cancellationToken) =>
                 {
                     _cancellationToken.ThrowIfCancellationRequested();
-                    await RunParallel(tx, g, txCache, cancellationToken);
+                    await RunParallel(tx, g, txCache, blockStatistics, cancellationToken);
                     Interlocked.Increment(ref pTxCount);
                     _logger.LogTransaction($"{pTxCount}/{txCount} ({pTxCount / txCount:p2})");
                     _cancellationToken.ThrowIfCancellationRequested();
@@ -144,9 +144,10 @@ namespace BC2G
             Transaction tx,
             GraphBase g,
             TxIndex txCache,
+            BlockStatistics blockStatistics,
             CancellationToken cancellationToken)
         {
-            var txGraph = new TransactionGraph();
+            var txGraph = new TransactionGraph(blockStatistics);
             cancellationToken.ThrowIfCancellationRequested();
 
             foreach (var input in tx.Inputs)

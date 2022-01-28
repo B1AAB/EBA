@@ -1,9 +1,14 @@
+using BC2G.Model;
 using System.Collections.Concurrent;
 
 namespace BC2G.Graph
 {
     public class TransactionGraph : GraphBase
     {
+        public TransactionGraph(BlockStatistics stats) : base(stats)
+        {
+        }
+
         public double TotalInputValue { set; get; }
         public double TotalOutputValue { set; get; }
 
