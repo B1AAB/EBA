@@ -267,9 +267,9 @@ namespace BC2G
                 Logger.LogStartProcessingBlock(height);
                 var blockStats = new BlockStatistics(height);
 
-                Logger.LogBlockProcessStatus(BPS.GetBlockHash);
+                //Logger.LogBlockProcessStatus(BPS.GetBlockHash);
                 var blockHash = await agent.GetBlockHash(height);
-                Logger.LogBlockProcessStatus(BPS.GetBlockHashDone, stopwatch.Elapsed.TotalSeconds);
+                //Logger.LogBlockProcessStatus(BPS.GetBlockHashDone, stopwatch.Elapsed.TotalSeconds);
 
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -284,9 +284,9 @@ namespace BC2G
                     break;
                 }
 
-                Logger.LogBlockProcessStatus(BPS.GetBlock);
+                //Logger.LogBlockProcessStatus(BPS.GetBlock);
                 var block = await agent.GetBlock(blockHash);
-                Logger.LogBlockProcessStatus(BPS.GetBlockDone, stopwatch.Elapsed.TotalSeconds);
+                //Logger.LogBlockProcessStatus(BPS.GetBlockDone, stopwatch.Elapsed.TotalSeconds);
 
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -300,12 +300,12 @@ namespace BC2G
                     break;
                 }
 
-                Logger.LogBlockProcessStatus(BPS.ProcessTransactions);
+                //Logger.LogBlockProcessStatus(BPS.ProcessTransactions);
                 GraphBase graph = new(blockStats);
                 try
                 {
                     graph = await agent.GetGraph(block, txCache, blockStats, cancellationToken);
-                    Logger.LogBlockProcessStatus(BPS.ProcessTransactionsDone, stopwatch.Elapsed.TotalSeconds);
+                    //Logger.LogBlockProcessStatus(BPS.ProcessTransactionsDone, stopwatch.Elapsed.TotalSeconds);
                 }
                 catch (OperationCanceledException)
                 {
@@ -349,10 +349,10 @@ namespace BC2G
                 }
 
                 _options.LastProcessedBlock = height;
-                Logger.LogFinishProcessingBlock(blockStats.Runtime.TotalSeconds);
+                //Logger.LogFinishProcessingBlock(blockStats.Runtime.TotalSeconds);
             }
 
-            Logger.LogFinishTraverse(cancellationToken.IsCancellationRequested);
+            //Logger.LogFinishTraverse(cancellationToken.IsCancellationRequested);
 
             // At this method's exist, the dispose method of
             // the types wrapped in `using` will be called that

@@ -87,6 +87,7 @@ namespace BC2G.Logging
             Log($"Export Directory: {exportPath}", true, ConsoleColor.DarkGray);
         }
 
+        
         public void InitBlocksTraverseLog(int from, int to)
         {
             _from = from;
@@ -114,9 +115,10 @@ namespace BC2G.Logging
             log.Info(message);
         }
 
+        
         public void LogStartProcessingBlock(int blockHeight)
         {
-            AsyncConsole.EraseBlockProgressReport();
+            //AsyncConsole.EraseBlockProgressReport();
 
             int completed = blockHeight - _from;
             double percentage = (completed / (double)(_to - _from)) * 100.0;
@@ -128,6 +130,7 @@ namespace BC2G.Logging
             AsyncConsole.WriteLine(msg, cursorTopOffset, cursorLeft, ConsoleColor.Cyan);
         }
 
+        /*
         public void LogFinishProcessingBlock(double runtime)
         {
             _runtimeMovingAverage.Add(runtime);
@@ -135,15 +138,16 @@ namespace BC2G.Logging
            // var msg = string.Format(template, runtime);
             //AsyncConsole.WriteLine(msg, cursorTopOffset, cursorLeft, ConsoleColor.DarkCyan);
             //log.Info(msg);
-        }
+        }*/
 
+        /*
         public static void LogFinishTraverse(bool cancelled)
         {
             var offset = _firstLineAfterBlockProgress;
             if (cancelled)
                 offset++;
             AsyncConsole.MoveCursorTo(0, offset);
-        }
+        }*/
 
         public void LogBlockProcessStatus(BPS status, double runtime = 0)
         {

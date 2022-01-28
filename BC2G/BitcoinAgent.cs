@@ -120,8 +120,8 @@ namespace BC2G
             g.RewardsAddresses = rewardAddresses;
             g.Enqueue(generationTxGraph);
 
-            double txCount = block.Transactions.Count;
-            int pTxCount = 1;
+            //double txCount = block.Transactions.Count;
+            //int pTxCount = 1;
 
             var options = new ParallelOptions() { CancellationToken = cancellationToken };
             // If cancelled, the following will throw the OperationCanceledException exception
@@ -132,8 +132,8 @@ namespace BC2G
                 {
                     _cancellationToken.ThrowIfCancellationRequested();
                     await RunParallel(tx, g, txCache, blockStatistics, cancellationToken);
-                    Interlocked.Increment(ref pTxCount);
-                    _logger.LogTransaction($"{pTxCount}/{txCount} ({pTxCount / txCount:p2})");
+                    //Interlocked.Increment(ref pTxCount);
+                    //_logger.LogTransaction($"{pTxCount}/{txCount} ({pTxCount / txCount:p2})");
                     _cancellationToken.ThrowIfCancellationRequested();
                 });
 
