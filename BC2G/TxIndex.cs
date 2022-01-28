@@ -68,7 +68,7 @@ namespace BC2G
         {
             var builder = new StringBuilder();
             foreach (var item in _utxoIdx)
-                builder.AppendLine(
+                builder.Append(
                     new TxIndexItem(
                         address: item.Value.Address,
                         value: item.Value.Value,
