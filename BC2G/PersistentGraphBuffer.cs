@@ -9,10 +9,12 @@ namespace BC2G
         private const string _delimiter = ",";
 
         private readonly AddressToIdMapper _mapper;
+        private readonly PersistentBlockStatistics _pBlockStatistics;
 
         public PersistentGraphBuffer(
             string filename,
             AddressToIdMapper mapper,
+            PersistentBlockStatistics pBlockStatistics,
             CancellationToken cancellationToken) : base(
                 filename,
                 cancellationToken,
@@ -20,11 +22,13 @@ namespace BC2G
                 { "Source", "Target", "Value", "EdgeType", "Timestamp" }))
         {
             _mapper = mapper;
+            _pBlockStatistics = pBlockStatistics;
         }
 
         public override string Serialize(GraphBase obj, CancellationToken cancellationToken)
         {
             obj.MergeQueuedTxGraphs(cancellationToken);
+            _pBlockStatistics.Enqueue(obj.BlockStatistics.ToString());
 
             var csvBuilder = new StringBuilder();
             foreach (var edge in obj.Edges)

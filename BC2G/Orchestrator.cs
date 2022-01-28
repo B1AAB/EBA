@@ -193,7 +193,12 @@ namespace BC2G
         private async Task TraverseBlocksAsync(
             BitcoinAgent agent, CancellationToken cancellationToken)
         {
-            var blocksStatistics = new ConcurrentQueue<BlockStatistics>();
+            // TODO: maybe this method can be implemented better/simpler 
+            // using Task Parallel Library (TPL); that can ideally replace
+            // the Persistent* types, and give a more natural flow to the
+            // current process.
+
+            //var blocksStatistics = new ConcurrentQueue<BlockStatistics>();
 
             var individualBlocksDir = Path.Combine(_options.OutputDir, "individual_blocks");
             if (_options.CreatePerBlockFiles && !Directory.Exists(individualBlocksDir))
@@ -207,9 +212,14 @@ namespace BC2G
             using var txCache = new TxIndex(_options.OutputDir, cancellationToken);
             using var serializer = new CSVSerializer(mapper);
 
+            var pBlockStat = new PersistentBlockStatistics(
+                Path.Combine(_options.OutputDir, "blocks_stats.tsv"), 
+                cancellationToken);
+
             var gBuffer = new PersistentGraphBuffer(
                 Path.Combine(_options.OutputDir, "edges.csv"),
-                mapper, 
+                mapper,
+                pBlockStat,
                 cancellationToken);
 
             // Parallelizing block traversal has more disadvantages than
@@ -296,7 +306,7 @@ namespace BC2G
                 GraphBase graph = new();
                 try
                 {
-                    graph = await agent.GetGraph(block, txCache, cancellationToken);
+                    graph = await agent.GetGraph(block, txCache, blockStats, cancellationToken);
                     Logger.LogBlockProcessStatus(BPS.ProcessTransactionsDone, stopwatch.Elapsed.TotalSeconds);
                 }
                 catch (OperationCanceledException)
@@ -322,20 +332,29 @@ namespace BC2G
                     break;
                 }
 
+                // TODO: stopwatch should not stop here, it should stop 
+                // after graph and all the related data are persisted. 
+                // However, since the graph and its related data are 
+                // serialized using the Persistent* type, it requires
+                // sending the stopwatch instance around to stop 
+                // at the momemnt the process completes, which makes
+                // it harder to read/follow. This should be fixed
+                // when this method is implemented using TPL. 
+                stopwatch.Stop();
+                blockStats.Runtime = stopwatch.Elapsed;
                 gBuffer.Enqueue(graph);
 
                 if (_options.CreatePerBlockFiles)
                 {
                     Logger.LogBlockProcessStatus(BPS.Serialize);
-                    serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"), blockStats);
+                    serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"));//, blockStats);
                 }
 
                 _options.LastProcessedBlock = height;
                 Logger.LogBlockProcessStatus(BPS.SerializeDone, stopwatch.Elapsed.TotalSeconds);
 
-                stopwatch.Stop();
-                blockStats.Runtime = stopwatch.Elapsed;
-                blocksStatistics.Enqueue(blockStats);
+
+                //blocksStatistics.Enqueue(blockStats);
 
                 Logger.LogFinishProcessingBlock(blockStats.Runtime.TotalSeconds);
             }
@@ -346,9 +365,10 @@ namespace BC2G
             //serializer.Serialize(graphsBuffer, graphsBufferFilename);
 
             Logger.Log("Serializing block status", true);
+            /*
             BlocksStatisticsSerializer.Serialize(
                 blocksStatistics,
-                Path.Combine(_options.OutputDir, "blocks_stats.tsv"));
+                Path.Combine(_options.OutputDir, "blocks_stats.tsv"));*/
 
             // At this method's exist, the dispose method of
             // the types wrapped in `using` will be called that

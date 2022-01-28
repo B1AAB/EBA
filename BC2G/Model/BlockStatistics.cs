@@ -2,7 +2,6 @@
 {
     public class BlockStatistics
     {
-        private const char _delimiter = '\t';
         public int Height { get; }
 
         private bool _isRuntimeSet = false;
@@ -39,6 +38,8 @@
         private readonly uint[] _edgeTypeFrequency =
             new uint[Enum.GetNames(typeof(EdgeType)).Length];
 
+        private const char _delimiter = '\t';
+
         public BlockStatistics(int height)
         {
             Height = height;
@@ -57,6 +58,16 @@
                     value);
         }
 
+        public static string GetHeader()
+        {
+            return string.Join(_delimiter, new string[]
+            {
+                "BlockHeight",
+                "Runtime",
+                string.Join(_delimiter, (EdgeType[]) Enum.GetValues(typeof(EdgeType)))
+            });
+        }
+
         public override string ToString()
         {
             return string.Join(_delimiter, new string[]
@@ -65,7 +76,8 @@
                 Runtime.ToString(),
                 string.Join(
                     _delimiter,
-                    _edgeTypeFrequency.Select((v, i) => v.ToString()).ToArray())
+                    _edgeTypeFrequency.Select((v, i) => v.ToString()).ToArray()),
+                Environment.NewLine
             });
         }
     }

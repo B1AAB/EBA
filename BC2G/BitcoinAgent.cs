@@ -93,13 +93,14 @@ namespace BC2G
         public async Task<GraphBase> GetGraph(
             Block block,
             TxIndex txCache,
+            BlockStatistics blockStatistics,
             CancellationToken cancellationToken)
         {
             /// Why using "mediantime" and not "time"? see the following BIP:
             /// https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
             uint timestamp = block.MedianTime;
 
-            var g = new GraphBase() { Timestamp = timestamp };
+            var g = new GraphBase(blockStatistics) { Timestamp = timestamp };
 
             var generationTxGraph = new TransactionGraph();
 

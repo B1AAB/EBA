@@ -22,13 +22,13 @@ namespace BC2G.Serializers
             _mapper = mapper;
         }
 
-        public override void Serialize(GraphBase g, string baseFilename, BlockStatistics stats)
+        public override void Serialize(GraphBase g, string baseFilename)//, BlockStatistics stats)
         {
             var nodesFilename = baseFilename + "_nodes.csv" + _tmpFilenamePostfix;
             var edgeFilename = baseFilename + "_edges.csv" + _tmpFilenamePostfix;
 
             WriteNodes(g, nodesFilename);
-            WriteEdges(g, edgeFilename, stats);
+            WriteEdges(g, edgeFilename);//, stats);
 
             _createdFiles.Add(nodesFilename);
             _createdFiles.Add(edgeFilename);
@@ -108,7 +108,7 @@ namespace BC2G.Serializers
             return nodeIds;
         }
 
-        private void WriteEdges(GraphBase g, string filename, BlockStatistics stats)
+        private void WriteEdges(GraphBase g, string filename)//, BlockStatistics stats)
         {
             var csvBuilder = new StringBuilder();
             csvBuilder.AppendLine(
@@ -131,7 +131,7 @@ namespace BC2G.Serializers
                         edge.Timestamp.ToString()
                     }));
 
-                stats.IncrementEdgeType(edge.Type);
+                //stats.IncrementEdgeType(edge.Type);
             }
 
             File.WriteAllText(filename, csvBuilder.ToString());

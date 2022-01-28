@@ -8,8 +8,6 @@ namespace BC2G.Graph
     {
         public const string CoinbaseTxLabel = "Coinbase";
 
-        public BlockStatistics Stats { get; } = new(0);
-
         public ReadOnlyCollection<Edge> Edges
         {
             get
@@ -33,13 +31,15 @@ namespace BC2G.Graph
         protected readonly ConcurrentDictionary<string, double> _sources = new();
         protected readonly ConcurrentDictionary<string, double> _targets = new();
 
+        public BlockStatistics BlockStatistics { set; get; }
+
         public uint Timestamp { get; set; }
 
         public List<string> RewardsAddresses = new();
 
         public GraphBase(BlockStatistics stats) : this()
         {
-            Stats = stats;
+            BlockStatistics = stats;
         }
         public GraphBase() { }
 
@@ -129,6 +129,7 @@ namespace BC2G.Graph
 
             _nodes.TryAdd(edge.Source, 0);
             _nodes.TryAdd(edge.Target, 0);
+            BlockStatistics.IncrementEdgeType(edge.Type);
         }
 
         public bool Equals(GraphBase? other)
