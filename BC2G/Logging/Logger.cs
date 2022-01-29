@@ -115,6 +115,13 @@ namespace BC2G.Logging
             log.Info(message);
         }
 
+        public void Log(Progress progress)
+        {
+            var msg = progress.ToString();
+            AsyncConsole.Write($"\r{msg}");
+            log.Info(msg);
+        }
+
         
         public void LogStartProcessingBlock(int blockHeight)
         {

@@ -70,7 +70,11 @@ namespace BC2G
             }
             catch (Exception e) when (e is not ClientInaccessible)
             {
-                throw new Exception($"Invalid height {height}");
+                throw;
+                // The exception can happen when the given block height 
+                // is invalid, or the service is not availabe (e.g., the 
+                // bitcoin agent is not responding. 
+                // throw new Exception($"Invalid height {height}");
             }
         }
 

@@ -8,6 +8,8 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
+using System.Threading.Tasks.Dataflow;
 
 namespace BC2G
 {
@@ -19,12 +21,16 @@ namespace BC2G
         private readonly string _statusFilename;
         private readonly Options _options;
 
+        private const string _delimiter = ",";
+
         public Logger Logger { set; get; }
         private const string _defaultLoggerRepoName = "EventsLog";
         private readonly string _loggerTimeStampFormat = "yyyyMMdd_HHmmssfffffff";
         private readonly string _maxLogfileSize = "2GB";
 
-        public Orchestrator(
+        private BitcoinAgent _agent;
+
+    public Orchestrator(
             Options options,
             HttpClient client,
             string statusFilename)
@@ -76,9 +82,11 @@ namespace BC2G
 
         public async Task<bool> RunAsync(CancellationToken cancellationToken)
         {
+            // TODO: these two may better to move the constructor. 
             Console.CursorVisible = false;
             if (!TryGetBitCoinAgent(out var agent))
                 return false;
+            _agent = agent;
 
             if (!AssertChain(agent, out ChainInfo chaininfo))
                 return false;
@@ -190,6 +198,197 @@ namespace BC2G
             }
         }
 
+        private async Task TraverseBlocksAsync_tpl(BitcoinAgent agent, CancellationToken cancellationToken)
+        {
+            // Declear resource shared across every block in the pipeline.
+            var edgesStream = File.AppendText(
+                Path.Combine(_options.OutputDir, "edges.csv"));
+            edgesStream.AutoFlush = true;
+
+            var blockStatsStream = File.AppendText(
+                Path.Combine(_options.OutputDir, "blocks_stats.tsv"));
+            blockStatsStream.AutoFlush = true;
+
+            var txCache = new TxIndex(_options.OutputDir, cancellationToken);
+
+            var mapper = new AddressToIdMapper(
+                _options.AddressIdMappingFilename,
+                AddressToIdMapper.Deserialize(_options.AddressIdMappingFilename),
+                cancellationToken);
+
+            int from = _options.LastProcessedBlock + 1;
+            int to = _options.ToExclusive;
+            var progress = new Progress(from, to);
+
+            // Create the pipeline.
+            var blockBuffer = new BufferBlock<DataContainer>(new DataflowBlockOptions
+            {
+                BoundedCapacity = 100,
+                CancellationToken = cancellationToken
+            });
+
+            var getBlockTB = new TransformBlock<DataContainer, DataContainer>(
+                GetBlock,
+                new ExecutionDataflowBlockOptions()
+                {
+                    BoundedCapacity = 100,
+                    MaxDegreeOfParallelism = 25,//5,
+                    CancellationToken = cancellationToken
+                });
+
+            var getGraphTB = new TransformBlock<DataContainer, DataContainer>(
+                GetGraph,
+                new ExecutionDataflowBlockOptions()
+                {
+                    BoundedCapacity = 100,
+                    MaxDegreeOfParallelism = 25, //Environment.ProcessorCount,
+                    CancellationToken = cancellationToken
+                });
+
+            var buildGraphTB = new TransformBlock<DataContainer, DataContainer>(
+                BuildGraph,
+                new ExecutionDataflowBlockOptions()
+                {
+                    BoundedCapacity = 100,
+                    MaxDegreeOfParallelism = Environment.ProcessorCount * 8,
+                    CancellationToken = cancellationToken
+                });
+
+            var serializeTB = new ActionBlock<DataContainer>(
+                Serialize,
+                new ExecutionDataflowBlockOptions()
+                {
+                    //BoundedCapacity = 100,
+                    MaxDegreeOfParallelism = 1,
+                    CancellationToken = cancellationToken
+                });
+
+            var linkOptions = new DataflowLinkOptions()
+            { PropagateCompletion = true };
+
+            blockBuffer.LinkTo(getBlockTB, linkOptions);
+            getBlockTB.LinkTo(getGraphTB, linkOptions);
+            getGraphTB.LinkTo(buildGraphTB, linkOptions);
+            buildGraphTB.LinkTo(serializeTB, linkOptions);
+
+            from = 719000;
+            for (int height = from; height < to; height++)
+            {
+                var container = new DataContainer(
+                    height, progress, edgesStream, blockStatsStream,
+                    txCache, mapper, cancellationToken);
+
+                //getBlockTB.Post(container);
+                await blockBuffer.SendAsync(container);
+            }
+
+            blockBuffer.Complete();
+            try
+            {
+                serializeTB.Completion.Wait(cancellationToken);
+            }
+            catch (OperationCanceledException e)
+            {
+
+            }
+            catch (Exception e)
+            {
+
+            }
+            finally
+            {
+                txCache.Dispose();
+            }
+        }
+
+        private async Task<DataContainer> GetBlock(DataContainer c)
+        {
+            try
+            {
+                Logger.Log($"Start getting block info {c.BlockHeight}.");
+                c.Stopwatch.Start();
+                var blockHash = await _agent.GetBlockHash(c.BlockHeight);
+                var block = await _agent.GetBlock(blockHash);
+                c.Block = block;
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+
+            Logger.Log($"Received block hash and data for block {c.BlockHeight}.");
+            return c;
+        }
+
+        private async Task<DataContainer> GetGraph(DataContainer c)
+        {            
+            try
+            {
+                Logger.Log($"Start getting block {c.BlockHeight}.");
+                GraphBase graph = new(c.BlockStatistics);
+                // TODO: move txCache to agent constructor. 
+                graph = await _agent.GetGraph(c.Block, c.TxCache, c.BlockStatistics, c.CancellationToken);
+                c.GraphBase = graph;
+                Logger.Log($"Received graph for block height {c.BlockHeight}.");
+                return c;
+                //Logger.LogBlockProcessStatus(BPS.ProcessTransactionsDone, stopwatch.Elapsed.TotalSeconds);
+            }
+            catch (OperationCanceledException)
+            {
+                //Logger.LogCancelledTasks(
+                //break;
+                // TODO: FIX ME. .................................
+                return c;
+            }
+        }
+
+        private DataContainer BuildGraph(DataContainer c)
+        {
+            try
+            {
+                Logger.Log($"Start building graph {c.BlockHeight}.");
+                c.GraphBase.MergeQueuedTxGraphs(c.CancellationToken);
+                Logger.Log($"Built graph for block height {c.BlockHeight}.");
+            }
+            catch (Exception e)
+            {
+
+            }
+            return c;
+        }
+
+        private void Serialize(DataContainer c)
+        {
+            try
+            {
+                Logger.Log($"started serialization for {c.BlockHeight}");
+                var csvBuilder = new StringBuilder();
+                foreach (var edge in c.GraphBase.Edges)
+                    csvBuilder.AppendLine(
+                        string.Join(_delimiter, new string[]
+                        {
+                        c.Mapper.GetId(edge.Source).ToString(),
+                        c.Mapper.GetId(edge.Target).ToString(),
+                        edge.Value.ToString(),
+                        ((byte)edge.Type).ToString(),
+                        edge.Timestamp.ToString()
+                        }));
+                c.EdgesStreamWriter.Write(csvBuilder.ToString());
+
+                c.Stopwatch.Stop();
+                c.BlockStatistics.Runtime = c.Stopwatch.Elapsed;
+                c.BlockStatsStreamWriter.Write(c.BlockStatistics.ToString());
+
+                //c.Progress.IncrementProcessed();
+                c.Progress.RecordProcessed(c.Block.TransactionsCount, c.BlockStatistics.Runtime.TotalSeconds);
+            }
+            catch (Exception ex)
+            {
+
+            }
+            Logger.Log(c.Progress);
+        }
+
         private async Task TraverseBlocksAsync(
             BitcoinAgent agent, CancellationToken cancellationToken)
         {
@@ -220,6 +419,18 @@ namespace BC2G
                 pBlockStat,
                 cancellationToken);
 
+            /// Multiple stategies for concurrently running processing
+            /// blocks are tested, among them are paralle.For,
+            /// parallel.Foreach, and Tasks.Dataflow (TPL dataflow).
+            /// They all add additional complexity with minor performance
+            /// improvement, and sometimes (mainly with TPL), significant
+            /// slow-down. 
+            /// CPU profiling shows the hottest line is when sending/getting
+            /// requests to/from the bitcoin clinet. Hence, the slowest 
+            /// part of the application is getting data from the 
+            /// Bitcoin agent. And through experiments, submitting more
+            /// concurrent requests does not speed up. 
+
             // Parallelizing block traversal has more disadvantages than
             // advantages it could bring. One draw back is related to
             // caching transactions, where of a block are cached for faster
@@ -245,8 +456,9 @@ namespace BC2G
             Logger.InitBlocksTraverseLog(_options.FromInclusive, _options.ToExclusive);
             AsyncConsole.BookmarkCurrentLine();
 
+            /*
             var blockHeightQueue = new ConcurrentQueue<int>();
-            for(int h = _options.LastProcessedBlock + 1; h< _options.ToExclusive; h++)
+            for (int h = _options.LastProcessedBlock + 1; h < _options.ToExclusive; h++)
                 blockHeightQueue.Enqueue(h);
 
 
@@ -254,9 +466,9 @@ namespace BC2G
             {
                 blockHeightQueue.TryDequeue(out var h);
                 ProcessBlock(agent, gBuffer, serializer, txCache, h, individualBlocksDir, cancellationToken).Wait();
-            });
+            });*/
 
-            for (int height = _options.LastProcessedBlock + 1; height < _options.ToExclusive; height++)
+            for (int height = 719000 /*_options.LastProcessedBlock + 1*/; height < _options.ToExclusive; height++)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -478,7 +690,10 @@ namespace BC2G
             if (!disposed)
             {
                 if (disposing)
+                {
                     Logger.Dispose();
+                    //_txCache.Dispose();
+                }
 
                 disposed = true;
             }
