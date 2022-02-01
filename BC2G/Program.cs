@@ -35,7 +35,7 @@ namespace BC2G
 
             var client = new HttpClient();
             client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.UserAgent.Clear();
+            //client.DefaultRequestHeaders.UserAgent.Clear();
             client.DefaultRequestHeaders.Add("User-Agent", "BitcoinAgent");
 
             try

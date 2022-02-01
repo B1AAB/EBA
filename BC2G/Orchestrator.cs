@@ -245,6 +245,17 @@ namespace BC2G
             Logger.InitBlocksTraverseLog(_options.FromInclusive, _options.ToExclusive);
             AsyncConsole.BookmarkCurrentLine();
 
+            var blockHeightQueue = new ConcurrentQueue<int>();
+            for(int h = _options.LastProcessedBlock + 1; h< _options.ToExclusive; h++)
+                blockHeightQueue.Enqueue(h);
+
+
+            Parallel.For(0, blockHeightQueue.Count, i =>
+            {
+                blockHeightQueue.TryDequeue(out var h);
+                ProcessBlock(agent, gBuffer, serializer, txCache, h, individualBlocksDir, cancellationToken).Wait();
+            });
+
             for (int height = _options.LastProcessedBlock + 1; height < _options.ToExclusive; height++)
             {
                 if (cancellationToken.IsCancellationRequested)
@@ -360,6 +371,98 @@ namespace BC2G
             Logger.Log("Finalizing serialized files.", true);
 
             await JsonSerializer<Options>.SerializeAsync(_options, _statusFilename);
+        }
+
+        private async Task ProcessBlock(BitcoinAgent agent, PersistentGraphBuffer gBuffer, CSVSerializer serializer, TxIndex txCache, int height, string individualBlocksDir, CancellationToken cancellationToken)
+        {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            Logger.LogStartProcessingBlock(height);
+            var blockStats = new BlockStatistics(height);
+
+            //Logger.LogBlockProcessStatus(BPS.GetBlockHash);
+            var blockHash = await agent.GetBlockHash(height);
+            //Logger.LogBlockProcessStatus(BPS.GetBlockHashDone, stopwatch.Elapsed.TotalSeconds);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                Logger.LogCancelledTasks(
+                    new BPS[]
+                    {
+                            BPS.GetBlockCancelled,
+                            BPS.ProcessTransactionsCancelled,
+                            BPS.SerializeCancelled,
+                            BPS.Cancelled
+                    });
+                return;
+            }
+
+            //Logger.LogBlockProcessStatus(BPS.GetBlock);
+            var block = await agent.GetBlock(blockHash);
+            //Logger.LogBlockProcessStatus(BPS.GetBlockDone, stopwatch.Elapsed.TotalSeconds);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                Logger.LogCancelledTasks(
+                    new BPS[]
+                    {
+                            BPS.ProcessTransactionsCancelled,
+                            BPS.SerializeCancelled,
+                            BPS.Cancelled
+                    });
+                return;
+            }
+
+            //Logger.LogBlockProcessStatus(BPS.ProcessTransactions);
+            GraphBase graph = new(blockStats);
+            try
+            {
+                graph = await agent.GetGraph(block, txCache, blockStats, cancellationToken);
+                //Logger.LogBlockProcessStatus(BPS.ProcessTransactionsDone, stopwatch.Elapsed.TotalSeconds);
+            }
+            catch (OperationCanceledException)
+            {
+                Logger.LogCancelledTasks(
+                    new BPS[]
+                    {
+                            BPS.ProcessTransactionsCancelled,
+                            BPS.SerializeCancelled,
+                            BPS.Cancelled
+                    });
+                return;
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                Logger.LogCancelledTasks(
+                    new BPS[]
+                    {
+                            BPS.SerializeCancelled,
+                            BPS.Cancelled
+                    });
+                return;
+            }
+
+            // TODO: stopwatch should not stop here, it should stop 
+            // after graph and all the related data are persisted. 
+            // However, since the graph and its related data are 
+            // serialized using the Persistent* type, it requires
+            // sending the stopwatch instance around to stop 
+            // at the momemnt the process completes, which makes
+            // it harder to read/follow. This should be fixed
+            // when this method is implemented using TPL. 
+            stopwatch.Stop();
+            blockStats.Runtime = stopwatch.Elapsed;
+            gBuffer.Enqueue(graph);
+
+            if (_options.CreatePerBlockFiles)
+            {
+                Logger.LogBlockProcessStatus(BPS.Serialize);
+                serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"));//, blockStats);
+            }
+
+            _options.LastProcessedBlock = height;
         }
 
         // The IDisposable interface is implemented following .NET docs:
