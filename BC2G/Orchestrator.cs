@@ -389,6 +389,66 @@ namespace BC2G
             Logger.Log(c.Progress);
         }
 
+        private async Task TraverseBlocksAsync_parallel_for(
+            BitcoinAgent agent, CancellationToken cancellationToken)
+        {
+            // TODO: maybe this method can be implemented better/simpler 
+            // using Task Parallel Library (TPL); that can ideally replace
+            // the Persistent* types, and give a more natural flow to the
+            // current process.
+
+            var individualBlocksDir = Path.Combine(_options.OutputDir, "individual_blocks");
+            if (_options.CreatePerBlockFiles && !Directory.Exists(individualBlocksDir))
+                Directory.CreateDirectory(individualBlocksDir);
+
+            using var mapper = new AddressToIdMapper(
+                _options.AddressIdMappingFilename,
+                AddressToIdMapper.Deserialize(_options.AddressIdMappingFilename),
+                cancellationToken);
+
+            using var txCache = new TxIndex(_options.OutputDir, cancellationToken);
+            using var serializer = new CSVSerializer(mapper);
+
+            var pBlockStat = new PersistentBlockStatistics(
+                Path.Combine(_options.OutputDir, "blocks_stats.tsv"),
+                cancellationToken);
+
+            var gBuffer = new PersistentGraphBuffer(
+                Path.Combine(_options.OutputDir, "edges.csv"),
+                mapper,
+                pBlockStat,
+                cancellationToken);
+
+
+            Logger.Log(
+                $"Traversing blocks [{_options.FromInclusive:n0}, " +
+                $"{_options.ToExclusive:n0}):", writeLine: true);
+            Logger.InitBlocksTraverseLog(_options.FromInclusive, _options.ToExclusive);
+            AsyncConsole.BookmarkCurrentLine();
+
+            
+            var blockHeightQueue = new ConcurrentQueue<int>();
+            for (int h = _options.LastProcessedBlock + 1; h < _options.ToExclusive; h++)
+                blockHeightQueue.Enqueue(h);
+
+
+            Parallel.For(0, blockHeightQueue.Count, i =>
+            {
+                blockHeightQueue.TryDequeue(out var h);
+                ProcessBlock(agent, gBuffer, serializer, txCache, h, individualBlocksDir, cancellationToken).Wait();
+            });
+
+            //Logger.LogFinishTraverse(cancellationToken.IsCancellationRequested);
+
+            // At this method's exist, the dispose method of
+            // the types wrapped in `using` will be called that
+            // finalizes persisting output.
+            Logger.Log("Finalizing serialized files.", true);
+
+            await JsonSerializer<Options>.SerializeAsync(_options, _statusFilename);
+        }
+
+
         private async Task TraverseBlocksAsync(
             BitcoinAgent agent, CancellationToken cancellationToken)
         {
@@ -455,18 +515,6 @@ namespace BC2G
                 $"{_options.ToExclusive:n0}):", writeLine: true);
             Logger.InitBlocksTraverseLog(_options.FromInclusive, _options.ToExclusive);
             AsyncConsole.BookmarkCurrentLine();
-
-            /*
-            var blockHeightQueue = new ConcurrentQueue<int>();
-            for (int h = _options.LastProcessedBlock + 1; h < _options.ToExclusive; h++)
-                blockHeightQueue.Enqueue(h);
-
-
-            Parallel.For(0, blockHeightQueue.Count, i =>
-            {
-                blockHeightQueue.TryDequeue(out var h);
-                ProcessBlock(agent, gBuffer, serializer, txCache, h, individualBlocksDir, cancellationToken).Wait();
-            });*/
 
             for (int height = 719000 /*_options.LastProcessedBlock + 1*/; height < _options.ToExclusive; height++)
             {
