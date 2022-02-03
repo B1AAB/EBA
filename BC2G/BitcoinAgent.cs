@@ -124,14 +124,12 @@ namespace BC2G
             g.RewardsAddresses = rewardAddresses;
             g.Enqueue(generationTxGraph);
 
-            //double txCount = block.Transactions.Count;
-            //int pTxCount = 1;
 
-            var options = new ParallelOptions() { CancellationToken = cancellationToken };
             // If cancelled, the following will throw the OperationCanceledException exception
             // which is caught at the orchestrator in order to better handle logging.
             await Parallel.ForEachAsync(
                 block.Transactions.Where(x => !x.IsCoinbase),
+
                 async (tx, _cancellationToken) =>
                 {
                     _cancellationToken.ThrowIfCancellationRequested();
@@ -166,6 +164,7 @@ namespace BC2G
                 {
                     // Extended transaction: details of the transaction are
                     // retrieved from the bitcoin client.
+                    //var exTx = await GetTransaction(input.TxId);
                     var exTx = await GetTransaction(input.TxId);
                     var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
                     if (vout == null)

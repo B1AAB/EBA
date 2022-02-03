@@ -4,12 +4,8 @@ using BC2G.Graph;
 using BC2G.Logging;
 using BC2G.Model;
 using BC2G.Serializers;
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Threading.Tasks.Dataflow;
 
 namespace BC2G
 {
@@ -269,6 +265,7 @@ namespace BC2G
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
+                    /*
                     Logger.LogCancelledTasks(
                         new BPS[]
                         {
@@ -277,7 +274,7 @@ namespace BC2G
                             BPS.ProcessTransactionsCancelled,
                             BPS.SerializeCancelled,
                             BPS.Cancelled
-                        });
+                        });*/
                     break;
                 }
 
@@ -293,6 +290,7 @@ namespace BC2G
 
                 if (cancellationToken.IsCancellationRequested)
                 {
+                    /*
                     Logger.LogCancelledTasks(
                         new BPS[]
                         {
@@ -300,7 +298,7 @@ namespace BC2G
                             BPS.ProcessTransactionsCancelled,
                             BPS.SerializeCancelled,
                             BPS.Cancelled
-                        });
+                        });*/
                     break;
                 }
 
@@ -310,13 +308,14 @@ namespace BC2G
 
                 if (cancellationToken.IsCancellationRequested)
                 {
+                    /*
                     Logger.LogCancelledTasks(
                         new BPS[]
                         {
                             BPS.ProcessTransactionsCancelled,
                             BPS.SerializeCancelled,
                             BPS.Cancelled
-                        });
+                        });*/
                     break;
                 }
 
@@ -329,24 +328,26 @@ namespace BC2G
                 }
                 catch (OperationCanceledException)
                 {
+                    /*
                     Logger.LogCancelledTasks(
                         new BPS[]
                         {
                             BPS.ProcessTransactionsCancelled,
                             BPS.SerializeCancelled,
                             BPS.Cancelled
-                        });
+                        });*/
                     break;
                 }
 
                 if (cancellationToken.IsCancellationRequested)
                 {
+                    /*
                     Logger.LogCancelledTasks(
                         new BPS[]
                         {
                             BPS.SerializeCancelled,
                             BPS.Cancelled
-                        });
+                        });*/
                     break;
                 }
 

@@ -75,7 +75,7 @@ namespace BC2G
         private static bool ConsoleEventCallback(
             EventType eventType)
         {
-            // NOTE THAT THIS METHOD NEEDS TO WRAP UP IN 5 SECONDS, 
+            // NOTE THAT THIS METHOD NEEDS TO WRAP-UP IN 5 SECONDS, 
             // OR IT WILL BE FORCE-TERMINATED BY HOST.
 
             switch (eventType)

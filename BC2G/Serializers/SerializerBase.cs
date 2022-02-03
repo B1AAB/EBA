@@ -1,5 +1,4 @@
 ﻿using BC2G.Graph;
-using BC2G.Model;
 
 namespace BC2G.Serializers
 {
