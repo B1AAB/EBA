@@ -100,17 +100,17 @@ namespace BC2G
             BlockStatistics blockStatistics,
             CancellationToken cancellationToken)
         {
-            /// Why using "mediantime" and not "time"? see the following BIP:
-            /// https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
+            // Why using "mediantime" and not "time"? see the following BIP:
+            // https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
             uint timestamp = block.MedianTime;
 
             var g = new GraphBase(blockStatistics) { Timestamp = timestamp };
 
             var generationTxGraph = new TransactionGraph(blockStatistics);
 
-            /// By definition, each block has a generative block that is the
-            /// reward of the miner. Hence, this should never raise an 
-            /// exception if the block is not corrupt.
+            // By definition, each block has a generative block that is the
+            // reward of the miner. Hence, this should never raise an 
+            // exception if the block is not corrupt.
             var coinbaseTx = block.Transactions.First(x => x.IsCoinbase);
             var rewardAddresses = new List<string>();
             foreach (var output in coinbaseTx.Outputs.Where(x => x.IsValueTransfer))

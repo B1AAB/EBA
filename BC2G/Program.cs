@@ -62,8 +62,7 @@ namespace BC2G
                 }
 
                 var success = orchestrator.RunAsync(cancellationToken).Result;
-                if (!success)
-                    Environment.Exit(1);
+                Environment.Exit(success ? 0 : 1);
             }
             catch (Exception e)
             {
