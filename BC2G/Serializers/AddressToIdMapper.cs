@@ -2,13 +2,13 @@
 
 namespace BC2G.Serializers
 {
-    public class AddressToIdMapper : PersistentObject<(int, string)>
+    public class AddressToIdMapper : PersistentObject<(string, string)>
     {
         private const string _delimiter = "\t";
 
         private readonly object _locker = new();
 
-        private readonly ConcurrentDictionary<string, int> _mappings;
+        private readonly ConcurrentDictionary<string, string> _mappings;
 
         // Cannot take the filename and call the Deserializers
         // from the constructor, because the base type needs to
@@ -21,7 +21,7 @@ namespace BC2G.Serializers
 
         public AddressToIdMapper(
             string filename,
-            ConcurrentDictionary<string, int> mappings,
+            ConcurrentDictionary<string, string> mappings,
             CancellationToken cancellationToken) : base(
                 filename,
                 cancellationToken)
@@ -29,20 +29,23 @@ namespace BC2G.Serializers
             _mappings = mappings;
         }
 
-        public int GetId(string address)
+        public string GetId(string address)
         {
             lock (_locker)
             {
-                var id = _mappings.GetOrAdd(address, _mappings.Count);
-                if (id == _mappings.Count - 1)
+                // Potential ID is set to hex of number of items 
+                // currently in the _mappings dictionary.
+                var potentialId = _mappings.Count.ToString("X");
+                var id = _mappings.GetOrAdd(address, potentialId);
+                if (id == potentialId)
                     Enqueue((id, address));
                 return id;
             }
         }
 
-        public static ConcurrentDictionary<string, int> Deserialize(string filename)
+        public static ConcurrentDictionary<string, string> Deserialize(string filename)
         {
-            var mappings = new ConcurrentDictionary<string, int>();
+            var mappings = new ConcurrentDictionary<string, string>();
 
             if (!File.Exists(filename))
                 return mappings;
@@ -55,13 +58,13 @@ namespace BC2G.Serializers
                 if (sLine.Length != 2)
                     throw new FormatException(
                         $"Expected two columns, found {sLine.Length}: {line}");
-                mappings.TryAdd(sLine[1], int.Parse(sLine[0]));
+                mappings.TryAdd(sLine[1], sLine[0]);
             }
 
             return mappings;
         }
 
-        public override string Serialize((int, string) obj, CancellationToken cancellationToken)
+        public override string Serialize((string, string) obj, CancellationToken cancellationToken)
         {
             return $"{obj.Item1}{_delimiter}{obj.Item2}{Environment.NewLine}";
         }

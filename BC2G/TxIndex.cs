@@ -21,7 +21,7 @@ namespace BC2G
         private readonly TransactionIndex _txIndex;
         private readonly ConcurrentDictionary<string, TxIndexItem> _utxoIdx = new();
 
-        private readonly Random _random = new Random();
+        private readonly Random _random = new();
 
         public TxIndex(string outputDir, CancellationToken cancellationToken)
         {

@@ -35,8 +35,8 @@ namespace BC2G
                 csvBuilder.AppendLine(
                     string.Join(_delimiter, new string[]
                     {
-                        _mapper.GetId(edge.Source).ToString(),
-                        _mapper.GetId(edge.Target).ToString(),
+                        _mapper.GetId(edge.Source),
+                        _mapper.GetId(edge.Target),
                         edge.Value.ToString(),
                         ((byte)edge.Type).ToString(),
                         edge.Timestamp.ToString()
