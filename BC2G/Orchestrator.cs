@@ -4,6 +4,7 @@ using BC2G.Graph;
 using BC2G.Logging;
 using BC2G.Model;
 using BC2G.Serializers;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 
@@ -194,14 +195,10 @@ namespace BC2G
             }
         }
 
+
         private async Task TraverseBlocksAsync(
             BitcoinAgent agent, CancellationToken cancellationToken)
         {
-            // TODO: maybe this method can be implemented better/simpler 
-            // using Task Parallel Library (TPL); that can ideally replace
-            // the Persistent* types, and give a more natural flow to the
-            // current process.
-
             var individualBlocksDir = Path.Combine(_options.OutputDir, "individual_blocks");
             if (_options.CreatePerBlockFiles && !Directory.Exists(individualBlocksDir))
                 Directory.CreateDirectory(individualBlocksDir);
@@ -215,7 +212,7 @@ namespace BC2G
             using var serializer = new CSVSerializer(mapper);
 
             var pBlockStat = new PersistentBlockStatistics(
-                Path.Combine(_options.OutputDir, "blocks_stats.tsv"), 
+                Path.Combine(_options.OutputDir, "blocks_stats.tsv"),
                 cancellationToken);
 
             var gBuffer = new PersistentGraphBuffer(
@@ -224,154 +221,32 @@ namespace BC2G
                 pBlockStat,
                 cancellationToken);
 
-            // Multiple stategies for concurrently running processing
-            // blocks are tested, among them are Paralle.For,
-            // Parallel.Foreach, and Tasks.Dataflow (TPL dataflow).
-            // They all add additional complexity with minor performance
-            // improvement, and sometimes (mainly with TPL), significant
-            // slow-down. 
-            // CPU profiling shows the hottest line is when sending/getting
-            // requests to/from the bitcoin clinet. Hence, the slowest 
-            // part of the application is getting data from the 
-            // Bitcoin agent. And through experiments, submitting more
-            // concurrent requests does not speed up. 
-
-            // Parallelizing block traversal has more disadvantages than
-            // advantages it could bring. One draw back is related to
-            // caching transactions, where of a block are cached for faster
-            // processing of subsequent blocks, however, when parallelized
-            // this optimization may not be fully applicable. For instance,
-            // consider traversing blocks 0-200 and the parallelizer
-            // partitioner to split the interval to thread_1: 0-100 and
-            // thread_2: 100-200. If blocks 100-200 are referencing
-            // transactions in blocks 0-100, those transactions may not
-            // be in cache yet, hence, BitCoinAgent will need to query
-            // Bitcoin client for those transactions, which is considerably
-            // slower than using the built-in cache. Partitioner can be
-            // adjusted to assign threads as thread_1:0, thread_2:1,
-            // thread_1:2, thread_2:3, and so on. This might suffer less
-            // than the previous partitioning, and a good techniuqe to
-            // implement it is TPL. However, it needs to be tested
-            // if/how-much performance optimization it delivers and if
-            // it balaces with complications of implementing it.
-
             Logger.Log(
                 $"Traversing blocks [{_options.FromInclusive:n0}, " +
                 $"{_options.ToExclusive:n0}):", writeLine: true);
             Logger.InitBlocksTraverseLog(_options.FromInclusive, _options.ToExclusive);
             AsyncConsole.BookmarkCurrentLine();
 
-            for (int height = /*719000*/ _options.LastProcessedBlock + 1; height < _options.ToExclusive; height++)
+            var blockHeightQueue = new ConcurrentQueue<int>();
+            for (int h = _options.LastProcessedBlock + 1; h < 20000/*_options.ToExclusive*/; h++)
+                blockHeightQueue.Enqueue(h);
+
+            var parallelOptions = new ParallelOptions()
+            {
+                MaxDegreeOfParallelism = _options.MaxConcurrentBlocks
+            };
+
+            // Have tested TPL dataflow as alternative to Parallel.For,
+            // it adds more complexity with little performance improvements,
+            // and in some cases, slower than Parallel.For and sequential traversal.
+            Parallel.For(0, blockHeightQueue.Count, parallelOptions, (i, state) =>
             {
                 if (cancellationToken.IsCancellationRequested)
-                {
-                    /*
-                    Logger.LogCancelledTasks(
-                        new BPS[]
-                        {
-                            BPS.GetBlockHashCancelled,
-                            BPS.GetBlockCancelled,
-                            BPS.ProcessTransactionsCancelled,
-                            BPS.SerializeCancelled,
-                            BPS.Cancelled
-                        });*/
-                    break;
-                }
+                    state.Break();
 
-                var stopwatch = new Stopwatch();
-                stopwatch.Start();
-
-                Logger.LogStartProcessingBlock(height);
-                var blockStats = new BlockStatistics(height);
-
-                //Logger.LogBlockProcessStatus(BPS.GetBlockHash);
-                var blockHash = await agent.GetBlockHash(height);
-                //Logger.LogBlockProcessStatus(BPS.GetBlockHashDone, stopwatch.Elapsed.TotalSeconds);
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    /*
-                    Logger.LogCancelledTasks(
-                        new BPS[]
-                        {
-                            BPS.GetBlockCancelled,
-                            BPS.ProcessTransactionsCancelled,
-                            BPS.SerializeCancelled,
-                            BPS.Cancelled
-                        });*/
-                    break;
-                }
-
-                //Logger.LogBlockProcessStatus(BPS.GetBlock);
-                var block = await agent.GetBlock(blockHash);
-                //Logger.LogBlockProcessStatus(BPS.GetBlockDone, stopwatch.Elapsed.TotalSeconds);
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    /*
-                    Logger.LogCancelledTasks(
-                        new BPS[]
-                        {
-                            BPS.ProcessTransactionsCancelled,
-                            BPS.SerializeCancelled,
-                            BPS.Cancelled
-                        });*/
-                    break;
-                }
-
-                //Logger.LogBlockProcessStatus(BPS.ProcessTransactions);
-                GraphBase graph = new(blockStats);
-                try
-                {
-                    graph = await agent.GetGraph(block, txCache, blockStats, cancellationToken);
-                    //Logger.LogBlockProcessStatus(BPS.ProcessTransactionsDone, stopwatch.Elapsed.TotalSeconds);
-                }
-                catch (OperationCanceledException)
-                {
-                    /*
-                    Logger.LogCancelledTasks(
-                        new BPS[]
-                        {
-                            BPS.ProcessTransactionsCancelled,
-                            BPS.SerializeCancelled,
-                            BPS.Cancelled
-                        });*/
-                    break;
-                }
-
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    /*
-                    Logger.LogCancelledTasks(
-                        new BPS[]
-                        {
-                            BPS.SerializeCancelled,
-                            BPS.Cancelled
-                        });*/
-                    break;
-                }
-
-                // TODO: stopwatch should not stop here, it should stop 
-                // after graph and all the related data are persisted. 
-                // However, since the graph and its related data are 
-                // serialized using the Persistent* type, it requires
-                // sending the stopwatch instance around to stop 
-                // at the momemnt the process completes, which makes
-                // it harder to read/follow. This should be fixed
-                // when this method is implemented using TPL. 
-                stopwatch.Stop();
-                blockStats.Runtime = stopwatch.Elapsed;
-                gBuffer.Enqueue(graph);
-
-                if (_options.CreatePerBlockFiles)
-                {
-                    Logger.LogBlockProcessStatus(BPS.Serialize);
-                    serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"));//, blockStats);
-                }
-
-                _options.LastProcessedBlock = height;
-                //Logger.LogFinishProcessingBlock(blockStats.Runtime.TotalSeconds);
-            }
+                blockHeightQueue.TryDequeue(out var h);
+                ProcessBlock(agent, gBuffer, serializer, txCache, h, individualBlocksDir, cancellationToken).Wait();
+            });
 
             //Logger.LogFinishTraverse(cancellationToken.IsCancellationRequested);
 
@@ -381,6 +256,125 @@ namespace BC2G
             Logger.Log("Finalizing serialized files.", true);
 
             await JsonSerializer<Options>.SerializeAsync(_options, _statusFilename);
+        }
+
+        private async Task ProcessBlock(
+            BitcoinAgent agent, 
+            PersistentGraphBuffer gBuffer, 
+            CSVSerializer serializer, 
+            TxIndex txCache, 
+            int height, 
+            string individualBlocksDir, 
+            CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                /*
+                Logger.LogCancelledTasks(
+                    new BPS[]
+                    {
+                        BPS.GetBlockHashCancelled,
+                        BPS.GetBlockCancelled,
+                        BPS.ProcessTransactionsCancelled,
+                        BPS.SerializeCancelled,
+                        BPS.Cancelled
+                    });*/
+                return;
+            }
+
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            Logger.LogStartProcessingBlock(height);
+            var blockStats = new BlockStatistics(height);
+
+            //Logger.LogBlockProcessStatus(BPS.GetBlockHash);
+            var blockHash = await agent.GetBlockHash(height);
+            //Logger.LogBlockProcessStatus(BPS.GetBlockHashDone, stopwatch.Elapsed.TotalSeconds);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                /*
+                Logger.LogCancelledTasks(
+                    new BPS[]
+                    {
+                        BPS.GetBlockCancelled,
+                        BPS.ProcessTransactionsCancelled,
+                        BPS.SerializeCancelled,
+                        BPS.Cancelled
+                    });*/
+                return;
+            }
+
+            //Logger.LogBlockProcessStatus(BPS.GetBlock);
+            var block = await agent.GetBlock(blockHash);
+            //Logger.LogBlockProcessStatus(BPS.GetBlockDone, stopwatch.Elapsed.TotalSeconds);
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                /*
+                Logger.LogCancelledTasks(
+                    new BPS[]
+                    {
+                        BPS.ProcessTransactionsCancelled,
+                        BPS.SerializeCancelled,
+                        BPS.Cancelled
+                    });*/
+                return;
+            }
+
+            //Logger.LogBlockProcessStatus(BPS.ProcessTransactions);
+            GraphBase graph = new(blockStats);
+            try
+            {
+                graph = await agent.GetGraph(block, txCache, blockStats, cancellationToken);
+                //Logger.LogBlockProcessStatus(BPS.ProcessTransactionsDone, stopwatch.Elapsed.TotalSeconds);
+            }
+            catch (OperationCanceledException)
+            {
+                /*
+                Logger.LogCancelledTasks(
+                    new BPS[]
+                    {
+                        BPS.ProcessTransactionsCancelled,
+                        BPS.SerializeCancelled,
+                        BPS.Cancelled
+                    });*/
+                return;
+            }
+
+            if (cancellationToken.IsCancellationRequested)
+            {
+                /*
+                Logger.LogCancelledTasks(
+                    new BPS[]
+                    {
+                        BPS.SerializeCancelled,
+                        BPS.Cancelled
+                    });*/
+                return;
+            }
+
+            // TODO: stopwatch should not stop here, it should stop 
+            // after graph and all the related data are persisted. 
+            // However, since the graph and its related data are 
+            // serialized using the Persistent* type, it requires
+            // sending the stopwatch instance around to stop 
+            // at the momemnt the process completes, which makes
+            // it harder to read/follow. This should be fixed
+            // when this method is implemented using TPL. 
+            stopwatch.Stop();
+            blockStats.Runtime = stopwatch.Elapsed;
+            gBuffer.Enqueue(graph);
+
+            if (_options.CreatePerBlockFiles)
+            {
+                Logger.LogBlockProcessStatus(BPS.Serialize);
+                serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"));//, blockStats);
+            }
+
+            _options.LastProcessedBlock = height;
+            //Logger.LogFinishProcessingBlock(blockStats.Runtime.TotalSeconds);
         }
 
         // The IDisposable interface is implemented following .NET docs:

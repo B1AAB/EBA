@@ -77,6 +77,7 @@ namespace BC2G.CLI
         private string _addressIdMappingFilename = "address_id_mapping.csv";
         private string? _resumeFrom = null;
         private bool _createPerBlockFiles = false;
+        private int _maxConcurrentBlocks = Environment.ProcessorCount / 2;
 
         public static string HelpOption
         {
@@ -132,7 +133,8 @@ namespace BC2G.CLI
                     ToExclusive = _to,
                     OutputDir = _output,
                     AddressIdMappingFilename = _addressIdMappingFilename,
-                    CreatePerBlockFiles = _createPerBlockFiles
+                    CreatePerBlockFiles = _createPerBlockFiles,
+                    MaxConcurrentBlocks = _maxConcurrentBlocks
                 };
             }
             else
