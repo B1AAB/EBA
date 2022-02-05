@@ -14,8 +14,14 @@ namespace BC2G
         private bool _disposed = false;
         private const string _txidVoutDelimiter = "___";
 
+        private const int _maxItemsInCache = 100000;
+        private const int _cacheSqueezeSize = 1000;
+        private readonly object _locker = new();
+
         private readonly TransactionIndex _txIndex;
         private readonly ConcurrentDictionary<string, TxIndexItem> _utxoIdx = new();
+
+        private readonly Random _random = new Random();
 
         public TxIndex(string outputDir, CancellationToken cancellationToken)
         {
@@ -51,6 +57,25 @@ namespace BC2G
 
         public void Add(string txid, int outputIndex, string address, double value)
         {
+            if (_utxoIdx.Count >= _maxItemsInCache)
+            {
+                // TODO: how this can be improved?!
+                lock (_locker)
+                {
+                    var keys = _utxoIdx.Keys;
+                    var removedKeys = new HashSet<string>();
+                    for (int i = 0; i < _cacheSqueezeSize; i++)
+                    {
+                        string item;
+                        do { item = keys.ElementAt(_random.Next(0, keys.Count - 1)); }
+                        while (removedKeys.Contains(item));
+                        removedKeys.Add(item);
+
+                        _utxoIdx.TryRemove(item, out TxIndexItem _);
+                    }
+                }
+            }
+
             _utxoIdx.TryAdd(
                 ComposeId(txid, outputIndex),
                 new TxIndexItem(address, value));
