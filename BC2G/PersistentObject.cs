@@ -11,17 +11,14 @@ namespace BC2G
     /// This type is loosly-related to "Memory-mapped files":
     /// <see cref="https://docs.microsoft.com/en-us/dotnet/standard/io/memory-mapped-files"/>
     /// </summary>
-    public abstract class PersistentObject<T> : IDisposable
+    public class PersistentObject<T> : IDisposable
     {
         private readonly StreamWriter _stream;
         private readonly BlockingCollection<T> _buffer;
 
         private bool _disposed = false;
 
-        public PersistentObject(
-            string filename,
-            CancellationToken cancellationToken,
-            string header = "")
+        public PersistentObject(string filename, CancellationToken cT, string header = "")
         {
             if (string.IsNullOrEmpty(filename))
                 throw new ArgumentException(
@@ -44,11 +41,11 @@ namespace BC2G
                 while (true)
                 {
                     T t;
-                    try { t = _buffer.Take(cancellationToken); }
+                    try { t = _buffer.Take(cT); }
                     catch (OperationCanceledException) { break; }
 
                     if (t != null)
-                        _stream.Write(Serialize(t, cancellationToken));
+                        _stream.Write(Serialize(t, cT));
                 }
             })
             { IsBackground = false };
@@ -61,16 +58,19 @@ namespace BC2G
             _buffer.Add(obj);
         }
 
-        public abstract string Serialize(T obj, CancellationToken cancellationToken);
+        public virtual string Serialize(T obj, CancellationToken cT)
+        {
+            if (obj == null)
+                throw new ArgumentNullException(nameof(obj));
+            else
+                return obj.ToString() ?? throw new ArgumentNullException(nameof(obj));
+        }
 
-        // The IDisposable interface is implemented following .NET docs:
-        // https://docs.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0
         public void Dispose()
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
-
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)

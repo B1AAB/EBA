@@ -4,7 +4,10 @@ using System.Text;
 
 namespace BC2G
 {
-    public class TxIndex : IDisposable
+    // TODO: this could be better implemented using a 
+    // database; e.g., RavenDb (https://ravendb.net).
+
+    public class TxCache : IDisposable
     {
         private readonly string _utxoIndexFilename = "utxo.csv";
         private readonly string _txIndexFilename = "tx_index.csv";
@@ -14,16 +17,16 @@ namespace BC2G
         private bool _disposed = false;
         private const string _txidVoutDelimiter = "___";
 
-        private const int _maxItemsInCache = 100000;
+        private const int _maxItemsInCache = 1000000;
         private const int _cacheSqueezeSize = 1000;
         private readonly object _locker = new();
 
-        private readonly TransactionIndex _txIndex;
-        private readonly ConcurrentDictionary<string, TxIndexItem> _utxoIdx = new();
+        private readonly PersistentObject<TxCacheItem> _visitedTxCache;
+        private readonly ConcurrentDictionary<string, TxCacheItem> _utxoCache = new();
 
         private readonly Random _random = new();
 
-        public TxIndex(string outputDir, CancellationToken cancellationToken)
+        public TxCache(string outputDir, CancellationToken cT)
         {
             _outputDir = outputDir;
             _utxoIndexFilename = Path.Combine(outputDir, _utxoIndexFilename);
@@ -33,14 +36,15 @@ namespace BC2G
                 File.Create(_utxoIndexFilename).Dispose();
 
             _txIndexFilename = Path.Combine(_outputDir, _txIndexFilename);
-            _txIndex = new TransactionIndex(_txIndexFilename, cancellationToken);
+            _visitedTxCache = new PersistentObject<TxCacheItem>(
+                _txIndexFilename, cT, TxCacheItem.GetHeader());
         }
 
         public bool TryGet(string txid, int outputIndex, out string address, out double value)
         {
-            var res = _utxoIdx.TryRemove(
+            var res = _utxoCache.TryRemove(
                 ComposeId(txid, outputIndex), 
-                out TxIndexItem output);
+                out TxCacheItem output);
 
             if (res)
             {
@@ -57,12 +61,12 @@ namespace BC2G
 
         public void Add(string txid, int outputIndex, string address, double value)
         {
-            if (_utxoIdx.Count >= _maxItemsInCache)
+            if (_utxoCache.Count >= _maxItemsInCache)
             {
                 // TODO: how this can be improved?!
                 lock (_locker)
                 {
-                    var keys = _utxoIdx.Keys;
+                    var keys = _utxoCache.Keys;
                     var removedKeys = new HashSet<string>();
                     for (int i = 0; i < _cacheSqueezeSize; i++)
                     {
@@ -71,16 +75,16 @@ namespace BC2G
                         while (removedKeys.Contains(item));
                         removedKeys.Add(item);
 
-                        _utxoIdx.TryRemove(item, out TxIndexItem _);
+                        _utxoCache.TryRemove(item, out TxCacheItem _);
                     }
                 }
             }
 
-            _utxoIdx.TryAdd(
+            _utxoCache.TryAdd(
                 ComposeId(txid, outputIndex),
-                new TxIndexItem(address, value));
+                new TxCacheItem(address, value));
 
-            _txIndex.Enqueue(new TxIndexItem(address, value, txid, outputIndex));
+            _visitedTxCache.Enqueue(new TxCacheItem(address, value, txid, outputIndex));
         }
 
         private static string ComposeId(string txid, int outputIndex)
@@ -91,9 +95,9 @@ namespace BC2G
         private void Serialize(string filename)
         {
             var builder = new StringBuilder();
-            foreach (var item in _utxoIdx)
+            foreach (var item in _utxoCache)
                 builder.Append(
-                    new TxIndexItem(
+                    new TxCacheItem(
                         address: item.Value.Address,
                         value: item.Value.Value,
                         txid: item.Key)
@@ -108,7 +112,7 @@ namespace BC2G
             string? line;
             while ((line = reader.ReadLine()) != null)
             {
-                var item = TxIndexItem.Deserialize(line);
+                var item = TxCacheItem.Deserialize(line);
                 
                 // Note that the deserialized item will be different
                 // from the item in that the item before serialization 
@@ -118,18 +122,15 @@ namespace BC2G
                 // object is larger than when it was at serialization. 
                 // If this turns out to be an issue, should rework
                 // deserialization.
-                _utxoIdx.TryAdd(item.TxId, item);
+                _utxoCache.TryAdd(item.TxId, item);
             }
         }
 
-        // The IDisposable interface is implemented following .NET docs:
-        // https://docs.microsoft.com/en-us/dotnet/api/system.idisposable?view=net-6.0
         public void Dispose()
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
-
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)

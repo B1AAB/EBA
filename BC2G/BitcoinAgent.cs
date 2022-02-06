@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace BC2G
 {
-    public class BitcoinAgent
+    public class BitcoinAgent : IDisposable
     {
         /// <summary>
         /// Sets and gets the REST API endpoint of the Bitcoin client.
@@ -17,10 +17,18 @@ namespace BC2G
 
         private readonly Logger _logger;
 
-        public BitcoinAgent(HttpClient client, Logger logger)
+        private readonly TxCache _txCache;
+
+        private readonly CancellationToken _cT;
+
+        private bool _disposed = false;
+
+        public BitcoinAgent(HttpClient client, TxCache txCache, Logger logger, CancellationToken ct)
         {
             _client = client;
+            _txCache = txCache;
             _logger = logger;
+            _cT = ct;
         }
 
         /// <summary>
@@ -94,40 +102,33 @@ namespace BC2G
                 ?? throw new Exception("Invalid transaction.");
         }
 
-        public async Task<BlockGraph> GetGraph(
-            int height,
-            TxIndex txCache,
-            CancellationToken ct)
+        public async Task<BlockGraph> GetGraph(int height)
         {
-            if (ct.IsCancellationRequested) throw new OperationCanceledException();
+            if (_cT.IsCancellationRequested) throw new OperationCanceledException();
 
             var graph = new BlockGraph(height);
-            
-            _logger.Log($"Getting block hash; height `{height}`.");
+
+            _logger.Log($"Getting block hash; height {height}.");
             var blockHash = await GetBlockHash(height);
 
-            if (ct.IsCancellationRequested) throw new OperationCanceledException();
+            if (_cT.IsCancellationRequested) throw new OperationCanceledException();
 
-            _logger.Log($"Getting block; height: `{height}`.");
+            _logger.Log($"Getting block; height: {height}.");
             var block = await GetBlock(blockHash);
 
             // See the following BIP on using `mediantime` instead of `time`.
             // https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
             graph.Timestamp = block.MedianTime;
 
-            if (ct.IsCancellationRequested) throw new OperationCanceledException();
+            if (_cT.IsCancellationRequested) throw new OperationCanceledException();
 
-            _logger.Log($"Getting graph; height: `{height}`.");
-            await ProcessTransactions(graph, block, txCache, ct);
+            _logger.Log($"Getting graph; height: {height}.");
+            await ProcessTxes(graph, block);
 
             return graph;
         }
 
-        private async Task ProcessTransactions(
-            BlockGraph g,
-            Block block,
-            TxIndex txCache,
-            CancellationToken cancellationToken)
+        private async Task ProcessTxes(BlockGraph g, Block block)
         {
             var generationTxGraph = new TransactionGraph();
 
@@ -141,41 +142,35 @@ namespace BC2G
                 output.TryGetAddress(out string address);
                 address = generationTxGraph.AddTarget(address, output.Value);
                 rewardAddresses.Add(address);
-                txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
+                _txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
             }
 
             g.RewardsAddresses = rewardAddresses;
             g.Enqueue(generationTxGraph);
 
-            // If cancelled, the following will throw the OperationCanceledException exception
+            // If cancelled, the it will throw the OperationCanceledException
             // which is caught at the orchestrator in order to better handle logging.
+            var options = new ParallelOptions() { CancellationToken = _cT };
             await Parallel.ForEachAsync(
                 block.Transactions.Where(x => !x.IsCoinbase),
-
-                async (tx, _cancellationToken) =>
+                options,
+                async (tx, _loopCancellationToken) =>
                 {
-                    _cancellationToken.ThrowIfCancellationRequested();
-                    await RunParallel(g, tx, txCache, cancellationToken);
-                    //Interlocked.Increment(ref pTxCount);
-                    //_logger.LogTransaction($"{pTxCount}/{txCount} ({pTxCount / txCount:p2})");
-                    _cancellationToken.ThrowIfCancellationRequested();
+                    _loopCancellationToken.ThrowIfCancellationRequested();
+                    await ProcessTx(g, tx);
                 });
         }
 
-        private async Task RunParallel(
-            BlockGraph g, 
-            Transaction tx, 
-            TxIndex txCache, 
-            CancellationToken ct)
+        private async Task ProcessTx(BlockGraph g, Transaction tx)
         {
             var txGraph = new TransactionGraph();
-            ct.ThrowIfCancellationRequested();
+            _cT.ThrowIfCancellationRequested();
 
             foreach (var input in tx.Inputs)
             {
-                ct.ThrowIfCancellationRequested();
+                _cT.ThrowIfCancellationRequested();
 
-                if (!txCache.TryGet(
+                if (!_txCache.TryGet(
                     input.TxId,
                     input.OutputIndex,
                     out string address,
@@ -200,11 +195,11 @@ namespace BC2G
 
             foreach (var output in tx.Outputs.Where(x => x.IsValueTransfer))
             {
-                ct.ThrowIfCancellationRequested();
+                _cT.ThrowIfCancellationRequested();
 
                 output.TryGetAddress(out string address);
                 txGraph.AddTarget(address, output.Value);
-                txCache.Add(tx.Txid, output.Index, address, output.Value);
+                _txCache.Add(tx.Txid, output.Index, address, output.Value);
             }
 
             g.Enqueue(txGraph);
@@ -232,6 +227,25 @@ namespace BC2G
                 if (e.InnerException != null)
                     msg += " " + e.InnerException.Message;
                 throw new Exception(msg);
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _txCache.Dispose();
+                }
+
+                _disposed = true;
             }
         }
     }

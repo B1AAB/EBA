@@ -1,6 +1,6 @@
 ﻿namespace BC2G.DTO
 {
-    public class TxIndexItem
+    public class TxCacheItem
     {
         public string TxId { get; }
         public int VOut { get; }
@@ -9,7 +9,7 @@
 
         private const string _delimiter = "\t";
 
-        public TxIndexItem(
+        public TxCacheItem(
             string address,
             double value,
             string txid = "",
@@ -28,10 +28,10 @@
                 new string[] { "txid", "vout", "address", "value" });
         }
 
-        public static TxIndexItem Deserialize(string value)
+        public static TxCacheItem Deserialize(string value)
         {
             var cols = value.Split(_delimiter);
-            return new TxIndexItem(
+            return new TxCacheItem(
                 txid: cols[0],
                 vout: int.Parse(cols[1]),
                 address: cols[2],

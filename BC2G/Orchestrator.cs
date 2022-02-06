@@ -18,19 +18,12 @@ namespace BC2G
         private readonly string _statusFilename;
         private readonly Options _options;
 
-        private const string _delimiter = ",";
-
         public Logger Logger { set; get; }
         private const string _defaultLoggerRepoName = "EventsLog";
         private readonly string _loggerTimeStampFormat = "yyyyMMdd_HHmmssfffffff";
         private readonly string _maxLogfileSize = "2GB";
 
-        private BitcoinAgent _agent;
-
-    public Orchestrator(
-            Options options,
-            HttpClient client,
-            string statusFilename)
+        public Orchestrator(Options options, HttpClient client, string statusFilename)
         {
             _client = client;
             _options = options;
@@ -77,18 +70,17 @@ namespace BC2G
             }
         }
 
-        public async Task<bool> RunAsync(CancellationToken ct)
+        public async Task<bool> RunAsync(CancellationToken cT)
         {
             // TODO: these two may better to move the constructor. 
             Console.CursorVisible = false;
-            if (!TryGetBitCoinAgent(out var agent))
+            if (!TryGetBitCoinAgent(cT, out var agent))
                 return false;
-            _agent = agent;
 
             if (!AssertChain(agent, out ChainInfo chaininfo))
                 return false;
 
-            if (ct.IsCancellationRequested)
+            if (cT.IsCancellationRequested)
                 return false;
 
             if (_options.FromInclusive == -1)
@@ -109,9 +101,9 @@ namespace BC2G
             try
             {
                 stopwatch.Start();
-                await TraverseBlocksAsync(agent, ct);
+                await TraverseBlocksAsync(agent, cT);
                 stopwatch.Stop();
-                if (ct.IsCancellationRequested)
+                if (cT.IsCancellationRequested)
                 {
                     Logger.Log(
                         $"Cancelled successfully.",
@@ -140,7 +132,7 @@ namespace BC2G
             return true;
         }
 
-        private bool TryGetBitCoinAgent(out BitcoinAgent agent)
+        private bool TryGetBitCoinAgent(CancellationToken cT, out BitcoinAgent agent)
         {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             agent = null;
@@ -148,7 +140,12 @@ namespace BC2G
 
             try
             {
-                agent = new BitcoinAgent(_client, Logger);
+                agent = new BitcoinAgent(
+                    _client,
+                    new TxCache(_options.OutputDir, cT),
+                    Logger,
+                    cT);
+
                 if (!agent.IsConnected)
                     throw new ClientInaccessible();
                 return true;
@@ -197,7 +194,7 @@ namespace BC2G
 
 
         private async Task TraverseBlocksAsync(
-            BitcoinAgent agent, CancellationToken cancellationToken)
+            BitcoinAgent agent, CancellationToken cT)
         {
             var individualBlocksDir = Path.Combine(_options.OutputDir, "individual_blocks");
             if (_options.CreatePerBlockFiles && !Directory.Exists(individualBlocksDir))
@@ -206,20 +203,19 @@ namespace BC2G
             using var mapper = new AddressToIdMapper(
                 _options.AddressIdMappingFilename,
                 AddressToIdMapper.Deserialize(_options.AddressIdMappingFilename),
-                cancellationToken);
+                cT);
 
-            using var txCache = new TxIndex(_options.OutputDir, cancellationToken);
             using var serializer = new CSVSerializer(mapper);
 
             var pBlockStat = new PersistentBlockStatistics(
                 Path.Combine(_options.OutputDir, "blocks_stats.tsv"),
-                cancellationToken);
+                cT);
 
             var gBuffer = new PersistentGraphBuffer(
                 Path.Combine(_options.OutputDir, "edges.csv"),
                 mapper,
                 pBlockStat,
-                cancellationToken);
+                cT);
 
             Logger.Log(
                 $"Traversing blocks [{_options.FromInclusive:n0}, " +
@@ -241,11 +237,11 @@ namespace BC2G
             // and in some cases, slower than Parallel.For and sequential traversal.
             Parallel.For(0, blockHeightQueue.Count, parallelOptions, (i, state) =>
             {
-                if (cancellationToken.IsCancellationRequested)
+                if (cT.IsCancellationRequested)
                     state.Break();
 
                 blockHeightQueue.TryDequeue(out var h);
-                ProcessBlock(agent, gBuffer, serializer, txCache, h, individualBlocksDir, cancellationToken).Wait();
+                ProcessBlock(agent, gBuffer, serializer, h, individualBlocksDir, cT).Wait();
             });
 
             //Logger.LogFinishTraverse(cancellationToken.IsCancellationRequested);
@@ -259,15 +255,14 @@ namespace BC2G
         }
 
         private async Task ProcessBlock(
-            BitcoinAgent agent, 
-            PersistentGraphBuffer gBuffer, 
-            CSVSerializer serializer, 
-            TxIndex txCache, 
-            int height, 
-            string individualBlocksDir, 
-            CancellationToken cancellationToken)
+            BitcoinAgent agent,
+            PersistentGraphBuffer gBuffer,
+            CSVSerializer serializer,
+            int height,
+            string individualBlocksDir,
+            CancellationToken cT)
         {
-            if (cancellationToken.IsCancellationRequested)
+            if (cT.IsCancellationRequested)
             { Logger.LogCancelling(); return; }
 
             Logger.LogStartProcessingBlock(height);
@@ -275,8 +270,7 @@ namespace BC2G
             BlockGraph graph;
             try
             {
-                // TODO: see if I can move the TxCache and cancellation to the init of agent.
-                graph = await agent.GetGraph(height, txCache, cancellationToken);
+                graph = await agent.GetGraph(height);
             }
             catch (OperationCanceledException)
             {
@@ -293,7 +287,7 @@ namespace BC2G
             if (_options.CreatePerBlockFiles)
             {
                 Logger.LogBlockProcessStatus(BPS.Serialize);
-                serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"));//, blockStats);
+                serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"));
             }
 
             _options.LastProcessedBlock = height;

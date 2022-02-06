@@ -64,7 +64,7 @@ namespace BC2G.Serializers
             return mappings;
         }
 
-        public override string Serialize((string, string) obj, CancellationToken cancellationToken)
+        public override string Serialize((string, string) obj, CancellationToken cT)
         {
             return $"{obj.Item1}{_delimiter}{obj.Item2}{Environment.NewLine}";
         }
