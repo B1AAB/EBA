@@ -97,10 +97,11 @@ namespace BC2G.Logging
 
         public void Log(string message, bool writeLine = true)
         {
+            /*
             if (writeLine)
                 AsyncConsole.WriteLine(message);
             else
-                AsyncConsole.Write(message);
+                AsyncConsole.Write(message);*/
             
             log.Info(message);
         }
@@ -173,9 +174,10 @@ namespace BC2G.Logging
             log.Info(msg);
         }
 
-        public void LogCancelleing()
+        public void LogCancelling()
         {
             var (cursorTopOffset, cursorLeft, template) = _messages[(byte)BPS.Cancelling];
+            // TODO: these two need to happen in one action.
             AsyncConsole.MoveCursorToOffset(cursorLeft,  cursorTopOffset);
             AsyncConsole.WriteLine(template, ConsoleColor.Yellow);
             log.Info(template);

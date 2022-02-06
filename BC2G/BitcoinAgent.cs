@@ -94,19 +94,42 @@ namespace BC2G
                 ?? throw new Exception("Invalid transaction.");
         }
 
-        public async Task<GraphBase> GetGraph(
+        public async Task<BlockGraph> GetGraph(
+            int height,
+            TxIndex txCache,
+            CancellationToken ct)
+        {
+            if (ct.IsCancellationRequested) throw new OperationCanceledException();
+
+            var graph = new BlockGraph(height);
+            
+            _logger.Log($"Getting block hash; height `{height}`.");
+            var blockHash = await GetBlockHash(height);
+
+            if (ct.IsCancellationRequested) throw new OperationCanceledException();
+
+            _logger.Log($"Getting block; height: `{height}`.");
+            var block = await GetBlock(blockHash);
+
+            // See the following BIP on using `mediantime` instead of `time`.
+            // https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
+            graph.Timestamp = block.MedianTime;
+
+            if (ct.IsCancellationRequested) throw new OperationCanceledException();
+
+            _logger.Log($"Getting graph; height: `{height}`.");
+            await ProcessTransactions(graph, block, txCache, ct);
+
+            return graph;
+        }
+
+        private async Task ProcessTransactions(
+            BlockGraph g,
             Block block,
             TxIndex txCache,
-            BlockStatistics blockStatistics,
             CancellationToken cancellationToken)
         {
-            // Why using "mediantime" and not "time"? see the following BIP:
-            // https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
-            uint timestamp = block.MedianTime;
-
-            var g = new GraphBase(blockStatistics) { Timestamp = timestamp };
-
-            var generationTxGraph = new TransactionGraph(blockStatistics);
+            var generationTxGraph = new TransactionGraph();
 
             // By definition, each block has a generative block that is the
             // reward of the miner. Hence, this should never raise an 
@@ -124,7 +147,6 @@ namespace BC2G
             g.RewardsAddresses = rewardAddresses;
             g.Enqueue(generationTxGraph);
 
-
             // If cancelled, the following will throw the OperationCanceledException exception
             // which is caught at the orchestrator in order to better handle logging.
             await Parallel.ForEachAsync(
@@ -133,33 +155,30 @@ namespace BC2G
                 async (tx, _cancellationToken) =>
                 {
                     _cancellationToken.ThrowIfCancellationRequested();
-                    await RunParallel(tx, g, txCache, blockStatistics, cancellationToken);
+                    await RunParallel(g, tx, txCache, cancellationToken);
                     //Interlocked.Increment(ref pTxCount);
                     //_logger.LogTransaction($"{pTxCount}/{txCount} ({pTxCount / txCount:p2})");
                     _cancellationToken.ThrowIfCancellationRequested();
                 });
-
-            return g;
         }
 
         private async Task RunParallel(
-            Transaction tx,
-            GraphBase g,
-            TxIndex txCache,
-            BlockStatistics blockStatistics,
-            CancellationToken cancellationToken)
+            BlockGraph g, 
+            Transaction tx, 
+            TxIndex txCache, 
+            CancellationToken ct)
         {
-            var txGraph = new TransactionGraph(blockStatistics);
-            cancellationToken.ThrowIfCancellationRequested();
+            var txGraph = new TransactionGraph();
+            ct.ThrowIfCancellationRequested();
 
             foreach (var input in tx.Inputs)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                ct.ThrowIfCancellationRequested();
 
                 if (!txCache.TryGet(
-                    input.TxId, 
-                    input.OutputIndex, 
-                    out string address, 
+                    input.TxId,
+                    input.OutputIndex,
+                    out string address,
                     out double value))
                 {
                     // Extended transaction: details of the transaction are
@@ -181,7 +200,7 @@ namespace BC2G
 
             foreach (var output in tx.Outputs.Where(x => x.IsValueTransfer))
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                ct.ThrowIfCancellationRequested();
 
                 output.TryGetAddress(out string address);
                 txGraph.AddTarget(address, output.Value);

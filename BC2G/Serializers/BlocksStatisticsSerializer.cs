@@ -1,4 +1,5 @@
-﻿using BC2G.Model;
+﻿using BC2G.Graph;
+using BC2G.Model;
 using System.Collections.Concurrent;
 using System.Text;
 
@@ -7,7 +8,7 @@ namespace BC2G.Serializers
     public class BlocksStatisticsSerializer
     {
         public static void Serialize(
-            ConcurrentQueue<BlockStatistics> blocksStats,
+            ConcurrentQueue<GraphStatistics> blocksStats,
             string filename)
         {
             var strBuilder = new StringBuilder();

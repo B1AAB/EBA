@@ -99,7 +99,7 @@ namespace BC2G
         {
             tokenSource.Cancel();
             e.Cancel = true;
-            logger.LogCancelleing();
+            logger.LogCancelling();
         }
     }
 }

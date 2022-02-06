@@ -1,4 +1,5 @@
-﻿using BC2G.Model;
+﻿using BC2G.Graph;
+using BC2G.Model;
 
 namespace BC2G
 {
@@ -16,7 +17,7 @@ namespace BC2G
             CancellationToken cancellationToken) : base(
                 filename,
                 cancellationToken,
-                BlockStatistics.GetHeader())
+                GraphStatistics.GetHeader())
         { }
 
         public override string Serialize(

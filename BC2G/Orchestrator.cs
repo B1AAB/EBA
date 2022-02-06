@@ -77,7 +77,7 @@ namespace BC2G
             }
         }
 
-        public async Task<bool> RunAsync(CancellationToken cancellationToken)
+        public async Task<bool> RunAsync(CancellationToken ct)
         {
             // TODO: these two may better to move the constructor. 
             Console.CursorVisible = false;
@@ -88,7 +88,7 @@ namespace BC2G
             if (!AssertChain(agent, out ChainInfo chaininfo))
                 return false;
 
-            if (cancellationToken.IsCancellationRequested)
+            if (ct.IsCancellationRequested)
                 return false;
 
             if (_options.FromInclusive == -1)
@@ -109,9 +109,9 @@ namespace BC2G
             try
             {
                 stopwatch.Start();
-                await TraverseBlocksAsync(agent, cancellationToken);
+                await TraverseBlocksAsync(agent, ct);
                 stopwatch.Stop();
-                if (cancellationToken.IsCancellationRequested)
+                if (ct.IsCancellationRequested)
                 {
                     Logger.Log(
                         $"Cancelled successfully.",
@@ -268,103 +268,26 @@ namespace BC2G
             CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
-            {
-                /*
-                Logger.LogCancelledTasks(
-                    new BPS[]
-                    {
-                        BPS.GetBlockHashCancelled,
-                        BPS.GetBlockCancelled,
-                        BPS.ProcessTransactionsCancelled,
-                        BPS.SerializeCancelled,
-                        BPS.Cancelled
-                    });*/
-                return;
-            }
-
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
+            { Logger.LogCancelling(); return; }
 
             Logger.LogStartProcessingBlock(height);
-            var blockStats = new BlockStatistics(height);
 
-            //Logger.LogBlockProcessStatus(BPS.GetBlockHash);
-            var blockHash = await agent.GetBlockHash(height);
-            //Logger.LogBlockProcessStatus(BPS.GetBlockHashDone, stopwatch.Elapsed.TotalSeconds);
-
-            if (cancellationToken.IsCancellationRequested)
-            {
-                /*
-                Logger.LogCancelledTasks(
-                    new BPS[]
-                    {
-                        BPS.GetBlockCancelled,
-                        BPS.ProcessTransactionsCancelled,
-                        BPS.SerializeCancelled,
-                        BPS.Cancelled
-                    });*/
-                return;
-            }
-
-            //Logger.LogBlockProcessStatus(BPS.GetBlock);
-            var block = await agent.GetBlock(blockHash);
-            //Logger.LogBlockProcessStatus(BPS.GetBlockDone, stopwatch.Elapsed.TotalSeconds);
-
-            if (cancellationToken.IsCancellationRequested)
-            {
-                /*
-                Logger.LogCancelledTasks(
-                    new BPS[]
-                    {
-                        BPS.ProcessTransactionsCancelled,
-                        BPS.SerializeCancelled,
-                        BPS.Cancelled
-                    });*/
-                return;
-            }
-
-            //Logger.LogBlockProcessStatus(BPS.ProcessTransactions);
-            GraphBase graph = new(blockStats);
+            BlockGraph graph;
             try
             {
-                graph = await agent.GetGraph(block, txCache, blockStats, cancellationToken);
-                //Logger.LogBlockProcessStatus(BPS.ProcessTransactionsDone, stopwatch.Elapsed.TotalSeconds);
+                // TODO: see if I can move the TxCache and cancellation to the init of agent.
+                graph = await agent.GetGraph(height, txCache, cancellationToken);
             }
             catch (OperationCanceledException)
             {
-                /*
-                Logger.LogCancelledTasks(
-                    new BPS[]
-                    {
-                        BPS.ProcessTransactionsCancelled,
-                        BPS.SerializeCancelled,
-                        BPS.Cancelled
-                    });*/
+                Logger.LogCancelling();
                 return;
             }
-
-            if (cancellationToken.IsCancellationRequested)
+            catch
             {
-                /*
-                Logger.LogCancelledTasks(
-                    new BPS[]
-                    {
-                        BPS.SerializeCancelled,
-                        BPS.Cancelled
-                    });*/
-                return;
+                throw;
             }
 
-            // TODO: stopwatch should not stop here, it should stop 
-            // after graph and all the related data are persisted. 
-            // However, since the graph and its related data are 
-            // serialized using the Persistent* type, it requires
-            // sending the stopwatch instance around to stop 
-            // at the momemnt the process completes, which makes
-            // it harder to read/follow. This should be fixed
-            // when this method is implemented using TPL. 
-            stopwatch.Stop();
-            blockStats.Runtime = stopwatch.Elapsed;
             gBuffer.Enqueue(graph);
 
             if (_options.CreatePerBlockFiles)

@@ -1,4 +1,4 @@
-﻿namespace BC2G.Model
+﻿namespace BC2G.Graph
 {
     public class Edge
     {

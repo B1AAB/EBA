@@ -1,28 +1,13 @@
-﻿namespace BC2G.Model
+﻿using System.Diagnostics;
+
+namespace BC2G.Graph
 {
-    public class BlockStatistics
+    public class GraphStatistics
     {
         public int Height { get; }
-
-        private bool _isRuntimeSet = false;
+        public TimeSpan Runtime { get { return _runtime; } }
         private TimeSpan _runtime;
-        public TimeSpan Runtime
-        {
-            // This property is writable only once.
-            set
-            {
-                if (_isRuntimeSet)
-                    throw new InvalidOperationException("Runtime is already set.");
-                _runtime = value;
-                _isRuntimeSet = true;
-            }
-            get
-            {
-                if (!_isRuntimeSet)
-                    throw new InvalidOperationException("Runtime is not set yet.");
-                return _runtime;
-            }
-        }
+        private readonly Stopwatch _stopwatch = new();
 
         public Dictionary<EdgeType, uint> EdgeTypeFrequency
         {
@@ -40,9 +25,19 @@
 
         private const char _delimiter = '\t';
 
-        public BlockStatistics(int height)
+        public GraphStatistics(int height)
         {
             Height = height;
+        }
+
+        public void StartStopwatch()
+        {
+            _stopwatch.Start();
+        }
+        public void StopStopwatch()
+        {
+            _stopwatch.Stop();
+            _runtime = _stopwatch.Elapsed;
         }
 
         public void IncrementEdgeType(EdgeType type)

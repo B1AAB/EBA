@@ -1,5 +1,4 @@
 ﻿using BC2G.Graph;
-using BC2G.Model;
 using System.Collections.Concurrent;
 using System.Text;
 
@@ -22,7 +21,7 @@ namespace BC2G.Serializers
             _mapper = mapper;
         }
 
-        public override void Serialize(GraphBase g, string baseFilename)
+        public override void Serialize(BlockGraph g, string baseFilename)
         {
             var nodesFilename = baseFilename + "_nodes.csv" + _tmpFilenamePostfix;
             var edgeFilename = baseFilename + "_edges.csv" + _tmpFilenamePostfix;
@@ -34,7 +33,7 @@ namespace BC2G.Serializers
             _createdFiles.Add(edgeFilename);
         }
 
-        public void Serialize(ConcurrentQueue<GraphBase> graphsBuffer, string edgesFilename)
+        public void Serialize(ConcurrentQueue<BlockGraph> graphsBuffer, string edgesFilename)
         {
             // TODO: Note that this approach is not using a staging 
             // file to first write to that, and then replace the 
@@ -70,13 +69,13 @@ namespace BC2G.Serializers
         }
 
 
-        public override GraphBase Deserialize(string path, int blockHeight)
+        public override BlockGraph Deserialize(string path, int blockHeight)
         {
             var nodeIds = ReadNodes(Path.Combine(path, $"{blockHeight}_nodes.csv"));
             return ReadEdges(Path.Combine(path, $"{blockHeight}_edges.csv"), blockHeight, nodeIds);
         }
 
-        private void WriteNodes(GraphBase g, string filename)
+        private void WriteNodes(BlockGraph g, string filename)
         {
             var csvBuilder = new StringBuilder();
             csvBuilder.AppendLine(
@@ -108,7 +107,7 @@ namespace BC2G.Serializers
             return nodeIds;
         }
 
-        private void WriteEdges(GraphBase g, string filename)
+        private void WriteEdges(BlockGraph g, string filename)
         {
             var csvBuilder = new StringBuilder();
             csvBuilder.AppendLine(
@@ -135,9 +134,9 @@ namespace BC2G.Serializers
             File.WriteAllText(filename, csvBuilder.ToString());
         }
 
-        private static GraphBase ReadEdges(string filename, int height, Dictionary<string, string> nodeIds)
+        private static BlockGraph ReadEdges(string filename, int height, Dictionary<string, string> nodeIds)
         {
-            var g = new GraphBase(new BlockStatistics(height));
+            var g = new BlockGraph(height);
             string? line;
             using var reader = new StreamReader(filename);
             reader.ReadLine(); // skip the header.

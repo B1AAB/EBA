@@ -4,7 +4,7 @@ using System.Text;
 
 namespace BC2G
 {
-    public class PersistentGraphBuffer : PersistentObject<GraphBase>
+    public class PersistentGraphBuffer : PersistentObject<BlockGraph>
     {
         private const string _delimiter = ",";
 
@@ -25,10 +25,9 @@ namespace BC2G
             _pBlockStatistics = pBlockStatistics;
         }
 
-        public override string Serialize(GraphBase obj, CancellationToken cancellationToken)
+        public override string Serialize(BlockGraph obj, CancellationToken cancellationToken)
         {
             obj.MergeQueuedTxGraphs(cancellationToken);
-            _pBlockStatistics.Enqueue(obj.BlockStatistics.ToString());
 
             var csvBuilder = new StringBuilder();
             foreach (var edge in obj.Edges)
@@ -41,6 +40,9 @@ namespace BC2G
                         ((byte)edge.Type).ToString(),
                         edge.Timestamp.ToString()
                     }));
+
+            obj.Stats.StopStopwatch();
+            _pBlockStatistics.Enqueue(obj.Stats.ToString());
 
             return csvBuilder.ToString();
         }
