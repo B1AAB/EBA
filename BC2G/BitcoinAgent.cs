@@ -235,7 +235,6 @@ namespace BC2G
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
-
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)

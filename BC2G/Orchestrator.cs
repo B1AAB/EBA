@@ -212,7 +212,7 @@ namespace BC2G
             var gBuffer = new PersistentGraphBuffer(
                 Path.Combine(_options.OutputDir, "edges.csv"),
                 mapper,
-                pBlockStat, 
+                pBlockStat,
                 Logger,
                 cT);
 
@@ -242,10 +242,13 @@ namespace BC2G
             Parallel.For(0, blockHeightQueue.Count, parallelOptions, (i, state) =>
             {
                 if (cT.IsCancellationRequested)
-                    state.Break();
+                    state.Stop();
 
                 blockHeightQueue.TryDequeue(out var h);
                 ProcessBlock(agent, gBuffer, serializer, h, individualBlocksDir, cT).Wait();
+
+                if (cT.IsCancellationRequested)
+                    state.Stop();
             });
 
             //Logger.LogFinishTraverse(cancellationToken.IsCancellationRequested);
@@ -266,25 +269,14 @@ namespace BC2G
             string individualBlocksDir,
             CancellationToken cT)
         {
-            if (cT.IsCancellationRequested)
-            { Logger.LogCancelling(); return; }
+            if (cT.IsCancellationRequested) return;
 
             Logger.LogStartProcessingBlock(height);
 
             BlockGraph graph;
-            try
-            {
-                graph = await agent.GetGraph(height);
-            }
-            catch (OperationCanceledException)
-            {
-                Logger.LogCancelling();
-                return;
-            }
-            catch
-            {
-                throw;
-            }
+            try { graph = await agent.GetGraph(height); }
+            catch (OperationCanceledException) { return; }
+            catch { throw; }
 
             gBuffer.Enqueue(graph);
 
