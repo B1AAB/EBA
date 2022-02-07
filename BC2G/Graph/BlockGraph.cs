@@ -23,6 +23,9 @@ namespace BC2G.Graph
             }
         }
 
+        public int NodeCount { get { return _nodes.Count; } }
+        public int EdgeCount { get { return _edges.Count; } }
+
         private readonly ConcurrentQueue<TransactionGraph> _txGraphsQueue = new();
 
         private readonly ConcurrentDictionary<int, Edge> _edges = new();

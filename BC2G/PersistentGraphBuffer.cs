@@ -1,4 +1,5 @@
 ﻿using BC2G.Graph;
+using BC2G.Logging;
 using BC2G.Serializers;
 using System.Text;
 
@@ -10,11 +11,13 @@ namespace BC2G
 
         private readonly AddressToIdMapper _mapper;
         private readonly PersistentBlockStatistics _pBlockStatistics;
+        private readonly Logger _logger;
 
         public PersistentGraphBuffer(
             string filename,
             AddressToIdMapper mapper,
             PersistentBlockStatistics pBlockStatistics,
+            Logger logger,
             CancellationToken cancellationToken) : base(
                 filename,
                 cancellationToken,
@@ -23,6 +26,7 @@ namespace BC2G
         {
             _mapper = mapper;
             _pBlockStatistics = pBlockStatistics;
+            _logger = logger;
         }
 
         public override string Serialize(BlockGraph obj, CancellationToken cancellationToken)
@@ -45,6 +49,15 @@ namespace BC2G
             _pBlockStatistics.Enqueue(obj.Stats.ToString());
 
             return csvBuilder.ToString();
+        }
+
+        public override void PostPersistence(BlockGraph obj)
+        {
+            _logger.LogFinishProcessingBlock(
+                obj.Height,
+                _mapper.NodesCount,
+                obj.EdgeCount,
+                obj.Stats.Runtime.TotalSeconds);
         }
     }
 }

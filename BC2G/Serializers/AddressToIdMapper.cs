@@ -4,6 +4,8 @@ namespace BC2G.Serializers
 {
     public class AddressToIdMapper : PersistentObject<(string, string)>
     {
+        public int NodesCount { get { return _mappings.Count; } }
+
         private const string _delimiter = "\t";
 
         private readonly object _locker = new();

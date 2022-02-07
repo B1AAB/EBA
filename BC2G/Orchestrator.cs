@@ -73,7 +73,6 @@ namespace BC2G
         public async Task<bool> RunAsync(CancellationToken cT)
         {
             // TODO: these two may better to move the constructor. 
-            Console.CursorVisible = false;
             if (!TryGetBitCoinAgent(cT, out var agent))
                 return false;
 
@@ -128,7 +127,6 @@ namespace BC2G
                 stopwatch.Stop();
             }
 
-            Console.CursorVisible = true;
             return true;
         }
 
@@ -214,17 +212,23 @@ namespace BC2G
             var gBuffer = new PersistentGraphBuffer(
                 Path.Combine(_options.OutputDir, "edges.csv"),
                 mapper,
-                pBlockStat,
+                pBlockStat, 
+                Logger,
                 cT);
 
             Logger.Log(
                 $"Traversing blocks [{_options.FromInclusive:n0}, " +
                 $"{_options.ToExclusive:n0}):", writeLine: true);
-            Logger.InitBlocksTraverseLog(_options.FromInclusive, _options.ToExclusive);
-            AsyncConsole.BookmarkCurrentLine();
+
+            // test:
+            _options.FromInclusive = 700000;
+            _options.LastProcessedBlock = _options.FromInclusive;
+            _options.ToExclusive = 700005;
+
+            Logger.InitBlocksTraverse(_options.FromInclusive, _options.ToExclusive);
 
             var blockHeightQueue = new ConcurrentQueue<int>();
-            for (int h = _options.LastProcessedBlock + 1; h < 20000/*_options.ToExclusive*/; h++)
+            for (int h = _options.LastProcessedBlock + 1; h < _options.ToExclusive; h++)
                 blockHeightQueue.Enqueue(h);
 
             var parallelOptions = new ParallelOptions()
@@ -285,13 +289,9 @@ namespace BC2G
             gBuffer.Enqueue(graph);
 
             if (_options.CreatePerBlockFiles)
-            {
-                Logger.LogBlockProcessStatus(BPS.Serialize);
                 serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"));
-            }
 
             _options.LastProcessedBlock = height;
-            //Logger.LogFinishProcessingBlock(blockStats.Runtime.TotalSeconds);
         }
 
         // The IDisposable interface is implemented following .NET docs:

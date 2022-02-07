@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System;
 
 namespace BC2G.Logging
 {
@@ -67,6 +68,33 @@ namespace BC2G.Logging
                 Console.WriteLine(value);
                 Console.ResetColor();
                 Console.SetCursorPosition(Left, Top);
+            });
+        }
+
+        public static void WriteLines(string[] msgs, ConsoleColor[] colors, int cursorTopOffset = 1)
+        {
+            _actions.Add(() =>
+            {
+                var (currentLeft, currentTop) = Console.GetCursorPosition();
+                Console.SetCursorPosition(0, BookmarkedLine + cursorTopOffset);
+                Console.CursorVisible = false;
+                for (int i = 0; i < msgs.Length; i++)
+                {
+                    Console.ForegroundColor = colors[i];
+                    if (msgs[i].Length - 1 >= Console.WindowWidth)
+                    {
+                        Console.WriteLine(string.Concat(
+                            msgs[i].AsSpan(0, Console.WindowWidth - 6), "...   "));
+                    }
+                    else
+                    {
+                        Console.Write(msgs[i]);
+                        Console.WriteLine(new string(
+                            ' ', Console.WindowWidth - Console.CursorLeft - 1));
+                    }
+                }
+                Console.ResetColor();
+                Console.SetCursorPosition(currentLeft, currentTop);
             });
         }
 

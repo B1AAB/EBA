@@ -57,6 +57,7 @@ namespace BC2G
                 }
                 catch
                 {
+                    Console.CursorVisible = true;
                     Environment.Exit(1);
                     return;
                 }
@@ -67,7 +68,9 @@ namespace BC2G
             catch (Exception e)
             {
                 Console.Error.WriteLine(e.Message);
+                Console.CursorVisible = true;
                 Environment.Exit(1);
+                return;
             }
         }
 

@@ -40,12 +40,15 @@ namespace BC2G
             {
                 while (true)
                 {
-                    T t;
-                    try { t = _buffer.Take(cT); }
+                    T obj;
+                    try { obj = _buffer.Take(cT); }
                     catch (OperationCanceledException) { break; }
 
-                    if (t != null)
-                        _stream.Write(Serialize(t, cT));
+                    if (obj != null)
+                    {
+                        _stream.Write(Serialize(obj, cT));
+                        PostPersistence(obj);
+                    }
                 }
             })
             { IsBackground = false };
@@ -65,6 +68,8 @@ namespace BC2G
             else
                 return obj.ToString() ?? throw new ArgumentNullException(nameof(obj));
         }
+
+        public virtual void PostPersistence(T obj) { }
 
         public void Dispose()
         {
