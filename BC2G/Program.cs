@@ -38,6 +38,8 @@ namespace BC2G
             //client.DefaultRequestHeaders.UserAgent.Clear();
             client.DefaultRequestHeaders.Add("User-Agent", "BitcoinAgent");
 
+            var success = false;
+
             try
             {
                 var cliOptions = new CommandLineOptions();
@@ -45,40 +47,40 @@ namespace BC2G
                 if (helpOrVersionIsDisplayed)
                     return;
 
-                Orchestrator orchestrator;
-                try
-                {
-                    orchestrator = new Orchestrator(
-                        options, client, cliOptions.StatusFilename);
+                var orchestrator = new Orchestrator(
+                    options, client, cliOptions.StatusFilename);
 
-                    Console.CancelKeyPress += new ConsoleCancelEventHandler(
-                        (sender, e) => CancelKeyPressHandler(
-                            sender, e, _tokenSource, orchestrator.Logger));
-                }
-                catch
-                {
-                    Console.CursorVisible = true;
-                    Environment.Exit(1);
-                    return;
-                }
+                Console.CancelKeyPress += new ConsoleCancelEventHandler(
+                    (sender, e) => CancelKeyPressHandler(
+                        e, _tokenSource, orchestrator.Logger));
 
-                var success = orchestrator.RunAsync(cancellationToken).Result;
-                Environment.Exit(success ? 0 : 1);
+                success = orchestrator.RunAsync(cancellationToken).Result;
             }
             catch (Exception e)
             {
                 Console.Error.WriteLine(e.Message);
+            }
+            finally
+            {
+                AsyncConsole.WaitUntilBufferEmpty();
                 Console.CursorVisible = true;
-                Environment.Exit(1);
-                return;
+                Environment.Exit(success ? 0 : 1);
             }
         }
 
         private static bool ConsoleEventCallback(
             EventType eventType)
         {
-            // NOTE THAT THIS METHOD NEEDS TO WRAP-UP IN 5 SECONDS, 
-            // OR IT WILL BE FORCE-TERMINATED BY HOST.
+            // This method will be called when the application 
+            // is being exited abruptly, e.g., terminal closing, 
+            // or the host OS restrating/shutting-down. 
+            // HOWEVER, NOTE THAT THIS METHOD NEEDS TO WRAP-UP
+            // IN __5__ SECONDS (depending on the host OS), 
+            // OR IT WILL BE FORCE-TERMINATED BY THE HOST. HENCE,
+            // AFTER THE CANCEL FLAG, ALL THE RUNNING PROCESSED
+            // NEED TO SAFELY RETURN QUICKEST POSSIBLE. 
+            // THEREFORE, LIMIT THE SCOPE TO CLOSE THE MOST
+            // CRITICAL HANDLES.
 
             switch (eventType)
             {
@@ -95,7 +97,6 @@ namespace BC2G
         }
 
         static void CancelKeyPressHandler(
-            object? sender,
             ConsoleCancelEventArgs e,
             CancellationTokenSource tokenSource,
             Logger logger)

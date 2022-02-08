@@ -8,6 +8,11 @@ namespace BC2G.Logging
         public static int BookmarkedLine { set; get; }
         public static int BlockProgressLinesCount { get; set; }
 
+        public static bool IsBufferEmpty
+        {
+            get { return _actions.Count == 0; }
+        }
+
         private static readonly BlockingCollection<Action> _actions = new();
 
         static AsyncConsole()
@@ -146,6 +151,15 @@ namespace BC2G.Logging
                     Console.Write(new string(' ', Console.WindowWidth - 1) + "\r");
                 }
             });
+        }
+
+        public static void WaitUntilBufferEmpty()
+        {
+            while (true)
+            {
+                if (IsBufferEmpty) return;
+                Thread.Sleep(500);
+            }
         }
     }
 }

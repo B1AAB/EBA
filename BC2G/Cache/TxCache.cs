@@ -9,6 +9,11 @@ namespace BC2G
 
     public class TxCache : IDisposable
     {
+        public bool IsBufferEmpty
+        {
+            get { return _visitedTxCache.IsBufferEmpty; }
+        }
+
         private readonly string _utxoIndexFilename = "utxo.csv";
         private readonly string _txIndexFilename = "tx_index.csv";
         private const string _tmpFilenamePostfix = ".tmp";

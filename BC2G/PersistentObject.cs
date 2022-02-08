@@ -13,6 +13,11 @@ namespace BC2G
     /// </summary>
     public class PersistentObject<T> : IDisposable
     {
+        public bool IsBufferEmpty
+        {
+            get { return _buffer.Count == 0; }
+        }
+
         private readonly StreamWriter _stream;
         private readonly BlockingCollection<T> _buffer;
 

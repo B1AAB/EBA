@@ -73,7 +73,7 @@ namespace BC2G
         public async Task<bool> RunAsync(CancellationToken cT)
         {
             // TODO: these two may better to move the constructor. 
-            if (!TryGetBitCoinAgent(cT, out var agent))
+            if (!TryGetBitCoinAgent(cT, out var agent, out var txCache))
                 return false;
 
             if (!AssertChain(agent, out ChainInfo chaininfo))
@@ -101,6 +101,14 @@ namespace BC2G
             {
                 stopwatch.Start();
                 await TraverseBlocksAsync(agent, cT);
+
+                while (true)
+                {
+                    if (txCache.IsBufferEmpty)
+                        break;
+                    Thread.Sleep(500);
+                }
+
                 stopwatch.Stop();
                 if (cT.IsCancellationRequested)
                 {
@@ -130,19 +138,17 @@ namespace BC2G
             return true;
         }
 
-        private bool TryGetBitCoinAgent(CancellationToken cT, out BitcoinAgent agent)
+        private bool TryGetBitCoinAgent(CancellationToken cT, out BitcoinAgent agent, out TxCache txCache)
         {
 #pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             agent = null;
+            txCache = null;
 #pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
 
             try
             {
-                agent = new BitcoinAgent(
-                    _client,
-                    new TxCache(_options.OutputDir, cT),
-                    Logger,
-                    cT);
+                txCache = new TxCache(_options.OutputDir, cT);
+                agent = new BitcoinAgent(_client, txCache, Logger, cT);
 
                 if (!agent.IsConnected)
                     throw new ClientInaccessible();
@@ -257,8 +263,14 @@ namespace BC2G
             // the types wrapped in `using` will be called that
             // finalizes persisting output.
             Logger.Log("Finalizing serialized files.", true);
-
             await JsonSerializer<Options>.SerializeAsync(_options, _statusFilename);
+
+            while(true)
+            {
+                if (mapper.IsBufferEmpty && gBuffer.IsBufferEmpty)
+                    break;
+                Thread.Sleep(500);
+            }
         }
 
         private async Task ProcessBlock(
