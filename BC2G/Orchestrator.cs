@@ -104,7 +104,7 @@ namespace BC2G
 
                 while (true)
                 {
-                    if (txCache.IsBufferEmpty)
+                    if (txCache.Stopped)
                         break;
                     Thread.Sleep(500);
                 }
@@ -227,9 +227,10 @@ namespace BC2G
                 $"{_options.ToExclusive:n0}):", writeLine: true);
 
             // test:
-            _options.FromInclusive = 700000;
+            /*
+            _options.FromInclusive = 0;//700000;
             _options.LastProcessedBlock = _options.FromInclusive;
-            _options.ToExclusive = 700005;
+            _options.ToExclusive = 700005;*/
 
             Logger.InitBlocksTraverse(_options.FromInclusive, _options.ToExclusive);
 
@@ -267,7 +268,7 @@ namespace BC2G
 
             while(true)
             {
-                if (mapper.IsBufferEmpty && gBuffer.IsBufferEmpty)
+                if (mapper.Stopped && gBuffer.Stopped)
                     break;
                 Thread.Sleep(500);
             }

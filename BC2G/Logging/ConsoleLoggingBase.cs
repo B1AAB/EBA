@@ -2,9 +2,9 @@
 
 namespace BC2G.Logging
 {
-    public class ConsoleLoggingBase
+    public abstract class ConsoleLoggingBase
     {
-        public int MovingAvgWindowSize { set; get; } = 20;
+        public int MovingAvgWindowSize { set; get; } = 10;
 
         public int FromInclusive { get; }
         public int ToExclusive { get; }
@@ -25,10 +25,12 @@ namespace BC2G.Logging
             get
             {
                 return
-                    $"{_activeBlocks.Keys.Count,10}: " +
+                    $"{_activeBlocks.Keys.Count,9}: " +
                     $"{string.Join(", ", _activeBlocks.Keys)}";
             }
         }
+
+        public int ActiveBlocksCount { get { return _activeBlocks.Count; } }
 
         public MovingAverage BlockRuntimeMovingAvg { get; }
         public MovingAverage EdgeRuntimeMovingAvg { get; }
@@ -41,10 +43,15 @@ namespace BC2G.Logging
         {
             FromInclusive = fromInclusive;
             ToExclusive = toExclusive;
-            Total = ToExclusive - FromInclusive;
+            Total = ToExclusive - FromInclusive - 1;
 
             BlockRuntimeMovingAvg = new MovingAverage(MovingAvgWindowSize);
             EdgeRuntimeMovingAvg = new MovingAverage(MovingAvgWindowSize);
+
+            // The exception is thrown with the message 'The handle is invalid.'
+            // only when running the tests, because Xunit does not have a console.
+            try { Console.CursorVisible = false; }
+            catch (IOException) { }
 
             AsyncConsole.BookmarkCurrentLine();
             AsyncConsole.WriteLine("");
@@ -52,12 +59,14 @@ namespace BC2G.Logging
                 AsyncConsole.WriteLine("");
         }
 
-        public virtual void Log(int height)
+        public virtual string Log(int height)
         {
             _activeBlocks.TryAdd(height, true);
+            ToConsole();
+            return $"Started processing block {height}.";
         }
 
-        public virtual void Log(
+        public virtual string Log(
             int height, 
             int allNodesCount, 
             int addedEdgesCount, 
@@ -71,7 +80,19 @@ namespace BC2G.Logging
 
             BlockRuntimeMovingAvg.Add(runtime);
             EdgeRuntimeMovingAvg.Add(runtime / addedEdgesCount);
+
+            ToConsole();
+
+            return
+                $"Active:{ActiveBlocksCount};" +
+                $"Completed:{Completed}/{Total};" +
+                $"{BlockRuntimeMovingAvg.Speed}bps;" +
+                $"{EdgeRuntimeMovingAvg.Speed}eps;" +
+                $"N:{NodesCount};" +
+                $"E:{EdgesCount}.";
         }
+
+        protected abstract void ToConsole();
 
         public virtual string LogCancelling()
         {

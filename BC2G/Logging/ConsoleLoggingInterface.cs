@@ -1,9 +1,8 @@
 ﻿namespace BC2G.Logging
 {
-    public enum ConsoleLoggingStyle
+    public enum ConsoleLoggingInterface
     {
         Minimal,
-        Compact,
         Complete
     }
 }

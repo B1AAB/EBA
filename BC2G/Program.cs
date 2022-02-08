@@ -54,6 +54,8 @@ namespace BC2G
                     (sender, e) => CancelKeyPressHandler(
                         e, _tokenSource, orchestrator.Logger));
 
+                AsyncConsole.CancellationToken = cancellationToken;
+
                 success = orchestrator.RunAsync(cancellationToken).Result;
             }
             catch (Exception e)
@@ -63,7 +65,10 @@ namespace BC2G
             finally
             {
                 AsyncConsole.WaitUntilBufferEmpty();
-                Console.CursorVisible = true;
+                // The exception is thrown with the message 'The handle is invalid.'
+                // only when running the tests, because Xunit does not have a console.
+                try { Console.CursorVisible = true; }
+                catch (IOException) { }
                 Environment.Exit(success ? 0 : 1);
             }
         }
