@@ -64,14 +64,6 @@ namespace BC2G.Logging
             thread.Start();
         }
 
-        public static void Write(string value)
-        {
-            _actions.Add(() =>
-            {
-                Console.Write(value);
-            });
-        }
-
         public static void Write(string value, ConsoleColor color, int lineOffset = 1)
         {
             _actions.Add(() =>
@@ -112,19 +104,6 @@ namespace BC2G.Logging
             });
         }
 
-        public static void WriteLine(string value, int lineOffset, ConsoleColor color)
-        {
-            _actions.Add(() =>
-            {
-                var (Left, Top) = Console.GetCursorPosition();
-                Console.SetCursorPosition(0, BookmarkedLine + lineOffset);
-                Console.ForegroundColor = color;
-                Console.WriteLine(value);
-                Console.ResetColor();
-                Console.SetCursorPosition(Left, Top);
-            });
-        }
-
         public static void WriteLines(string[] msgs, ConsoleColor[] colors, int cursorTopOffset = 1)
         {
             _actions.Add(() =>
@@ -151,19 +130,6 @@ namespace BC2G.Logging
             });
         }
 
-        public static void WriteLine(string value, int cursorTopOffset, int cursorLeft, ConsoleColor color)
-        {
-            _actions.Add(() =>
-            {
-                var (currentLeft, currentTop) = Console.GetCursorPosition();
-                Console.SetCursorPosition(cursorLeft, BookmarkedLine + cursorTopOffset);
-                Console.ForegroundColor = color;
-                Console.WriteLine(value);
-                Console.ResetColor();
-                Console.SetCursorPosition(currentLeft, currentTop);
-            });
-        }
-
         public static void WriteErrorLine(string value, ConsoleColor color = ConsoleColor.Red)
         {
             _actions.Add(() =>
@@ -182,28 +148,6 @@ namespace BC2G.Logging
                 // only when running the tests, because Xunit does not have a console.
                 try { BookmarkedLine = Console.CursorTop; }
                 catch (IOException) { }
-            });
-        }
-
-        public static void MoveCursorTo(int left, int top)
-        {
-            _actions.Add(() => Console.SetCursorPosition(left, top));
-        }
-
-        public static void MoveCursorToOffset(int left, int topOffset)
-        {
-            _actions.Add(() => Console.SetCursorPosition(left, BookmarkedLine + topOffset));
-        }
-
-        public static void EraseBlockProgressReport()
-        {
-            _actions.Add(() =>
-            {
-                for (int line = BookmarkedLine + BlockProgressLinesCount; line >= BookmarkedLine; line--)
-                {
-                    Console.CursorTop = line;
-                    Console.Write(new string(' ', Console.WindowWidth - 1) + "\r");
-                }
             });
         }
 

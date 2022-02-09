@@ -1,8 +1,8 @@
 ﻿namespace BC2G.Logging
 {
-    internal class ConsoleLoggingMinimal : ConsoleLoggingBase
+    internal class BlockTraversalLoggingMinimal : BlockTraversalLoggingBase
     {
-        public ConsoleLoggingMinimal(int fromInclusive, int toExclusive) :
+        public BlockTraversalLoggingMinimal(int fromInclusive, int toExclusive) :
             base(fromInclusive, toExclusive, 0)
         { }
 

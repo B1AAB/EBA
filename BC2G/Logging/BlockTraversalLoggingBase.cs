@@ -2,7 +2,7 @@
 
 namespace BC2G.Logging
 {
-    public abstract class ConsoleLoggingBase
+    public abstract class BlockTraversalLoggingBase
     {
         public int MovingAvgWindowSize { set; get; } = 10;
 
@@ -39,7 +39,7 @@ namespace BC2G.Logging
 
         private readonly ConcurrentDictionary<int, bool> _activeBlocks = new();
 
-        public ConsoleLoggingBase(int fromInclusive, int toExclusive, int templateLinesCount)
+        public BlockTraversalLoggingBase(int fromInclusive, int toExclusive, int templateLinesCount)
         {
             FromInclusive = fromInclusive;
             ToExclusive = toExclusive;

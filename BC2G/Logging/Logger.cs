@@ -16,7 +16,7 @@ namespace BC2G.Logging
         private readonly string _name;
         private readonly string _repository;
 
-        private ConsoleLoggingBase _consoleLogging;
+        private BlockTraversalLoggingBase _consoleLogging;
 
         private bool disposed = false;
 
@@ -65,10 +65,10 @@ namespace BC2G.Logging
             switch(ConsoleLoggingInterface)
             {
                 case ConsoleLoggingInterface.Minimal:
-                    _consoleLogging = new ConsoleLoggingMinimal(from, to);
+                    _consoleLogging = new BlockTraversalLoggingMinimal(from, to);
                     break;
                 case ConsoleLoggingInterface.Complete:
-                    _consoleLogging = new ConsoleLoggingComplete(from, to);
+                    _consoleLogging = new BlockTraversalLoggingComplete(from, to);
                     break;
             }
         }

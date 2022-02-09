@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Logging
 {
-    public class ConsoleLoggingComplete : ConsoleLoggingBase
+    public class BlockTraversalLoggingComplete : BlockTraversalLoggingBase
     {
         private static readonly ConsoleColor[] _colors = new[]
         {
@@ -12,7 +12,7 @@
             ConsoleColor.Blue,
         };
 
-        public ConsoleLoggingComplete(int fromInclusive, int toExclusive) :
+        public BlockTraversalLoggingComplete(int fromInclusive, int toExclusive) :
             base(fromInclusive, toExclusive, 6)
         { }
 
