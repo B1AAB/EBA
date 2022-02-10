@@ -2,9 +2,9 @@
 
 namespace BC2G
 {
-    public class PersistentBlockStatistics : PersistentObject<string>
+    public class PersistentGraphStatistics : PersistentObject<string>
     {
-        public PersistentBlockStatistics(
+        public PersistentGraphStatistics(
             string filename,
             CancellationToken cancellationToken) : base(
                 filename,

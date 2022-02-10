@@ -10,13 +10,13 @@ namespace BC2G
         private const string _delimiter = ",";
 
         private readonly AddressToIdMapper _mapper;
-        private readonly PersistentBlockStatistics _pBlockStatistics;
+        private readonly PersistentGraphStatistics _pGraphStats;
         private readonly Logger _logger;
 
         public PersistentGraphBuffer(
             string filename,
             AddressToIdMapper mapper,
-            PersistentBlockStatistics pBlockStatistics,
+            PersistentGraphStatistics pGraphStats,
             Logger logger,
             CancellationToken cancellationToken) : base(
                 filename,
@@ -25,7 +25,7 @@ namespace BC2G
                 { "Source", "Target", "Value", "EdgeType", "Timestamp" }))
         {
             _mapper = mapper;
-            _pBlockStatistics = pBlockStatistics;
+            _pGraphStats = pGraphStats;
             _logger = logger;
         }
 
@@ -46,7 +46,7 @@ namespace BC2G
                     }));
 
             obj.Stats.StopStopwatch();
-            _pBlockStatistics.Enqueue(obj.Stats.ToString());
+            _pGraphStats.Enqueue(obj.Stats.ToString());
 
             return csvBuilder.ToString();
         }
