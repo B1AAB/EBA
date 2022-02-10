@@ -243,6 +243,10 @@ namespace BC2G
                 MaxDegreeOfParallelism = _options.MaxConcurrentBlocks
             };
 
+            // Persist the start point so to at least have the starting point
+            // in case the program fails without a chance to persist the current status.
+            await JsonSerializer<Options>.SerializeAsync(_options, _statusFilename);
+
             // Have tested TPL dataflow as alternative to Parallel.For,
             // it adds more complexity with little performance improvements,
             // and in some cases, slower than Parallel.For and sequential traversal.
