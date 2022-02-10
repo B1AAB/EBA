@@ -212,7 +212,7 @@ namespace BC2G
             using var serializer = new CSVSerializer(mapper);
 
             var pBlockStat = new PersistentBlockStatistics(
-                Path.Combine(_options.OutputDir, "blocks_stats.tsv"),
+                Path.Combine(_options.OutputDir, "graph_stats.tsv"),
                 cT);
 
             var gBuffer = new PersistentGraphBuffer(

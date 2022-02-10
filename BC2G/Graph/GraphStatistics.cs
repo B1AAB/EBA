@@ -9,6 +9,12 @@ namespace BC2G.Graph
         private TimeSpan _runtime;
         private readonly Stopwatch _stopwatch = new();
 
+        public int InputTxCount { get { return _inputTxCount; } }
+        private int _inputTxCount;
+
+        public int OutputTxCount { get { return _outputTxCount; } }
+        private int _outputTxCount;
+
         public Dictionary<EdgeType, uint> EdgeTypeFrequency
         {
             get
@@ -45,6 +51,15 @@ namespace BC2G.Graph
             Interlocked.Increment(ref _edgeTypeFrequency[(int)type]);
         }
 
+        public void AddInputTxCount(int value)
+        {
+            Interlocked.Add(ref _inputTxCount, value);
+        }
+        public void AddOutputTxCount(int value)
+        {
+            Interlocked.Add(ref _outputTxCount, value);
+        }
+
         public void AddEdgeType(EdgeType type, uint value)
         {
             _edgeTypeFrequency[(int)type] =
@@ -59,7 +74,9 @@ namespace BC2G.Graph
             {
                 "BlockHeight",
                 "Runtime",
-                string.Join(_delimiter, (EdgeType[]) Enum.GetValues(typeof(EdgeType)))
+                string.Join(_delimiter, (EdgeType[]) Enum.GetValues(typeof(EdgeType))),
+                "InputTxCount",
+                "OutputTxCount"
             });
         }
 
@@ -72,6 +89,8 @@ namespace BC2G.Graph
                 string.Join(
                     _delimiter,
                     _edgeTypeFrequency.Select((v, i) => v.ToString()).ToArray()),
+                InputTxCount.ToString(),
+                OutputTxCount.ToString(),
                 Environment.NewLine
             });
         }

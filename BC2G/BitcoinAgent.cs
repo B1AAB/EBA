@@ -142,6 +142,7 @@ namespace BC2G
                 output.TryGetAddress(out string address);
                 address = generationTxGraph.AddTarget(address, output.Value);
                 rewardAddresses.Add(address);
+                g.Stats.AddInputTxCount(1);
                 _txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
             }
 
@@ -202,6 +203,8 @@ namespace BC2G
                 _txCache.Add(tx.Txid, output.Index, address, output.Value);
             }
 
+            g.Stats.AddInputTxCount(tx.Inputs.Count);
+            g.Stats.AddOutputTxCount(tx.Outputs.Count);
             g.Enqueue(txGraph);
         }
 
