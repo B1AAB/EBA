@@ -224,7 +224,7 @@ namespace BC2G
 
             Logger.Log(
                 $"Traversing blocks [{_options.FromInclusive:n0}, " +
-                $"{_options.ToExclusive:n0}):", writeLine: true);
+                $"{_options.ToExclusive:n0}):");
 
             // test:
             /*
@@ -267,7 +267,7 @@ namespace BC2G
             // At this method's exist, the dispose method of
             // the types wrapped in `using` will be called that
             // finalizes persisting output.
-            Logger.Log("Finalizing serialized files.", true);
+            Logger.Log("Finalizing serialized files.");
             await JsonSerializer<Options>.SerializeAsync(_options, _statusFilename);
 
             while(true)

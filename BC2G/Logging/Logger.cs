@@ -73,14 +73,8 @@ namespace BC2G.Logging
             }
         }
 
-        public void Log(string message, bool writeLine = true)
+        public void Log(string message)
         {
-            /*
-            if (writeLine)
-                AsyncConsole.WriteLine(message);
-            else
-                AsyncConsole.Write(message);*/
-            
             log.Info(message);
         }
 

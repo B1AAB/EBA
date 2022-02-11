@@ -29,7 +29,7 @@ namespace BC2G.Logging
                     $"{string.Join(", ", _activeBlocks.Keys)}";
             }
         }
-
+        private readonly ConcurrentDictionary<int, bool> _activeBlocks = new();
         public int ActiveBlocksCount { get { return _activeBlocks.Count; } }
 
         public MovingAverage BlockRuntimeMovingAvg { get; }
@@ -37,9 +37,11 @@ namespace BC2G.Logging
 
         private const string _cancelling = "Cancelling ... do not turn off your computer.";
 
-        private readonly ConcurrentDictionary<int, bool> _activeBlocks = new();
 
-        public BlockTraversalLoggingBase(int fromInclusive, int toExclusive, int templateLinesCount)
+        public BlockTraversalLoggingBase(
+            int fromInclusive, 
+            int toExclusive, 
+            int templateLinesCount)
         {
             FromInclusive = fromInclusive;
             ToExclusive = toExclusive;
