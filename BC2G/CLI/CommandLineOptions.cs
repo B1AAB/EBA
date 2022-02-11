@@ -8,7 +8,7 @@ namespace BC2G.CLI
     public class CommandLineOptions
     {
         public string StatusFilename { get { return _statusFilename; } }
-        public string? ResumeFrom { get { return _resumeFrom; } }
+        private string _statusFilename = "status.json";
 
         private readonly CommandLineApplication _cla;
 
@@ -68,16 +68,7 @@ namespace BC2G.CLI
             "it creates `[block_height]_edges.csv` and `[block_height]_nodes.csv. "
         };
 
-        //from = 719000;
-        //to = 719010;
-        private int _from = -1;
-        private int _to = -1;
-        private string _output = Environment.CurrentDirectory;
-        private string _statusFilename = "status.json";
-        private string _addressIdMappingFilename = "address_id_mapping.csv";
-        private string? _resumeFrom = null;
-        private bool _createPerBlockFiles = false;
-        private int _maxConcurrentBlocks = Environment.ProcessorCount / 2;
+        private Options _parsedOptions = new();
 
         public static string HelpOption
         {
@@ -122,35 +113,7 @@ namespace BC2G.CLI
         public Options Parse(string[] args, out bool helpOrVersionIsDisplayed)
         {
             helpOrVersionIsDisplayed = _cla.Execute(args) != 1;
-            if (helpOrVersionIsDisplayed)
-                return new Options();
-
-            if (ResumeFrom == null)
-            {
-                return new Options()
-                {
-                    FromInclusive = _from,
-                    ToExclusive = _to,
-                    OutputDir = _output,
-                    AddressIdMappingFilename = _addressIdMappingFilename,
-                    CreatePerBlockFiles = _createPerBlockFiles,
-                    MaxConcurrentBlocks = _maxConcurrentBlocks
-                };
-            }
-            else
-            {
-                try
-                {
-                    return JsonSerializer<Options>
-                        .DeserializeAsync(ResumeFrom).Result;
-                }
-                catch (Exception e)
-                {
-                    throw new ArgumentException(
-                        $"Failed loading status from " +
-                        $"`{ResumeFrom}`: {e.Message}");
-                }
-            }
+            return _parsedOptions;
         }
 
         private int AssertArguments()
@@ -170,7 +133,7 @@ namespace BC2G.CLI
             if (missingArgs.Count > 0)
             {
                 var msgBuilder = new StringBuilder(
-                    "the following required arguments are missing: ");
+                    "The following required arguments are missing: ");
                 for (int i = 0; i < missingArgs.Count - 1; i++)
                     msgBuilder.Append(missingArgs[i] + "; and ");
                 msgBuilder.Append(missingArgs[^1] + ".");
@@ -181,36 +144,64 @@ namespace BC2G.CLI
 
         private void AssertGivenArgs()
         {
-            if (_fromOption.HasValue() && 
-                !int.TryParse(_fromOption.Value(), out _from))
+            // TODO: if a value for this argument is given,
+            // no value for other arguments should be
+            // provided, throw a warning that other arguments
+            // will be ignored. 
+            if (_resumeFromOption.HasValue())
+            {
+                var resumeFromFilename = Path.GetFullPath(_resumeFromOption.Value());
+                try
+                {
+                    _parsedOptions = JsonSerializer<Options>.DeserializeAsync(resumeFromFilename).Result;
+                    return;
+                }
+                catch (Exception e)
+                {
+                    throw new ArgumentException(
+                        $"Failed loading status from " +
+                        $"`{resumeFromFilename}`: {e.Message}");
+                }
+            }
+
+            _parsedOptions = new Options();
+
+            int from = 0, to = 0;
+            if (_fromOption.HasValue() &&
+                !int.TryParse(_fromOption.Value(), out from))
                 throw new ArgumentException(
                     $"Invalid value given for the " +
                     $"`{_fromOption.LongName}` argument.");
 
             if (_toOption.HasValue() &&
-                !int.TryParse(_toOption.Value(), out _to))
+                !int.TryParse(_toOption.Value(), out to))
                 throw new ArgumentException(
                     $"Invalid value given for the " +
                     $"`{_toOption.LongName}` argument.");
 
-            if (_to != -1 && _from != -1 && _to <= _from)
+            if (to != -1 && from != -1 && to <= from)
                 throw new ArgumentException(
                     $"Provided value for {_toOption.LongName} " +
                     $"({_toOption.Value}) should be greater " +
                     $"than the value provided for " +
                     $"{_fromOption.LongName} ({_fromOption.Value})");
 
+            _parsedOptions.FromInclusive = from;
+            _parsedOptions.ToExclusive = to;
+
+            var output = string.Empty;
             if (_outputOption.HasValue())
             {
                 try
                 {
-                    _output = Path.GetFullPath(_outputOption.Value());
+                    output = Path.GetFullPath(_outputOption.Value());
+                    _parsedOptions.OutputDir = output;
                 }
-                catch (Exception ex)
+                catch (Exception e)
                 {
                     throw new ArgumentException(
                         $"Invalid value given for the " +
-                        $"`{_outputOption.LongName}` argument: {ex.Message}");
+                        $"`{_outputOption.LongName}` argument: {e.Message}");
                 }
             }
 
@@ -221,62 +212,43 @@ namespace BC2G.CLI
                     _statusFilename = Path.GetFullPath(
                         _statusFilenameOption.Value());
                 }
-                catch (Exception ex)
+                catch (Exception e)
                 {
                     throw new ArgumentException(
                         $"Invalid value given for the " +
                         $"`{_statusFilenameOption.LongName}` " +
-                        $"argument: {ex.Message}");
+                        $"argument: {e.Message}");
                 }
             }
             else
             {
-                _statusFilename = Path.Combine(_output, _statusFilename);
+                _statusFilename = Path.Combine(output, _statusFilename);
             }
 
             if (_addressIdMappingFilenameOption.HasValue())
             {
                 try
                 {
-                    _addressIdMappingFilename = Path.GetFullPath(
-                        _addressIdMappingFilenameOption.Value());
+                    _parsedOptions.AddressIdMappingFilename =
+                        Path.GetFullPath(_addressIdMappingFilenameOption.Value());
                 }
-                catch (Exception ex)
+                catch (Exception e)
                 {
                     throw new ArgumentException(
                         $"Invalid value given for the " +
                         $"`{_addressIdMappingFilenameOption.LongName}` " +
-                        $"argument: {ex.Message}");
+                        $"argument: {e.Message}");
                 }
             }
             else
             {
-                _addressIdMappingFilename = Path.Combine(
-                    _output, _addressIdMappingFilename);
+                _parsedOptions.AddressIdMappingFilename =
+                    Path.Combine(output, _parsedOptions.AddressIdMappingFilename);
             }
 
-            // TODO: if a value for this argument is given,
-            // no value for other arguments should also be
-            // provided, throw a warning that other arguments
-            // will be ignored. Also, implement the code to
-            // ignore those arguments.
-            if(_resumeFromOption.HasValue())
-            {
-                try
-                {
-                    _resumeFrom = Path.GetFullPath(_resumeFromOption.Value());
-                }
-                catch (Exception ex)
-                {
-                    throw new ArgumentException(
-                        $"Invalid value given for the " +
-                        $"`{_resumeFromOption.LongName}` " +
-                        $"argument: {ex.Message}");
-                }
-            }
 
             if (_createPerBlockFilesOption.HasValue())
-                _createPerBlockFiles = true;
+                _parsedOptions.CreatePerBlockFiles = true;
         }
     }
 }

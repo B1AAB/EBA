@@ -37,7 +37,6 @@ namespace BC2G.Logging
 
         private const string _cancelling = "Cancelling ... do not turn off your computer.";
 
-
         public BlockTraversalLoggingBase(
             int fromInclusive, 
             int toExclusive, 
@@ -45,7 +44,7 @@ namespace BC2G.Logging
         {
             FromInclusive = fromInclusive;
             ToExclusive = toExclusive;
-            Total = ToExclusive - FromInclusive - 1;
+            Total = ToExclusive - FromInclusive;
 
             BlockRuntimeMovingAvg = new MovingAverage(MovingAvgWindowSize);
             EdgeRuntimeMovingAvg = new MovingAverage(MovingAvgWindowSize);
