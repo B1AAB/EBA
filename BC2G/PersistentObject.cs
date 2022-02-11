@@ -13,7 +13,8 @@ namespace BC2G
     /// </summary>
     public class PersistentObject<T> : IDisposable
     {
-        public bool Stopped { private set; get; } = false;
+        public bool BufferEmpty { get { return _buffer.Count == 0 || _cancelled; } }
+        private bool _cancelled = false;
 
         private readonly StreamWriter _stream;
         private readonly BlockingCollection<T> _buffer;
@@ -44,7 +45,7 @@ namespace BC2G
                 {
                     T obj;
                     try { obj = _buffer.Take(cT); }
-                    catch (OperationCanceledException) { Stopped = true; break; }
+                    catch (OperationCanceledException) { _cancelled = true; break; }
 
                     if (obj != null)
                     {
@@ -56,7 +57,6 @@ namespace BC2G
             { IsBackground = false };
 
             thread.Start();
-            Stopped = false;
         }
 
         public void Enqueue(T obj)
