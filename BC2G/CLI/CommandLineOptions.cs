@@ -91,14 +91,13 @@ namespace BC2G.CLI
             _cla.Options.Add(_createPerBlockFilesOption);
 
             var version = "Unknown (Called from unmanaged code)";
-            if (Assembly.GetEntryAssembly() != null)
-#pragma warning disable CS8604 // Possible null reference argument.
-#pragma warning disable CS8602 // Dereference of a possibly null reference.
-                version = Assembly.GetEntryAssembly()
-                    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-                    .InformationalVersion;
-#pragma warning restore CS8602 // Dereference of a possibly null reference.
-#pragma warning restore CS8604 // Possible null reference argument.
+            var assembly = Assembly.GetEntryAssembly();
+            if (assembly != null)
+            {
+                var attribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+                if (attribute != null)
+                    version = attribute.InformationalVersion;
+            }
 
             _cla.HelpOption(HelpOption);
             _cla.VersionOption("-v | --version", () =>
