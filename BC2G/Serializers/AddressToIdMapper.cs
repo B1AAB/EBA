@@ -35,9 +35,7 @@ namespace BC2G.Serializers
         {
             lock (_locker)
             {
-                // Potential ID is set to hex of number of items 
-                // currently in the _mappings dictionary.
-                var potentialId = _mappings.Count.ToString("X");
+                var potentialId = _mappings.Count.ToString();
                 var id = _mappings.GetOrAdd(address, potentialId);
                 if (id == potentialId)
                     Enqueue((id, address));
