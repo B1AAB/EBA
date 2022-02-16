@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System;
 
 namespace BC2G.Logging
 {
@@ -68,7 +67,22 @@ namespace BC2G.Logging
         {
             _actions.Add(() =>
             {
-                if (Console.CursorTop != BookmarkedLine + 1)
+                // Write to Block Traversal Progress Line.
+                bool w2BTL = false;
+                try
+                {
+                    if (Console.CursorTop != BookmarkedLine + 1)
+                        w2BTL = true;
+                }
+                catch (IOException)
+                {
+                    // This exception is thrown when tested under
+                    // xunit, because xunit does not have a console 
+                    // attached. 
+                    w2BTL = false;
+                }
+
+                if (w2BTL)
                 {
                     var (Left, Top) = Console.GetCursorPosition();
                     Console.SetCursorPosition(0, BookmarkedLine + lineOffset);
