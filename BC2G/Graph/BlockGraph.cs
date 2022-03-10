@@ -70,7 +70,8 @@ namespace BC2G.Graph
                         item.Key,
                         item.Value,
                         EdgeType.Generation,
-                        Timestamp));
+                        Timestamp,
+                        Height));
             }
             else
             {
@@ -97,13 +98,14 @@ namespace BC2G.Graph
                             Utilities.Round(t.Value * Utilities.Round(
                                 s.Value / txGraph.TotalInputValue)),
                             s.Key == t.Key ? EdgeType.Change : EdgeType.Transfer,
-                            Timestamp));
+                            Timestamp,
+                            Height));
 
                     foreach (var m in RewardsAddresses)
                     {
                         var feeShare = Utilities.Round(fee / RewardsAddresses.Count);
                         if (feeShare > 0.0)
-                            AddEdge(new Edge(s.Key, m, feeShare, EdgeType.Fee, Timestamp));
+                            AddEdge(new Edge(s.Key, m, feeShare, EdgeType.Fee, Timestamp, Height));
                     }
                 }
             }
@@ -122,7 +124,8 @@ namespace BC2G.Graph
                     edge.Target,
                     edge.Value + oldValue.Value,
                     edge.Type,
-                    edge.Timestamp));
+                    edge.Timestamp,
+                    edge.BlockHeight));
 
             _nodes.TryAdd(edge.Source, 0);
             _nodes.TryAdd(edge.Target, 0);

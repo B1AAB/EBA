@@ -21,8 +21,7 @@ namespace BC2G
             CancellationToken cancellationToken) : base(
                 filename,
                 cancellationToken,
-                string.Join(_delimiter, new string[]
-                { "Source", "Target", "Value", "EdgeType", "Timestamp", "TimeOffsetFromGenesisBlock" }))
+                Edge.Header)
         {
             _mapper = mapper;
             _pGraphStats = pGraphStats;
@@ -36,15 +35,9 @@ namespace BC2G
             var csvBuilder = new StringBuilder();
             foreach (var edge in obj.Edges)
                 csvBuilder.AppendLine(
-                    string.Join(_delimiter, new string[]
-                    {
+                    edge.ToString(
                         _mapper.GetId(edge.Source),
-                        _mapper.GetId(edge.Target),
-                        edge.Value.ToString(),
-                        ((byte)edge.Type).ToString(),
-                        edge.Timestamp.ToString(),
-                        (edge.Timestamp - BitcoinAgent.GenesisTimestamp).ToString()
-                    }));
+                        _mapper.GetId(edge.Target)));
 
             obj.Stats.StopStopwatch();
             _pGraphStats.Enqueue(obj.Stats.ToString());

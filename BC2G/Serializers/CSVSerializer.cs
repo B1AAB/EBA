@@ -110,27 +110,13 @@ namespace BC2G.Serializers
         private void WriteEdges(BlockGraph g, string filename)
         {
             var csvBuilder = new StringBuilder();
-            csvBuilder.AppendLine(
-                string.Join(_delimiter, new string[]
-                { "Source", "Target", "Weight", "EdgeType", "Timestamp", "TimeOffsetFromGenesisBlock" }));
-
-            // Do NOT refactor "EdgeType" to "Type", since
-            // some tools such as Gephi will fail to visualize
-            // the graph if this is labeled as "Type".
+            csvBuilder.AppendLine(Edge.Header);
 
             foreach (var edge in g.Edges)
-            {
                 csvBuilder.AppendLine(
-                    string.Join(_delimiter, new string[]
-                    {
+                    edge.ToString(
                         _mapper.GetId(edge.Source),
-                        _mapper.GetId(edge.Target),
-                        edge.Value.ToString(),
-                        ((int)edge.Type).ToString(),
-                        edge.Timestamp.ToString(),
-                        (edge.Timestamp - BitcoinAgent.GenesisTimestamp).ToString()
-                    }));
-            }
+                        _mapper.GetId(edge.Target)));
 
             File.WriteAllText(filename, csvBuilder.ToString());
         }
@@ -149,7 +135,8 @@ namespace BC2G.Serializers
                     nodeIds[x[1]],
                     double.Parse(x[2]),
                     (EdgeType)int.Parse(x[3]),
-                    uint.Parse(x[4])));
+                    uint.Parse(x[4]),
+                    int.Parse(x[5])));
             }
 
             return g;
