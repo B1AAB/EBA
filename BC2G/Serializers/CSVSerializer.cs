@@ -112,7 +112,7 @@ namespace BC2G.Serializers
             var csvBuilder = new StringBuilder();
             csvBuilder.AppendLine(
                 string.Join(_delimiter, new string[]
-                { "Source", "Target", "Weight", "EdgeType", "Timestamp" }));
+                { "Source", "Target", "Weight", "EdgeType", "Timestamp", "TimeOffsetFromGenesisBlock" }));
 
             // Do NOT refactor "EdgeType" to "Type", since
             // some tools such as Gephi will fail to visualize
@@ -127,7 +127,8 @@ namespace BC2G.Serializers
                         _mapper.GetId(edge.Target),
                         edge.Value.ToString(),
                         ((int)edge.Type).ToString(),
-                        edge.Timestamp.ToString()
+                        edge.Timestamp.ToString(),
+                        (edge.Timestamp - BitcoinAgent.GenesisTimestamp).ToString()
                     }));
             }
 

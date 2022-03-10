@@ -8,6 +8,8 @@ namespace BC2G
 {
     public class BitcoinAgent : IDisposable
     {
+        public static uint GenesisTimestamp { get { return 1231006505; } }
+
         /// <summary>
         /// Sets and gets the REST API endpoint of the Bitcoin client.
         /// </summary>

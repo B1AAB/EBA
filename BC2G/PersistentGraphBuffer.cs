@@ -22,7 +22,7 @@ namespace BC2G
                 filename,
                 cancellationToken,
                 string.Join(_delimiter, new string[]
-                { "Source", "Target", "Value", "EdgeType", "Timestamp" }))
+                { "Source", "Target", "Value", "EdgeType", "Timestamp", "TimeOffsetFromGenesisBlock" }))
         {
             _mapper = mapper;
             _pGraphStats = pGraphStats;
@@ -42,7 +42,8 @@ namespace BC2G
                         _mapper.GetId(edge.Target),
                         edge.Value.ToString(),
                         ((byte)edge.Type).ToString(),
-                        edge.Timestamp.ToString()
+                        edge.Timestamp.ToString(),
+                        (edge.Timestamp - BitcoinAgent.GenesisTimestamp).ToString()
                     }));
 
             obj.Stats.StopStopwatch();
