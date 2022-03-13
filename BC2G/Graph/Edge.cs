@@ -17,7 +17,7 @@
                 {
                     "Source",
                     "Target",
-                    "Weight",
+                    "Weight", // TODO: rename this
                     "EdgeType",
                     "Timestamp",
                     "TimeOffsetFromGenesisBlock",

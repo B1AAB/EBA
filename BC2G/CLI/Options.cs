@@ -6,8 +6,17 @@
         public int ToExclusive { get; set; } = -1;
         public int LastProcessedBlock
         {
-            get { return _lastProcessedBlock == -1 ? FromInclusive - 1 : _lastProcessedBlock; }
-            set { _lastProcessedBlock = value; }
+            get
+            {
+                if (_lastProcessedBlock == -1)
+                    return FromInclusive == -1 ? -1 : FromInclusive - 1;
+                else
+                    return _lastProcessedBlock;
+            }
+            set
+            {
+                _lastProcessedBlock = value;
+            }
         }
         private int _lastProcessedBlock = -1;
 

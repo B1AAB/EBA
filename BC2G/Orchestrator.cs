@@ -89,10 +89,22 @@ namespace BC2G
 
             if (_options.ToExclusive <= _options.FromInclusive)
             {
-                Logger.LogWarning(
+                Logger.LogException(
                     $"The Start block height must be smaller than the end " +
                     $"block height: `{_options.FromInclusive}` is not less " +
                     $"than `{_options.ToExclusive}`.");
+                return false;
+            }
+
+            if (_options.FromInclusive < 0)
+            {
+                Logger.LogException($"Invalid Start block height {_options.FromInclusive}");
+                return false;
+            }
+
+            if(_options.ToExclusive < 0)
+            {
+                Logger.LogException($"Invalid To block height {_options.ToExclusive}");
                 return false;
             }
 
@@ -104,7 +116,7 @@ namespace BC2G
 
                 while (true)
                 {
-                    if (txCache.BufferEmpty)
+                    if (txCache.CanClose)
                         break;
                     Thread.Sleep(500);
                 }
@@ -133,6 +145,8 @@ namespace BC2G
             finally
             {
                 stopwatch.Stop();
+                agent.Dispose();
+                txCache.Dispose();
             }
 
             return true;
@@ -211,11 +225,11 @@ namespace BC2G
 
             using var serializer = new CSVSerializer(mapper);
 
-            var pGraphStat = new PersistentGraphStatistics(
+            using var pGraphStat = new PersistentGraphStatistics(
                 Path.Combine(_options.OutputDir, "graph_stats.tsv"),
                 cT);
 
-            var gBuffer = new PersistentGraphBuffer(
+            using var gBuffer = new PersistentGraphBuffer(
                 Path.Combine(_options.OutputDir, "edges.csv"),
                 mapper,
                 pGraphStat,
@@ -272,7 +286,7 @@ namespace BC2G
 
             while(true)
             {
-                if (mapper.BufferEmpty && gBuffer.BufferEmpty)
+                if (mapper.CanDispose && gBuffer.CanDispose)
                     break;
                 Thread.Sleep(500);
             }

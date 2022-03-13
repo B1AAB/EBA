@@ -47,7 +47,8 @@ namespace BC2G.Logging
                 MaxSizeRollBackups = 5,
                 MaximumFileSize = MaxLogFileSize,
                 RollingStyle = RollingFileAppender.RollingMode.Size,
-                StaticLogFileName = true
+                StaticLogFileName = true,
+                LockingModel = new FileAppender.MinimalLock()
             };
             roller.ActivateOptions();
             hierarchy.Root.AddAppender(roller);

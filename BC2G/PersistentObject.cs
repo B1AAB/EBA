@@ -13,13 +13,19 @@ namespace BC2G
     /// </summary>
     public class PersistentObject<T> : IDisposable
     {
-        public bool BufferEmpty { get { return _buffer.Count == 0 || _cancelled; } }
+        public bool CanDispose
+        {
+            get
+            {
+                return _canCloseStream && (_buffer.Count == 0 || _cancelled);
+            }
+        }
+        private bool _canCloseStream = true;
         private bool _cancelled = false;
+        private bool _disposed = false;
 
         private readonly StreamWriter _stream;
         private readonly BlockingCollection<T> _buffer;
-
-        private bool _disposed = false;
 
         public PersistentObject(string filename, CancellationToken cT, string header = "")
         {
@@ -49,8 +55,10 @@ namespace BC2G
 
                     if (obj != null)
                     {
+                        _canCloseStream = false;
                         _stream.Write(Serialize(obj, cT));
                         PostPersistence(obj);
+                        _canCloseStream = true;
                     }
                 }
             })
@@ -82,11 +90,21 @@ namespace BC2G
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)
+            {
                 if (disposing)
                 {
+                    int graceCount = 3;
+                    while (graceCount-- >= 0)
+                    {
+                        if (_canCloseStream)
+                            break;
+                        Thread.Sleep(500);
+                    }
+
                     _stream.Flush();
                     _stream.Dispose();
                 }
+            }
 
             _disposed = true;
         }

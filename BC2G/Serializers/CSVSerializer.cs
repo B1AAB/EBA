@@ -68,7 +68,6 @@ namespace BC2G.Serializers
             File.AppendAllText(edgesFilename, csvBuilder.ToString());
         }
 
-
         public override BlockGraph Deserialize(string path, int blockHeight)
         {
             var nodeIds = ReadNodes(Path.Combine(path, $"{blockHeight}_nodes.csv"));

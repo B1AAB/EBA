@@ -246,7 +246,7 @@ namespace BC2G
             {
                 if (disposing)
                 {
-                    _txCache.Dispose();
+                    //_txCache.Dispose();
                 }
 
                 _disposed = true;

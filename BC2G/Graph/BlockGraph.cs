@@ -32,7 +32,7 @@ namespace BC2G.Graph
 
         private readonly ConcurrentQueue<TransactionGraph> _txGraphsQueue = new();
 
-        public BlockGraph(int height):base()
+        public BlockGraph(int height) : base()
         {
             Height = height;
             Stats = new GraphStatistics(height);

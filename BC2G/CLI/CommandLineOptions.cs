@@ -165,7 +165,7 @@ namespace BC2G.CLI
 
             _parsedOptions = new Options();
 
-            int from = 0, to = 0;
+            int from = -1, to = -1;
             if (_fromOption.HasValue() &&
                 !int.TryParse(_fromOption.Value(), out from))
                 throw new ArgumentException(
