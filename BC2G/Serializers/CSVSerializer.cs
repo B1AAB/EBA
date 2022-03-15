@@ -74,6 +74,37 @@ namespace BC2G.Serializers
             return ReadEdges(Path.Combine(path, $"{blockHeight}_edges.csv"), blockHeight, nodeIds);
         }
 
+        public static Dictionary<int, BlockGraph> Deserialize(string edges, string addressIdMapping)
+        {
+            var mappings = new Dictionary<string, string>();
+            foreach (var l in File.ReadAllLines(addressIdMapping))
+            {
+                var cols = l.Trim().Split('\t');
+                mappings.Add(cols[0], cols[1]);
+            }
+
+            var blockGraphs = new Dictionary<int, BlockGraph>();
+
+            string? line;
+            using var reader = new StreamReader(edges);
+            reader.ReadLine(); // skip the header.
+            while ((line = reader.ReadLine()) != null)
+            {
+                var cols = line.Trim().Split(',');
+                cols[0] = mappings[cols[0]];
+                cols[1] = mappings[cols[1]];
+
+                var edge = Edge.FromString(cols);
+
+                if (!blockGraphs.ContainsKey(edge.BlockHeight))
+                    blockGraphs.Add(edge.BlockHeight, new BlockGraph(edge.BlockHeight));
+
+                blockGraphs[edge.BlockHeight].AddEdge(edge);
+            }
+
+            return blockGraphs;
+        }
+
         private void WriteNodes(BlockGraph g, string filename)
         {
             var csvBuilder = new StringBuilder();

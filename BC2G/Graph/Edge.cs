@@ -56,6 +56,17 @@
             });
         }
 
+        public static Edge FromString(string[] fields)
+        {
+            return new Edge(
+                fields[0],
+                fields[1],
+                double.Parse(fields[2]),
+                Enum.Parse<EdgeType>(fields[3]),
+                uint.Parse(fields[4]),
+                int.Parse(fields[6]));
+        }
+
         public int GetHashCode(bool ignoreValue)
         {
             if (ignoreValue)
