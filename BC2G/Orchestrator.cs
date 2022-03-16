@@ -154,11 +154,6 @@ namespace BC2G
 
         private bool TryGetBitCoinAgent(CancellationToken cT, out BitcoinAgent agent, out TxCache txCache)
         {
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-            agent = null;
-            txCache = null;
-#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
-
             try
             {
                 txCache = new TxCache(_options.OutputDir, cT);
@@ -173,6 +168,11 @@ namespace BC2G
                 Logger.LogException(
                     $"Failed to create/access BitcoinAgent: " +
                     $"{e.Message}");
+
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+                agent = null;
+                txCache = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 return false;
             }
         }
@@ -239,12 +239,6 @@ namespace BC2G
             Logger.Log(
                 $"Traversing blocks [{_options.FromInclusive:n0}, " +
                 $"{_options.ToExclusive:n0}):");
-
-            // test:
-            /*
-            _options.FromInclusive = 0;//700000;
-            _options.LastProcessedBlock = _options.FromInclusive;
-            _options.ToExclusive = 700005;*/
 
             Logger.InitBlocksTraverse(_options.FromInclusive, _options.ToExclusive);
 

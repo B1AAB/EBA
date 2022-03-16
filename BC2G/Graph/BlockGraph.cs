@@ -111,7 +111,6 @@ namespace BC2G.Graph
             }
         }
 
-        // TODO: it could probably be faster if this method takes the attributes of Edge instead of an instance of edge.
         public void AddEdge(Edge edge)
         {
             /// Note that the hashkey is invariant to the edge value.

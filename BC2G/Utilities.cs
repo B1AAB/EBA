@@ -44,17 +44,17 @@ namespace BC2G
             return Math.Round(input, digits: FractionalDigitsCount);
         }
 
-        public static double ThreadsafeAdd(ref double location1, double value)
+        public static double ThreadsafeAdd(ref double location, double value)
         {
             // This is implemented based on the following Stackoverflow answer.
             // https://stackoverflow.com/a/16893641/947889
 
-            double newCurrentValue = location1; // non-volatile read, so may be stale
+            double newCurrentValue = location; // non-volatile read, so may be stale
             while (true)
             {
                 double currentValue = newCurrentValue;
                 double newValue = Round(currentValue + value);
-                newCurrentValue = Interlocked.CompareExchange(ref location1, newValue, currentValue);
+                newCurrentValue = Interlocked.CompareExchange(ref location, newValue, currentValue);
                 if (newCurrentValue == currentValue)
                     return newValue;
             }

@@ -10,11 +10,8 @@ namespace BC2G.Serializers
         private const string _tmpFilenamePostfix = ".tmp";
         private bool disposed = false;
 
-        private readonly string _mapperFilename = string.Empty;
         private readonly List<string> _createdFiles = new();
         private readonly AddressToIdMapper _mapper;
-
-        public CSVSerializer() { }
 
         public CSVSerializer(AddressToIdMapper mapper)
         {
@@ -187,7 +184,7 @@ namespace BC2G.Serializers
                 if (disposing)
                 {
                     /// rename temporary files as the following.
-                    ///   rom: abc.csv.tmp
+                    ///  from: abc.csv.tmp
                     ///    to: abc.csv
                     foreach (var filename in _createdFiles)
                         File.Move(
