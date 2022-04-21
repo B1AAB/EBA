@@ -19,7 +19,6 @@
                     "Target",
                     "Value",
                     "EdgeType",
-                    "Timestamp",
                     "TimeOffsetFromGenesisBlock",
                     "BlockHeight"
                 });
@@ -50,7 +49,6 @@
                 targetId,
                 Value.ToString(),
                 ((int)Type).ToString(),
-                Timestamp.ToString(),
                 (Timestamp - BitcoinAgent.GenesisTimestamp).ToString(),
                 BlockHeight.ToString()
             });
@@ -59,12 +57,12 @@
         public static Edge FromString(string[] fields)
         {
             return new Edge(
-                fields[0],
-                fields[1],
-                double.Parse(fields[2]),
-                Enum.Parse<EdgeType>(fields[3]),
-                uint.Parse(fields[4]),
-                int.Parse(fields[6]));
+                source: fields[0],
+                target: fields[1],
+                value: double.Parse(fields[2]),
+                type: Enum.Parse<EdgeType>(fields[3]),
+                timestamp: BitcoinAgent.GenesisTimestamp + uint.Parse(fields[4]),
+                blockHeight: int.Parse(fields[6]));
         }
 
         public int GetHashCode(bool ignoreValue)
