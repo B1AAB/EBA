@@ -21,7 +21,7 @@
         private int _lastProcessedBlock = -1;
 
         public string OutputDir { get; set; } = Environment.CurrentDirectory;
-        public string AddressIdMappingFilename { set; get; } = "address_id_mapping.csv";
+        public string AddressIdMappingFilename { set; get; } = "id_to_address_mapping.tsv";
         public bool CreatePerBlockFiles { get; set; } = false;
         public int MaxConcurrentBlocks { get; set; } = Environment.ProcessorCount / 2;
     }

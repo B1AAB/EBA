@@ -62,7 +62,7 @@
                 value: double.Parse(fields[2]),
                 type: Enum.Parse<EdgeType>(fields[3]),
                 timestamp: BitcoinAgent.GenesisTimestamp + uint.Parse(fields[4]),
-                blockHeight: int.Parse(fields[6]));
+                blockHeight: int.Parse(fields[5]));
         }
 
         public int GetHashCode(bool ignoreValue)

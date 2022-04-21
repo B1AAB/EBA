@@ -19,7 +19,7 @@ namespace BC2G
         private readonly Options _options;
 
         public Logger Logger { set; get; }
-        private const string _defaultLoggerRepoName = "EventsLog";
+        private const string _defaultLoggerRepoName = "events_log";
         private readonly string _loggerTimeStampFormat = "yyyyMMdd_HHmmssfffffff";
         private readonly string _maxLogfileSize = "2GB";
 
@@ -226,11 +226,11 @@ namespace BC2G
             using var serializer = new CSVSerializer(mapper);
 
             using var pGraphStat = new PersistentGraphStatistics(
-                Path.Combine(_options.OutputDir, "block_stats.tsv"),
+                Path.Combine(_options.OutputDir, "blocks_stats.tsv"),
                 cT);
 
             using var gBuffer = new PersistentGraphBuffer(
-                Path.Combine(_options.OutputDir, "edges.csv"),
+                Path.Combine(_options.OutputDir, "edges.tsv"),
                 mapper,
                 pGraphStat,
                 Logger,

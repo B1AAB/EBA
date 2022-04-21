@@ -65,7 +65,7 @@ namespace BC2G.CLI
             CommandOptionType.NoValue)
         {
             Description = "If provided, for each block it traverses, " +
-            "it creates `[block_height]_edges.csv` and `[block_height]_nodes.csv. "
+            "it creates `[block_height]_edges.tsv` and `[block_height]_nodes.tsv. "
         };
 
         private Options _parsedOptions = new();

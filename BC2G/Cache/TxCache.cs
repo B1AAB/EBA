@@ -14,8 +14,8 @@ namespace BC2G
             get { return _visitedTxCache.CanDispose; }
         }
 
-        private readonly string _utxoIndexFilename = "utxo.csv";
-        private readonly string _txIndexFilename = "tx_index.csv";
+        private readonly string _utxoIndexFilename = "utxo.tsv";
+        private readonly string _txIndexFilename = "tx_index.tsv";
         private const string _tmpFilenamePostfix = ".tmp";
 
         private readonly string _outputDir;
