@@ -128,7 +128,7 @@ namespace BC2G.Graph
 
             _nodes.TryAdd(edge.Source, 0);
             _nodes.TryAdd(edge.Target, 0);
-            Stats.IncrementEdgeType(edge.Type);
+            Stats.IncrementEdgeType(edge.Type, edge.Value);
         }
 
         public bool Equals(BlockGraph? other)

@@ -25,7 +25,7 @@
             }
         }
 
-        private const string _delimiter = ",";
+        private const string _delimiter = "\t";
 
 
         public Edge(

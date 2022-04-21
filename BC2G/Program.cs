@@ -76,6 +76,7 @@ namespace BC2G
         private static bool ConsoleEventCallback(
             EventType eventType)
         {
+            // ***************************************************
             // This method will be called when the application 
             // is being exited abruptly, e.g., terminal closing, 
             // or the host OS restrating/shutting-down. 
@@ -86,6 +87,7 @@ namespace BC2G
             // NEED TO SAFELY RETURN QUICKEST POSSIBLE. 
             // THEREFORE, LIMIT THE SCOPE TO CLOSE THE MOST
             // CRITICAL HANDLES.
+            // ***************************************************
 
             switch (eventType)
             {

@@ -29,6 +29,9 @@ namespace BC2G.Graph
         private readonly uint[] _edgeTypeFrequency =
             new uint[Enum.GetNames(typeof(EdgeType)).Length];
 
+        private readonly double[] _edgeTypeTxSum = 
+            new double[Enum.GetNames(typeof(EdgeType)).Length];
+
         private const char _delimiter = '\t';
 
         public GraphStatistics(int height)
@@ -46,9 +49,10 @@ namespace BC2G.Graph
             _runtime = _stopwatch.Elapsed;
         }
 
-        public void IncrementEdgeType(EdgeType type)
+        public void IncrementEdgeType(EdgeType type, double value)
         {
             Interlocked.Increment(ref _edgeTypeFrequency[(int)type]);
+            Utilities.ThreadsafeAdd(ref _edgeTypeTxSum[(int)type], value);
         }
 
         public void AddInputTxCount(int value)
@@ -74,9 +78,16 @@ namespace BC2G.Graph
             {
                 "BlockHeight",
                 "Runtime",
-                string.Join(_delimiter, (EdgeType[]) Enum.GetValues(typeof(EdgeType))),
                 "InputTxCount",
-                "OutputTxCount"
+                "OutputTxCount",
+                string.Join(
+                    _delimiter,
+                    ((EdgeType[])Enum.GetValues(typeof(EdgeType))).Select(
+                        x => x + "TxCount").ToArray()),
+                string.Join(
+                    _delimiter,
+                    ((EdgeType[])Enum.GetValues(typeof(EdgeType))).Select(
+                        x => x + "TxSum").ToArray()),
             });
         }
 
@@ -86,11 +97,14 @@ namespace BC2G.Graph
             {
                 Height.ToString(),
                 Runtime.ToString(),
+                InputTxCount.ToString(),
+                OutputTxCount.ToString(),
                 string.Join(
                     _delimiter,
                     _edgeTypeFrequency.Select((v, i) => v.ToString()).ToArray()),
-                InputTxCount.ToString(),
-                OutputTxCount.ToString(),
+                string.Join(
+                    _delimiter,
+                    _edgeTypeTxSum.Select((v, i) => v.ToString()).ToArray()),
                 Environment.NewLine
             });
         }
