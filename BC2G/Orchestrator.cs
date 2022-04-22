@@ -222,6 +222,7 @@ namespace BC2G
                 _options.AddressIdMappingFilename,
                 AddressToIdMapper.Deserialize(_options.AddressIdMappingFilename),
                 cT);
+            agent.AddressToIdMapper = mapper;
 
             using var serializer = new CSVSerializer(mapper);
 

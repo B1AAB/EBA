@@ -7,8 +7,6 @@ namespace BC2G
 {
     public class PersistentGraphBuffer : PersistentObject<BlockGraph>
     {
-        private const string _delimiter = ",";
-
         private readonly AddressToIdMapper _mapper;
         private readonly PersistentGraphStatistics _pGraphStats;
         private readonly Logger _logger;
@@ -36,8 +34,8 @@ namespace BC2G
             foreach (var edge in obj.Edges)
                 csvBuilder.AppendLine(
                     edge.ToString(
-                        _mapper.GetId(edge.Source),
-                        _mapper.GetId(edge.Target)));
+                        edge.Source.Id,
+                        edge.Target.Id));
 
             obj.Stats.StopStopwatch();
             _pGraphStats.Enqueue(obj.Stats.ToString());

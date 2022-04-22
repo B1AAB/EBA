@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using BC2G.Graph;
+using System.Collections.Concurrent;
 
 namespace BC2G.Serializers
 {
@@ -29,6 +30,12 @@ namespace BC2G.Serializers
                 cancellationToken)
         {
             _mappings = mappings;
+
+            if (_mappings.IsEmpty)
+            {
+                // Add coinbase node. 
+                GetId(new Node().Address);
+            }
         }
 
         public string GetId(string address)

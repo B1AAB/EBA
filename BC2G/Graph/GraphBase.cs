@@ -6,10 +6,10 @@ namespace BC2G.Graph
     {
         public const string CoinbaseTxLabel = "Coinbase";
 
-        protected readonly ConcurrentDictionary<string, double> _sources = new();
-        protected readonly ConcurrentDictionary<string, double> _targets = new();
+        protected readonly ConcurrentDictionary<Node, double> _sources = new();
+        protected readonly ConcurrentDictionary<Node, double> _targets = new();
 
-        public List<string> RewardsAddresses = new();
+        public List<Node> RewardsAddresses = new();
 
         public GraphBase()
         { }

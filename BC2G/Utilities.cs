@@ -5,8 +5,10 @@ namespace BC2G
 {
     internal class Utilities
     {
-        // To be consistent with Bitcoin client. 
-        public const int FractionalDigitsCount = 8;
+        // Bitcoin clinet has 8 fractional points, add a few
+        // bases to account for numbers smaller than that
+        // as a result of computations.
+        public const int FractionalDigitsCount = 12;
 
         public static readonly char[] chars =
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".ToCharArray();

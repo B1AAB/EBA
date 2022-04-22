@@ -1,4 +1,5 @@
 ﻿using BC2G.Graph;
+using BC2G.Model;
 using System.Collections.Concurrent;
 using System.Text;
 
@@ -55,8 +56,8 @@ namespace BC2G.Serializers
                     csvBuilder.AppendLine(
                         string.Join(_delimiter, new string[]
                         {
-                            _mapper.GetId(edge.Source),
-                            _mapper.GetId(edge.Target),
+                            edge.Source.Id,
+                            edge.Target.Id,
                             edge.Value.ToString(),
                             ((byte)edge.Type).ToString(),
                             edge.Timestamp.ToString()
@@ -88,10 +89,7 @@ namespace BC2G.Serializers
             while ((line = reader.ReadLine()) != null)
             {
                 var cols = line.Trim().Split(_delimiter);
-                cols[0] = mappings[cols[0]];
-                cols[1] = mappings[cols[1]];
-
-                var edge = Edge.FromString(cols);
+                var edge = Edge.FromString(cols, mappings[cols[0]], mappings[cols[1]]);
 
                 if (!blockGraphs.ContainsKey(edge.BlockHeight))
                     blockGraphs.Add(edge.BlockHeight, new BlockGraph(edge.BlockHeight));
@@ -112,8 +110,7 @@ namespace BC2G.Serializers
             foreach (var node in g.Nodes)
                 csvBuilder.AppendLine(string.Join(_delimiter, new string[]
                 {
-                    _mapper.GetId(node),
-                    node
+                    node.Id, node.Address
                 }));
 
             File.WriteAllText(filename, csvBuilder.ToString());
@@ -141,9 +138,7 @@ namespace BC2G.Serializers
 
             foreach (var edge in g.Edges)
                 csvBuilder.AppendLine(
-                    edge.ToString(
-                        _mapper.GetId(edge.Source),
-                        _mapper.GetId(edge.Target)));
+                    edge.ToString(edge.Source.Id, edge.Target.Id));
 
             File.WriteAllText(filename, csvBuilder.ToString());
         }
@@ -157,9 +152,10 @@ namespace BC2G.Serializers
             while ((line = reader.ReadLine()) != null)
             {
                 var x = line.Split(_delimiter);
+                // TODO: fix setting node script type.
                 g.AddEdge(new Edge(
-                    nodeIds[x[0]],
-                    nodeIds[x[1]],
+                    new Node(x[0], nodeIds[x[0]], ScriptType.Unknown),
+                    new Node(x[1], nodeIds[x[1]], ScriptType.Unknown),
                     double.Parse(x[2]),
                     (EdgeType)int.Parse(x[3]),
                     uint.Parse(x[4]),

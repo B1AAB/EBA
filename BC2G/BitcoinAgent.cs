@@ -2,6 +2,7 @@
 using BC2G.Graph;
 using BC2G.Logging;
 using BC2G.Model;
+using BC2G.Serializers;
 using System.Text.Json;
 
 namespace BC2G
@@ -24,6 +25,8 @@ namespace BC2G
         private readonly CancellationToken _cT;
 
         private bool _disposed = false;
+
+        public AddressToIdMapper AddressToIdMapper { get; set; }
 
         public BitcoinAgent(HttpClient client, TxCache txCache, Logger logger, CancellationToken ct)
         {
@@ -138,12 +141,18 @@ namespace BC2G
             // reward of the miner. Hence, this should never raise an 
             // exception if the block is not corrupt.
             var coinbaseTx = block.Transactions.First(x => x.IsCoinbase);
-            var rewardAddresses = new List<string>();
+            var rewardAddresses = new List<Node>();
             foreach (var output in coinbaseTx.Outputs.Where(x => x.IsValueTransfer))
             {
                 output.TryGetAddress(out string address);
-                address = generationTxGraph.AddTarget(address, output.Value);
-                rewardAddresses.Add(address);
+                var node = generationTxGraph.AddTarget(
+                    new Node(
+                        AddressToIdMapper.GetId(address),
+                        address,
+                        output.GetScriptType()),
+                    output.Value);
+
+                rewardAddresses.Add(node);
                 g.Stats.AddInputTxCount(1);
                 _txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
             }
@@ -193,7 +202,12 @@ namespace BC2G
                     value = vout.Value;
                 }
 
-                txGraph.AddSource(address, value);
+                txGraph.AddSource(
+                    new Node(
+                        AddressToIdMapper.GetId(address),
+                        address,
+                        ScriptType.Unknown), /* TODO: can this set to a better value? */
+                    value);
             }
 
             foreach (var output in tx.Outputs.Where(x => x.IsValueTransfer))
@@ -201,7 +215,12 @@ namespace BC2G
                 _cT.ThrowIfCancellationRequested();
 
                 output.TryGetAddress(out string address);
-                txGraph.AddTarget(address, output.Value);
+                txGraph.AddTarget(
+                    new Node(
+                        AddressToIdMapper.GetId(address),
+                        address,
+                        output.GetScriptType()),
+                    output.Value);
                 _txCache.Add(tx.Txid, output.Index, address, output.Value);
             }
 
