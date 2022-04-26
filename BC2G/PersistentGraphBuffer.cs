@@ -12,13 +12,16 @@ namespace BC2G
         private readonly Logger _logger;
 
         public PersistentGraphBuffer(
-            string filename,
+            string nodesFilename,
+            string edgesFilename,
             AddressToIdMapper mapper,
             PersistentGraphStatistics pGraphStats,
             Logger logger,
             CancellationToken cancellationToken) : base(
-                filename,
+                nodesFilename,
+                edgesFilename,
                 cancellationToken,
+                Node.Header,
                 Edge.Header)
         {
             _mapper = mapper;
@@ -26,21 +29,30 @@ namespace BC2G
             _logger = logger;
         }
 
-        public override string Serialize(BlockGraph obj, CancellationToken cancellationToken)
+        public override void Serialize(
+            BlockGraph obj, 
+            StreamWriter nodesStream, 
+            StreamWriter edgesStream, 
+            CancellationToken cT)
         {
-            obj.MergeQueuedTxGraphs(cancellationToken);
+            obj.MergeQueuedTxGraphs(cT);
 
-            var csvBuilder = new StringBuilder();
+            var edgesStringBuilder = new StringBuilder();
             foreach (var edge in obj.Edges)
-                csvBuilder.AppendLine(
+                edgesStringBuilder.AppendLine(
                     edge.ToString(
                         edge.Source.Id,
                         edge.Target.Id));
 
+            var nodesStringBuilder = new StringBuilder();
+            foreach (var node in obj.Nodes)
+                nodesStringBuilder.AppendLine(node.ToString());
+
             obj.Stats.StopStopwatch();
             _pGraphStats.Enqueue(obj.Stats.ToString());
 
-            return csvBuilder.ToString();
+            edgesStream.Write(edgesStringBuilder.ToString());
+            nodesStream.Write(nodesStringBuilder.ToString());
         }
 
         public override void PostPersistence(BlockGraph obj)

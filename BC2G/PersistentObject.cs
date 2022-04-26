@@ -27,6 +27,9 @@ namespace BC2G
         private readonly StreamWriter _stream;
         private readonly BlockingCollection<T> _buffer;
 
+        private readonly StreamWriter _nodesStream;
+        private readonly StreamWriter _edgesStream;
+
         public PersistentObject(string filename, CancellationToken cT, string header = "")
         {
             if (string.IsNullOrEmpty(filename))
@@ -67,6 +70,60 @@ namespace BC2G
             thread.Start();
         }
 
+        // Ideally this and the previous constructors
+        // should be merged into a single constructor.
+        public PersistentObject(
+            string nodesFilename, 
+            string edgesFilename,
+            CancellationToken cT,
+            string nodesHeader = "",
+            string edgesHeader = "")
+        {
+            if (!File.Exists(nodesFilename))
+            {
+                if (string.IsNullOrEmpty(nodesHeader))
+                    File.Create(nodesFilename).Dispose();
+                else
+                    File.WriteAllText(nodesFilename, nodesHeader + Environment.NewLine);
+            }
+
+            if (!File.Exists(edgesFilename))
+            {
+                if (string.IsNullOrEmpty(edgesHeader))
+                    File.Create(edgesFilename).Dispose();
+                else
+                    File.WriteAllText(edgesFilename, edgesHeader + Environment.NewLine);
+            }
+
+            _nodesStream = File.AppendText(nodesFilename);
+            _nodesStream.AutoFlush = true;
+
+            _edgesStream = File.AppendText(edgesFilename);
+            _edgesStream.AutoFlush = true;
+
+            _buffer = new();
+            var thread = new Thread(() =>
+            {
+                while (true)
+                {
+                    T obj;
+                    try { obj = _buffer.Take(cT); }
+                    catch (OperationCanceledException) { _cancelled = true; break; }
+
+                    if (obj != null)
+                    {
+                        _canCloseStream = false;
+                        Serialize(obj, _nodesStream, _edgesStream, cT);
+                        PostPersistence(obj);
+                        _canCloseStream = true;
+                    }
+                }
+            })
+            { IsBackground = false };
+
+            thread.Start();
+        }
+
         public void Enqueue(T obj)
         {
             _buffer.Add(obj);
@@ -79,6 +136,9 @@ namespace BC2G
             else
                 return obj.ToString() ?? throw new ArgumentNullException(nameof(obj));
         }
+
+        public virtual void Serialize(T obj, StreamWriter nodesStream, StreamWriter edgesStream, CancellationToken cT)
+        { }
 
         public virtual void PostPersistence(T obj) { }
 
@@ -101,8 +161,19 @@ namespace BC2G
                         Thread.Sleep(500);
                     }
 
-                    _stream.Flush();
-                    _stream.Dispose();
+                    if (_stream is not null)
+                    {
+                        _stream.Flush();
+                        _stream.Dispose();
+                    }
+                    else
+                    {
+                        _nodesStream.Flush();
+                        _nodesStream.Dispose();
+
+                        _edgesStream.Flush();
+                        _edgesStream.Dispose();
+                    }
                 }
             }
 

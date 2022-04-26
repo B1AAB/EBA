@@ -8,6 +8,20 @@ namespace BC2G.Graph
         public string Address { get; } = "Coinbase";
         public ScriptType ScriptType { get; } = ScriptType.Unknown;
 
+        public static string Header
+        {
+            get
+            {
+                return string.Join(_delimiter, new string[]
+                {
+                    "Id",
+                    "ScriptType"
+                });
+            }
+        }
+
+        private const string _delimiter = "\t";
+
         /// <summary>
         /// This constructor creates the Coinbase node.
         /// </summary>
@@ -18,6 +32,13 @@ namespace BC2G.Graph
             Id = id;
             Address = address;
             ScriptType = scriptType;
+        }
+
+        public override string ToString()
+        {
+            return string.Join(
+                _delimiter, 
+                new string[] { Id, ScriptType.ToString("d") });
         }
 
         public override int GetHashCode()
