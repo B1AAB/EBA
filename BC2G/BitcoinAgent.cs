@@ -31,6 +31,10 @@ namespace BC2G
         public BitcoinAgent(HttpClient client, TxCache txCache, Logger logger, CancellationToken ct)
         {
             _client = client;
+
+            // the use of Tx cache is disabled since it is not clear 
+            // how much improvement it offers to the additional complexity.
+            // TODO: needs more experimenting.
             _txCache = txCache;
             _logger = logger;
             _cT = ct;
@@ -149,7 +153,8 @@ namespace BC2G
 
                 rewardAddresses.Add(node);
                 g.Stats.AddInputTxCount(1);
-                _txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
+
+                //_txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
             }
 
             g.RewardsAddresses = rewardAddresses;
@@ -177,25 +182,26 @@ namespace BC2G
             {
                 _cT.ThrowIfCancellationRequested();
 
-                if (!_txCache.TryGet(
+                double value;
+                /*if (!_txCache.TryGet(
                     input.TxId,
                     input.OutputIndex,
                     out string address,
                     out double value))
-                {
-                    // Extended transaction: details of the transaction are
-                    // retrieved from the bitcoin client.
-                    //var exTx = await GetTransaction(input.TxId);
-                    var exTx = await GetTransaction(input.TxId);
-                    var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
-                    if (vout == null)
-                        // TODO: check when this can be null,
-                        // or if it would ever happen.
-                        throw new NotImplementedException();
+                {*/
+                // Extended transaction: details of the transaction are
+                // retrieved from the bitcoin client.
+                //var exTx = await GetTransaction(input.TxId);
+                var exTx = await GetTransaction(input.TxId);
+                var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
+                if (vout == null)
+                    // TODO: check when this can be null,
+                    // or if it would ever happen.
+                    throw new NotImplementedException();
 
-                    vout.TryGetAddress(out address);
-                    value = vout.Value;
-                }
+                vout.TryGetAddress(out string address);
+                value = vout.Value;
+                //}
 
                 txGraph.AddSource(
                     new Node(
@@ -216,7 +222,7 @@ namespace BC2G
                         address,
                         output.GetScriptType()),
                     output.Value);
-                _txCache.Add(tx.Txid, output.Index, address, output.Value);
+                //_txCache.Add(tx.Txid, output.Index, address, output.Value);
             }
 
             g.Stats.AddInputTxCount(tx.Inputs.Count);

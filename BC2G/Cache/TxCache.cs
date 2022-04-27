@@ -22,7 +22,7 @@ namespace BC2G
         private bool _disposed = false;
         private const string _txidVoutDelimiter = "___";
 
-        private const int _maxItemsInCache = 1000000;
+        private const int _maxItemsInCache = 1;//10000;
         private const int _cacheSqueezeSize = 1000;
         private readonly object _locker = new();
 
@@ -69,6 +69,8 @@ namespace BC2G
             if (_utxoCache.Count >= _maxItemsInCache)
             {
                 // TODO: how this can be improved?!
+                // TODO: the lock does not seem to
+                // be blocking multiple threads entering at the same time.
                 lock (_locker)
                 {
                     var keys = _utxoCache.Keys;

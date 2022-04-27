@@ -280,6 +280,13 @@ namespace BC2G
             Logger.Log("Finalizing serialized files.");
             await JsonSerializer<Options>.SerializeAsync(_options, _statusFilename);
 
+            // TODO: this is not a good strategy, it has two drawbacks: 
+            // - it is an infinite loop with the assumption that the
+            // condition will be met eventually, but there is a chance
+            // that the condition is not met in a given time, so it
+            // should break with a timeout;
+            // - the sleep blocks other threads, so a background task 
+            // will never end.
             while(true)
             {
                 if (mapper.CanDispose && gBuffer.CanDispose)
