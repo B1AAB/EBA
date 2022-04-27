@@ -9,7 +9,7 @@ namespace BC2G
             CancellationToken cancellationToken) : base(
                 filename,
                 cancellationToken,
-                GraphStatistics.GetHeader())
+                BlockStatistics.GetHeader())
         { }
 
         public override string Serialize(

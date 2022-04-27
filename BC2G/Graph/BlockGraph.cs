@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using BC2G.Model;
+using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 
 namespace BC2G.Graph
@@ -6,8 +7,8 @@ namespace BC2G.Graph
     public class BlockGraph : GraphBase, IEquatable<BlockGraph>
     {
         public int Height { get; }
-        public uint Timestamp { get; set; }
-        public GraphStatistics Stats { set; get; }
+        public uint Timestamp { get; }
+        public BlockStatistics Stats { set; get; }
 
         public ReadOnlyCollection<Edge> Edges
         {
@@ -32,10 +33,25 @@ namespace BC2G.Graph
 
         private readonly ConcurrentQueue<TransactionGraph> _txGraphsQueue = new();
 
-        public BlockGraph(int height) : base()
+        public BlockGraph(Block block) : base()
+        {
+            Height = block.Height;
+
+            // See the following BIP on using `mediantime` instead of `time`.
+            // https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
+            Timestamp = block.MedianTime;
+
+            Stats = new BlockStatistics(block);
+            Stats.StartStopwatch();
+        }
+
+        // TODO: this constructor is required by the deserializer
+        // mostly for testing purposes, should improve avoid
+        // needing constructor.
+        public BlockGraph(int height)
         {
             Height = height;
-            Stats = new GraphStatistics(height);
+            Stats = new BlockStatistics(height);
             Stats.StartStopwatch();
         }
 

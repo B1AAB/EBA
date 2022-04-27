@@ -111,8 +111,6 @@ namespace BC2G
         {
             if (_cT.IsCancellationRequested) throw new OperationCanceledException();
 
-            var graph = new BlockGraph(height);
-
             _logger.Log($"Getting block hash; height {height}.");
             var blockHash = await GetBlockHash(height);
 
@@ -121,13 +119,10 @@ namespace BC2G
             _logger.Log($"Getting block; height: {height}.");
             var block = await GetBlock(blockHash);
 
-            // See the following BIP on using `mediantime` instead of `time`.
-            // https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
-            graph.Timestamp = block.MedianTime;
-
             if (_cT.IsCancellationRequested) throw new OperationCanceledException();
 
             _logger.Log($"Getting graph; height: {height}.");
+            var graph = new BlockGraph(block);
             await ProcessTxes(graph, block);
 
             return graph;
