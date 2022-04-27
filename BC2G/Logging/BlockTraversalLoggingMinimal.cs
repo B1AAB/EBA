@@ -9,10 +9,9 @@
         protected override void ToConsole()
         {
             AsyncConsole.Write(
-                $"\r\tCompleted:\t{Completed:n0}/{Total:n0} ({Percentage:f2}%)" +
-                $"\tCB:\t{ActiveBlocksCount}" +
-                $"\tNodes:\t{NodesCount:n0}" +
-                $"\tEdges:\t{EdgesCount:n0}",
+                $"\r   [Completed:{$"{Completed:n0}",12}/{$"{Total:n0}"} ({$"{Percentage:f2}%",2})]" +
+                $"   [Nodes:{$"{NodesCount:n0}",12}]" +
+                $"   [Edges:{$"{EdgesCount:n0}",12}]",
                 ConsoleColor.Cyan);
         }
     }
