@@ -109,13 +109,18 @@ namespace BC2G.Graph
                         return;
 
                     foreach (var t in txGraph.Targets)
+                    {
+                        var d = txGraph.TotalInputValue - fee;
+                        var v = 0.0;
+                        if (d != 0)
+                            v = Utilities.Round(t.Value * Utilities.Round(s.Value / d));
+
                         AddEdge(new Edge(
-                            s.Key, t.Key,
-                            Utilities.Round(t.Value * Utilities.Round(
-                                s.Value / (txGraph.TotalInputValue - fee))),
+                            s.Key, t.Key, v,
                             s.Key == t.Key ? EdgeType.Change : EdgeType.Transfer,
                             Timestamp,
                             Height));
+                    }
 
                     foreach (var m in RewardsAddresses)
                     {

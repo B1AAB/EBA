@@ -68,9 +68,9 @@ namespace BC2G.Logging
         }
 
         public virtual string Log(
-            int height, 
-            int allNodesCount, 
-            int addedEdgesCount, 
+            int height,
+            int allNodesCount,
+            int addedEdgesCount,
             double runtime)
         {
             _activeBlocks.TryRemove(height, out bool _);
