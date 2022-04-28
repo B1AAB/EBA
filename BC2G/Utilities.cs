@@ -51,7 +51,15 @@ namespace BC2G
             // This is implemented based on the following Stackoverflow answer.
             // https://stackoverflow.com/a/16893641/947889
 
+            if (double.IsNaN(location))
+            {
+                // TODO: better handle this case.
+                throw new NotImplementedException("Cannot thread-safe add to NaN.");
+            }
+
             double newCurrentValue = location; // non-volatile read, so may be stale
+
+            // TODO: the loop should not be infinite, put a max iteration counter.
             while (true)
             {
                 double currentValue = newCurrentValue;
