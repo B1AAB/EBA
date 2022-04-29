@@ -2,8 +2,8 @@
 {
     internal class BlockTraversalLoggingMinimal : BlockTraversalLoggingBase
     {
-        public BlockTraversalLoggingMinimal(int fromInclusive, int toExclusive) :
-            base(fromInclusive, toExclusive, 0)
+        public BlockTraversalLoggingMinimal(int fromInclusive, int toExclusive, int blocksCount) :
+            base(fromInclusive, toExclusive, blocksCount, 0)
         { }
 
         protected override void ToConsole()

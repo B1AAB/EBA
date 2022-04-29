@@ -12,8 +12,8 @@
             ConsoleColor.Blue,
         };
 
-        public BlockTraversalLoggingComplete(int fromInclusive, int toExclusive) :
-            base(fromInclusive, toExclusive, 6)
+        public BlockTraversalLoggingComplete(int fromInclusive, int toExclusive, int blocksCount) :
+            base(fromInclusive, toExclusive, blocksCount, 6)
         { }
 
         protected override void ToConsole()

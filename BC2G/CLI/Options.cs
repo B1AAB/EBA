@@ -20,6 +20,13 @@
         }
         private int _lastProcessedBlock = -1;
 
+        public int Granularity
+        {
+            get { return _granularity; }
+            set { _granularity = value > 0 ? value : 1; }
+        }
+        private int _granularity = 1;
+
         public string OutputDir { get; set; } = Environment.CurrentDirectory;
         public string AddressIdMappingFilename { set; get; } = "id_to_address_mapping.tsv";
         public bool CreatePerBlockFiles { get; set; } = false;

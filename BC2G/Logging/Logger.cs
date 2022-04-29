@@ -61,15 +61,15 @@ namespace BC2G.Logging
             Log($"Export Directory: {exportPath}", true, ConsoleColor.DarkGray);
         }
         
-        public void InitBlocksTraverse(int from, int to)
+        public void InitBlocksTraverse(int from, int to, int blocksToProcess)
         {
             switch(ConsoleLoggingInterface)
             {
                 case ConsoleLoggingInterface.Minimal:
-                    _consoleLogging = new BlockTraversalLoggingMinimal(from, to);
+                    _consoleLogging = new BlockTraversalLoggingMinimal(from, to, blocksToProcess);
                     break;
                 case ConsoleLoggingInterface.Complete:
-                    _consoleLogging = new BlockTraversalLoggingComplete(from, to);
+                    _consoleLogging = new BlockTraversalLoggingComplete(from, to, blocksToProcess);
                     break;
             }
         }

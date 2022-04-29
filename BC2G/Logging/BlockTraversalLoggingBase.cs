@@ -8,6 +8,7 @@ namespace BC2G.Logging
 
         public int FromInclusive { get; }
         public int ToExclusive { get; }
+        public int BlocksCount { get; }
         public double Total { get; }
         public double Percentage { get { return (Completed / Total) * 100; } }
 
@@ -40,11 +41,12 @@ namespace BC2G.Logging
         public BlockTraversalLoggingBase(
             int fromInclusive, 
             int toExclusive, 
+            int blocksCount,
             int templateLinesCount)
         {
             FromInclusive = fromInclusive;
             ToExclusive = toExclusive;
-            Total = ToExclusive - FromInclusive;
+            Total = blocksCount; //ToExclusive - FromInclusive;
 
             BlockRuntimeMovingAvg = new MovingAverage(MovingAvgWindowSize);
             EdgeRuntimeMovingAvg = new MovingAverage(MovingAvgWindowSize);
