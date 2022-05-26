@@ -1,4 +1,5 @@
-﻿using BC2G.Graph;
+﻿using BC2G.DAL;
+using BC2G.Graph;
 using BC2G.Logging;
 using BC2G.Serializers;
 using System.Text;
@@ -11,7 +12,10 @@ namespace BC2G
         private readonly PersistentGraphStatistics _pGraphStats;
         private readonly Logger _logger;
 
+        private readonly GraphDB _graphDB;
+
         public PersistentGraphBuffer(
+            GraphDB graphdb,
             string nodesFilename,
             string edgesFilename,
             AddressToIdMapper mapper,
@@ -24,6 +28,7 @@ namespace BC2G
                 Node.Header,
                 Edge.Header)
         {
+            _graphDB = graphdb;
             _mapper = mapper;
             _pGraphStats = pGraphStats;
             _logger = logger;
