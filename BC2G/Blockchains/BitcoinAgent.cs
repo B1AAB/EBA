@@ -5,7 +5,7 @@ using BC2G.Model;
 using BC2G.Serializers;
 using System.Text.Json;
 
-namespace BC2G
+namespace BC2G.Blockchains
 {
     public class BitcoinAgent : IDisposable
     {

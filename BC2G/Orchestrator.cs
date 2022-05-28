@@ -1,4 +1,5 @@
-﻿using BC2G.CLI;
+﻿using BC2G.Blockchains;
+using BC2G.CLI;
 using BC2G.DAL;
 using BC2G.Exceptions;
 using BC2G.Graph;

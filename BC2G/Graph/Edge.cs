@@ -1,4 +1,5 @@
-﻿using BC2G.Model;
+﻿using BC2G.Blockchains;
+using BC2G.Model;
 
 namespace BC2G.Graph
 {
