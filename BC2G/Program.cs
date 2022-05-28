@@ -31,7 +31,8 @@ namespace BC2G
             var cancellationToken = _tokenSource.Token;
 
             _handler += new EventHandler(ConsoleEventCallback);
-            SetConsoleCtrlHandler(_handler, true);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                SetConsoleCtrlHandler(_handler, true);
 
             var client = new HttpClient();
             client.DefaultRequestHeaders.Accept.Clear();
