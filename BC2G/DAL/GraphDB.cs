@@ -5,6 +5,8 @@ namespace BC2G.DAL
 {
     public class GraphDB : IDisposable
     {
+        public static string Coinbase { get { return "Coinbase"; } }
+
         private bool _disposed = false;
         private readonly IDriver _driver;
 
@@ -13,19 +15,49 @@ namespace BC2G.DAL
         public GraphDB(string uri, string user, string password)
         {
             _driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+
+            try { _driver.VerifyConnectivityAsync().Wait(); }
+            catch (AggregateException) { Dispose(true); throw; }
+
+            EnsureCoinbaseNode().Wait();
+            
+        }
+
+        private async Task EnsureCoinbaseNode()
+        {
+            using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+            var count = await session.ReadTransactionAsync(async tx =>
+            {
+                var result = await tx.RunAsync($"MATCH (n:{Coinbase}) RETURN COUNT(n)");
+                return result.SingleAsync().Result[0].As<int>();
+            });
+
+            switch (count)
+            {
+                case 1: return;
+                case 0:
+                    await session.WriteTransactionAsync(async tx =>
+                    {
+                        await tx.RunAsync($"CREATE (:{Coinbase})");
+                    });
+                    break;
+                default:
+                    // TODO: replace with a more suitable exception type. 
+                    throw new Exception($"Found {count} {Coinbase} nodes; expected zero or one.");
+            }
         }
 
         public async Task AddNode(ScriptType scriptType, string address)
         {
-            using (var session = _driver.AsyncSession()                )
+            using (var session = _driver.AsyncSession())
             {
                 var x = session.WriteTransactionAsync(async tx =>
                 {
                     var result = await tx.RunAsync(
-                        $"CREATE (a:{scriptType}:{address})");
+                        $"CREATE (n:{scriptType}:_{address}) RETURN id(n)");
                 });
 
-                await x;                
+                await x;
             }
 
             using(var session = _driver.AsyncSession())
@@ -58,7 +90,8 @@ namespace BC2G.DAL
                         new { message });
                     return result.SingleAsync().Result[0].As<string>();
                 });
-                Console.WriteLine(greeting);
+                var xxx = await greeting;
+                Console.WriteLine(await greeting);
             }
         }
 
