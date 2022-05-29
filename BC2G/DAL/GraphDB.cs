@@ -1,4 +1,5 @@
-﻿using BC2G.Model;
+﻿using BC2G.Graph;
+using BC2G.Model;
 using Neo4j.Driver;
 
 namespace BC2G.DAL
@@ -25,26 +26,44 @@ namespace BC2G.DAL
 
         private async Task EnsureCoinbaseNode()
         {
-            using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
-            var count = await session.ReadTransactionAsync(async tx =>
+            int count = 0;
+            using (var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read)))
             {
-                var result = await tx.RunAsync($"MATCH (n:{Coinbase}) RETURN COUNT(n)");
-                return result.SingleAsync().Result[0].As<int>();
-            });
+                count = await session.ReadTransactionAsync(async tx =>
+                {
+                    var result = await tx.RunAsync($"MATCH (n:{Coinbase}) RETURN COUNT(n)");
+                    return result.SingleAsync().Result[0].As<int>();
+                });
+            }
 
             switch (count)
             {
                 case 1: return;
                 case 0:
-                    await session.WriteTransactionAsync(async tx =>
+                    using (var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write)))
                     {
-                        await tx.RunAsync($"CREATE (:{Coinbase})");
-                    });
+                        await session.WriteTransactionAsync(async tx =>
+                        {
+                            await tx.RunAsync($"CREATE (:{Coinbase})");
+                        });
+                    }
                     break;
                 default:
                     // TODO: replace with a more suitable exception type. 
                     throw new Exception($"Found {count} {Coinbase} nodes; expected zero or one.");
             }
+        }
+
+        public async Task AddEdge(Edge edge)
+        {
+            using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
+            await session.WriteTransactionAsync(async tx =>
+            {
+                var result = await tx.RunAsync(
+                    $"MERGE (x:{edge.Source.ScriptType}:_{edge.Source.Address}) " +
+                    $"MERGE (y:{edge.Target.ScriptType}:_{edge.Target.Address}) " +
+                    $"CREATE (x)-[:{edge.Type} {{value: {edge.Value}, block: {edge.BlockHeight}}}]->(y)");
+            });
         }
 
         public async Task AddNode(ScriptType scriptType, string address)
