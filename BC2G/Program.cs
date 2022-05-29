@@ -6,6 +6,7 @@ namespace BC2G
 {
     internal class Program
     {
+        /* TODO: how this can be made cross-platform?!
         // See the following SO topics handeling resource
         // clean-up on console exits:
         // - https://stackoverflow.com/a/474743/947889
@@ -15,6 +16,7 @@ namespace BC2G
         private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
         private delegate bool EventHandler(EventType eventType);
         private static EventHandler _handler;
+        */
         enum EventType
         {
             CTRL_C_EVENT = 0,
@@ -30,9 +32,10 @@ namespace BC2G
         {
             var cancellationToken = _tokenSource.Token;
 
+            /*
             _handler += new EventHandler(ConsoleEventCallback);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                SetConsoleCtrlHandler(_handler, true);
+                SetConsoleCtrlHandler(_handler, true);*/
 
             var client = new HttpClient();
             client.DefaultRequestHeaders.Accept.Clear();
