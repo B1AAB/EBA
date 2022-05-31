@@ -32,8 +32,15 @@
         public bool CreatePerBlockFiles { get; set; } = false;
         public int MaxConcurrentBlocks { get; set; } = Environment.ProcessorCount / 2;
 
-        public string Neo4jUri { get; set; } = "bolt://localhost:7687";
-        public string Neo4jUser { get; set; } = "neo4j";
-        public string Neo4jPassword { set; get; } = "password";
+        public string Neo4jUri { get; set; } =
+            Environment.GetEnvironmentVariable("NEO4J_URI") ??
+            "bolt://localhost:7687";
+
+        public string Neo4jUser { get; set; } =
+            Environment.GetEnvironmentVariable("NEO4J_USER") ??
+            "neo4j";
+        public string Neo4jPassword { set; get; } =
+            Environment.GetEnvironmentVariable("NEO4J_PASSWORD") ??
+            "password";
     }
 }

@@ -19,9 +19,11 @@ namespace BC2G.DAL
 
             try { _driver.VerifyConnectivityAsync().Wait(); }
             catch (AggregateException) { Dispose(true); throw; }
+            // TODO: it seems message of an exception cannot be modified without impacting 
+            // stacktrace. Check if there is a better way of throwing an error with a message
+            // that indicates not able to connect to the Neo4j database.
 
             EnsureCoinbaseNode().Wait();
-            
         }
 
         private async Task EnsureCoinbaseNode()
