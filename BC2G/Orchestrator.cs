@@ -74,9 +74,11 @@ namespace BC2G
 
             _graphDb = new GraphDB(options.Neo4jUri, options.Neo4jUser, options.Neo4jPassword);
             //_graphDb.AddNode(ScriptType.PubKeyHash, "abc").Wait();
-            _graphDb.AddEdge(new Edge(
-                new Node("0", "abc", ScriptType.PubKeyHash),
-                new Node("0", "xyz", ScriptType.Unknown),
+            _graphDb.AddEdge(
+                new Block() { Height = 10, MedianTime = 123 },
+                new Edge(
+                    new Node("0", "abc", ScriptType.PubKeyHash),
+                    new Node("0", "xyz", ScriptType.Unknown),
                 100, EdgeType.Transfer, 123456789, 10)).Wait();
 
         }

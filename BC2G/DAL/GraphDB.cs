@@ -56,15 +56,42 @@ namespace BC2G.DAL
             }
         }
 
-        public async Task AddEdge(Edge edge)
+        public async Task AddBlock(Block block)
         {
             using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
             await session.WriteTransactionAsync(async tx =>
             {
                 var result = await tx.RunAsync(
+                    $"MERGE (x:{block.Height}:{block.MedianTime} " +
+                    $"{{difficulty: {block.Difficulty}, " +
+                    $"confirmations: {block.Confirmations}, " +
+                    $"tx_count: {block.TransactionsCount}, " +
+                    $"stripped_size: {block.StrippedSize}, " +
+                    $"size: {block.Size}, " +
+                    $"weight: {block.Weight}}}");
+            });
+        }
+
+        public async Task AddEdge(Block block, Edge edge)
+        {
+            using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
+            await session.WriteTransactionAsync(async tx =>
+            {
+                /*
+                var result = await tx.RunAsync(
                     $"MERGE (x:{edge.Source.ScriptType}:_{edge.Source.Address}) " +
                     $"MERGE (y:{edge.Target.ScriptType}:_{edge.Target.Address}) " +
                     $"CREATE (x)-[:{edge.Type} {{value: {edge.Value}, block: {edge.BlockHeight}}}]->(y)");
+                */
+
+                var result = await tx.RunAsync(
+                    $"MERGE (x:{edge.Source.ScriptType}:_{edge.Source.Address}) " +
+                    $"MERGE (y:{edge.Target.ScriptType}:_{edge.Target.Address}) " +
+                    $"WITH x, y " +
+                    $"MATCH (b:_{block.Height}:_{block.MedianTime}) " +
+                    $"CREATE (x)-[:{edge.Type} {{value: {edge.Value}, block: {edge.BlockHeight}}}]->(y) " +
+                    $"CREATE (x)-[:Redeems]->(b) " +
+                    $"CREATE (b)-[:Creates]->(y)");
             });
         }
 
