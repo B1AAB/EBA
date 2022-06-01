@@ -8,6 +8,7 @@ namespace BC2G.Graph
     {
         public int Height { get; }
         public uint Timestamp { get; }
+        public Block Block { get; }
         public BlockStatistics Stats { set; get; }
 
         public ReadOnlyCollection<Edge> Edges
@@ -35,6 +36,9 @@ namespace BC2G.Graph
 
         public BlockGraph(Block block) : base()
         {
+            Block = block;
+
+            // TODO: with the above block ref, no need to keep a copy of height and timestamp.
             Height = block.Height;
 
             // See the following BIP on using `mediantime` instead of `time`.

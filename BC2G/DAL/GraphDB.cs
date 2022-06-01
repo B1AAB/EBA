@@ -62,13 +62,13 @@ namespace BC2G.DAL
             await session.WriteTransactionAsync(async tx =>
             {
                 var result = await tx.RunAsync(
-                    $"MERGE (x:{block.Height}:{block.MedianTime} " +
+                    $"MERGE (x:h{block.Height}:t{block.MedianTime} " +
                     $"{{difficulty: {block.Difficulty}, " +
                     $"confirmations: {block.Confirmations}, " +
                     $"tx_count: {block.TransactionsCount}, " +
                     $"stripped_size: {block.StrippedSize}, " +
                     $"size: {block.Size}, " +
-                    $"weight: {block.Weight}}}");
+                    $"weight: {block.Weight}}})");
             });
         }
 
@@ -88,7 +88,7 @@ namespace BC2G.DAL
                     $"MERGE (x:{edge.Source.ScriptType}:_{edge.Source.Address}) " +
                     $"MERGE (y:{edge.Target.ScriptType}:_{edge.Target.Address}) " +
                     $"WITH x, y " +
-                    $"MATCH (b:_{block.Height}:_{block.MedianTime}) " +
+                    $"MATCH (b:b{block.Height}:t{block.MedianTime}) " +
                     $"CREATE (x)-[:{edge.Type} {{value: {edge.Value}, block: {edge.BlockHeight}}}]->(y) " +
                     $"CREATE (x)-[:Redeems]->(b) " +
                     $"CREATE (b)-[:Creates]->(y)");

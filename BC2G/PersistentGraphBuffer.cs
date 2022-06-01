@@ -2,7 +2,6 @@
 using BC2G.Graph;
 using BC2G.Logging;
 using BC2G.Serializers;
-using System.Text;
 
 namespace BC2G
 {
@@ -35,29 +34,22 @@ namespace BC2G
         }
 
         public override void Serialize(
-            BlockGraph obj, 
-            StreamWriter nodesStream, 
-            StreamWriter edgesStream, 
+            BlockGraph obj,
+            StreamWriter nodesStream,
+            StreamWriter edgesStream,
             CancellationToken cT)
         {
-            obj.MergeQueuedTxGraphs(cT);
+            try
+            {
+                obj.MergeQueuedTxGraphs(cT);
+                _graphDB.AddBlock(obj.Block).Wait(cT);
+                foreach (var edge in obj.Edges)
+                    _graphDB.AddEdge(obj.Block, edge).Wait(cT);
 
-            var edgesStringBuilder = new StringBuilder();
-            foreach (var edge in obj.Edges)
-                edgesStringBuilder.AppendLine(
-                    edge.ToString(
-                        edge.Source.Id,
-                        edge.Target.Id));
-
-            var nodesStringBuilder = new StringBuilder();
-            foreach (var node in obj.Nodes)
-                nodesStringBuilder.AppendLine(node.ToString());
-
-            obj.Stats.StopStopwatch();
-            _pGraphStats.Enqueue(obj.Stats.ToString());
-
-            edgesStream.Write(edgesStringBuilder.ToString());
-            nodesStream.Write(nodesStringBuilder.ToString());
+                obj.Stats.StopStopwatch();
+                _pGraphStats.Enqueue(obj.Stats.ToString());
+            }
+            catch (OperationCanceledException) { return; }
         }
 
         public override void PostPersistence(BlockGraph obj)
