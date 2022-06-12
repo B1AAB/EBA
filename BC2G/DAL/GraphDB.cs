@@ -24,6 +24,7 @@ namespace BC2G.DAL
             // that indicates not able to connect to the Neo4j database.
 
             EnsureCoinbaseNode().Wait();
+            EnsureConstraints().Wait();
         }
 
         private async Task EnsureCoinbaseNode()
@@ -54,6 +55,44 @@ namespace BC2G.DAL
                     // TODO: replace with a more suitable exception type. 
                     throw new Exception($"Found {count} {Coinbase} nodes; expected zero or one.");
             }
+        }
+
+        private async Task EnsureConstraints()
+        {
+            using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
+
+
+            // TODO: handle the exceptions raised in running the following.
+            // Note that the exceptions are stored in the Exceptions property
+            // and do not log and stop execution when raised. 
+            var addressUniquenessContraint = await session.WriteTransactionAsync(async x =>
+            {
+                var result = await x.RunAsync(
+                    "CREATE CONSTRAINT addressUniqueContraint " +
+                    "FOR (address:Address) " +
+                    "REQUIRE address.address IS UNIQUE");
+
+                return result.ToListAsync();
+            });
+
+            var indexAddress = await session.WriteTransactionAsync(async x =>
+            {
+                var result = await x.RunAsync(
+                    "CREATE INDEX FOR (address:Address) " +
+                    "ON (address.address)");
+                return result.ToListAsync();
+            });
+
+
+            // TODO: check if existing contraints as the following, and add contrains only
+            // if they are not already defined. Alternatively, try creating the contrains, 
+            // and if they already exist, you'll see an Exception (non-blocking) in the
+            // above code. 
+            /*var xyz = await session.ReadTransactionAsync(async x =>
+            {
+                var result = await x.RunAsync("CALL db.constraints");
+                return result.ToListAsync();
+            });*/
         }
 
         public async Task AddBlock(Block block)
