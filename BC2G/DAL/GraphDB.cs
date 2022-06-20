@@ -160,8 +160,8 @@ namespace BC2G.DAL
                 var result = await x.RunAsync(
                     $"LOAD CSV WITH HEADERS FROM 'file:///{_edgesCSVFilename}' AS line " +
                     $"FIELDTERMINATOR '{_delimiter}' " +
-                    "MERGE (source:Node {scriptType: line.SourceScriptType, address: line.SourceAddress}) " +
-                    "MERGE (target:Node {scriptType: line.TargetScriptType, address: line.TargetAddress}) " +
+                    "MERGE (source:Script {scriptType: line.SourceScriptType, address: line.SourceAddress}) " +
+                    "MERGE (target:Script {scriptType: line.TargetScriptType, address: line.TargetAddress}) " +
                     "WITH source, target, line " +
                     "MATCH (block:Block {height: line.BlockHeight}) " +
                     "CREATE (source)-[:Sends {type: line.Type, value: line.Value, block: line.BlockHeight}]->(target) " +
@@ -189,7 +189,7 @@ namespace BC2G.DAL
                     $"LOAD CSV WITH HEADERS FROM 'file:///{_coinbaseEdgesCSVFilename}' AS line " +
                     $"FIELDTERMINATOR '{_delimiter}' " +
                     $"MATCH (coinbase:{Coinbase}) " +
-                    "MERGE (target:Node {scriptType: line.TargetScriptType, address: line.TargetAddress}) " +
+                    "MERGE (target:Script {scriptType: line.TargetScriptType, address: line.TargetAddress}) " +
                     "CREATE (coinbase)-[:Generation {type: line.Type, value: line.Value, block: line.BlockHeight}]->(target)");
                 return result.ToListAsync();
             });
@@ -231,8 +231,8 @@ namespace BC2G.DAL
             {
                 var result = await x.RunAsync(
                     $"LOAD CSV WITH HEADERS FROM 'file:///{dataFile2}' AS line FIELDTERMINATOR '\t'" +
-                    "MERGE (source:Node {scriptType: line.SourceScriptType, address: line.SourceAddress})" +
-                    "MERGE (target:None {scriptType: line.TargetScriptType, address: line.TargetAddress})" +
+                    "MERGE (source:Script {scriptType: line.SourceScriptType, address: line.SourceAddress})" +
+                    "MERGE (target:Script {scriptType: line.TargetScriptType, address: line.TargetAddress})" +
                     "CREATE (source)-[:line.EdgeType {value: {line.EdgeValue}, block: {line.BlockHeight}}]->(target)");
                 return result.ToListAsync();
             });
@@ -319,8 +319,8 @@ namespace BC2G.DAL
             var indexAddress = await session.WriteTransactionAsync(async x =>
             {
                 var result = await x.RunAsync(
-                    "CREATE INDEX FOR (address:Address) " +
-                    "ON (address.address)");
+                    "CREATE INDEX FOR (script:Script) " +
+                    "ON (script.Address)");
                 return result.ToListAsync();
             });
 
