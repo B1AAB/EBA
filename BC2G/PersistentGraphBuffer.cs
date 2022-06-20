@@ -42,9 +42,7 @@ namespace BC2G
             try
             {
                 obj.MergeQueuedTxGraphs(cT);
-                _graphDB.AddBlock(obj.Block).Wait(cT);
-                foreach (var edge in obj.Edges)
-                    _graphDB.AddEdge(obj.Block, edge).Wait(cT);
+                _graphDB.BulkImport(obj, cT);
 
                 obj.Stats.StopStopwatch();
                 _pGraphStats.Enqueue(obj.Stats.ToString());

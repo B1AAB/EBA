@@ -15,7 +15,7 @@ namespace BC2G
     public class Orchestrator : IDisposable
     {
         private readonly HttpClient _client;
-        private readonly GraphDB _graphDb;
+        private readonly GraphDB _graphDB;
         private bool disposed = false;
 
         private readonly string _statusFilename;
@@ -72,7 +72,8 @@ namespace BC2G
                 throw;
             }
 
-            _graphDb = new GraphDB(options.Neo4jUri, options.Neo4jUser, options.Neo4jPassword);
+            _graphDB = new GraphDB(options.Neo4jUri, options.Neo4jUser, options.Neo4jPassword, @"\dbmss\dbms\import");
+            //_graphDB.TEST_LoadCSV().Wait();
         }
 
         public async Task<bool> RunAsync(CancellationToken cT)
@@ -242,7 +243,7 @@ namespace BC2G
                 cT);
 
             using var gBuffer = new PersistentGraphBuffer(
-                _graphDb,
+                _graphDB,
                 Path.Combine(_options.OutputDir, "nodes.tsv"),
                 Path.Combine(_options.OutputDir, "edges.tsv"),                
                 mapper,
@@ -285,6 +286,8 @@ namespace BC2G
                 if (cT.IsCancellationRequested)
                     state.Stop();
             });
+
+            _graphDB.FinishBulkImport();
 
             //Logger.LogFinishTraverse(cancellationToken.IsCancellationRequested);
 
@@ -333,9 +336,26 @@ namespace BC2G
             catch { throw; }
 
             gBuffer.Enqueue(graph);
+            /*try
+            {
+                graph.MergeQueuedTxGraphs(cT);
+                _graphDB.AddBlock(graph.Block).Wait(cT);
+                foreach (var edge in graph.Edges)
+                    _graphDB.AddEdge(graph.Block, edge).Wait(cT);
 
-            if (_options.CreatePerBlockFiles)
-                serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"));
+                graph.Stats.StopStopwatch();
+                //_pGraphStats.Enqueue(graph.Stats.ToString());
+            }
+            catch (OperationCanceledException) { return; }*/
+
+            Logger.LogFinishProcessingBlock(
+                graph.Height,
+                1, //_mapper.NodesCount,
+                graph.EdgeCount,
+                graph.Stats.Runtime.TotalSeconds);
+
+            /*if (_options.CreatePerBlockFiles)
+                serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"));*/
 
             _options.LastProcessedBlock = height;
         }
