@@ -27,6 +27,11 @@ namespace BC2G.DAL
             "TargetScriptType", "TargetAddress",
             "Type", "Value", "BlockHeight"
         });
+        private readonly string _coinbaseCSVHeader = string.Join(_delimiter, new string[]
+        {
+            "TargetScriptType", "TargetAddress",
+            "Type", "Value", "BlockHeight"
+        });
         private readonly string _blocksCSVHeader = string.Join(_delimiter, new string[]
         {
             "Height",
@@ -93,7 +98,7 @@ namespace BC2G.DAL
                 eWriter.WriteLine(_edgesCSVHeader);
 
                 using var cWriter = new StreamWriter(_coinbaseEdgesCSVAbsFilename);
-                cWriter.WriteLine(_edgesCSVHeader);
+                cWriter.WriteLine(_coinbaseCSVHeader);
             }
 
             using var blocksWriter = new StreamWriter(_blocksCSVAbsFilename, append: true);
@@ -103,7 +108,11 @@ namespace BC2G.DAL
             using var coinbaseWrite = new StreamWriter(_coinbaseEdgesCSVAbsFilename, append: true);
             foreach (var edge in edges)
                 if (edge.Source.Address == Coinbase)
-                    coinbaseWrite.WriteLine(EdgeToCSV(edge));
+                    coinbaseWrite.WriteLine(string.Join(_delimiter, new string[]
+                    {
+                        edge.Target.ScriptType.ToString(), edge.Target.Address,
+                        edge.Type.ToString(), edge.Value.ToString(), edge.BlockHeight.ToString()
+                    }));
                 else
                     edgesWriter.WriteLine(EdgeToCSV(edge));
 
@@ -179,9 +188,9 @@ namespace BC2G.DAL
                 var result = await x.RunAsync(
                     $"LOAD CSV WITH HEADERS FROM 'file:///{_coinbaseEdgesCSVFilename}' AS line " +
                     $"FIELDTERMINATOR '{_delimiter}' " +
-                    "MERGE (source:Node {scriptType: line.SourceScriptType, address: line.SourceAddress}) " +
+                    $"MATCH (coinbase:{Coinbase}) " +
                     "MERGE (target:Node {scriptType: line.TargetScriptType, address: line.TargetAddress}) " +
-                    "CREATE (source)-[:Generation {type: line.Type, value: line.Value, block: line.BlockHeight}]->(target)");
+                    "CREATE (coinbase)-[:Generation {type: line.Type, value: line.Value, block: line.BlockHeight}]->(target)");
                 return result.ToListAsync();
             });
             coinbaseEdgeBulkLoadResult.Result.Wait();
@@ -279,7 +288,7 @@ namespace BC2G.DAL
                     {
                         await session.WriteTransactionAsync(async tx =>
                         {
-                            await tx.RunAsync($"CREATE (:{Coinbase})");
+                            await tx.RunAsync($"CREATE (:{Coinbase} {{address: \"{Coinbase}\"}})");
                         });
                     }
                     break;
