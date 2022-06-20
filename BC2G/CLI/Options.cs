@@ -30,7 +30,7 @@
         public string OutputDir { get; set; } = Environment.CurrentDirectory;
         public string AddressIdMappingFilename { set; get; } = "id_to_address_mapping.tsv";
         public bool CreatePerBlockFiles { get; set; } = false;
-        public int MaxConcurrentBlocks { get; set; } = Environment.ProcessorCount / 2;
+        public int MaxConcurrentBlocks { get; set; } = 1;// Environment.ProcessorCount / 2;
 
         public string Neo4jUri { get; set; } =
             Environment.GetEnvironmentVariable("NEO4J_URI") ??
