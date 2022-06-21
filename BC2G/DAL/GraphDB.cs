@@ -20,28 +20,15 @@ namespace BC2G.DAL
         private const int _maxEdgesInCSV = 2;//50000;
         private int _edgesInCSV;
 
+        private readonly BlockBulkLoadMapper _blockMapper = new();
+        private readonly EdgeBlockBulkMapper _edgeMapper = new();
+        private readonly CoinbaseTxBulkLoadMapper _coinbaseMapper = new();
+
         private const string _delimiter = "\t";
-        private readonly string _edgesCSVHeader = string.Join(_delimiter, new string[]
-        {
-            "SourceScriptType", "SourceAddress",
-            "TargetScriptType", "TargetAddress",
-            "Type", "Value", "BlockHeight"
-        });
         private readonly string _coinbaseCSVHeader = string.Join(_delimiter, new string[]
         {
             "TargetScriptType", "TargetAddress",
             "Type", "Value", "BlockHeight"
-        });
-        private readonly string _blocksCSVHeader = string.Join(_delimiter, new string[]
-        {
-            "Height",
-            "MedianTime",
-            "Confirmations",
-            "Difficulty",
-            "TransactionsCount",
-            "Size",
-            "StrippedSize",
-            "Weight"
         });
 
         private readonly string _neo4jImportDir;
@@ -51,6 +38,15 @@ namespace BC2G.DAL
         private readonly string _coinbaseEdgesCSVAbsFilename;
         private const string _blocksCSVFilename = "tmpBulkImportBlocks.csv";
         private readonly string _blocksCSVAbsFilename;
+
+        private static readonly NodeMapping _nodeMapping = new()
+        {
+            Labels = new List<string>() { "Script" },
+            PropertyMappings = new Dictionary<string, string>()
+            {
+                { nameof(Node.Id), nameof(Node.Id) }
+            }
+        };
 
         ~GraphDB() => Dispose(false);
 
@@ -71,6 +67,16 @@ namespace BC2G.DAL
 
             EnsureCoinbaseNode().Wait();
             EnsureConstraints().Wait();
+            /*
+            var script = new NodeMapping();
+            script.Labels.Add("Script");
+            var props = new Node().GetType().GetProperties();
+
+            var x = new Node("abc", "", ScriptType.NullData);
+            
+            string y = nameof(x.Id);
+
+            var v = x.GetType().GetProperty("Id").GetValue(x);*/
         }
 
         /* TODO:
@@ -92,29 +98,25 @@ namespace BC2G.DAL
             if (_edgesInCSV == 0)
             {
                 using var bWriter = new StreamWriter(_blocksCSVAbsFilename);
-                bWriter.WriteLine(_blocksCSVHeader);
+                bWriter.WriteLine(_blockMapper.GetCsvHeader());
 
                 using var eWriter = new StreamWriter(_edgesCSVAbsFilename);
-                eWriter.WriteLine(_edgesCSVHeader);
+                eWriter.WriteLine(_edgeMapper.GetCsvHeader());
 
                 using var cWriter = new StreamWriter(_coinbaseEdgesCSVAbsFilename);
-                cWriter.WriteLine(_coinbaseCSVHeader);
+                cWriter.WriteLine(_coinbaseMapper.GetCsvHeader());
             }
 
             using var blocksWriter = new StreamWriter(_blocksCSVAbsFilename, append: true);
-            blocksWriter.WriteLine(BlockToCSV(graph));
+            blocksWriter.WriteLine(_blockMapper.ToCsv(graph.Block));
 
             using var edgesWriter = new StreamWriter(_edgesCSVAbsFilename, append: true);
             using var coinbaseWrite = new StreamWriter(_coinbaseEdgesCSVAbsFilename, append: true);
             foreach (var edge in edges)
                 if (edge.Source.Address == Coinbase)
-                    coinbaseWrite.WriteLine(string.Join(_delimiter, new string[]
-                    {
-                        edge.Target.ScriptType.ToString(), edge.Target.Address,
-                        edge.Type.ToString(), edge.Value.ToString(), edge.BlockHeight.ToString()
-                    }));
+                    coinbaseWrite.WriteLine(_coinbaseMapper.ToCsv(edge));
                 else
-                    edgesWriter.WriteLine(EdgeToCSV(edge));
+                    edgesWriter.WriteLine(_edgeMapper.ToCsv(edge));
 
             _edgesInCSV += edges.Count;
         }
@@ -139,93 +141,24 @@ namespace BC2G.DAL
 
             var blockBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
-                var result = await x.RunAsync(
-                    $"LOAD CSV WITH HEADERS FROM 'file:///{_blocksCSVFilename}' AS line " +
-                    $"FIELDTERMINATOR '{_delimiter}'" +
-                    "MERGE (b: Block {" +
-                    "height: line.Height, " +
-                    "medianTime: line.MedianTime, " +
-                    "confirmations: line.Confirmations, " +
-                    "difficulty: line.Difficulty," +
-                    "transactionsCount: line.TransactionsCount," +
-                    "size: line.Size, " +
-                    "strippedSize: line.StrippedSize, " +
-                    "weight: line.Weight})");
+                var result = await x.RunAsync(_blockMapper.GetCypherQuery($"file:///{_blocksCSVFilename}"));
                 return result.ToListAsync();
             });
             blockBulkLoadResult.Result.Wait();
 
             var edgeBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
-
-                var result = await x.RunAsync(
-                    $"LOAD CSV WITH HEADERS FROM 'file:///{_edgesCSVFilename}' AS line " +
-                    $"FIELDTERMINATOR '{_delimiter}' " +
-                    "MERGE (source:Script {scriptType: line.SourceScriptType, address: line.SourceAddress}) " +
-                    "MERGE (target:Script {scriptType: line.TargetScriptType, address: line.TargetAddress}) " +
-                    "WITH source, target, line " +
-                    "MATCH (block:Block {height: line.BlockHeight}) " +
-                    //"CREATE (source)-[:Sends {type: line.Type, value: line.Value, block: line.BlockHeight}]->(target) " +
-                    "CREATE (source)-[:Redeems]->(block) " +
-                    "CREATE (block)-[:Creates]->(target) " +
-
-                    "WITH source, target, line " +
-                    "CALL apoc.create.relationship(source, line.Type, {}, target) YIELD rel RETURN distinct 'done'");
-                /*
-                var result = await x.RunAsync(
-                    $"LOAD CSV WITH HEADERS FROM 'file:///{_edgesCSVFilename}' AS line " +
-                    $"FIELDTERMINATOR '{_delimiter}' " +
-                    "MERGE (source:Node {scriptType: line.SourceScriptType, address: line.SourceAddress}) " +
-                    "MERGE (target:Node {scriptType: line.TargetScriptType, address: line.TargetAddress}) " +
-                    "WITH source, target, line " +
-                    "MATCH (block:Block {height: line.BlockHeight}) " +
-                    "CALL apoc.create.relationship(source, line.Type, {value: line.value, block: line.BlockHeight}, target) YIELD r " +
-                    "CREATE (source)-[:Redeems]->(block) " +
-                    "CREATE (block)-[:Creates]->(target)");*/
-
+                var result = await x.RunAsync(_edgeMapper.GetCypherQuery($"file:///{_edgesCSVFilename}"));
                 return result.ToListAsync();
             });
             edgeBulkLoadResult.Result.Wait();
 
             var coinbaseEdgeBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
-                var result = await x.RunAsync(
-                    $"LOAD CSV WITH HEADERS FROM 'file:///{_coinbaseEdgesCSVFilename}' AS line " +
-                    $"FIELDTERMINATOR '{_delimiter}' " +
-                    $"MATCH (coinbase:{Coinbase}) " +
-                    "MERGE (target:Script {scriptType: line.TargetScriptType, address: line.TargetAddress}) " +
-                    "WITH coinbase, target, line " +
-                    "MATCH (block:Block {height: line.BlockHeight}) " +
-                    "CREATE (coinbase)-[:Generation {type: line.Type, value: line.Value, block: line.BlockHeight}]->(target) " +
-                    "CREATE (block)-[:Creates]->(target)");
+            var result = await x.RunAsync(_coinbaseMapper.GetCypherQuery($"file:///{_coinbaseEdgesCSVFilename}"));
                 return result.ToListAsync();
             });
             coinbaseEdgeBulkLoadResult.Result.Wait();
-        }
-
-        private static string EdgeToCSV(Edge edge)
-        {
-            return string.Join(_delimiter, new string[]
-            {
-                edge.Source.ScriptType.ToString(), edge.Source.Address,
-                edge.Target.ScriptType.ToString(), edge.Target.Address,
-                edge.Type.ToString(), edge.Value.ToString(), edge.BlockHeight.ToString()
-            });
-        }
-
-        private static string BlockToCSV(BlockGraph graph)
-        {
-            return string.Join(_delimiter, new string[]
-            {
-                graph.Block.Height.ToString(),
-                graph.Block.MedianTime.ToString(),
-                graph.Block.Confirmations.ToString(),
-                graph.Block.Difficulty.ToString(),
-                graph.Block.TransactionsCount.ToString(),
-                graph.Block.Size.ToString(),
-                graph.Block.StrippedSize.ToString(),
-                graph.Block.Weight.ToString()
-            });
         }
 
         public async Task TEST_LoadCSV()
