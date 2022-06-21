@@ -9,6 +9,7 @@ namespace BC2G.Blockchains
 {
     public class BitcoinAgent : IDisposable
     {
+        public static readonly string Coinbase = "Coinbase";
         public static uint GenesisTimestamp { get { return 1231006505; } }
 
         /// <summary>

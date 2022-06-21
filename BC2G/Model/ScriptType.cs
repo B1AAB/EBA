@@ -37,6 +37,7 @@
         /// </summary>
         NullData,
 
+        Coinbase,
         Unknown
     }
 }
