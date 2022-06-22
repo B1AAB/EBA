@@ -8,24 +8,23 @@ namespace BC2G.DAL
 {
     internal abstract class ModelMapper<T>
     {
-        internal readonly char csvDelimiter;
-        internal readonly char labelsDelimiter;
+        public const string csvDelimiter = "\t";
+        public const string labelsDelimiter = ":";
 
-        public ModelMapper(char csvDelimiter = '\t', char labelsDelimiter = ':')
+        public string Filename { get; }
+        public string CypherQuery { get; }
+
+        public ModelMapper(
+            string cypherImportPrefix,
+            string importDirectory,
+            string filename)
         {
-            this.csvDelimiter = csvDelimiter;
-            this.labelsDelimiter = labelsDelimiter;
+            Filename = Path.Combine(importDirectory, filename);
+            CypherQuery = ComposeCypherQuery(cypherImportPrefix + filename);
         }
 
-        /// <summary>
-        /// Returns a list of labels delimited by <typeparamref name="csvDelimiter"/> 
-        /// if more than one label.
-        /// </summary>
-        /// <returns></returns>
-        public abstract string GetLabels();
-
-        public abstract string GetCsvHeader();        
+        public abstract string GetCsvHeader();
         public abstract string ToCsv(T obj);
-        public abstract string GetCypherQuery(string filename);
+        protected abstract string ComposeCypherQuery(string filename);
     }
 }

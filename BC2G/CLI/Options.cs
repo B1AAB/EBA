@@ -42,5 +42,13 @@
         public string Neo4jPassword { set; get; } =
             Environment.GetEnvironmentVariable("NEO4J_PASSWORD") ??
             "password";
+
+        public string Neo4jImportDirectory { set; get; } =
+            Environment.GetEnvironmentVariable("NEO4J_IMPORTDIRECTORY") ??
+            @"\dbmss\dbms\import";
+
+        public string Neo4jCypherImportPrefix { set; get; } =
+            Environment.GetEnvironmentVariable("NEO4J_CYPHERIMPORTPREFIX") ??
+            "file:///";
     }
 }

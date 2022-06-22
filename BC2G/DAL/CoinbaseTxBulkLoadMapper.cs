@@ -7,41 +7,33 @@ using System.Threading.Tasks;
 
 namespace BC2G.DAL
 {
-    internal class CoinbaseTxBulkLoadMapper : ModelMapper<Edge>
+    internal class CoinbaseTxBulkLoadMapper : EdgeBulkLoadMapper
     {
-        private const string _scriptType = nameof(Edge.Target.ScriptType);
-        private const string _address = nameof(Edge.Target.Address);
-        private static readonly string _edgeType = EdgeBlockBulkMapper.EdgeType;
-        private static readonly string _valueName = EdgeBlockBulkMapper.ValueName;
-        private const string _blockHeight = nameof(Edge.BlockHeight);
-
-        /// <summary>
-        /// Note that the ordre of the items in this array should 
-        /// match those in the `GetCsvHeader` method.
-        /// </summary>
-        private static readonly string[] _properties = new string[]
-        {
-            _scriptType,
-            _address,
-            _edgeType,
-            _valueName,
-            _blockHeight
-        };
-
-        public override string GetLabels()
-        {
-            return GraphDB.Coinbase;
-        }
+        public CoinbaseTxBulkLoadMapper(
+            string cypherImportPrefix,
+            string importDirectory,
+            string filename = "tmpBulkImportCoinbase.csv") :
+            base(cypherImportPrefix, importDirectory, filename)
+        { }
 
         public override string GetCsvHeader()
         {
-            return string.Join(csvDelimiter, _properties);
+            /// Note that the ordre of the items in this array should 
+            /// match those in the `ToCSV` method.
+            return string.Join(csvDelimiter, new string[]
+            {
+                csvHeaderTargetScriptType,
+                csvHeaderTargetScriptAddress,
+                csvHeaderEdgeType,
+                csvHeaderValue,
+                csvHeaderBlockHeight
+            });
         }
 
         public override string ToCsv(Edge edge)
         {
-            /// Note that the order in this array 
-            /// should match those in `_properties`. 
+            /// Note that the ordre of the items in this array should 
+            /// match those in the `GetCsvHeader` method. 
             return string.Join(csvDelimiter, new string[]
             {
                 edge.Target.ScriptType.ToString(),
@@ -52,39 +44,26 @@ namespace BC2G.DAL
             });
         }
 
-        public override string GetCypherQuery(string filename)
+        protected override string ComposeCypherQuery(string filename)
         {
-            var builder = new StringBuilder();
-            builder.Append(
+            return 
                 $"LOAD CSV WITH HEADERS FROM '{filename}' AS line " +
-                $"FIELDTERMINATOR '{csvDelimiter}' ");
-
-            builder.Append($"MATCH (coinbase:{GetLabels()}) ");
-
-            builder.Append($"MERGE " +
-                $"(target:{EdgeBlockBulkMapper.Labels} {{" +
-                $"{nameof(Edge.Target.ScriptType)}: line.{_scriptType}, " +
-                $"{nameof(Edge.Target.Address)}: line.{_address}" +
-                $"}}) ");
-
-            builder.Append("WITH coinbase, target, line ");
-
-            builder.Append(
-                $"MATCH (block:{BlockBulkLoadMapper.Labels} {{" +
-                $"{BlockBulkLoadMapper.HeightPropertyName}: line.{_blockHeight}" +
-                $"}}) ");
-
-            // TODO: change generation in the following to read from the CSV file.
-            builder.Append(
+                $"FIELDTERMINATOR '{csvDelimiter}' " +
+                $"MATCH (coinbase:{neo4jModelLabels}) " +
+                $"MERGE (target:{neo4jModelLabels} {{" +
+                $"{neo4jModelScriptType}: line.{csvHeaderTargetScriptAddress}, " +
+                $"{neo4jModelScriptAddress}: line.{csvHeaderTargetScriptAddress}" +
+                $"}}) " +
+                "WITH coinbase, target, line " +
+                $"MATCH (block:{BlockBulkLoadMapper.neo4jModelLabel} {{" +
+                $"{BlockBulkLoadMapper.neo4jModelHeight}: line.{csvHeaderBlockHeight}" +
+                $"}}) " +
                 $"CREATE (coinbase)-[:Generation {{" +
-                $"{_edgeType}: line.{_edgeType}, " +
-                $"{_valueName}: line.{_valueName}, " +
-                $"{_blockHeight}: line.{_blockHeight}" +
-                $"}}]->(target)");
-
-            builder.Append("CREATE (block)-[:Creates]->(target)");
-
-            return builder.ToString();
+                $"{neo4jModelEdgeType}: line.{csvHeaderEdgeType}, " +
+                $"{neo4jModelValue}: line.{csvHeaderValue}, " +
+                $"{neo4jModelBlockHeight}: line.{csvHeaderBlockHeight}" +
+                $"}}]->(target)" +
+                "CREATE (block)-[:Creates]->(target)";
         }
     }
 }

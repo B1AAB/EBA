@@ -9,29 +9,36 @@ namespace BC2G.DAL
 {
     internal class BlockBulkLoadMapper : ModelMapper<Block>
     {
-        public static readonly string Labels = "Block";
-        public static readonly string HeightPropertyName = nameof(Block.Height);
+        public const string neo4jModelLabel = "Block";
+        public const string neo4jModelHeight = "Height";
+        public const string neo4jModelMedianTime = "MedianTime";
+        public const string neo4jModelConfirmations = "Confirmations";
+        public const string neo4jModelDifficulty = "Difficulty";
+        public const string neo4jModelTxCount = "TransactionsCount";
+        public const string neo4jModelSize = "Size";
+        public const string neo4jModelStrippedSize = "StrippedSize";
+        public const string neo4jModelWeight = "Weight";
 
-        /// <summary>
         /// Note that the ordre of the items in this array should 
-        /// match those in the `GetCsvHeader` method.
-        /// </summary>
+        /// match those returned from the `ToCsv()` method.. 
         private static readonly string[] _properties = new string[]
         {
-            HeightPropertyName,
-            nameof(Block.MedianTime),
-            nameof(Block.Confirmations),
-            nameof(Block.Difficulty),
-            nameof(Block.TransactionsCount),
-            nameof(Block.Size),
-            nameof(Block.StrippedSize),
-            nameof(Block.Weight)
+            neo4jModelHeight,
+            neo4jModelMedianTime,
+            neo4jModelConfirmations,
+            neo4jModelDifficulty,
+            neo4jModelTxCount,
+            neo4jModelSize,
+            neo4jModelStrippedSize,
+            neo4jModelWeight
         };
 
-        public override string GetLabels()
-        {
-            return Labels;
-        }
+        public BlockBulkLoadMapper(
+            string importPrefix,
+            string importDirectory,
+            string filename = "tmpBulkImportBlocks.csv") :
+            base(importPrefix, importDirectory, filename)
+        { }
 
         public override string GetCsvHeader()
         {
@@ -40,8 +47,8 @@ namespace BC2G.DAL
 
         public override string ToCsv(Block block)
         {
-            /// Note that the order in this array 
-            /// should match those in `_properties`. 
+            /// Note that the ordre of the items in this array should 
+            /// match those in the `_properties`. 
             return string.Join(csvDelimiter, new string[]
             {
                 block.Height.ToString(),
@@ -55,13 +62,13 @@ namespace BC2G.DAL
             });
         }
 
-        public override string GetCypherQuery(string filename)
+        protected override string ComposeCypherQuery(string filename)
         {
             var builder = new StringBuilder();
             builder.Append(
                 $"LOAD CSV WITH HEADERS FROM '{filename}' AS line " +
                 $"FIELDTERMINATOR '{csvDelimiter}' " +
-                $"MERGE (: {GetLabels()} {{");
+                $"MERGE (: {neo4jModelLabel} {{");
 
             string comma = "";
             foreach (var p in _properties)

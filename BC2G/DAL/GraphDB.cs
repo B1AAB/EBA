@@ -18,39 +18,21 @@ namespace BC2G.DAL
         /// Ref: https://neo4j.com/blog/bulk-data-import-neo4j-3-0/
         /// </summary>
         private const int _maxEdgesInCSV = 2;//50000;
-        private int _edgesInCSV;
+        private int _edgesInCsvCount;
 
-        private readonly BlockBulkLoadMapper _blockMapper = new();
-        private readonly EdgeBlockBulkMapper _edgeMapper = new();
-        private readonly CoinbaseTxBulkLoadMapper _coinbaseMapper = new();
+        private readonly BlockBulkLoadMapper _blockMapper;
+        private readonly EdgeBulkLoadMapper _edgeMapper;
+        private readonly CoinbaseTxBulkLoadMapper _coinbaseMapper;
 
-        private const string _delimiter = "\t";
-        private readonly string _coinbaseCSVHeader = string.Join(_delimiter, new string[]
-        {
-            "TargetScriptType", "TargetAddress",
-            "Type", "Value", "BlockHeight"
-        });
-
-        private readonly string _neo4jImportDir;
-        private const string _edgesCSVFilename = "tmpBulkImportEdges.csv";
-        private readonly string _edgesCSVAbsFilename;
-        private const string _coinbaseEdgesCSVFilename = "tmpCoinbase.csv";
-        private readonly string _coinbaseEdgesCSVAbsFilename;
-        private const string _blocksCSVFilename = "tmpBulkImportBlocks.csv";
-        private readonly string _blocksCSVAbsFilename;
-
-        private static readonly NodeMapping _nodeMapping = new()
-        {
-            Labels = new List<string>() { "Script" },
-            PropertyMappings = new Dictionary<string, string>()
-            {
-                { nameof(Node.Id), nameof(Node.Id) }
-            }
-        };
 
         ~GraphDB() => Dispose(false);
 
-        public GraphDB(string uri, string user, string password, string importDirectory)
+        public GraphDB(
+            string uri, 
+            string user, 
+            string password, 
+            string neo4jImportDirectory, 
+            string neo4jCypherImportPrefix)
         {
             _driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
 
@@ -60,10 +42,9 @@ namespace BC2G.DAL
             // stacktrace. Check if there is a better way of throwing an error with a message
             // that indicates not able to connect to the Neo4j database.
 
-            _neo4jImportDir = importDirectory;
-            _edgesCSVAbsFilename = Path.Combine(_neo4jImportDir, _edgesCSVFilename);
-            _blocksCSVAbsFilename = Path.Combine(_neo4jImportDir, _blocksCSVFilename);
-            _coinbaseEdgesCSVAbsFilename = Path.Combine(_neo4jImportDir, _coinbaseEdgesCSVFilename);
+            _blockMapper = new BlockBulkLoadMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
+            _edgeMapper = new EdgeBulkLoadMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
+            _coinbaseMapper = new CoinbaseTxBulkLoadMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
 
             EnsureCoinbaseNode().Wait();
             EnsureConstraints().Wait();
@@ -92,42 +73,42 @@ namespace BC2G.DAL
         {
             var edges = graph.Edges;
 
-            if (_edgesInCSV != 0 && _edgesInCSV + edges.Count >= _maxEdgesInCSV)
+            if (_edgesInCsvCount != 0 && _edgesInCsvCount + edges.Count >= _maxEdgesInCSV)
                 BulkImportStagedAndReset();
 
-            if (_edgesInCSV == 0)
+            if (_edgesInCsvCount == 0)
             {
-                using var bWriter = new StreamWriter(_blocksCSVAbsFilename);
+                using var bWriter = new StreamWriter(_blockMapper.Filename);
                 bWriter.WriteLine(_blockMapper.GetCsvHeader());
 
-                using var eWriter = new StreamWriter(_edgesCSVAbsFilename);
+                using var eWriter = new StreamWriter(_edgeMapper.Filename);
                 eWriter.WriteLine(_edgeMapper.GetCsvHeader());
 
-                using var cWriter = new StreamWriter(_coinbaseEdgesCSVAbsFilename);
+                using var cWriter = new StreamWriter(_coinbaseMapper.Filename);
                 cWriter.WriteLine(_coinbaseMapper.GetCsvHeader());
             }
 
-            using var blocksWriter = new StreamWriter(_blocksCSVAbsFilename, append: true);
+            using var blocksWriter = new StreamWriter(_blockMapper.Filename, append: true);
             blocksWriter.WriteLine(_blockMapper.ToCsv(graph.Block));
 
-            using var edgesWriter = new StreamWriter(_edgesCSVAbsFilename, append: true);
-            using var coinbaseWrite = new StreamWriter(_coinbaseEdgesCSVAbsFilename, append: true);
+            using var edgesWriter = new StreamWriter(_edgeMapper.Filename, append: true);
+            using var coinbaseWrite = new StreamWriter(_coinbaseMapper.Filename, append: true);
             foreach (var edge in edges)
                 if (edge.Source.Address == Coinbase)
                     coinbaseWrite.WriteLine(_coinbaseMapper.ToCsv(edge));
                 else
                     edgesWriter.WriteLine(_edgeMapper.ToCsv(edge));
 
-            _edgesInCSV += edges.Count;
+            _edgesInCsvCount += edges.Count;
         }
 
         private void BulkImportStagedAndReset()
         {
             BulkImport();
-            File.Delete(_edgesCSVAbsFilename);
-            File.Delete(_blocksCSVAbsFilename);
-            File.Delete(_coinbaseEdgesCSVAbsFilename);
-            _edgesInCSV = 0;
+            File.Delete(_edgeMapper.Filename);
+            File.Delete(_blockMapper.Filename);
+            File.Delete(_coinbaseMapper.Filename);
+            _edgesInCsvCount = 0;
         }
 
         public void FinishBulkImport()
@@ -141,21 +122,21 @@ namespace BC2G.DAL
 
             var blockBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
-                var result = await x.RunAsync(_blockMapper.GetCypherQuery($"file:///{_blocksCSVFilename}"));
+                var result = await x.RunAsync(_blockMapper.CypherQuery);
                 return result.ToListAsync();
             });
             blockBulkLoadResult.Result.Wait();
 
             var edgeBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
-                var result = await x.RunAsync(_edgeMapper.GetCypherQuery($"file:///{_edgesCSVFilename}"));
+                var result = await x.RunAsync(_edgeMapper.CypherQuery);
                 return result.ToListAsync();
             });
             edgeBulkLoadResult.Result.Wait();
 
             var coinbaseEdgeBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
-            var result = await x.RunAsync(_coinbaseMapper.GetCypherQuery($"file:///{_coinbaseEdgesCSVFilename}"));
+                var result = await x.RunAsync(_coinbaseMapper.CypherQuery);
                 return result.ToListAsync();
             });
             coinbaseEdgeBulkLoadResult.Result.Wait();
