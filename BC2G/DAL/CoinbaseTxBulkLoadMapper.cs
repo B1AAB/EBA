@@ -1,4 +1,5 @@
-﻿using BC2G.Graph;
+﻿using BC2G.Blockchains;
+using BC2G.Graph;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,9 +50,9 @@ namespace BC2G.DAL
             return 
                 $"LOAD CSV WITH HEADERS FROM '{filename}' AS line " +
                 $"FIELDTERMINATOR '{csvDelimiter}' " +
-                $"MATCH (coinbase:{neo4jModelLabels}) " +
+                $"MATCH (coinbase:{BitcoinAgent.coinbase}) " +
                 $"MERGE (target:{neo4jModelLabels} {{" +
-                $"{neo4jModelScriptType}: line.{csvHeaderTargetScriptAddress}, " +
+                $"{neo4jModelScriptType}: line.{csvHeaderTargetScriptType}, " +
                 $"{neo4jModelScriptAddress}: line.{csvHeaderTargetScriptAddress}" +
                 $"}}) " +
                 "WITH coinbase, target, line " +

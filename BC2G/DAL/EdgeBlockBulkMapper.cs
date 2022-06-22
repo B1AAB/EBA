@@ -85,8 +85,10 @@ namespace BC2G.DAL
                 "WITH source, target, line " +
                 "CALL apoc.create.relationship(" +
                 "source, " +
-                $"line.{csvHeaderEdgeType}, " +
-                $"{{}}, " +
+                $"line.{csvHeaderEdgeType}, {{" +
+                $"{neo4jModelValue}: line.{csvHeaderValue}, " +
+                $"{neo4jModelBlockHeight}: line.{csvHeaderBlockHeight}" +
+                $"}}, " +
                 $"target) YIELD rel RETURN distinct 'done'";
         }
     }
