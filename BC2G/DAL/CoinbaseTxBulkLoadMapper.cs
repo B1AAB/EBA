@@ -23,11 +23,11 @@ namespace BC2G.DAL
             /// match those in the `ToCSV` method.
             return string.Join(csvDelimiter, new string[]
             {
-                csvHeaderTargetScriptType,
-                csvHeaderTargetScriptAddress,
-                csvHeaderEdgeType,
-                csvHeaderValue,
-                csvHeaderBlockHeight
+                CsvColumn.targetScriptType,
+                CsvColumn.targetScriptAddress,
+                CsvColumn.edgeType,
+                CsvColumn.value,
+                CsvColumn.height
             });
         }
 
@@ -47,22 +47,22 @@ namespace BC2G.DAL
 
         protected override string ComposeCypherQuery(string filename)
         {
-            return 
+            return
                 $"LOAD CSV WITH HEADERS FROM '{filename}' AS line " +
                 $"FIELDTERMINATOR '{csvDelimiter}' " +
                 $"MATCH (coinbase:{BitcoinAgent.coinbase}) " +
-                $"MERGE (target:{neo4jModelLabels} {{" +
-                $"{neo4jModelScriptType}: line.{csvHeaderTargetScriptType}, " +
-                $"{neo4jModelScriptAddress}: line.{csvHeaderTargetScriptAddress}" +
+                $"MERGE (target:{Neo4jModel.labels} {{" +
+                $"{Neo4jModel.scriptType}: line.{CsvColumn.targetScriptType}, " +
+                $"{Neo4jModel.scriptAddress}: line.{CsvColumn.targetScriptAddress}" +
                 $"}}) " +
                 "WITH coinbase, target, line " +
-                $"MATCH (block:{BlockBulkLoadMapper.neo4jModelLabel} {{" +
-                $"{BlockBulkLoadMapper.neo4jModelHeight}: line.{csvHeaderBlockHeight}" +
+                $"MATCH (block:{BlockBulkLoadMapper.Neo4jModel.label} {{" +
+                $"{Neo4jModel.height}: line.{CsvColumn.height}" +
                 $"}}) " +
                 $"CREATE (coinbase)-[:Generation {{" +
-                $"{neo4jModelEdgeType}: line.{csvHeaderEdgeType}, " +
-                $"{neo4jModelValue}: line.{csvHeaderValue}, " +
-                $"{neo4jModelBlockHeight}: line.{csvHeaderBlockHeight}" +
+                $"{Neo4jModel.edgeType}: line.{CsvColumn.edgeType}, " +
+                $"{Neo4jModel.value}: line.{CsvColumn.value}, " +
+                $"{Neo4jModel.height}: line.{CsvColumn.height}" +
                 $"}}]->(target)" +
                 "CREATE (block)-[:Creates]->(target)";
         }

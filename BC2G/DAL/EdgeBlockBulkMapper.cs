@@ -9,20 +9,25 @@ namespace BC2G.DAL
 {
     internal class EdgeBulkLoadMapper : ModelMapper<Edge>
     {
-        public const string neo4jModelLabels = "Script";
-        public const string neo4jModelScriptType = "ScriptType";
-        public const string neo4jModelScriptAddress = "Address";
-        public const string neo4jModelEdgeType = "EdgeType";
-        public const string neo4jModelValue = "Value";
-        public const string neo4jModelBlockHeight = "Height";
+        public class Neo4jModel : Neo4jModelBase
+        {
+            public const string labels = "Script";
+            public const string scriptType = "ScriptType";
+            public const string scriptAddress = "Address";
+            public const string edgeType = "EdgeType";
+            public const string value = "Value";
+        }
 
-        public const string csvHeaderSourceScriptAddress = "SourceScriptAddress";
-        public const string csvHeaderSourceScriptType = "SourceScriptType";
-        public const string csvHeaderTargetScriptAddress = "TargetScriptAddress";
-        public const string csvHeaderTargetScriptType = "TargetScriptType";
-        public const string csvHeaderEdgeType = "EdgeType";
-        public const string csvHeaderValue = "Value";
-        public const string csvHeaderBlockHeight = "BlockHeight";
+        public class CsvColumn
+        {
+            public const string sourceScriptAddress = "SourceScriptAddress";
+            public const string sourceScriptType = "SourceScriptType";
+            public const string targetScriptAddress = "TargetScriptAddress";
+            public const string targetScriptType = "TargetScriptType";
+            public const string edgeType = "EdgeType";
+            public const string value = "Value";
+            public const string height = "Height";
+        }
 
         public EdgeBulkLoadMapper(
             string cypherImportPrefix,
@@ -37,13 +42,13 @@ namespace BC2G.DAL
             /// match those in the `ToCSV` method.
             return string.Join(csvDelimiter, new string[]
             {
-                csvHeaderSourceScriptAddress,
-                csvHeaderSourceScriptType,
-                csvHeaderTargetScriptAddress,
-                csvHeaderTargetScriptType ,
-                csvHeaderEdgeType,
-                csvHeaderValue,
-                csvHeaderBlockHeight
+                CsvColumn.sourceScriptAddress,
+                CsvColumn.sourceScriptType,
+                CsvColumn.targetScriptAddress,
+                CsvColumn.targetScriptType,
+                CsvColumn.edgeType,
+                CsvColumn.value,
+                CsvColumn.height
             });
         }
 
@@ -68,26 +73,26 @@ namespace BC2G.DAL
             return
                 $"LOAD CSV WITH HEADERS FROM '{filename}' AS line " +
                 $"FIELDTERMINATOR '{csvDelimiter}' " +
-                $"MERGE (source:{neo4jModelLabels} {{" +
-                $"{neo4jModelScriptType}: line.{csvHeaderSourceScriptType}, " +
-                $"{neo4jModelScriptAddress}: line.{csvHeaderSourceScriptAddress}" +
+                $"MERGE (source:{Neo4jModel.labels} {{" +
+                $"{Neo4jModel.scriptType}: line.{CsvColumn.sourceScriptType}, " +
+                $"{Neo4jModel.scriptAddress}: line.{CsvColumn.sourceScriptAddress}" +
                 "}) " +
-                $"MERGE (target:{neo4jModelLabels} {{" +
-                $"{neo4jModelScriptType}: line.{csvHeaderTargetScriptType}, " +
-                $"{neo4jModelScriptAddress}: line.{csvHeaderTargetScriptAddress}" +
+                $"MERGE (target:{Neo4jModel.labels} {{" +
+                $"{Neo4jModel.scriptType}: line.{CsvColumn.targetScriptType}, " +
+                $"{Neo4jModel.scriptAddress}: line.{CsvColumn.targetScriptAddress}" +
                 "}) " +
                 "WITH source, target, line " +
-                $"MATCH (block:{BlockBulkLoadMapper.neo4jModelLabel} {{" +
-                $"{BlockBulkLoadMapper.neo4jModelHeight}: line.{csvHeaderBlockHeight}" +
+                $"MATCH (block:{BlockBulkLoadMapper.Neo4jModel.label} {{" +
+                $"{Neo4jModel.height}: line.{CsvColumn.height}" +
                 "}) " +
                 "CREATE (source)-[:Redeems]->(block) " +
                 "CREATE (block)-[:Creates]->(target) " +
                 "WITH source, target, line " +
                 "CALL apoc.create.relationship(" +
                 "source, " +
-                $"line.{csvHeaderEdgeType}, {{" +
-                $"{neo4jModelValue}: line.{csvHeaderValue}, " +
-                $"{neo4jModelBlockHeight}: line.{csvHeaderBlockHeight}" +
+                $"line.{CsvColumn.edgeType}, {{" +
+                $"{Neo4jModel.value}: line.{CsvColumn.value}, " +
+                $"{Neo4jModel.height}: line.{CsvColumn.height}" +
                 $"}}, " +
                 $"target) YIELD rel RETURN distinct 'done'";
         }

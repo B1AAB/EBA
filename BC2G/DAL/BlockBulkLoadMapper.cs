@@ -9,28 +9,30 @@ namespace BC2G.DAL
 {
     internal class BlockBulkLoadMapper : ModelMapper<Block>
     {
-        public const string neo4jModelLabel = "Block";
-        public const string neo4jModelHeight = "Height";
-        public const string neo4jModelMedianTime = "MedianTime";
-        public const string neo4jModelConfirmations = "Confirmations";
-        public const string neo4jModelDifficulty = "Difficulty";
-        public const string neo4jModelTxCount = "TransactionsCount";
-        public const string neo4jModelSize = "Size";
-        public const string neo4jModelStrippedSize = "StrippedSize";
-        public const string neo4jModelWeight = "Weight";
+        public class Neo4jModel : Neo4jModelBase
+        {
+            public const string label = "Block";
+            public const string medianTime = "MedianTime";
+            public const string confirmations = "Confirmations";
+            public const string difficulty = "Difficulty";
+            public const string txCount = "TransactionsCount";
+            public const string size = "Size";
+            public const string strippedSize = "StrippedSize";
+            public const string weight = "Weight";
+        }
 
         /// Note that the ordre of the items in this array should 
         /// match those returned from the `ToCsv()` method.. 
         private static readonly string[] _properties = new string[]
         {
-            neo4jModelHeight,
-            neo4jModelMedianTime,
-            neo4jModelConfirmations,
-            neo4jModelDifficulty,
-            neo4jModelTxCount,
-            neo4jModelSize,
-            neo4jModelStrippedSize,
-            neo4jModelWeight
+            Neo4jModel.height,
+            Neo4jModel.medianTime,
+            Neo4jModel.confirmations,
+            Neo4jModel.difficulty,
+            Neo4jModel.txCount,
+            Neo4jModel.size,
+            Neo4jModel.strippedSize,
+            Neo4jModel.weight
         };
 
         public BlockBulkLoadMapper(
@@ -68,7 +70,7 @@ namespace BC2G.DAL
             builder.Append(
                 $"LOAD CSV WITH HEADERS FROM '{filename}' AS line " +
                 $"FIELDTERMINATOR '{csvDelimiter}' " +
-                $"MERGE (: {neo4jModelLabel} {{");
+                $"MERGE (: {Neo4jModel.label} {{");
 
             string comma = "";
             foreach (var p in _properties)

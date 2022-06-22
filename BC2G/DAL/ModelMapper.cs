@@ -14,6 +14,11 @@ namespace BC2G.DAL
         public string Filename { get; }
         public string CypherQuery { get; }
 
+        public class Neo4jModelBase
+        {
+            public const string height = "Height";
+        }
+
         public ModelMapper(
             string cypherImportPrefix,
             string importDirectory,
