@@ -1,4 +1,5 @@
-﻿using BC2G.Graph;
+﻿using BC2G.Blockchains;
+using BC2G.Graph;
 using BC2G.Model;
 using Neo4j.Driver;
 
@@ -94,7 +95,7 @@ namespace BC2G.DAL
             using var edgesWriter = new StreamWriter(_edgeMapper.Filename, append: true);
             using var coinbaseWrite = new StreamWriter(_coinbaseMapper.Filename, append: true);
             foreach (var edge in edges)
-                if (edge.Source.Address == Coinbase)
+                if (edge.Source.Address != Coinbase)
                     coinbaseWrite.WriteLine(_coinbaseMapper.ToCsv(edge));
                 else
                     edgesWriter.WriteLine(_edgeMapper.ToCsv(edge));
@@ -196,7 +197,7 @@ namespace BC2G.DAL
             {
                 count = await session.ReadTransactionAsync(async tx =>
                 {
-                    var result = await tx.RunAsync($"MATCH (n:{Coinbase}) RETURN COUNT(n)");
+                    var result = await tx.RunAsync($"MATCH (n:{BitcoinAgent.coinbase}) RETURN COUNT(n)");
                     return result.SingleAsync().Result[0].As<int>();
                 });
             }
@@ -209,7 +210,10 @@ namespace BC2G.DAL
                     {
                         await session.WriteTransactionAsync(async tx =>
                         {
-                            await tx.RunAsync($"CREATE (:{Coinbase} {{address: \"{Coinbase}\"}})");
+                            await tx.RunAsync(
+                                $"CREATE (:{BitcoinAgent.coinbase} {{" +
+                                $"{EdgeBulkLoadMapper.Neo4jModel.scriptAddress}: " +
+                                $"\"{BitcoinAgent.coinbase}\"}})");
                         });
                     }
                     break;
@@ -230,9 +234,9 @@ namespace BC2G.DAL
             var addressUniquenessContraint = await session.WriteTransactionAsync(async x =>
             {
                 var result = await x.RunAsync(
-                    "CREATE CONSTRAINT addressUniqueContraint " +
-                    "FOR (script:Script) " +
-                    "REQUIRE script.address IS UNIQUE");
+                    "CREATE CONSTRAINT UniqueAddressContraint " +
+                    $"FOR (script:{EdgeBulkLoadMapper.Neo4jModel.labels}) " +
+                    $"REQUIRE script.{EdgeBulkLoadMapper.Neo4jModel.scriptAddress} IS UNIQUE");
 
                 return result.ToListAsync();
             });
@@ -240,14 +244,16 @@ namespace BC2G.DAL
             var indexAddress = await session.WriteTransactionAsync(async x =>
             {
                 var result = await x.RunAsync(
-                    "CREATE INDEX FOR (script:Script) " +
-                    "ON (script.Address)");
+                    $"CREATE INDEX FOR (script:{EdgeBulkLoadMapper.Neo4jModel.labels}) " +
+                    $"ON (script.{EdgeBulkLoadMapper.Neo4jModel.scriptAddress})");
                 return result.ToListAsync();
             });
 
             var indexBlockHeight = await session.WriteTransactionAsync(async x =>
             {
-                var result = await x.RunAsync("CREATE INDEX FOR (block:Block) on (block.height)");
+                var result = await x.RunAsync(
+                    $"CREATE INDEX FOR (block:{BlockBulkLoadMapper.Neo4jModel.label})" +
+                    $" on (block.{BlockBulkLoadMapper.Neo4jModelBase.height})");
                 return result.ToListAsync();
             });
 
@@ -261,76 +267,6 @@ namespace BC2G.DAL
                 var result = await x.RunAsync("CALL db.constraints");
                 return result.ToListAsync();
             });*/
-        }
-
-        public async Task AddBlock(Block block)
-        {
-            using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
-            await session.WriteTransactionAsync(async tx =>
-            {
-                var result = await tx.RunAsync(
-                    $"MERGE (x:h{block.Height}:t{block.MedianTime} " +
-                    $"{{difficulty: {block.Difficulty}, " +
-                    $"confirmations: {block.Confirmations}, " +
-                    $"tx_count: {block.TransactionsCount}, " +
-                    $"stripped_size: {block.StrippedSize}, " +
-                    $"size: {block.Size}, " +
-                    $"weight: {block.Weight}}})");
-            });
-        }
-
-        public async Task AddEdge(Block block, Edge edge)
-        {
-            using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
-            await session.WriteTransactionAsync(async tx =>
-            {
-                /*
-                var result = await tx.RunAsync(
-                    $"MERGE (x:{edge.Source.ScriptType}:_{edge.Source.Address}) " +
-                    $"MERGE (y:{edge.Target.ScriptType}:_{edge.Target.Address}) " +
-                    $"CREATE (x)-[:{edge.Type} {{value: {edge.Value}, block: {edge.BlockHeight}}}]->(y)");
-                */
-
-                var result = await tx.RunAsync(
-                    $"MERGE (x:{edge.Source.ScriptType}:_{edge.Source.Address}) " +
-                    $"MERGE (y:{edge.Target.ScriptType}:_{edge.Target.Address}) " +
-                    $"WITH x, y " +
-                    $"MATCH (b:b{block.Height}:t{block.MedianTime}) " +
-                    $"CREATE (x)-[:{edge.Type} {{value: {edge.Value}, block: {edge.BlockHeight}}}]->(y) " +
-                    $"CREATE (x)-[:Redeems]->(b) " +
-                    $"CREATE (b)-[:Creates]->(y)");
-            });
-        }
-
-        public async Task AddNode(ScriptType scriptType, string address)
-        {
-            using (var session = _driver.AsyncSession())
-            {
-                var x = session.WriteTransactionAsync(async tx =>
-                {
-                    var result = await tx.RunAsync(
-                        $"CREATE (n:{scriptType}:_{address}) RETURN id(n)");
-                });
-
-                await x;
-            }
-
-            using(var session = _driver.AsyncSession())
-            {
-                var x = session.WriteTransactionAsync(async tx =>
-                {
-                    var result = await tx.RunAsync(
-                        "MATCH (p:abc) RETURN p");
-
-                    return result.SingleAsync().Result;
-                });
-
-                await x;
-
-                var z = 10;
-            }
-
-            var y = 10;
         }
 
         public async void PrintGreeting(string message)
