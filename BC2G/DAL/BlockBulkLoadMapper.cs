@@ -70,16 +70,21 @@ namespace BC2G.DAL
             builder.Append(
                 $"LOAD CSV WITH HEADERS FROM '{filename}' AS line " +
                 $"FIELDTERMINATOR '{csvDelimiter}' " +
-                $"MERGE (: {Neo4jModel.label} {{");
+                $"MERGE (b: {Neo4jModel.label} {{" +
+                $"{Neo4jModel.height}: line.{Neo4jModel.height}}})" +
+                $"ON CREATE SET ");
 
             string comma = "";
-            foreach (var p in _properties)
-            {
-                builder.Append($"{comma}{p}: line.{p}");
-                comma = ", ";
-            }
+            foreach (var p in _properties) if (p != Neo4jModel.height)
+                {
+                    builder.Append($"{comma}b.{p}=line.{p}");
+                    comma = ", ";
+                }
 
-            builder.Append("})");
+            builder.Append(
+                " ON MATCH SET " +
+                $"b.{Neo4jModel.confirmations}=line.{Neo4jModel.confirmations}");
+
             return builder.ToString();
         }
     }
