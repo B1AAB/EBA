@@ -70,6 +70,20 @@ namespace BC2G.DAL
 
         protected override string ComposeCypherQuery(string filename)
         {
+            /// There are some corner cases where there exist
+            /// more than one transactions sending value between 
+            /// same input and output (and possibly same value). 
+            /// One of the design decisions of BC2G is to sum 
+            /// these transactions and represent them with only one.
+            /// However, in order to leave this design decision 
+            /// make in one place, we use `apoc.create.relationship` 
+            /// in the following where if two transfers between 
+            /// same inputs and outputs in a given block are given 
+            /// in the CSV file, that leads to the creation of two 
+            /// edges. Alternative is using `apoc.merge.relationship`
+            /// where it can ensure the source-target-properties 
+            /// tuple is unique. 
+
             return
                 $"LOAD CSV WITH HEADERS FROM '{filename}' AS line " +
                 $"FIELDTERMINATOR '{csvDelimiter}' " +
@@ -85,16 +99,18 @@ namespace BC2G.DAL
                 $"MATCH (block:{BlockBulkLoadMapper.Neo4jModel.label} {{" +
                 $"{Neo4jModel.height}: line.{CsvColumn.height}" +
                 "}) " +
-                "CREATE (source)-[:Redeems]->(block) " +
-                "CREATE (block)-[:Creates]->(target) " +
+                $"CREATE (source)-[:Redeems {{{Neo4jModel.height}: line.{CsvColumn.height}}}]->(block) " +
+                $"CREATE (block)-[:Creates {{{Neo4jModel.height}: line.{CsvColumn.height}}}]->(target) " +
                 "WITH source, target, line " +
                 "CALL apoc.create.relationship(" +
                 "source, " +
-                $"line.{CsvColumn.edgeType}, {{" +
+                $"line.{CsvColumn.edgeType}, " +
+                $"{{" + 
                 $"{Neo4jModel.value}: line.{CsvColumn.value}, " +
                 $"{Neo4jModel.height}: line.{CsvColumn.height}" +
                 $"}}, " +
-                $"target) YIELD rel RETURN distinct 'done'";
+                $"target)" +
+                $"YIELD rel RETURN distinct 'done'";
         }
     }
 }
