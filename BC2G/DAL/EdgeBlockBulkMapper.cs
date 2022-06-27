@@ -9,25 +9,20 @@ namespace BC2G.DAL
 {
     internal class EdgeBulkLoadMapper : ModelMapper<Edge>
     {
-        public class Neo4jModel : Neo4jModelBase
-        {
-            public const string labels = "Script";
-            public const string scriptType = "ScriptType";
-            public const string scriptAddress = "Address";
-            public const string edgeType = "EdgeType";
-            public const string value = "Value";
-        }
+        public const string labels = "Script";
 
-        public class CsvColumn
+        /// Note that the ordre of the items in this array should 
+        /// match those in the `ToCSV` method.
+        private readonly Prop[] _properties = new Prop[]
         {
-            public const string sourceScriptAddress = "SourceScriptAddress";
-            public const string sourceScriptType = "SourceScriptType";
-            public const string targetScriptAddress = "TargetScriptAddress";
-            public const string targetScriptType = "TargetScriptType";
-            public const string edgeType = "EdgeType";
-            public const string value = "Value";
-            public const string height = "Height";
-        }
+            Prop.EdgeSourceAddress,
+            Prop.EdgeSourceType,
+            Prop.EdgeTargetAddress,
+            Prop.EdgeTargetType,
+            Prop.EdgeType,
+            Prop.EdgeValue,
+            Prop.Height
+        };
 
         public EdgeBulkLoadMapper(
             string cypherImportPrefix,
@@ -38,24 +33,14 @@ namespace BC2G.DAL
 
         public override string GetCsvHeader()
         {
-            /// Note that the ordre of the items in this array should 
-            /// match those in the `ToCSV` method.
-            return string.Join(csvDelimiter, new string[]
-            {
-                CsvColumn.sourceScriptAddress,
-                CsvColumn.sourceScriptType,
-                CsvColumn.targetScriptAddress,
-                CsvColumn.targetScriptType,
-                CsvColumn.edgeType,
-                CsvColumn.value,
-                CsvColumn.height
-            });
+            return string.Join(csvDelimiter,
+                from x in _properties select Props[x].CsvHeader);
         }
 
         public override string ToCsv(Edge edge)
         {
             /// Note that the ordre of the items in this array should 
-            /// match those in the `GetCsvHeader` method. 
+            /// match those in the `_properties`. 
             return string.Join(csvDelimiter, new string[]
             {
                 edge.Source.Address,
@@ -85,29 +70,29 @@ namespace BC2G.DAL
             /// tuple is unique. 
 
             return
-                $"LOAD CSV WITH HEADERS FROM '{filename}' AS line " +
+                $"LOAD CSV WITH HEADERS FROM '{filename}' AS {Property.lineVarName} " +
                 $"FIELDTERMINATOR '{csvDelimiter}' " +
-                $"MERGE (source:{Neo4jModel.labels} {{" +
-                $"{Neo4jModel.scriptType}: line.{CsvColumn.sourceScriptType}, " +
-                $"{Neo4jModel.scriptAddress}: line.{CsvColumn.sourceScriptAddress}" +
+                $"MERGE (source:{labels} {{" +
+                $"{Props[Prop.EdgeSourceType].GetLoadExp(":")}, " +
+                $"{Props[Prop.EdgeSourceAddress].GetLoadExp(":")}" +
                 "}) " +
-                $"MERGE (target:{Neo4jModel.labels} {{" +
-                $"{Neo4jModel.scriptType}: line.{CsvColumn.targetScriptType}, " +
-                $"{Neo4jModel.scriptAddress}: line.{CsvColumn.targetScriptAddress}" +
+                $"MERGE (target:{labels} {{" +
+                $"{Props[Prop.EdgeTargetType].GetLoadExp(":")}, " +
+                $"{Props[Prop.EdgeTargetAddress].GetLoadExp(":")}" +
                 "}) " +
                 "WITH source, target, line " +
-                $"MATCH (block:{BlockBulkLoadMapper.Neo4jModel.label} {{" +
-                $"{Neo4jModel.height}: line.{CsvColumn.height}" +
+                $"MATCH (block:{BlockBulkLoadMapper.label} {{" +
+                $"{Props[Prop.Height].GetLoadExp(":")}" +
                 "}) " +
-                $"CREATE (source)-[:Redeems {{{Neo4jModel.height}: line.{CsvColumn.height}}}]->(block) " +
-                $"CREATE (block)-[:Creates {{{Neo4jModel.height}: line.{CsvColumn.height}}}]->(target) " +
+                $"CREATE (source)-[:Redeems {{{Props[Prop.Height].GetLoadExp(":")}}}]->(block) " +
+                $"CREATE (block)-[:Creates {{{Props[Prop.Height].GetLoadExp(":")}}}]->(target) " +
                 "WITH source, target, line " +
                 "CALL apoc.create.relationship(" +
                 "source, " +
-                $"line.{CsvColumn.edgeType}, " +
-                $"{{" + 
-                $"{Neo4jModel.value}: line.{CsvColumn.value}, " +
-                $"{Neo4jModel.height}: line.{CsvColumn.height}" +
+                $"{Property.lineVarName}.{Props[Prop.EdgeType].CsvHeader}, " +
+                $"{{" +
+                $"{Props[Prop.EdgeValue].GetLoadExp(":")}, " +
+                $"{Props[Prop.Height].GetLoadExp(":")}" +
                 $"}}, " +
                 $"target)" +
                 $"YIELD rel RETURN distinct 'done'";

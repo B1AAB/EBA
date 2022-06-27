@@ -212,7 +212,7 @@ namespace BC2G.DAL
                         {
                             await tx.RunAsync(
                                 $"CREATE (:{BitcoinAgent.coinbase} {{" +
-                                $"{EdgeBulkLoadMapper.Neo4jModel.scriptAddress}: " +
+                                $"{EdgeBulkLoadMapper.Props[Prop.ScriptAddress].Name}: " +
                                 $"\"{BitcoinAgent.coinbase}\"}})");
                         });
                     }
@@ -235,8 +235,8 @@ namespace BC2G.DAL
             {
                 var result = await x.RunAsync(
                     "CREATE CONSTRAINT UniqueAddressContraint " +
-                    $"FOR (script:{EdgeBulkLoadMapper.Neo4jModel.labels}) " +
-                    $"REQUIRE script.{EdgeBulkLoadMapper.Neo4jModel.scriptAddress} IS UNIQUE");
+                    $"FOR (script:{EdgeBulkLoadMapper.labels}) " +
+                    $"REQUIRE script.{EdgeBulkLoadMapper.Props[Prop.ScriptAddress].Name} IS UNIQUE");
 
                 return result.ToListAsync();
             });
@@ -244,16 +244,16 @@ namespace BC2G.DAL
             var indexAddress = await session.WriteTransactionAsync(async x =>
             {
                 var result = await x.RunAsync(
-                    $"CREATE INDEX FOR (script:{EdgeBulkLoadMapper.Neo4jModel.labels}) " +
-                    $"ON (script.{EdgeBulkLoadMapper.Neo4jModel.scriptAddress})");
+                    $"CREATE INDEX FOR (script:{EdgeBulkLoadMapper.labels}) " +
+                    $"ON (script.{EdgeBulkLoadMapper.Props[Prop.ScriptAddress].Name})");
                 return result.ToListAsync();
             });
 
             var indexBlockHeight = await session.WriteTransactionAsync(async x =>
             {
                 var result = await x.RunAsync(
-                    $"CREATE INDEX FOR (block:{BlockBulkLoadMapper.Neo4jModel.label})" +
-                    $" on (block.{BlockBulkLoadMapper.Neo4jModelBase.height})");
+                    $"CREATE INDEX FOR (block:{BlockBulkLoadMapper.label})" +
+                    $" on (block.{BlockBulkLoadMapper.Props[Prop.Height].Name})");
                 return result.ToListAsync();
             });
 

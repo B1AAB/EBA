@@ -10,6 +10,17 @@ namespace BC2G.DAL
 {
     internal class CoinbaseTxBulkLoadMapper : EdgeBulkLoadMapper
     {
+        /// Note that the ordre of the items in this array should 
+        /// match those in the `ToCSV` method.
+        private readonly Prop[] _properties = new Prop[]
+        {
+            Prop.EdgeTargetAddress,
+            Prop.EdgeTargetType,
+            Prop.EdgeType,
+            Prop.EdgeValue,
+            Prop.Height
+        };
+
         public CoinbaseTxBulkLoadMapper(
             string cypherImportPrefix,
             string importDirectory,
@@ -19,26 +30,18 @@ namespace BC2G.DAL
 
         public override string GetCsvHeader()
         {
-            /// Note that the ordre of the items in this array should 
-            /// match those in the `ToCSV` method.
-            return string.Join(csvDelimiter, new string[]
-            {
-                CsvColumn.targetScriptType,
-                CsvColumn.targetScriptAddress,
-                CsvColumn.edgeType,
-                CsvColumn.value,
-                CsvColumn.height
-            });
+            return string.Join(csvDelimiter,
+                from x in _properties select Props[x].CsvHeader);
         }
 
         public override string ToCsv(Edge edge)
         {
             /// Note that the ordre of the items in this array should 
-            /// match those in the `GetCsvHeader` method. 
+            /// match those in the `_properties`. 
             return string.Join(csvDelimiter, new string[]
             {
-                edge.Target.ScriptType.ToString(),
                 edge.Target.Address,
+                edge.Target.ScriptType.ToString(),
                 edge.Type.ToString(),
                 edge.Value.ToString(),
                 edge.BlockHeight.ToString()
@@ -48,21 +51,21 @@ namespace BC2G.DAL
         protected override string ComposeCypherQuery(string filename)
         {
             return
-                $"LOAD CSV WITH HEADERS FROM '{filename}' AS line " +
+                $"LOAD CSV WITH HEADERS FROM '{filename}' AS {Property.lineVarName} " +
                 $"FIELDTERMINATOR '{csvDelimiter}' " +
                 $"MATCH (coinbase:{BitcoinAgent.coinbase}) " +
-                $"MERGE (target:{Neo4jModel.labels} {{" +
-                $"{Neo4jModel.scriptType}: line.{CsvColumn.targetScriptType}, " +
-                $"{Neo4jModel.scriptAddress}: line.{CsvColumn.targetScriptAddress}" +
+                $"MERGE (target:{labels} {{" +
+                $"{Props[Prop.EdgeTargetType].GetLoadExp(":")}, " +
+                $"{Props[Prop.EdgeTargetAddress].GetLoadExp(":")}" +
                 $"}}) " +
-                "WITH coinbase, target, line " +
-                $"MATCH (block:{BlockBulkLoadMapper.Neo4jModel.label} {{" +
-                $"{Neo4jModel.height}: line.{CsvColumn.height}" +
+                $"WITH coinbase, target, {Property.lineVarName} " +
+                $"MATCH (block:{BlockBulkLoadMapper.label} {{" +
+                $"{Props[Prop.Height].GetLoadExp(":")}" +
                 $"}}) " +
                 $"CREATE (coinbase)-[:Generation {{" +
-                $"{Neo4jModel.edgeType}: line.{CsvColumn.edgeType}, " +
-                $"{Neo4jModel.value}: line.{CsvColumn.value}, " +
-                $"{Neo4jModel.height}: line.{CsvColumn.height}" +
+                $"{Props[Prop.EdgeType].GetLoadExp(":")}, " +
+                $"{Props[Prop.EdgeValue].GetLoadExp(":")}, " +
+                $"{Props[Prop.Height].GetLoadExp(":")}" +
                 $"}}]->(target)" +
                 "CREATE (block)-[:Creates]->(target)";
         }

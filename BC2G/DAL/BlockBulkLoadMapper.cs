@@ -9,30 +9,20 @@ namespace BC2G.DAL
 {
     internal class BlockBulkLoadMapper : ModelMapper<Block>
     {
-        public class Neo4jModel : Neo4jModelBase
-        {
-            public const string label = "Block";
-            public const string medianTime = "MedianTime";
-            public const string confirmations = "Confirmations";
-            public const string difficulty = "Difficulty";
-            public const string txCount = "TransactionsCount";
-            public const string size = "Size";
-            public const string strippedSize = "StrippedSize";
-            public const string weight = "Weight";
-        }
+        public const string label = "Block";
 
         /// Note that the ordre of the items in this array should 
         /// match those returned from the `ToCsv()` method.. 
-        private static readonly string[] _properties = new string[]
+        private static readonly Prop[] _properties = new Prop[]
         {
-            Neo4jModel.height,
-            Neo4jModel.medianTime,
-            Neo4jModel.confirmations,
-            Neo4jModel.difficulty,
-            Neo4jModel.txCount,
-            Neo4jModel.size,
-            Neo4jModel.strippedSize,
-            Neo4jModel.weight
+            Prop.Height,
+            Prop.BlockMedianTime,
+            Prop.BlockConfirmations,
+            Prop.BlockDifficulty,
+            Prop.BlockTxCount,
+            Prop.BlockSize,
+            Prop.BlockStrippedSize,
+            Prop.BlockWeight
         };
 
         public BlockBulkLoadMapper(
@@ -44,7 +34,9 @@ namespace BC2G.DAL
 
         public override string GetCsvHeader()
         {
-            return string.Join(csvDelimiter, _properties);
+            return string.Join(
+                csvDelimiter,
+                from x in _properties select Props[x].CsvHeader);
         }
 
         public override string ToCsv(Block block)
@@ -68,22 +60,22 @@ namespace BC2G.DAL
         {
             var builder = new StringBuilder();
             builder.Append(
-                $"LOAD CSV WITH HEADERS FROM '{filename}' AS line " +
+                $"LOAD CSV WITH HEADERS FROM '{filename}' AS {Property.lineVarName} " +
                 $"FIELDTERMINATOR '{csvDelimiter}' " +
-                $"MERGE (b: {Neo4jModel.label} {{" +
-                $"{Neo4jModel.height}: line.{Neo4jModel.height}}})" +
+                $"MERGE (b: {label} {{" +
+                $"{Props[Prop.Height].GetLoadExp(":")}}})" +
                 $"ON CREATE SET ");
 
             string comma = "";
-            foreach (var p in _properties) if (p != Neo4jModel.height)
+            foreach (var p in _properties) if (p != Prop.Height)
                 {
-                    builder.Append($"{comma}b.{p}=line.{p}");
+                    builder.Append($"{comma}b.{Props[p].GetLoadExp()}");
                     comma = ", ";
                 }
 
             builder.Append(
                 " ON MATCH SET " +
-                $"b.{Neo4jModel.confirmations}=line.{Neo4jModel.confirmations}");
+                $"b.{Props[Prop.BlockConfirmations].GetLoadExp()}");
 
             return builder.ToString();
         }
