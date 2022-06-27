@@ -21,9 +21,9 @@ namespace BC2G.DAL
         private const int _maxEdgesInCSV = 2;//50000;
         private int _edgesInCsvCount;
 
-        private readonly BlockBulkLoadMapper _blockMapper;
-        private readonly EdgeBulkLoadMapper _edgeMapper;
-        private readonly CoinbaseTxBulkLoadMapper _coinbaseMapper;
+        private readonly BlockMapper _blockMapper;
+        private readonly ScriptMapper _edgeMapper;
+        private readonly CoinbaseMapper _coinbaseMapper;
 
 
         ~GraphDB() => Dispose(false);
@@ -43,9 +43,9 @@ namespace BC2G.DAL
             // stacktrace. Check if there is a better way of throwing an error with a message
             // that indicates not able to connect to the Neo4j database.
 
-            _blockMapper = new BlockBulkLoadMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
-            _edgeMapper = new EdgeBulkLoadMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
-            _coinbaseMapper = new CoinbaseTxBulkLoadMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
+            _blockMapper = new BlockMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
+            _edgeMapper = new ScriptMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
+            _coinbaseMapper = new CoinbaseMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
 
             EnsureCoinbaseNode().Wait();
             EnsureConstraints().Wait();
@@ -212,7 +212,7 @@ namespace BC2G.DAL
                         {
                             await tx.RunAsync(
                                 $"CREATE (:{BitcoinAgent.coinbase} {{" +
-                                $"{EdgeBulkLoadMapper.Props[Prop.ScriptAddress].Name}: " +
+                                $"{ScriptMapper.Props[Prop.ScriptAddress].Name}: " +
                                 $"\"{BitcoinAgent.coinbase}\"}})");
                         });
                     }
@@ -235,8 +235,8 @@ namespace BC2G.DAL
             {
                 var result = await x.RunAsync(
                     "CREATE CONSTRAINT UniqueAddressContraint " +
-                    $"FOR (script:{EdgeBulkLoadMapper.labels}) " +
-                    $"REQUIRE script.{EdgeBulkLoadMapper.Props[Prop.ScriptAddress].Name} IS UNIQUE");
+                    $"FOR (script:{ScriptMapper.labels}) " +
+                    $"REQUIRE script.{ScriptMapper.Props[Prop.ScriptAddress].Name} IS UNIQUE");
 
                 return result.ToListAsync();
             });
@@ -244,16 +244,16 @@ namespace BC2G.DAL
             var indexAddress = await session.WriteTransactionAsync(async x =>
             {
                 var result = await x.RunAsync(
-                    $"CREATE INDEX FOR (script:{EdgeBulkLoadMapper.labels}) " +
-                    $"ON (script.{EdgeBulkLoadMapper.Props[Prop.ScriptAddress].Name})");
+                    $"CREATE INDEX FOR (script:{ScriptMapper.labels}) " +
+                    $"ON (script.{ScriptMapper.Props[Prop.ScriptAddress].Name})");
                 return result.ToListAsync();
             });
 
             var indexBlockHeight = await session.WriteTransactionAsync(async x =>
             {
                 var result = await x.RunAsync(
-                    $"CREATE INDEX FOR (block:{BlockBulkLoadMapper.label})" +
-                    $" on (block.{BlockBulkLoadMapper.Props[Prop.Height].Name})");
+                    $"CREATE INDEX FOR (block:{BlockMapper.label})" +
+                    $" on (block.{BlockMapper.Props[Prop.Height].Name})");
                 return result.ToListAsync();
             });
 

@@ -11,7 +11,6 @@ namespace BC2G.DAL
     {
         public const string csvDelimiter = "\t";
         public const string labelsDelimiter = ":";
-        public const string lineVarName = "line";
 
         private const string _addressProperty = "Address";
         private const string _scriptTypeProperty = "ScriptType";

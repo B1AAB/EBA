@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace BC2G.DAL
 {
-    internal class CoinbaseTxBulkLoadMapper : EdgeBulkLoadMapper
+    internal class CoinbaseMapper : ScriptMapper
     {
         /// Note that the ordre of the items in this array should 
         /// match those in the `ToCSV` method.
@@ -21,7 +21,7 @@ namespace BC2G.DAL
             Prop.Height
         };
 
-        public CoinbaseTxBulkLoadMapper(
+        public CoinbaseMapper(
             string cypherImportPrefix,
             string importDirectory,
             string filename = "tmpBulkImportCoinbase.csv") :
@@ -59,7 +59,7 @@ namespace BC2G.DAL
                 $"{Props[Prop.EdgeTargetAddress].GetLoadExp(":")}" +
                 $"}}) " +
                 $"WITH coinbase, target, {Property.lineVarName} " +
-                $"MATCH (block:{BlockBulkLoadMapper.label} {{" +
+                $"MATCH (block:{BlockMapper.label} {{" +
                 $"{Props[Prop.Height].GetLoadExp(":")}" +
                 $"}}) " +
                 $"CREATE (coinbase)-[:Generation {{" +

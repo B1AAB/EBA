@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace BC2G.DAL
 {
-    internal class EdgeBulkLoadMapper : ModelMapper<Edge>
+    internal class ScriptMapper : ModelMapper<Edge>
     {
         public const string labels = "Script";
 
@@ -24,7 +24,7 @@ namespace BC2G.DAL
             Prop.Height
         };
 
-        public EdgeBulkLoadMapper(
+        public ScriptMapper(
             string cypherImportPrefix,
             string importDirectory,
             string filename = "tmpBulkImportEdges.csv") :
@@ -81,7 +81,7 @@ namespace BC2G.DAL
                 $"{Props[Prop.EdgeTargetAddress].GetLoadExp(":")}" +
                 "}) " +
                 "WITH source, target, line " +
-                $"MATCH (block:{BlockBulkLoadMapper.label} {{" +
+                $"MATCH (block:{BlockMapper.label} {{" +
                 $"{Props[Prop.Height].GetLoadExp(":")}" +
                 "}) " +
                 $"CREATE (source)-[:Redeems {{{Props[Prop.Height].GetLoadExp(":")}}}]->(block) " +

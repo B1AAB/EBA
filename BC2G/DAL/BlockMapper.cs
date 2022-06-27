@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace BC2G.DAL
 {
-    internal class BlockBulkLoadMapper : ModelMapper<Block>
+    internal class BlockMapper : ModelMapper<Block>
     {
         public const string label = "Block";
 
@@ -25,7 +25,7 @@ namespace BC2G.DAL
             Prop.BlockWeight
         };
 
-        public BlockBulkLoadMapper(
+        public BlockMapper(
             string importPrefix,
             string importDirectory,
             string filename = "tmpBulkImportBlocks.csv") :
