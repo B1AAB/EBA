@@ -18,12 +18,21 @@ namespace BC2G.DAL
         /// 
         /// Ref: https://neo4j.com/blog/bulk-data-import-neo4j-3-0/
         /// </summary>
-        private const int _maxEdgesInCSV = 2;//50000;
+        private const int _maxEdgesInCSV = 50000;
         private int _edgesInCsvCount;
 
         private readonly BlockMapper _blockMapper;
-        private readonly ScriptMapper _edgeMapper;
+        private readonly ScriptMapper _scriptMapper;
         private readonly CoinbaseMapper _coinbaseMapper;
+
+
+        // There is not enough memory to perform the current task.
+        // Please try increasing 'dbms.memory.heap.max_size' in
+        // the neo4j configuration (normally in 'conf/neo4j.conf'
+        // or, if you are using Neo4j Desktop, found through the
+        // user interface) or if you are running an embedded
+        // installation increase the heap by using '-Xmx'
+        // command line flag, and then restart the database.
 
 
         ~GraphDB() => Dispose(false);
@@ -44,7 +53,7 @@ namespace BC2G.DAL
             // that indicates not able to connect to the Neo4j database.
 
             _blockMapper = new BlockMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
-            _edgeMapper = new ScriptMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
+            _scriptMapper = new ScriptMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
             _coinbaseMapper = new CoinbaseMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
 
             EnsureCoinbaseNode().Wait();
@@ -82,8 +91,8 @@ namespace BC2G.DAL
                 using var bWriter = new StreamWriter(_blockMapper.Filename);
                 bWriter.WriteLine(_blockMapper.GetCsvHeader());
 
-                using var eWriter = new StreamWriter(_edgeMapper.Filename);
-                eWriter.WriteLine(_edgeMapper.GetCsvHeader());
+                using var eWriter = new StreamWriter(_scriptMapper.Filename);
+                eWriter.WriteLine(_scriptMapper.GetCsvHeader());
 
                 using var cWriter = new StreamWriter(_coinbaseMapper.Filename);
                 cWriter.WriteLine(_coinbaseMapper.GetCsvHeader());
@@ -92,13 +101,13 @@ namespace BC2G.DAL
             using var blocksWriter = new StreamWriter(_blockMapper.Filename, append: true);
             blocksWriter.WriteLine(_blockMapper.ToCsv(graph.Block));
 
-            using var edgesWriter = new StreamWriter(_edgeMapper.Filename, append: true);
+            using var edgesWriter = new StreamWriter(_scriptMapper.Filename, append: true);
             using var coinbaseWrite = new StreamWriter(_coinbaseMapper.Filename, append: true);
             foreach (var edge in edges)
-                if (edge.Source.Address != Coinbase)
+                if (edge.Source.Address == Coinbase)
                     coinbaseWrite.WriteLine(_coinbaseMapper.ToCsv(edge));
                 else
-                    edgesWriter.WriteLine(_edgeMapper.ToCsv(edge));
+                    edgesWriter.WriteLine(_scriptMapper.ToCsv(edge));
 
             _edgesInCsvCount += edges.Count;
         }
@@ -106,7 +115,7 @@ namespace BC2G.DAL
         private void BulkImportStagedAndReset()
         {
             BulkImport();
-            File.Delete(_edgeMapper.Filename);
+            File.Delete(_scriptMapper.Filename);
             File.Delete(_blockMapper.Filename);
             File.Delete(_coinbaseMapper.Filename);
             _edgesInCsvCount = 0;
@@ -130,10 +139,10 @@ namespace BC2G.DAL
 
             var edgeBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
-                var result = await x.RunAsync(_edgeMapper.CypherQuery);
-                return result.ToListAsync();
+                var result = await x.RunAsync(_scriptMapper.CypherQuery);
+                return result.SingleAsync().Result[0].As<string>();
             });
-            edgeBulkLoadResult.Result.Wait();
+            edgeBulkLoadResult.Wait();
 
             var coinbaseEdgeBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
@@ -306,3 +315,4 @@ namespace BC2G.DAL
         }
     }
 }
+

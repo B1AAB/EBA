@@ -55,9 +55,8 @@ namespace BC2G.DAL
                 $"FIELDTERMINATOR '{csvDelimiter}' " +
                 $"MATCH (coinbase:{BitcoinAgent.coinbase}) " +
                 $"MERGE (target:{labels} {{" +
-                $"{Props[Prop.EdgeTargetType].GetLoadExp(":")}, " +
-                $"{Props[Prop.EdgeTargetAddress].GetLoadExp(":")}" +
-                $"}}) " +
+                $"{Props[Prop.EdgeTargetAddress].GetLoadExp(":")}}}) " +
+                $"SET target.{Props[Prop.EdgeTargetType].GetLoadExp("=")} " +
                 $"WITH coinbase, target, {Property.lineVarName} " +
                 $"MATCH (block:{BlockMapper.label} {{" +
                 $"{Props[Prop.Height].GetLoadExp(":")}" +
