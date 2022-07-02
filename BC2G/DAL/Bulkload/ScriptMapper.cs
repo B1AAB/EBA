@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BC2G.DAL
+namespace BC2G.DAL.Bulkload
 {
     internal class ScriptMapper : ModelMapper<Edge>
     {

@@ -1,4 +1,5 @@
 ﻿using BC2G.Blockchains;
+using BC2G.DAL.Bulkload;
 using BC2G.Graph;
 using BC2G.Model;
 using Neo4j.Driver;
