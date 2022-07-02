@@ -25,16 +25,6 @@ namespace BC2G.DAL
         private readonly ScriptMapper _scriptMapper;
         private readonly CoinbaseMapper _coinbaseMapper;
 
-
-        // There is not enough memory to perform the current task.
-        // Please try increasing 'dbms.memory.heap.max_size' in
-        // the neo4j configuration (normally in 'conf/neo4j.conf'
-        // or, if you are using Neo4j Desktop, found through the
-        // user interface) or if you are running an embedded
-        // installation increase the heap by using '-Xmx'
-        // command line flag, and then restart the database.
-
-
         ~GraphDB() => Dispose(false);
 
         public GraphDB(
