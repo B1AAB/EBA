@@ -38,6 +38,17 @@ namespace BC2G.Graph
         private readonly uint[] _edgeTypeFrequency =
             new uint[Enum.GetNames(typeof(EdgeType)).Length];
 
+        public Dictionary<EdgeType, double> EdgeTypeTxSum
+        {
+            get
+            {
+                return
+                    _edgeTypeTxSum
+                    .Select((v, i) => new { Key = (EdgeType)i, Value = v })
+                    .ToDictionary(x => x.Key, x => x.Value);
+            }
+        }
+
         private readonly double[] _edgeTypeTxSum = 
             new double[Enum.GetNames(typeof(EdgeType)).Length];
 

@@ -90,7 +90,7 @@ namespace BC2G.DAL
             }
 
             using var blocksWriter = new StreamWriter(_blockMapper.Filename, append: true);
-            blocksWriter.WriteLine(_blockMapper.ToCsv(graph.Block));
+            blocksWriter.WriteLine(_blockMapper.ToCsv(graph));
 
             using var edgesWriter = new StreamWriter(_scriptMapper.Filename, append: true);
             using var coinbaseWrite = new StreamWriter(_coinbaseMapper.Filename, append: true);

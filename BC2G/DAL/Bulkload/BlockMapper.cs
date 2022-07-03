@@ -1,4 +1,5 @@
-﻿using BC2G.Model;
+﻿using BC2G.Graph;
+using BC2G.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace BC2G.DAL.Bulkload
 {
-    internal class BlockMapper : ModelMapper<Block>
+    internal class BlockMapper : ModelMapper<BlockGraph>
     {
         public const string label = "Block";
 
@@ -22,7 +23,15 @@ namespace BC2G.DAL.Bulkload
             Prop.BlockTxCount,
             Prop.BlockSize,
             Prop.BlockStrippedSize,
-            Prop.BlockWeight
+            Prop.BlockWeight,
+            Prop.NumGenerationEdges,
+            Prop.NumTransferEdges,
+            Prop.NumChangeEdges,
+            Prop.NumFeeEdges,
+            Prop.SumGenerationEdges,
+            Prop.SumTransferEdges,
+            Prop.SumChangeEdges,
+            Prop.SumFeeEdges
         };
 
         public BlockMapper(
@@ -39,20 +48,31 @@ namespace BC2G.DAL.Bulkload
                 from x in _properties select Props[x].CsvHeader);
         }
 
-        public override string ToCsv(Block block)
+        public override string ToCsv(BlockGraph bgraph)
         {
+            var counts = bgraph.Stats.EdgeTypeFrequency;
+            var sums = bgraph.Stats.EdgeTypeTxSum;
+
             /// Note that the ordre of the items in this array should 
             /// match those in the `_properties`. 
             return string.Join(csvDelimiter, new string[]
             {
-                block.Height.ToString(),
-                block.MedianTime.ToString(),
-                block.Confirmations.ToString(),
-                block.Difficulty.ToString(),
-                block.TransactionsCount.ToString(),
-                block.Size.ToString(),
-                block.StrippedSize.ToString(),
-                block.Weight.ToString()
+                bgraph.Block.Height.ToString(),
+                bgraph.Block.MedianTime.ToString(),
+                bgraph.Block.Confirmations.ToString(),
+                bgraph.Block.Difficulty.ToString(),
+                bgraph.Block.TransactionsCount.ToString(),
+                bgraph.Block.Size.ToString(),
+                bgraph.Block.StrippedSize.ToString(),
+                bgraph.Block.Weight.ToString(),
+                counts[EdgeType.Generation].ToString(),
+                counts[EdgeType.Transfer].ToString(),
+                counts[EdgeType.Change].ToString(),
+                counts[EdgeType.Fee].ToString(),
+                sums[EdgeType.Generation].ToString(),
+                sums[EdgeType.Transfer].ToString(),
+                sums[EdgeType.Change].ToString(),
+                sums[EdgeType.Fee].ToString()
             });
         }
 
