@@ -83,11 +83,8 @@ namespace BC2G.Graph
             // is registered as a transfer from coinbase to 
             // miner. But here we process it as a transfer 
             // from sender to miner. 
-            Parallel.ForEach(_txGraphsQueue.Where(x => !x.Sources.IsEmpty),
-
-                /* TEMP */
-                //new ParallelOptions { MaxDegreeOfParallelism = 1 },
-
+            Parallel.ForEach(
+                _txGraphsQueue.Where(x => !x.Sources.IsEmpty),
                 (txGraph, state) =>
                 {
                     if (ct.IsCancellationRequested)
@@ -143,24 +140,30 @@ namespace BC2G.Graph
 
                 var d = txGraph.TotalInputValue - fee;
                 foreach (var t in txGraph.Targets)
-                {   
+                {
+                    // It means the transaction is a "change" transfer 
+                    // (i.e., return the remainder of a transfer to target
+                    // to self), we avoid these transactions to simplify 
+                    // graph representation. 
+                    if (s.Key == t.Key)
+                        continue;
+
                     var v = 0.0;
                     if (d != 0)
                         v = Utilities.Round(t.Value * Utilities.Round(s.Value / d));
 
                     AddEdge(new Edge(
                         s.Key, t.Key, v,
-                        s.Key == t.Key ? EdgeType.Change : EdgeType.Transfer,
+                        EdgeType.Transfer,
                         Timestamp,
                         Height));
                 }
 
+                var x = fee * Utilities.Round(s.Value / sumInputWithoutFee == 0 ? 1 : sumInputWithoutFee);
                 if (fee > 0)
                     foreach (var m in coinbaseTxG.Targets)
                         AddEdge(new Edge(s.Key, m.Key,
-                            Utilities.Round(fee *
-                                            Utilities.Round(s.Value / sumInputWithoutFee) *
-                                            Utilities.Round(m.Value / totalPaidToMiner)),
+                            Utilities.Round(x * Utilities.Round(m.Value / totalPaidToMiner)),
                             EdgeType.Fee, Timestamp, Height));
             }
         }
@@ -179,6 +182,11 @@ namespace BC2G.Graph
                     edge.Type,
                     edge.Timestamp,
                     edge.BlockHeight));
+
+            if(double.IsNaN(edge.Value))
+            {
+
+            }
 
             _nodes.TryAdd(edge.Source, 0);
             _nodes.TryAdd(edge.Target, 0);

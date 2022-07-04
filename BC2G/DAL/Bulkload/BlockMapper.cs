@@ -67,11 +67,9 @@ namespace BC2G.DAL.Bulkload
                 bgraph.Block.Weight.ToString(),
                 counts[EdgeType.Generation].ToString(),
                 counts[EdgeType.Transfer].ToString(),
-                counts[EdgeType.Change].ToString(),
                 counts[EdgeType.Fee].ToString(),
                 sums[EdgeType.Generation].ToString(),
                 sums[EdgeType.Transfer].ToString(),
-                sums[EdgeType.Change].ToString(),
                 sums[EdgeType.Fee].ToString()
             });
         }

@@ -4,7 +4,6 @@
     {
         Generation = 0,
         Transfer = 1,
-        Change = 2,
-        Fee = 3
+        Fee = 2
     }
 }
