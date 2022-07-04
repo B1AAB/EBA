@@ -120,18 +120,19 @@ namespace BC2G.Graph
             var fee = txGraph.Fee;
             if (fee > 0.0)
             {
+                // You cannot modify a collection that you're iterating over;
+                // therefore, you need to iterate over a copy of the keys of 
+                // the dictionary. There are different ways of implementing it, 
+                // but probably the following requires least accesses to the
+                // collection. 
                 foreach (var s in txGraph.Sources)
                     txGraph.Sources.AddOrUpdate(
-                        s.Key, txGraph.Sources[s.Key],
+                        s.Key, s.Value,
                         (_, oldValue) => Utilities.Round(
                             oldValue - Utilities.Round(
                                 oldValue * Utilities.Round(
                                     fee / txGraph.TotalInputValue))));
             }
-
-            /// The AddOrUpdate method is only expected to update, 
-            /// adding a new key is not expected to happen.
-            /// 
 
             var sumInputWithoutFee = txGraph.TotalInputValue - fee;
 

@@ -41,7 +41,7 @@ namespace BC2G
 
         public static double Round(double input)
         {
-            // Regarding the motivation behind this, read the following:
+            // Read the following post on the motivation behind this rounding.
             // https://stackoverflow.com/q/588004/947889
             return Math.Round(input, digits: FractionalDigitsCount);
         }
