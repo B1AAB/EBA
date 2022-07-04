@@ -10,6 +10,7 @@ namespace BC2G.Graph
 
         public double TotalInputValue { set; get; }
         public double TotalOutputValue { set; get; }
+        public double Fee { set; get; }
 
         public ConcurrentDictionary<Node, double> Sources { set; get; } = new();
         public ConcurrentDictionary<Node, double> Targets { set; get; } = new();

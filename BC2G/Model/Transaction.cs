@@ -25,6 +25,9 @@ namespace BC2G.Model
         [JsonPropertyName("locktime")]
         public long LockTime { set; get; }
 
+        [JsonPropertyName("fee")]
+        public double Fee { set; get; }
+
         [JsonPropertyName("vin")]
         public List<Input> Inputs { set; get; } = new List<Input>();
 

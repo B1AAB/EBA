@@ -9,7 +9,7 @@ namespace BC2G.Graph
         protected readonly ConcurrentDictionary<Node, double> _sources = new();
         protected readonly ConcurrentDictionary<Node, double> _targets = new();
 
-        public List<Node> RewardsAddresses = new();
+        public List<Node> RewardsAddresses { set; get; } = new();
 
         public GraphBase()
         { }

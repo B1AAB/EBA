@@ -11,6 +11,12 @@ namespace BC2G.Graph
         public Block Block { get; }
         public BlockStatistics Stats { set; get; }
 
+        /// <summary>
+        /// Is the sum of all the tranactions fee.
+        /// </summary>
+        public double TotalFee { get { return _totalFee; } }
+        private double _totalFee;
+
         public ReadOnlyCollection<Edge> Edges
         {
             get
@@ -61,78 +67,100 @@ namespace BC2G.Graph
 
         public void Enqueue(TransactionGraph g)
         {
+            Utilities.ThreadsafeAdd(ref _totalFee, g.Fee);
             _txGraphsQueue.Enqueue(g);
         }
 
         public void MergeQueuedTxGraphs(CancellationToken ct)
         {
-            Parallel.ForEach(_txGraphsQueue,
+            var coinbaseTxG = _txGraphsQueue.First(x => x.Sources.IsEmpty);
+            double totalPaidToMiner = coinbaseTxG.Targets.Sum(x => x.Value);
+            double blockReward = totalPaidToMiner - TotalFee;
+
+            // First process all non-coinbase transactions;
+            // this helps determine all the fee paied to the
+            // miner in the block. In the Bitcoin chain, fee
+            // is registered as a transfer from coinbase to 
+            // miner. But here we process it as a transfer 
+            // from sender to miner. 
+            Parallel.ForEach(_txGraphsQueue.Where(x => !x.Sources.IsEmpty),
+
+                /* TEMP */
+                //new ParallelOptions { MaxDegreeOfParallelism = 1 },
+
                 (txGraph, state) =>
                 {
                     if (ct.IsCancellationRequested)
                     { state.Stop(); return; }
 
-                    Merge(txGraph, ct);
+                    Merge(txGraph, coinbaseTxG, totalPaidToMiner, ct);
 
                     if (ct.IsCancellationRequested)
                     { state.Stop(); return; }
                 });
+
+            foreach (var item in coinbaseTxG.Targets)
+            {
+                AddEdge(new Edge(
+                    new Node(),
+                    item.Key,
+                    Utilities.Round((item.Value * blockReward) / totalPaidToMiner),
+                    EdgeType.Generation,
+                    Timestamp,
+                    Height));
+            }
         }
 
-        private void Merge(TransactionGraph txGraph, CancellationToken ct)
+        private void Merge(
+            TransactionGraph txGraph, 
+            TransactionGraph coinbaseTxG, 
+            double totalPaidToMiner, 
+            CancellationToken ct)
         {
-            if (txGraph.Sources.IsEmpty)
+            var fee = txGraph.Fee;
+            if (fee > 0.0)
             {
-                // build generative graph
-                foreach (var item in txGraph.Targets)
+                foreach (var s in txGraph.Sources)
+                    txGraph.Sources.AddOrUpdate(
+                        s.Key, txGraph.Sources[s.Key],
+                        (_, oldValue) => Utilities.Round(
+                            oldValue - Utilities.Round(
+                                oldValue * Utilities.Round(
+                                    fee / txGraph.TotalInputValue))));
+            }
+
+            /// The AddOrUpdate method is only expected to update, 
+            /// adding a new key is not expected to happen.
+            /// 
+
+            var sumInputWithoutFee = txGraph.TotalInputValue - fee;
+
+            foreach (var s in txGraph.Sources)
+            {
+                if (ct.IsCancellationRequested)
+                    return;
+
+                var d = txGraph.TotalInputValue - fee;
+                foreach (var t in txGraph.Targets)
+                {   
+                    var v = 0.0;
+                    if (d != 0)
+                        v = Utilities.Round(t.Value * Utilities.Round(s.Value / d));
+
                     AddEdge(new Edge(
-                        new Node(),
-                        item.Key,
-                        item.Value,
-                        EdgeType.Generation,
+                        s.Key, t.Key, v,
+                        s.Key == t.Key ? EdgeType.Change : EdgeType.Transfer,
                         Timestamp,
                         Height));
-            }
-            else
-            {
-                double fee = Utilities.Round(txGraph.TotalInputValue - txGraph.TotalOutputValue);
-                if (fee > 0.0)
-                    foreach (var s in txGraph.Sources)
-                        txGraph.Sources.AddOrUpdate(
-                            s.Key, txGraph.Sources[s.Key],
-                            (_, oldValue) => Utilities.Round(
-                                oldValue - Utilities.Round(
-                                    oldValue * Utilities.Round(
-                                        fee / txGraph.TotalInputValue))));
-                /// The AddOrUpdate method is only expected to update, 
-                /// adding a new key is not expected to happen.
-
-                foreach (var s in txGraph.Sources)
-                {
-                    if (ct.IsCancellationRequested)
-                        return;
-
-                    foreach (var t in txGraph.Targets)
-                    {
-                        var d = txGraph.TotalInputValue - fee;
-                        var v = 0.0;
-                        if (d != 0)
-                            v = Utilities.Round(t.Value * Utilities.Round(s.Value / d));
-
-                        AddEdge(new Edge(
-                            s.Key, t.Key, v,
-                            s.Key == t.Key ? EdgeType.Change : EdgeType.Transfer,
-                            Timestamp,
-                            Height));
-                    }
-
-                    foreach (var m in RewardsAddresses)
-                    {
-                        var feeShare = Utilities.Round(fee / RewardsAddresses.Count);
-                        if (feeShare > 0.0)
-                            AddEdge(new Edge(s.Key, m, feeShare, EdgeType.Fee, Timestamp, Height));
-                    }
                 }
+
+                if (fee > 0)
+                    foreach (var m in coinbaseTxG.Targets)
+                        AddEdge(new Edge(s.Key, m.Key,
+                            Utilities.Round(fee *
+                                            Utilities.Round(s.Value / sumInputWithoutFee) *
+                                            Utilities.Round(m.Value / totalPaidToMiner)),
+                            EdgeType.Fee, Timestamp, Height));
             }
         }
 

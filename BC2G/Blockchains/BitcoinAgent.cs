@@ -141,6 +141,7 @@ namespace BC2G.Blockchains
             // reward of the miner. Hence, this should never raise an 
             // exception if the block is not corrupt.
             var coinbaseTx = block.Transactions.First(x => x.IsCoinbase);
+
             var rewardAddresses = new List<Node>();
             foreach (var output in coinbaseTx.Outputs.Where(x => x.IsValueTransfer))
             {
@@ -176,7 +177,11 @@ namespace BC2G.Blockchains
 
         private async Task ProcessTx(BlockGraph g, Transaction tx)
         {
-            var txGraph = new TransactionGraph();
+            var txGraph = new TransactionGraph
+            {
+                Fee = tx.Fee
+            };
+
             _cT.ThrowIfCancellationRequested();
 
             foreach (var input in tx.Inputs)
