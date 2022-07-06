@@ -121,12 +121,26 @@ namespace BC2G.DAL
         {
             using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
 
+            // TODO: in all the awaits in the following, capture deadlock error and retry the statement
+            // if the error is occured. See the following:
+            // 
+            // One or more errors occurred. (One or more errors occurred.
+            // (ForsetiClient[transactionId=238, clientId=1] can't acquire
+            // ExclusiveLock{owner=ForsetiClient[transactionId=236, clientId=2]}
+            // on NODE(264194), because holders of that lock are waiting
+            // for ForsetiClient[transactionId=238, clientId=1].
+            // Wait list:ExclusiveLock[
+            // Client[236] waits for [ForsetiClient[transactionId = 238, clientId = 1]]]))
+            // 
+            // The type of inner exception is: 
+            // "Neo.TransientError.Transaction.DeadlockDetected"
+
             var blockBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
                 var result = await x.RunAsync(_blockMapper.CypherQuery);
-                return result.ToListAsync();
+                return await result.ToListAsync();
             });
-            blockBulkLoadResult.Result.Wait();
+            blockBulkLoadResult.Wait();
 
             var edgeBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
@@ -138,9 +152,13 @@ namespace BC2G.DAL
             var coinbaseEdgeBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
                 var result = await x.RunAsync(_coinbaseMapper.CypherQuery);
-                return result.ToListAsync();
+                return await result.ToListAsync();
             });
-            coinbaseEdgeBulkLoadResult.Result.Wait();
+            coinbaseEdgeBulkLoadResult.Wait();
+
+            // File deleted before the above query is finished?!!! 
+            // One or more errors occurred. (Couldn't load the external resource at:
+            // file://dbmss/dbms-ff193aad-d42a-4cf2-97b5-e7fe6b52b161/import/tmpBulkImportCoinbase.csv)
         }
 
         public async Task TEST_LoadCSV()
@@ -227,6 +245,13 @@ namespace BC2G.DAL
         {
             using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
 
+            // TODO: do not create contraints if they already exist,
+            // otherwise you'll get the following error: 
+            //
+            // One or more errors occurred. (An equivalent constraint
+            // already exists, 'Constraint( id=4,
+            // name='UniqueAddressContraint', type='UNIQUENESS',
+            // schema=(:Script {Address}), ownedIndex=3 )'.)
 
             // TODO: handle the exceptions raised in running the following.
             // Note that the exceptions are stored in the Exceptions property
