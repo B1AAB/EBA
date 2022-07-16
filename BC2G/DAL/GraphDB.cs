@@ -72,6 +72,17 @@ namespace BC2G.DAL
 
         public void BulkImport(BlockGraph graph, CancellationToken cT)
         {
+            // TODO: Neo4j deadlock can happen in the following calls too. 
+            // The error message:
+            // 
+            // One or more errors occurred. (One or more errors occurred.
+            // (ForsetiClient[transactionId=465, clientId=3] can't acquire
+            // ExclusiveLock{owner=ForsetiClient[transactionId=463, clientId=1]}
+            // on NODE(272254), because holders of that lock are waiting for
+            // ForsetiClient[transactionId=465, clientId=3].
+            // Wait list:ExclusiveLock[
+            // Client[463] waits for [ForsetiClient[transactionId = 465, clientId = 3]]]))
+
             var edges = graph.Edges;
 
             if (_edgesInCsvCount != 0 && _edgesInCsvCount + edges.Count >= _maxEdgesInCSV)

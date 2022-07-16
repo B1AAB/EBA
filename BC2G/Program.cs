@@ -4,6 +4,13 @@ using System.Runtime.InteropServices;
 
 namespace BC2G
 {
+    /*
+     * TODO: 
+     * Should not need/check a running bitcoin client if it is not running traversal task.
+     */
+
+
+
     internal class Program
     {
         /* TODO: how this can be made cross-platform?!

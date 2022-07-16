@@ -21,7 +21,7 @@ namespace BC2G.Blockchains
 
         private readonly Logger _logger;
 
-        private readonly TxCache _txCache;
+        //private readonly TxCache _txCache;
 
         private readonly CancellationToken _cT;
 
@@ -36,7 +36,7 @@ namespace BC2G.Blockchains
             // the use of Tx cache is disabled since it is not clear 
             // how much improvement it offers to the additional complexity.
             // TODO: needs more experimenting.
-            _txCache = txCache;
+            //_txCache = txCache;
             _logger = logger;
             _cT = ct;
         }

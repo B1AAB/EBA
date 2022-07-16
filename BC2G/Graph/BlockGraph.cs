@@ -2,6 +2,16 @@
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 
+
+// TODO: 
+// instead of creating one a new node instance for the Coinbase node, 
+// create one node instance and re-use it.
+// 
+//
+// TODO:
+// remove the RewardAddress from the BaseGraph.
+
+
 namespace BC2G.Graph
 {
     public class BlockGraph : GraphBase, IEquatable<BlockGraph>
