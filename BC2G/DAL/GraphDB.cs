@@ -59,6 +59,9 @@ namespace BC2G.DAL
             string y = nameof(x.Id);
 
             var v = x.GetType().GetProperty("Id").GetValue(x);*/
+
+            // TEMP
+            Sampling(3);
         }
 
         /* TODO:
@@ -303,6 +306,30 @@ namespace BC2G.DAL
                 var result = await x.RunAsync("CALL db.constraints");
                 return result.ToListAsync();
             });*/
+        }
+
+        private async Task Sampling(int hops)
+        {
+            using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
+
+            var blockBulkLoadResult = session.WriteTransactionAsync(async x =>
+            {
+                var result = await x.RunAsync(
+                    "MATCH path = (p: Person { label: \"A\"}) -[:Knows * 1..3]->(p2: Person) " +
+                    "WITH[n in nodes(path) where n <> p | n] as nodes, relationships(path) as relationships " +
+                    "WITH size(nodes) as cnt, collect(nodes[-1]) as nodes, collect(distinct relationships[-1]) as relationships " +
+                    "RETURN nodes, relationships");
+
+                /*
+                    "match (n:Script {address:\"A\"}) " +
+                    "call apoc.neighbors.byhop(n, \"Sends\", 3) " +
+                    "yield nodes " +
+                    "return nodes");*/
+                return await result.ToListAsync();
+            });
+            blockBulkLoadResult.Wait();
+
+            var x = 10;
         }
 
         public async void PrintGreeting(string message)
