@@ -6,6 +6,10 @@ using Neo4j.Driver;
 
 namespace BC2G.DAL
 {
+
+    // TODO: there is a bug: why many redeems per node in a given block? 
+    // TODO: add time stamp to edge. 
+
     public class GraphDB : IDisposable
     {
         public static string Coinbase { get { return "Coinbase"; } }
@@ -315,21 +319,52 @@ namespace BC2G.DAL
             var blockBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
                 var result = await x.RunAsync(
-                    "MATCH path = (p: Person { label: \"A\"}) -[:Knows * 1..3]->(p2: Person) " +
+                    "MATCH path = (p: Script { Address: \"A\"}) -[:Transfer * 1..3]->(p2: Script) " +
                     "WITH[n in nodes(path) where n <> p | n] as nodes, relationships(path) as relationships " +
                     "WITH size(nodes) as cnt, collect(nodes[-1]) as nodes, collect(distinct relationships[-1]) as relationships " +
                     "RETURN nodes, relationships");
 
-                /*
-                    "match (n:Script {address:\"A\"}) " +
-                    "call apoc.neighbors.byhop(n, \"Sends\", 3) " +
-                    "yield nodes " +
-                    "return nodes");*/
+                /* Note:
+                 * Neo4j has apoc.neighbors.byhop method that returns 
+                 * neighbors at n-hop distance. However, this method 
+                 * does not return relationships, therefore, the above
+                 * cypher query is used instead. 
+                 */
                 return await result.ToListAsync();
             });
             blockBulkLoadResult.Wait();
 
-            var x = 10;
+            foreach (var hop in blockBulkLoadResult.Result)
+            {
+                var neo4jNodes = hop.Values["nodes"].As<List<object>>();
+                var neo4jEdges = hop.Values["relationships"].As<List<object>>();
+
+                var nodes = new Dictionary<long, Node>();
+                foreach(var neo4jNode in neo4jNodes)
+                {
+                    var node = neo4jNode.As<INode>();
+                    var props = node.Properties;
+
+                    nodes.Add(node.Id, new Node(
+                        node.Id.ToString(),
+                        (string)props["Address"],
+                        Enum.Parse<ScriptType>((string)props["Type"])));
+                }
+
+                var edges = new List<Edge>();
+                foreach (var neo4jEdge in neo4jEdges)
+                {
+                    var edge = neo4jEdge.As<IRelationship>();
+
+                    edges.Add(new Edge(
+                        nodes[edge.StartNodeId],
+                        nodes[edge.EndNodeId],
+                        (double)edge.Properties["Value"],
+                        Enum.Parse<EdgeType>(edge.Type),
+                        0, // TODO: fixme. 
+                        (int)edge.Properties["Height"]));
+                }
+            }
         }
 
         public async void PrintGreeting(string message)
