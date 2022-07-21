@@ -44,6 +44,15 @@ namespace BC2G.Graph
             BlockHeight = blockHeight;
         }
 
+        public double[] GetFeatures()
+        {
+            return new double[] {
+                Value,
+                (double)Type,
+                Timestamp - BitcoinAgent.GenesisTimestamp,
+                BlockHeight };
+        }
+
         public string ToString(string sourceId, string targetId)
         {
             return string.Join(_delimiter, new string[]

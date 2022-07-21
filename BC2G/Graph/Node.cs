@@ -35,6 +35,11 @@ namespace BC2G.Graph
             ScriptType = scriptType;
         }
 
+        public double[] GetFeatures()
+        {
+            return new double[] { (double)ScriptType };
+        }
+
         public override string ToString()
         {
             return string.Join(

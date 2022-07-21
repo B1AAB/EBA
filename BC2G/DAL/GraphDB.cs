@@ -320,9 +320,9 @@ namespace BC2G.DAL
             {
                 var result = await x.RunAsync(
                     "MATCH path = (p: Script { Address: \"A\"}) -[:Transfer * 1..3]->(p2: Script) " +
-                    "WITH[n in nodes(path) where n <> p | n] as nodes, relationships(path) as relationships " +
-                    "WITH size(nodes) as cnt, collect(nodes[-1]) as nodes, collect(distinct relationships[-1]) as relationships " +
-                    "RETURN nodes, relationships");
+                    "WITH p, [n in nodes(path) where n <> p | n] as nodes, relationships(path) as relationships " +
+                    "WITH collect(distinct p) as root, size(nodes) as cnt, collect(nodes[-1]) as nodes, collect(distinct relationships[-1]) as relationships " +
+                    "RETURN root, nodes, relationships");
 
                 /* Note:
                  * Neo4j has apoc.neighbors.byhop method that returns 
@@ -330,41 +330,79 @@ namespace BC2G.DAL
                  * does not return relationships, therefore, the above
                  * cypher query is used instead. 
                  */
+
+                /* TODO:
+                 * Modify the above cypher query to return only one root, 
+                 * it currently returns one root per hop where root nodes
+                 * of all the hops are equal.
+                 */
                 return await result.ToListAsync();
             });
             blockBulkLoadResult.Wait();
 
+            var nodes = new Dictionary<long, Node>();
+            var edges = new List<IRelationship>();
+
+            Node parseNode(INode node)
+            {
+                var props = node.Properties;
+
+                return new Node(
+                        node.Id.ToString(),
+                        (string)props["Address"],
+                        Enum.Parse<ScriptType>((string)props["Type"]));
+            }
+
             foreach (var hop in blockBulkLoadResult.Result)
             {
+                var root = hop.Values["root"].As<List<INode>>()[0];
+                nodes[root.Id] = parseNode(root);
+
                 var neo4jNodes = hop.Values["nodes"].As<List<object>>();
                 var neo4jEdges = hop.Values["relationships"].As<List<object>>();
 
-                var nodes = new Dictionary<long, Node>();
                 foreach(var neo4jNode in neo4jNodes)
                 {
                     var node = neo4jNode.As<INode>();
-                    var props = node.Properties;
-
-                    nodes.Add(node.Id, new Node(
-                        node.Id.ToString(),
-                        (string)props["Address"],
-                        Enum.Parse<ScriptType>((string)props["Type"])));
+                    nodes[node.Id] = parseNode(node);
                 }
-
-                var edges = new List<Edge>();
+                
                 foreach (var neo4jEdge in neo4jEdges)
-                {
-                    var edge = neo4jEdge.As<IRelationship>();
+                    edges.Add(neo4jEdge.As<IRelationship>());
+            }
 
-                    edges.Add(new Edge(
-                        nodes[edge.StartNodeId],
+            var nodeFeatures = new List<double[]>();
+            var nodeIdToIdx = new Dictionary<long, int>();
+            foreach (var node in nodes)
+            {
+                nodeFeatures.Add(node.Value.GetFeatures());
+                nodeIdToIdx.Add(node.Key, nodeIdToIdx.Count);
+            }
+
+            var edgeFeatures = new SortedList<long[], double[]>(
+                Comparer<long[]>.Create((x, y) =>
+                {
+                    var r = x[0].CompareTo(y[0]);
+                    if (r != 0) return r;
+                    return x[1].CompareTo(y[1]);
+                }));
+
+            foreach (var edge in edges)
+            {
+                var e = new Edge(
+                    nodes[edge.StartNodeId],
                         nodes[edge.EndNodeId],
                         (double)edge.Properties["Value"],
                         Enum.Parse<EdgeType>(edge.Type),
                         0, // TODO: fixme. 
-                        (int)edge.Properties["Height"]));
-                }
+                        1);//(int)edge.Properties["Height"]); // TODO: fixme. 
+
+                edgeFeatures.Add(
+                    new long[] { nodeIdToIdx[edge.StartNodeId], nodeIdToIdx[edge.EndNodeId] },
+                    e.GetFeatures());
             }
+
+            var pairIndices = edgeFeatures.Keys;
         }
 
         public async void PrintGreeting(string message)
