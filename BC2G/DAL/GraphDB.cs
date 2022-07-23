@@ -8,7 +8,7 @@ namespace BC2G.DAL
 {
 
     // TODO: there is a bug: why many redeems per node in a given block? 
-    // TODO: add time stamp to edge. 
+    // TODO: add time stamp to edge.
 
     public class GraphDB : IDisposable
     {
@@ -65,7 +65,7 @@ namespace BC2G.DAL
             var v = x.GetType().GetProperty("Id").GetValue(x);*/
 
             // TEMP
-            Sampling(3);
+            Sampling(10, 3);
         }
 
         /* TODO:
@@ -312,14 +312,61 @@ namespace BC2G.DAL
             });*/
         }
 
-        private async Task Sampling(int hops)
+        private async Task Sampling(int rootNodesCount, int hops, double rootNodesSelectProb = 0.1)
         {
-            using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
+            var allNodeFeatures = new List<List<double[]>>();
+            var allEdgeFeatures = new List<List<double[]>>();
+            var allPairIndices = new List<List<int[]>>();
 
-            var blockBulkLoadResult = session.WriteTransactionAsync(async x =>
+            var rndRootNodes = await GetRandomNodes(rootNodesCount, rootNodesSelectProb);
+
+            foreach (var rootNode in rndRootNodes)
+            {
+                (var nodes, var edges) = await GetNeighbors(rootNode.Address, hops);
+                (var nodeFeatures, var edgeFeature, var pairIndices) = ToMatrix(nodes, edges);
+
+                // TODO: implement checks on the graph; e.g., graph size, or if it was already defined.
+
+                allNodeFeatures.Add(nodeFeatures);
+                allEdgeFeatures.Add(edgeFeature);
+                allPairIndices.Add(pairIndices);
+            }
+        }
+
+        private async Task<List<Node>> GetRandomNodes(
+            int nodesCount, double rootNodesSelectProb = 0.1)
+        {
+            using var session = _driver.AsyncSession(
+                x => x.WithDefaultAccessMode(AccessMode.Read));
+
+            var rndNodesResult = session.ReadTransactionAsync(async x =>
             {
                 var result = await x.RunAsync(
-                    "MATCH path = (p: Script { Address: \"A\"}) -[:Transfer * 1..3]->(p2: Script) " +
+                    $"MATCH (rndScript:Script)-[:Transfer]->() " +
+                    $"WHERE rand() < {rootNodesSelectProb} " +
+                    $"RETURN rndScript LIMIT {nodesCount}");
+
+                return await result.ToListAsync();
+            });
+            await rndNodesResult;
+
+            var rndNodes = new List<Node>();
+            foreach (var n in rndNodesResult.Result)
+                rndNodes.Add(ParseNode(n.Values["rndScript"].As<INode>()));
+
+            return rndNodes;
+        }
+
+        private async Task<(Dictionary<long, Node>, List<IRelationship>)> GetNeighbors(
+            string rootScriptAddress, int maxHops)
+        {
+            using var session = _driver.AsyncSession(
+                x => x.WithDefaultAccessMode(AccessMode.Read));
+
+            var samplingResult = session.ReadTransactionAsync(async x =>
+            {
+                var result = await x.RunAsync(
+                    $"MATCH path = (p: Script {{ Address: \"{rootScriptAddress}\"}}) -[:Transfer * 1..{maxHops}]->(p2: Script) " +
                     "WITH p, [n in nodes(path) where n <> p | n] as nodes, relationships(path) as relationships " +
                     "WITH collect(distinct p) as root, size(nodes) as cnt, collect(nodes[-1]) as nodes, collect(distinct relationships[-1]) as relationships " +
                     "RETURN root, nodes, relationships");
@@ -338,39 +385,34 @@ namespace BC2G.DAL
                  */
                 return await result.ToListAsync();
             });
-            blockBulkLoadResult.Wait();
+            await samplingResult;
 
             var nodes = new Dictionary<long, Node>();
             var edges = new List<IRelationship>();
 
-            Node parseNode(INode node)
-            {
-                var props = node.Properties;
-
-                return new Node(
-                        node.Id.ToString(),
-                        (string)props["Address"],
-                        Enum.Parse<ScriptType>((string)props["Type"]));
-            }
-
-            foreach (var hop in blockBulkLoadResult.Result)
+            foreach (var hop in samplingResult.Result)
             {
                 var root = hop.Values["root"].As<List<INode>>()[0];
-                nodes[root.Id] = parseNode(root);
+                nodes[root.Id] = ParseNode(root);
 
                 var neo4jNodes = hop.Values["nodes"].As<List<object>>();
                 var neo4jEdges = hop.Values["relationships"].As<List<object>>();
 
-                foreach(var neo4jNode in neo4jNodes)
+                foreach (var neo4jNode in neo4jNodes)
                 {
                     var node = neo4jNode.As<INode>();
-                    nodes[node.Id] = parseNode(node);
+                    nodes[node.Id] = ParseNode(node);
                 }
-                
+
                 foreach (var neo4jEdge in neo4jEdges)
                     edges.Add(neo4jEdge.As<IRelationship>());
             }
 
+            return (nodes, edges);
+        }
+
+        private static (List<double[]>, List<double[]>, List<int[]>) ToMatrix(Dictionary<long, Node> nodes, List<IRelationship> edges)
+        {
             var nodeFeatures = new List<double[]>();
             var nodeIdToIdx = new Dictionary<long, int>();
             foreach (var node in nodes)
@@ -379,12 +421,16 @@ namespace BC2G.DAL
                 nodeIdToIdx.Add(node.Key, nodeIdToIdx.Count);
             }
 
-            var edgeFeatures = new SortedList<long[], double[]>(
-                Comparer<long[]>.Create((x, y) =>
+            var edgeFeatures = new SortedList<int[], double[]>(
+                Comparer<int[]>.Create((x, y) =>
                 {
+                    // This comparer allows duplicates,
+                    // and treats equal items as x greater than y.
                     var r = x[0].CompareTo(y[0]);
                     if (r != 0) return r;
-                    return x[1].CompareTo(y[1]);
+                    r = x[1].CompareTo(y[1]);
+                    if (r != 0) return r;
+                    return 1;
                 }));
 
             foreach (var edge in edges)
@@ -395,14 +441,26 @@ namespace BC2G.DAL
                         (double)edge.Properties["Value"],
                         Enum.Parse<EdgeType>(edge.Type),
                         0, // TODO: fixme. 
-                        1);//(int)edge.Properties["Height"]); // TODO: fixme. 
+                        (int)(long)edge.Properties["Height"]); // TODO: fixme: here we are casting from int64 to int32, how hard is it to change the type of Height in the Edge from 32-bit int to 64-bit int?
 
                 edgeFeatures.Add(
-                    new long[] { nodeIdToIdx[edge.StartNodeId], nodeIdToIdx[edge.EndNodeId] },
+                    new int[] { nodeIdToIdx[edge.StartNodeId], nodeIdToIdx[edge.EndNodeId] },
                     e.GetFeatures());
+
             }
 
-            var pairIndices = edgeFeatures.Keys;
+            var pairIndices = edgeFeatures.Keys.ToList();
+            return (nodeFeatures, edgeFeatures.Values.ToList(), pairIndices);
+        }
+
+        private static Node ParseNode(INode node)
+        {
+            var props = node.Properties;
+
+            return new Node(
+                    node.Id.ToString(),
+                    (string)props["Address"],
+                    Enum.Parse<ScriptType>((string)props["ScriptType"]));
         }
 
         public async void PrintGreeting(string message)
