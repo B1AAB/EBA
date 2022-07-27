@@ -65,7 +65,7 @@ namespace BC2G.DAL
             var v = x.GetType().GetProperty("Id").GetValue(x);*/
 
             // TEMP
-            Sampling(10, 3);
+            Sampling(10, 3).Wait();
         }
 
         /* TODO:
@@ -314,23 +314,77 @@ namespace BC2G.DAL
 
         private async Task Sampling(int rootNodesCount, int hops, double rootNodesSelectProb = 0.1)
         {
-            var allNodeFeatures = new List<List<double[]>>();
-            var allEdgeFeatures = new List<List<double[]>>();
-            var allPairIndices = new List<List<int[]>>();
+            var includeRndEdges = true;
 
             var rndRootNodes = await GetRandomNodes(rootNodesCount, rootNodesSelectProb);
 
+            var baseOutputDir = @".";
+            var counter = -1;
             foreach (var rootNode in rndRootNodes)
             {
+                var features = new Dictionary<string, (List<double[]>, List<double[]>, List<int[]>, List<int[]>)>();
+
                 (var nodes, var edges) = await GetNeighbors(rootNode.Address, hops);
-                (var nodeFeatures, var edgeFeature, var pairIndices) = ToMatrix(nodes, edges);
 
-                // TODO: implement checks on the graph; e.g., graph size, or if it was already defined.
+                if (!CanUseGraph(nodes, edges, tolerance: 0))
+                    continue;
 
-                allNodeFeatures.Add(nodeFeatures);
-                allEdgeFeatures.Add(edgeFeature);
-                allPairIndices.Add(pairIndices);
+                if (includeRndEdges)
+                {
+                    (var rnodes, var redges) = await GetRandomEdges(edges.Count);
+
+                    if (!CanUseGraph(rnodes, redges, maxNodeCount: nodes.Count, maxEdgeCount: edges.Count))
+                        continue;
+
+                    (var rNodeFeatures, var rEdgeFeatures, var rPairIndices) = ToMatrix(rnodes, redges);
+                    features.Add("RandomEdges", (rNodeFeatures, rEdgeFeatures, rPairIndices, new List<int[]> { new int[] { 1 } }));
+                }
+
+                (var nodeFeatures, var edgeFeatures, var pairIndices) = ToMatrix(nodes, edges);
+                features.Add("Graph", (nodeFeatures, edgeFeatures, pairIndices, new List<int[]> { new int[] { 0 } }));
+
+                counter++;
+                foreach (var graphFeatures in features)
+                {
+                    var outputDir = Path.Join(baseOutputDir, counter.ToString(), graphFeatures.Key);
+                    Directory.CreateDirectory(outputDir);
+
+                    (var nFeatures, var eFeatures, var pIndices, var labels) = graphFeatures.Value;
+                    ToTSV(nFeatures, Path.Join(outputDir, "node_features.tsv"));
+                    ToTSV(eFeatures, Path.Join(outputDir, "edge_features.tsv"));
+                    ToTSV(pIndices, Path.Join(outputDir, "pair_indices.tsv"));
+                    ToTSV(labels, Path.Join(outputDir, "labels.tsv"));
+                }
             }
+        }
+
+        private static bool CanUseGraph(
+            Dictionary<long, Node> nodes,
+            List<IRelationship> edges,
+            int minNodeCount = 3, int maxNodeCount = 200,
+            int minEdgeCount = 3, int maxEdgeCount = 200,
+            double tolerance = 0.5)
+        {
+            // TODO: implement checks on the graph; e.g., graph size, or if it was already defined.
+
+            // TODO: very big graphs cause various issues
+            // with Tensorflow when training, such as out-of-memory
+            // (hence radically slow process), or even trying to
+            // multiply matrixes of very large size 2**32 or even
+            // larger. There should be much better workarounds at
+            // Tensorflow level, but for now, we limit the size of graphs.
+            if (nodes.Count < minNodeCount - (minNodeCount * tolerance) || nodes.Count > maxNodeCount + (maxNodeCount * tolerance) ||
+                edges.Count < minEdgeCount - (minEdgeCount * tolerance) || edges.Count > maxEdgeCount + (maxEdgeCount * tolerance))
+                return false;
+
+            return true;
+        }
+
+        private void ToTSV<T>(List<T[]> data, string filename)
+        {
+            using var writer = new StreamWriter(filename);
+            foreach (var x in data)
+                writer.WriteLine(string.Join("\t", x));
         }
 
         private async Task<List<Node>> GetRandomNodes(
@@ -355,6 +409,39 @@ namespace BC2G.DAL
                 rndNodes.Add(ParseNode(n.Values["rndScript"].As<INode>()));
 
             return rndNodes;
+        }
+
+        private async Task<(Dictionary<long, Node>, List<IRelationship>)> GetRandomEdges(int edgeCount, double edgeSelectProb = 0.1)
+        {
+            using var session = _driver.AsyncSession(
+                x => x.WithDefaultAccessMode(AccessMode.Read));
+
+            var rndNodesResult = session.ReadTransactionAsync(async x =>
+            {
+                var result = await x.RunAsync(
+                    $"Match (source)-[edge:Transfer]->(target) " +
+                    $"where rand() < {edgeSelectProb} " +
+                    $"return source, edge, target  limit {edgeCount}");
+
+                return await result.ToListAsync();
+            });
+            await rndNodesResult;
+
+            var rndNodes = new Dictionary<long, Node>();
+            var rndEdges = new List<IRelationship>();
+            foreach (var n in rndNodesResult.Result)
+            {
+                var isource = n.Values["source"].As<INode>();
+                var itarget = n.Values["target"].As<INode>();
+                var source = ParseNode(isource);
+                var target = ParseNode(itarget);
+
+                rndNodes[isource.Id] = source;
+                rndNodes[itarget.Id] = target;
+                rndEdges.Add(n.Values["edge"].As<IRelationship>());
+            }
+
+            return (rndNodes, rndEdges);
         }
 
         private async Task<(Dictionary<long, Node>, List<IRelationship>)> GetNeighbors(
@@ -433,15 +520,16 @@ namespace BC2G.DAL
                     return 1;
                 }));
 
+
             foreach (var edge in edges)
             {
                 var e = new Edge(
                     nodes[edge.StartNodeId],
-                        nodes[edge.EndNodeId],
-                        (double)edge.Properties["Value"],
-                        Enum.Parse<EdgeType>(edge.Type),
-                        0, // TODO: fixme. 
-                        (int)(long)edge.Properties["Height"]); // TODO: fixme: here we are casting from int64 to int32, how hard is it to change the type of Height in the Edge from 32-bit int to 64-bit int?
+                    nodes[edge.EndNodeId],
+                    (double)edge.Properties["Value"],
+                    Enum.Parse<EdgeType>(edge.Type),
+                    0, // TODO: fixme.
+                    (int)(long)edge.Properties["Height"]); // TODO: fixme: here we are casting from int64 to int32, how hard is it to change the type of Height in the Edge from 32-bit int to 64-bit int?
 
                 edgeFeatures.Add(
                     new int[] { nodeIdToIdx[edge.StartNodeId], nodeIdToIdx[edge.EndNodeId] },
@@ -458,9 +546,9 @@ namespace BC2G.DAL
             var props = node.Properties;
 
             return new Node(
-                    node.Id.ToString(),
-                    (string)props["Address"],
-                    Enum.Parse<ScriptType>((string)props["ScriptType"]));
+                node.Id.ToString(),
+                (string)props["Address"],
+                Enum.Parse<ScriptType>((string)props["ScriptType"]));
         }
 
         public async void PrintGreeting(string message)
