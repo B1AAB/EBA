@@ -5,7 +5,7 @@ using System.Text;
 
 namespace BC2G.CLI
 {
-    public class CommandLineOptions
+    public class CommandLineOptionsOld
     {
         public string StatusFilename { get { return _statusFilename; } }
         private string _statusFilename = "status.json";
@@ -90,7 +90,7 @@ namespace BC2G.CLI
          -r is needed.
         */
 
-        public CommandLineOptions()
+        public CommandLineOptionsOld()
         {
             _cla = new CommandLineApplication
             {

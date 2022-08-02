@@ -1,5 +1,12 @@
-﻿namespace BC2G.CLI
+﻿using BC2G.DAL;
+
+namespace BC2G.CLI
 {
+    // TODO: decide on where is a better place to set the
+    // defaults and set all the defaults in one place.
+    // Currently defaults are set in different places
+    // including here and CLI. 
+
     public class Options
     {
         public int FromInclusive { get; set; } = -1;
@@ -28,6 +35,11 @@
         private int _granularity = 1;
 
         public string OutputDir { get; set; } = Environment.CurrentDirectory;
+
+        public DirectoryInfo OutputDirectory { set; get; } = new DirectoryInfo(Environment.CurrentDirectory);
+        public int GraphSampleCount { set; get; }
+        public GraphSampleMode GraphSampleMode { set; get; } = GraphSampleMode.A;
+
         public string AddressIdMappingFilename { set; get; } = "id_to_address_mapping.tsv";
         public bool CreatePerBlockFiles { get; set; } = false;
         public int MaxConcurrentBlocks { get; set; } = 1;// Environment.ProcessorCount / 2;
@@ -50,5 +62,7 @@
         public string Neo4jCypherImportPrefix { set; get; } =
             Environment.GetEnvironmentVariable("NEO4J_CYPHERIMPORTPREFIX") ??
             "file:///";
+
+        public string StatusFilename { set; get; }
     }
 }
