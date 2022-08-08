@@ -88,9 +88,9 @@ namespace BC2G
             }
         }
 
-        public void Invoke(string[] args)
+        public async Task<int> InvokeAsync(string[] args)
         {
-            _cli.InvokeAsync(args).Wait();
+            return await _cli.InvokeAsync(args);
         }
 
         private async Task Sample(Options options)

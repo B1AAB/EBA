@@ -35,7 +35,7 @@ namespace BC2G
 
         private static readonly CancellationTokenSource _tokenSource = new();
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             var cancellationToken = _tokenSource.Token;
 
@@ -49,7 +49,7 @@ namespace BC2G
             //client.DefaultRequestHeaders.UserAgent.Clear();
             client.DefaultRequestHeaders.Add("User-Agent", "BitcoinAgent");
 
-            var success = false;
+            var exitCode = 0;
 
             try
             {
@@ -61,15 +61,14 @@ namespace BC2G
                 var orchestrator = new Orchestrator(
                     /*options,*/ client);//, cliOptions.StatusFilename);
 
-                orchestrator.Invoke(args);
-
                 Console.CancelKeyPress += new ConsoleCancelEventHandler(
                     (sender, e) => CancelKeyPressHandler(
                         e, _tokenSource, orchestrator.Logger));
 
                 AsyncConsole.CancellationToken = cancellationToken;
 
-                success = orchestrator.RunAsync(cancellationToken).Result;
+                exitCode = await orchestrator.InvokeAsync(args);
+                //success = orchestrator.RunAsync(cancellationToken).Result;
             }
             catch (Exception e)
             {
@@ -82,7 +81,7 @@ namespace BC2G
                 // only when running the tests, because Xunit does not have a console.
                 try { Console.CursorVisible = true; }
                 catch (IOException) { }
-                Environment.Exit(success ? 0 : 1);
+                Environment.Exit(exitCode);
             }
         }
 

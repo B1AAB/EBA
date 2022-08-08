@@ -50,9 +50,9 @@ namespace BC2G.CLI
             _rootCmd.AddCommand(GetTraverseCmd(BitcoinTraverseCmdHandler));
         }
 
-        public async Task InvokeAsync(string[] args)
+        public async Task<int> InvokeAsync(string[] args)
         {
-            await _rootCmd.InvokeAsync(args);
+            return await _rootCmd.InvokeAsync(args);
         }
 
         private Command GetSampleCmd(Func<Options, Task> handler)
