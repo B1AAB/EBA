@@ -27,9 +27,9 @@ namespace BC2G.Blockchains
 
         private bool _disposed = false;
 
-        public AddressToIdMapper AddressToIdMapper { get; set; }
+        //public AddressToIdMapper AddressToIdMapper { get; set; }
 
-        public BitcoinAgent(HttpClient client, TxCache txCache, Logger logger, CancellationToken ct)
+        public BitcoinAgent(HttpClient client, Logger logger, CancellationToken ct)
         {
             _client = client;
 
@@ -148,7 +148,7 @@ namespace BC2G.Blockchains
                 output.TryGetAddress(out string address);
                 var node = generationTxGraph.AddTarget(
                     new Node(
-                        AddressToIdMapper.GetId(address),
+                        //AddressToIdMapper.GetId(address),
                         address,
                         output.GetScriptType()),
                     output.Value);
@@ -211,7 +211,7 @@ namespace BC2G.Blockchains
 
                 txGraph.AddSource(
                     new Node(
-                        AddressToIdMapper.GetId(address),
+                        //AddressToIdMapper.GetId(address),
                         address,
                         ScriptType.Unknown), /* TODO: can this set to a better value? */
                     value);
@@ -224,7 +224,7 @@ namespace BC2G.Blockchains
                 output.TryGetAddress(out string address);
                 txGraph.AddTarget(
                     new Node(
-                        AddressToIdMapper.GetId(address),
+                        //AddressToIdMapper.GetId(address),
                         address,
                         output.GetScriptType()),
                     output.Value);

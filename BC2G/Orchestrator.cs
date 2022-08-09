@@ -15,11 +15,10 @@ namespace BC2G
     public class Orchestrator : IDisposable
     {
         private readonly HttpClient _client;
-        private readonly GraphDB _graphDB;
+        private GraphDB _graphDB;
         private bool disposed = false;
 
-        private readonly string _statusFilename;
-        private readonly Options _options;
+        private Options _options;
 
         public Logger Logger { set; get; }
         private const string _defaultLoggerRepoName = "events_log";
@@ -27,12 +26,15 @@ namespace BC2G
         private readonly string _maxLogfileSize = "2GB";
 
         private readonly CommandLineInterface _cli;
+        private readonly CancellationToken _ct;
 
-        public Orchestrator(/*Options options,*/ HttpClient client)//, string statusFilename)
+        public Orchestrator(HttpClient client, CancellationToken ct)
         {
-            _cli = new CommandLineInterface(Traverse, Sample);
-
+            _ct = ct;
             _client = client;
+            _cli = new CommandLineInterface(TraverseAsync, Sample);
+
+            
             //_options = options;
             //_statusFilename = statusFilename;
 
@@ -53,14 +55,6 @@ namespace BC2G
                     $"{e.Message}");
                 throw;
             }*/
-
-            /*
-            _graphDB = new GraphDB(
-                options.Neo4jUri, 
-                options.Neo4jUser, 
-                options.Neo4jPassword, 
-                options.Neo4jImportDirectory,
-                options.Neo4jCypherImportPrefix);*/
         }
 
         private void SetupLogger(Options options)
@@ -75,10 +69,10 @@ namespace BC2G
                         CultureInfo.InvariantCulture);
 
                 Logger = new Logger(
-                    Path.Join(options.OutputDir, _loggerRepository + ".txt"),
+                    Path.Join(options.WorkingDir, _loggerRepository + ".txt"),
                     _loggerRepository,
                     Guid.NewGuid().ToString(),
-                    options.OutputDir,
+                    options.WorkingDir,
                     _maxLogfileSize);
             }
             catch (Exception e)
@@ -86,6 +80,16 @@ namespace BC2G
                 Logger.LogExceptionStatic($"Logger setup failed: {e.Message}");
                 throw;
             }
+        }
+
+        private void SetupGraphDB(Options options)
+        {
+            _graphDB = new GraphDB(
+                options.Neo4jUri,
+                options.Neo4jUser,
+                options.Neo4jPassword,
+                options.Neo4jImportDirectory,
+                options.Neo4jCypherImportPrefix);
         }
 
         public async Task<int> InvokeAsync(string[] args)
@@ -96,24 +100,30 @@ namespace BC2G
         private async Task Sample(Options options)
         {
             SetupLogger(options);
+            SetupGraphDB(options);
+
+            await _graphDB.Sampling(10, 3);
         }
 
-        private async Task Traverse(Options options)
+        private async Task<bool> TraverseAsync(Options options)
         {
+            // important TODO:
+            // The booleans returns of this method are ignored.
+            // At the time of writing this, there are limited options
+            // in the system.commandline to implement this properly. 
+
+            _options = options;
+
             SetupLogger(options);
-        }
+            SetupGraphDB(options);
 
-
-        public async Task<bool> RunAsync(CancellationToken cT)
-        {
-            // TODO: these two may better to move the constructor. 
-            if (!TryGetBitCoinAgent(cT, out var agent, out var txCache))
+            if (!TryGetBitCoinAgent(_ct, out var agent))
                 return false;
 
             if (!AssertChain(agent, out ChainInfo chaininfo))
                 return false;
 
-            if (cT.IsCancellationRequested)
+            if (_ct.IsCancellationRequested)
                 return false;
 
             if (_options.FromInclusive == -1)
@@ -136,7 +146,7 @@ namespace BC2G
                 return false;
             }
 
-            if(_options.ToExclusive < 0)
+            if (_options.ToExclusive < 0)
             {
                 Logger.LogException($"Invalid To block height {_options.ToExclusive}");
                 return false;
@@ -146,17 +156,10 @@ namespace BC2G
             try
             {
                 stopwatch.Start();
-                await TraverseBlocksAsync(agent, cT);
-
-                while (true)
-                {
-                    if (txCache.CanClose)
-                        break;
-                    Thread.Sleep(500);
-                }
+                await TraverseBlocksAsync(agent, _ct);
 
                 stopwatch.Stop();
-                if (cT.IsCancellationRequested)
+                if (_ct.IsCancellationRequested)
                 {
                     Logger.Log(
                         $"Cancelled successfully.",
@@ -180,18 +183,16 @@ namespace BC2G
             {
                 stopwatch.Stop();
                 agent.Dispose();
-                txCache.Dispose();
             }
 
             return true;
         }
 
-        private bool TryGetBitCoinAgent(CancellationToken cT, out BitcoinAgent agent, out TxCache txCache)
+        private bool TryGetBitCoinAgent(CancellationToken cT, out BitcoinAgent agent)
         {
             try
             {
-                txCache = new TxCache(_options.OutputDir, cT);
-                agent = new BitcoinAgent(_client, txCache, Logger, cT);
+                agent = new BitcoinAgent(_client, Logger, cT);
 
                 if (!agent.IsConnected)
                     throw new ClientInaccessible();
@@ -203,10 +204,7 @@ namespace BC2G
                     $"Failed to create/access BitcoinAgent: " +
                     $"{e.Message}");
 
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-                agent = null;
-                txCache = null;
-#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+                agent = default;
                 return false;
             }
         }
@@ -247,9 +245,10 @@ namespace BC2G
         private async Task TraverseBlocksAsync(
             BitcoinAgent agent, CancellationToken cT)
         {
-            var individualBlocksDir = Path.Combine(_options.OutputDir, "individual_blocks");
+            /*
+            var individualBlocksDir = Path.Combine(_options.WorkingDir, "individual_blocks");
             if (_options.CreatePerBlockFiles && !Directory.Exists(individualBlocksDir))
-                Directory.CreateDirectory(individualBlocksDir);
+                Directory.CreateDirectory(individualBlocksDir);*/
 
             /* TODO: This object does not scale, 
              * its memory requirement grows linearly w.r.t. to 
@@ -258,23 +257,24 @@ namespace BC2G
              * a better solution for running on machines with 
              * less than 16GB of RAM?! 
              */
+            /*
             using var mapper = new AddressToIdMapper(
                 _options.AddressIdMappingFilename,
                 AddressToIdMapper.Deserialize(_options.AddressIdMappingFilename),
-                cT);
-            agent.AddressToIdMapper = mapper;
+                cT);*/
+            //agent.AddressToIdMapper = mapper;
 
-            using var serializer = new CSVSerializer(mapper);
+            using var serializer = new CSVSerializer();//mapper);
 
             using var pGraphStat = new PersistentGraphStatistics(
-                Path.Combine(_options.OutputDir, "blocks_stats.tsv"),
+                Path.Combine(_options.WorkingDir, "blocks_stats.tsv"),
                 cT);
 
             using var gBuffer = new PersistentGraphBuffer(
                 _graphDB,
-                Path.Combine(_options.OutputDir, "nodes.tsv"),
-                Path.Combine(_options.OutputDir, "edges.tsv"),                
-                mapper,
+                Path.Combine(_options.WorkingDir, "nodes.tsv"),
+                Path.Combine(_options.WorkingDir, "edges.tsv"),                
+                //mapper,
                 pGraphStat,
                 Logger,
                 cT);
@@ -298,7 +298,7 @@ namespace BC2G
 
             // Persist the start point so to at least have the starting point
             // in case the program fails without a chance to persist the current status.
-            await JsonSerializer<Options>.SerializeAsync(_options, _statusFilename);
+            await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile);
 
             // Have tested TPL dataflow as alternative to Parallel.For,
             // it adds more complexity with little performance improvements,
@@ -309,7 +309,7 @@ namespace BC2G
                     state.Stop();
 
                 blockHeightQueue.TryDequeue(out var h);
-                ProcessBlock(agent, gBuffer, serializer, h, individualBlocksDir, cT).Wait();
+                ProcessBlock(agent, gBuffer, serializer, h, /*individualBlocksDir,*/ cT).Wait();
 
                 if (cT.IsCancellationRequested)
                     state.Stop();
@@ -323,7 +323,7 @@ namespace BC2G
             // the types wrapped in `using` will be called that
             // finalizes persisting output.
             Logger.Log("Finalizing serialized files.");
-            await JsonSerializer<Options>.SerializeAsync(_options, _statusFilename);
+            await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile);
 
             // TODO: this is not a good strategy, it has two drawbacks: 
             // - it is an infinite loop with the assumption that the
@@ -334,7 +334,7 @@ namespace BC2G
             // will never end.
             while(true)
             {
-                if (mapper.CanDispose && gBuffer.CanDispose)
+                if (/*mapper.CanDispose &&*/ gBuffer.CanDispose)
                     break;
                 Thread.Sleep(500);
             }
@@ -351,7 +351,7 @@ namespace BC2G
             PersistentGraphBuffer gBuffer,
             CSVSerializer serializer,
             int height,
-            string individualBlocksDir,
+            //string individualBlocksDir,
             CancellationToken cT)
         {
             if (cT.IsCancellationRequested) return;

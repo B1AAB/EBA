@@ -28,6 +28,13 @@ namespace BC2G.Graph
         /// </summary>
         public Node() { }
 
+        public Node(string address, ScriptType scriptType)
+        {
+            Address = address;
+            ScriptType = scriptType;
+        }
+
+        // TODO: This constructor should be removed, we should NOT set specifically.
         public Node(string id, string address, ScriptType scriptType)
         {
             Id = id;

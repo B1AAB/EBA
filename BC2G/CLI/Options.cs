@@ -34,14 +34,12 @@ namespace BC2G.CLI
         }
         private int _granularity = 1;
 
-        public string OutputDir { get; set; } = Environment.CurrentDirectory;
-
-        public DirectoryInfo OutputDirectory { set; get; } = new DirectoryInfo(Environment.CurrentDirectory);
+        public string WorkingDir { set; get; } = Environment.CurrentDirectory;
         public int GraphSampleCount { set; get; }
         public GraphSampleMode GraphSampleMode { set; get; } = GraphSampleMode.A;
 
         public string AddressIdMappingFilename { set; get; } = "id_to_address_mapping.tsv";
-        public bool CreatePerBlockFiles { get; set; } = false;
+        //public bool CreatePerBlockFiles { get; set; } = false;
         public int MaxConcurrentBlocks { get; set; } = 1;// Environment.ProcessorCount / 2;
 
         public string Neo4jUri { get; set; } =
@@ -63,6 +61,6 @@ namespace BC2G.CLI
             Environment.GetEnvironmentVariable("NEO4J_CYPHERIMPORTPREFIX") ??
             "file:///";
 
-        public string StatusFilename { set; get; }
+        public string StatusFile { set; get; } = Path.Combine(Environment.CurrentDirectory, "status.json");
     }
 }

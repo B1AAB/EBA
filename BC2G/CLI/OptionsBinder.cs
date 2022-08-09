@@ -19,6 +19,8 @@ namespace BC2G.CLI
         private readonly Option<int>? _granularityOption;
         private readonly Option<int>? _graphSampleCountOption;
         private readonly Option<GraphSampleMode>? _graphSampleModeOption;
+        private readonly Option<string?>? _workingDirOption;
+        private readonly Option<string?>? _statusFilenameOption;
 
         public OptionsBinder(
 
@@ -26,13 +28,17 @@ namespace BC2G.CLI
             Option<int>? toExclusiveOption = null,
             Option<int>? graphSampleCountOption = null,
             Option<GraphSampleMode>? graphSampleModeOption = null,
-            Option<int>? granularityOption = null)
+            Option<int>? granularityOption = null, 
+            Option<string?>? workingDirOption = null,
+            Option<string?>? statusFilenameOption = null)
         {
             _fromInclusiveOption = fromInclusiveOption;
             _toExclusiveOption = toExclusiveOption;
             _granularityOption = granularityOption;
             _graphSampleCountOption = graphSampleCountOption;
             _graphSampleModeOption = graphSampleModeOption;
+            _workingDirOption = workingDirOption;
+            _statusFilenameOption = statusFilenameOption;
         }
 
         protected override Options GetBoundValue(BindingContext c)
@@ -52,6 +58,12 @@ namespace BC2G.CLI
 
             if (_graphSampleModeOption != null)
                 o.GraphSampleMode = c.ParseResult.GetValueForOption(_graphSampleModeOption);
+
+            if (_workingDirOption != null)
+                o.WorkingDir = c.ParseResult.GetValueForOption(_workingDirOption);
+
+            if (_statusFilenameOption != null)
+                o.StatusFile = c.ParseResult.GetValueForOption(_statusFilenameOption);
 
             return o;
         }

@@ -6,7 +6,7 @@ namespace BC2G
 {
     // TODO: this could be better implemented using a 
     // database; e.g., RavenDb (https://ravendb.net).
-
+    /*
     public class TxCache : IDisposable
     {
         public bool CanClose
@@ -30,7 +30,7 @@ namespace BC2G
         private readonly ConcurrentDictionary<string, TxCacheItem> _utxoCache = new();
 
         private readonly Random _random = new();
-
+        
         public TxCache(string outputDir, CancellationToken cT)
         {
             _outputDir = outputDir;
@@ -153,5 +153,5 @@ namespace BC2G
 
             _disposed = true;
         }
-    }
+    }*/
 }

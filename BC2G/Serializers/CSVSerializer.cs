@@ -12,11 +12,11 @@ namespace BC2G.Serializers
         private bool disposed = false;
 
         private readonly List<string> _createdFiles = new();
-        private readonly AddressToIdMapper _mapper;
+        //private readonly AddressToIdMapper _mapper;
 
-        public CSVSerializer(AddressToIdMapper mapper)
+        public CSVSerializer()//AddressToIdMapper mapper)
         {
-            _mapper = mapper;
+            //_mapper = mapper;
         }
 
         public override void Serialize(BlockGraph g, string baseFilename)

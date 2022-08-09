@@ -210,7 +210,7 @@ namespace BC2G.CLI
                 try
                 {
                     output = Path.GetFullPath(_outputOption.Value());
-                    _parsedOptions.OutputDir = output;
+                    //_parsedOptions.OutputDir = output;
                 }
                 catch (Exception e)
                 {
@@ -276,8 +276,9 @@ namespace BC2G.CLI
             }
 
 
+            /*
             if (_createPerBlockFilesOption.HasValue())
-                _parsedOptions.CreatePerBlockFiles = true;
+                _parsedOptions.CreatePerBlockFiles = true;*/
         }
     }
 }

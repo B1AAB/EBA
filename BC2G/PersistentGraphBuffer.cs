@@ -7,7 +7,7 @@ namespace BC2G
 {
     public class PersistentGraphBuffer : PersistentObject<BlockGraph>
     {
-        private readonly AddressToIdMapper _mapper;
+        //private readonly AddressToIdMapper _mapper;
         private readonly PersistentGraphStatistics _pGraphStats;
         private readonly Logger _logger;
 
@@ -17,7 +17,7 @@ namespace BC2G
             GraphDB graphdb,
             string nodesFilename,
             string edgesFilename,
-            AddressToIdMapper mapper,
+            //AddressToIdMapper mapper,
             PersistentGraphStatistics pGraphStats,
             Logger logger,
             CancellationToken cancellationToken) : base(
@@ -28,7 +28,7 @@ namespace BC2G
                 Edge.Header)
         {
             _graphDB = graphdb;
-            _mapper = mapper;
+            //_mapper = mapper;
             _pGraphStats = pGraphStats;
             _logger = logger;
         }
@@ -54,7 +54,7 @@ namespace BC2G
         {
             _logger.LogFinishProcessingBlock(
                 obj.Height,
-                _mapper.NodesCount,
+                1, // TODO: fixme.  //_mapper.NodesCount,
                 obj.EdgeCount,
                 obj.Stats.Runtime.TotalSeconds);
         }

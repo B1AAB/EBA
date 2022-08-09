@@ -1,5 +1,6 @@
 ﻿namespace BC2G.DTO
 {
+    /*
     public class TxCacheItem
     {
         public string TxId { get; }
@@ -49,5 +50,5 @@
                     Value.ToString(),
                     Environment.NewLine });
         }
-    }
+    }*/
 }
