@@ -113,19 +113,32 @@ namespace BC2G.DAL.Bulkload
                 $"{Props[Prop.Height].GetLoadExp(":")}" +
                 "}) " +
                 // Create relationship between the block node and the scripts nodes. 
-                $"CREATE (source)-[:Redeems {{{Props[Prop.Height].GetLoadExp(":")}}}]->(block) " +
-                $"CREATE (block)-[:Creates {{{Props[Prop.Height].GetLoadExp(":")}}}]->(target) " +
+                $"MERGE (source)-[:Redeems {{{Props[Prop.Height].GetLoadExp(":")}}}]->(block) " +
+                $"MERGE (block)-[:Creates {{{Props[Prop.Height].GetLoadExp(":")}}}]->(target) " +
                 $"WITH source, target, {l} " +
                 // Create relationship between the source and target scripts,
                 // where the type of the relationship is read from the CSV file.
-                "CALL apoc.create.relationship(" +
-                "source, " +
-                $"{l}.{Props[Prop.EdgeType].CsvHeader}, " +
-                $"{{" +
+                //$"MERGE (source)-[rel:{l}.{Props[Prop.EdgeType].CsvHeader}]->(target) RETURN distinct 'DONE'";
+                /*$"MERGE (source)-" +
+                $"[rel:{l}.{Props[Prop.EdgeType].CsvHeader} {{" +
                 $"{Props[Prop.EdgeValue].GetLoadExp(":")}, " +
                 $"{Props[Prop.Height].GetLoadExp(":")}" +
+                $"}}]->(target) " +
+                $"ON CREATE SET rel.Counter = 0 " +
+                $"ON MATCH SET rel.Counter = rel.Counter + 1 ";*/
+
+
+                "CALL apoc.merge.relationship(" +
+                "source, " + // source
+                $"{l}.{Props[Prop.EdgeType].CsvHeader}, " + // relationship type
+                $"{{" + // properties
+                $"{Props[Prop.EdgeValue].GetLoadExp(":")}, " + 
+                $"{Props[Prop.Height].GetLoadExp(":")}" +
                 $"}}, " +
-                $"target)" +
+                $"{{}}, " + // on create
+                $"target, " + // target
+                $"{{}}" +
+                $")" + // on update
                 $"YIELD rel RETURN distinct 'DONE'";
         }
     }

@@ -61,12 +61,14 @@ namespace BC2G.DAL.Bulkload
                 $"MATCH (block:{BlockMapper.label} {{" +
                 $"{Props[Prop.Height].GetLoadExp(":")}" +
                 $"}}) " +
-                $"CREATE (coinbase)-[:Generation {{" +
+                $"MERGE (coinbase)-[:Generation {{" +
                 $"{Props[Prop.EdgeType].GetLoadExp(":")}, " +
                 $"{Props[Prop.EdgeValue].GetLoadExp(":")}, " +
                 $"{Props[Prop.Height].GetLoadExp(":")}" +
                 $"}}]->(target)" +
-                "CREATE (block)-[:Creates]->(target)";
+                "MERGE (block)-[rel:Creates]->(target) " +
+                "ON CREATE SET rel.Counter = 1 " +
+                "ON MATCH SET rel.Counter = rel.Counter + 1";
         }
     }
 }
