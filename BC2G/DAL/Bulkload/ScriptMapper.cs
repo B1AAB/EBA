@@ -56,20 +56,6 @@ namespace BC2G.DAL.Bulkload
 
         protected override string ComposeCypherQuery(string filename)
         {
-            /// There are some corner cases where there exist
-            /// more than one transactions sending value between 
-            /// same input and output (and possibly same value). 
-            /// One of the design decisions of BC2G is to sum 
-            /// these transactions and represent them with one tx.
-            /// However, in order to leave this design decision 
-            /// made in one place, we use `apoc.create.relationship` 
-            /// in the following where if two transfers between 
-            /// same inputs and outputs in a given block are given 
-            /// in the CSV file, that leads to the creation of two 
-            /// edges. Alternative is using `apoc.merge.relationship`
-            /// where it can ensure the source-target-properties 
-            /// tuple is unique. 
-
             /// Loading `script` type: 
             /// Script address should be unique. If simply 
             /// merging on Script Type and Address, it may end-up
@@ -113,21 +99,11 @@ namespace BC2G.DAL.Bulkload
                 $"{Props[Prop.Height].GetLoadExp(":")}" +
                 "}) " +
                 // Create relationship between the block node and the scripts nodes. 
-                $"MERGE (source)-[:Redeems {{{Props[Prop.Height].GetLoadExp(":")}}}]->(block) " +
-                $"MERGE (block)-[:Creates {{{Props[Prop.Height].GetLoadExp(":")}}}]->(target) " +
+                RedeemsEdgeQuery +
+                CreatesEdgeQuery +
                 $"WITH source, target, {l} " +
                 // Create relationship between the source and target scripts,
                 // where the type of the relationship is read from the CSV file.
-                //$"MERGE (source)-[rel:{l}.{Props[Prop.EdgeType].CsvHeader}]->(target) RETURN distinct 'DONE'";
-                /*$"MERGE (source)-" +
-                $"[rel:{l}.{Props[Prop.EdgeType].CsvHeader} {{" +
-                $"{Props[Prop.EdgeValue].GetLoadExp(":")}, " +
-                $"{Props[Prop.Height].GetLoadExp(":")}" +
-                $"}}]->(target) " +
-                $"ON CREATE SET rel.Counter = 0 " +
-                $"ON MATCH SET rel.Counter = rel.Counter + 1 ";*/
-
-
                 "CALL apoc.merge.relationship(" +
                 "source, " + // source
                 $"{l}.{Props[Prop.EdgeType].CsvHeader}, " + // relationship type
@@ -135,11 +111,13 @@ namespace BC2G.DAL.Bulkload
                 $"{Props[Prop.EdgeValue].GetLoadExp(":")}, " + 
                 $"{Props[Prop.Height].GetLoadExp(":")}" +
                 $"}}, " +
-                $"{{}}, " + // on create
+                $"{{ Count : 0}}, " + // on create
                 $"target, " + // target
-                $"{{}}" +
-                $")" + // on update
-                $"YIELD rel RETURN distinct 'DONE'";
+                $"{{}}" + // on update
+                $")" + 
+                $"YIELD rel " +
+                $"SET rel.Count = rel.Count + 1 " +
+                $"RETURN distinct 'DONE'";
         }
     }
 }

@@ -43,6 +43,15 @@ namespace BC2G.DAL.Bulkload
             {Prop.EdgeValue, new Property("Value", FieldType.Float) }
         };
 
+        public static string CreatesEdgeQuery
+        {
+            get { return $"MERGE (block)-[:Creates {{{Props[Prop.Height].GetLoadExp(":")}}}]->(target) "; }
+        }
+        public static string RedeemsEdgeQuery
+        {
+            get { return $"MERGE (source)-[:Redeems {{{Props[Prop.Height].GetLoadExp(":")}}}]->(block) "; }
+        }
+
         public string Filename { get; }
         public string CypherQuery { get; }
 
