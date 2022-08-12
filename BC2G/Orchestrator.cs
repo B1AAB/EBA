@@ -264,7 +264,7 @@ namespace BC2G
                 cT);*/
             //agent.AddressToIdMapper = mapper;
 
-            using var serializer = new CSVSerializer();//mapper);
+            //using var serializer = new CSVSerializer();//mapper);
 
             using var pGraphStat = new PersistentGraphStatistics(
                 Path.Combine(_options.WorkingDir, "blocks_stats.tsv"),
@@ -309,7 +309,7 @@ namespace BC2G
                     state.Stop();
 
                 blockHeightQueue.TryDequeue(out var h);
-                ProcessBlock(agent, gBuffer, serializer, h, /*individualBlocksDir,*/ cT).Wait();
+                ProcessBlock(agent, gBuffer, /*serializer,*/ h, /*individualBlocksDir,*/ cT).Wait();
 
                 if (cT.IsCancellationRequested)
                     state.Stop();
@@ -349,7 +349,7 @@ namespace BC2G
         private async Task ProcessBlock(
             BitcoinAgent agent,
             PersistentGraphBuffer gBuffer,
-            CSVSerializer serializer,
+            //CSVSerializer serializer,
             int height,
             //string individualBlocksDir,
             CancellationToken cT)
