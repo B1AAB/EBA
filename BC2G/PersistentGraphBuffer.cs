@@ -15,14 +15,14 @@ namespace BC2G
 
         public PersistentGraphBuffer(
             GraphDB graphdb,
-            string nodesFilename,
-            string edgesFilename,
+            //string nodesFilename,
+            //string edgesFilename,
             //AddressToIdMapper mapper,
             PersistentGraphStatistics pGraphStats,
             Logger logger,
             CancellationToken cancellationToken) : base(
-                nodesFilename,
-                edgesFilename,
+                //nodesFilename,
+                //edgesFilename,
                 cancellationToken,
                 Node.Header,
                 Edge.Header)
@@ -33,10 +33,10 @@ namespace BC2G
             _logger = logger;
         }
 
-        public override void Serialize(
+        public override string Serialize(
             BlockGraph obj,
-            StreamWriter nodesStream,
-            StreamWriter edgesStream,
+            //StreamWriter nodesStream,
+            //StreamWriter edgesStream,
             CancellationToken cT)
         {
             try
@@ -46,8 +46,9 @@ namespace BC2G
 
                 obj.Stats.StopStopwatch();
                 _pGraphStats.Enqueue(obj.Stats.ToString());
+                return string.Empty;
             }
-            catch (OperationCanceledException) { return; }
+            catch (OperationCanceledException) { return string.Empty; }
         }
 
         public override void PostPersistence(BlockGraph obj)
