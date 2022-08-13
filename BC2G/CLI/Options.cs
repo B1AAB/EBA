@@ -36,6 +36,7 @@ namespace BC2G.CLI
 
         public string WorkingDir { set; get; } = Environment.CurrentDirectory;
         public int GraphSampleCount { set; get; }
+        public int GraphSampleHops { set; get; }
         public GraphSampleMode GraphSampleMode { set; get; } = GraphSampleMode.A;
 
         public string AddressIdMappingFilename { set; get; } = "id_to_address_mapping.tsv";

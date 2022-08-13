@@ -63,7 +63,15 @@ namespace BC2G.CLI
         {
             var countOption = new Option<int>(
                 name: "--count",
-                description: "The number of graphs to sample.");
+                description: "The number of graphs to sample.")
+            { IsRequired = true };
+            countOption.AddAlias("-c");
+
+            var hopsOption = new Option<int>(
+                name: "--hops",
+                description: "The number of hops to reach for sampling.")
+            { IsRequired = true };
+            hopsOption.AddAlias("-h");
 
             // TODO: rework this option.
             var modeOption = new Option<GraphSampleMode>(
@@ -74,6 +82,9 @@ namespace BC2G.CLI
                 isDefault: true,
                 parseArgument: x =>
                 {
+                    if (x.Tokens.Count == 0)
+                        return default;
+
                     var valid = Enum.TryParse(x.Tokens.Single().Value, out GraphSampleMode value);
                     if (!valid)
                         x.ErrorMessage = $"Invalid mode; provided `{value}`, expected `A` or `B`";
@@ -85,6 +96,7 @@ namespace BC2G.CLI
                 description: "TODO: add some description")
             {
                 countOption,
+                hopsOption,
                 //outputDirOption,
                 modeOption
             };
@@ -97,6 +109,7 @@ namespace BC2G.CLI
             _workingDirOption,
             new OptionsBinder(
                 graphSampleCountOption: countOption,
+                graphSampleHopOption: hopsOption,
                 graphSampleModeOption: modeOption));
 
             return cmd;

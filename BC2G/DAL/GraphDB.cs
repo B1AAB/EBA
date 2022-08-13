@@ -316,13 +316,13 @@ namespace BC2G.DAL
             });*/
         }
 
-        public async Task Sampling(int rootNodesCount, int hops, double rootNodesSelectProb = 0.1)
+        public async Task Sampling(int rootNodesCount, int hops, string workingDir, double rootNodesSelectProb = 0.1)
         {
             var includeRndEdges = true;
 
             var rndRootNodes = await GetRandomNodes(rootNodesCount, rootNodesSelectProb);
 
-            var baseOutputDir = @".";
+            var baseOutputDir = workingDir;
             var counter = -1;
             foreach (var rootNode in rndRootNodes)
             {

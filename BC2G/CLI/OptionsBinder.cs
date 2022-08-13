@@ -18,6 +18,7 @@ namespace BC2G.CLI
         private readonly Option<int>? _toExclusiveOption;
         private readonly Option<int>? _granularityOption;
         private readonly Option<int>? _graphSampleCountOption;
+        private readonly Option<int>? _graphSampleHopsOption;
         private readonly Option<GraphSampleMode>? _graphSampleModeOption;
         private readonly Option<string?>? _workingDirOption;
         private readonly Option<string?>? _statusFilenameOption;
@@ -27,6 +28,7 @@ namespace BC2G.CLI
             Option<int>? fromInclusiveOption = null,
             Option<int>? toExclusiveOption = null,
             Option<int>? graphSampleCountOption = null,
+            Option<int>? graphSampleHopOption = null,
             Option<GraphSampleMode>? graphSampleModeOption = null,
             Option<int>? granularityOption = null, 
             Option<string?>? workingDirOption = null,
@@ -36,6 +38,7 @@ namespace BC2G.CLI
             _toExclusiveOption = toExclusiveOption;
             _granularityOption = granularityOption;
             _graphSampleCountOption = graphSampleCountOption;
+            _graphSampleHopsOption = graphSampleHopOption;
             _graphSampleModeOption = graphSampleModeOption;
             _workingDirOption = workingDirOption;
             _statusFilenameOption = statusFilenameOption;
@@ -55,6 +58,9 @@ namespace BC2G.CLI
 
             if (_graphSampleCountOption != null)
                 o.GraphSampleCount = c.ParseResult.GetValueForOption(_graphSampleCountOption);
+
+            if (_graphSampleHopsOption != null)
+                o.GraphSampleHops = c.ParseResult.GetValueForOption(_graphSampleHopsOption);
 
             if (_graphSampleModeOption != null)
                 o.GraphSampleMode = c.ParseResult.GetValueForOption(_graphSampleModeOption);

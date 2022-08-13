@@ -102,7 +102,7 @@ namespace BC2G
             SetupLogger(options);
             SetupGraphDB(options);
 
-            await _graphDB.Sampling(10, 3);
+            await _graphDB.Sampling(options.GraphSampleCount, options.GraphSampleHops, options.WorkingDir);
         }
 
         private async Task<bool> TraverseAsync(Options options)
