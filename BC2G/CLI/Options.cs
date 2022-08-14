@@ -42,6 +42,18 @@ namespace BC2G.CLI
         public int GraphSampleMaxNodeCount { set; get; } = 200;
         public int GraphSampleMinEdgeCount { set; get; } = 3;
         public int GraphSampleMaxEdgeCount { set; get; } = 200;
+        public double GraphSampleRootNodeSelectProb
+        {
+            set
+            {
+                if (value < 0 || value > 1)
+                    _graphSampleRootNodeSelectProb = 1;
+                else
+                    _graphSampleRootNodeSelectProb = value;
+            }
+            get { return _graphSampleRootNodeSelectProb; }
+        }
+        private double _graphSampleRootNodeSelectProb = 0.1;
 
         public string AddressIdMappingFilename { set; get; } = "id_to_address_mapping.tsv";
         //public bool CreatePerBlockFiles { get; set; } = false;

@@ -97,6 +97,17 @@ namespace BC2G.CLI
             var minEdgeCountOption = new Option<int>("--min-edge-count");
             var maxEdgeCountOption = new Option<int>("--max-edge-count");
 
+            var rootNodeSelectProbOption = new Option<double>(
+                "--root-node-select-prob",
+                description: "The value should be between 0 and 1 (inclusive), " +
+                "if the given value is not in this range, it will be replaced " +
+                "by the default value.", 
+                // TODO: how can this be fixed?
+                // This is an over-kill, we should need to
+                // get an instance of this type only to get
+                // the default value of a property. 
+                getDefaultValue: () => new Options().GraphSampleRootNodeSelectProb);
+
             var cmd = new Command(
                 name: "sample",
                 description: "TODO: add some description")
@@ -107,6 +118,7 @@ namespace BC2G.CLI
                 maxNodeCountOption,
                 minEdgeCountOption,
                 maxEdgeCountOption,
+                rootNodeSelectProbOption,
                 modeOption
             };
 
@@ -122,6 +134,7 @@ namespace BC2G.CLI
                 graphSampleMinEdgeCount: minEdgeCountOption,
                 graphSampleMaxEdgeCount: maxEdgeCountOption,
                 graphSampleModeOption: modeOption,
+                graphSampleRootNodeSelectProb: rootNodeSelectProbOption,
                 workingDirOption: _workingDirOption,
                 statusFilenameOption: _statusFilenameOption));
 

@@ -24,6 +24,7 @@ namespace BC2G.CLI
         private readonly Option<int>? _graphSampleMinEdgeCount;
         private readonly Option<int>? _graphSampleMaxEdgeCount;
         private readonly Option<GraphSampleMode>? _graphSampleModeOption;
+        private readonly Option<double>? _graphSampleRootNodeSelectProb;
         private readonly Option<string>? _workingDirOption;
         private readonly Option<string>? _statusFilenameOption;
 
@@ -37,6 +38,7 @@ namespace BC2G.CLI
             Option<int>? graphSampleMinEdgeCount = null,
             Option<int>? graphSampleMaxEdgeCount = null,
             Option<GraphSampleMode>? graphSampleModeOption = null,
+            Option<double>? graphSampleRootNodeSelectProb = null,
             Option<int>? granularityOption = null,
             Option<string>? workingDirOption = null,
             Option<string>? statusFilenameOption = null)
@@ -51,6 +53,7 @@ namespace BC2G.CLI
             _graphSampleMinEdgeCount = graphSampleMinEdgeCount;
             _graphSampleMaxEdgeCount = graphSampleMaxEdgeCount;
             _graphSampleModeOption = graphSampleModeOption;
+            _graphSampleRootNodeSelectProb = graphSampleRootNodeSelectProb;
             _workingDirOption = workingDirOption;
             _statusFilenameOption = statusFilenameOption;
         }
@@ -69,6 +72,7 @@ namespace BC2G.CLI
             o.GraphSampleMinEdgeCount = GetValue(o.GraphSampleMinEdgeCount, _graphSampleMinEdgeCount, c);
             o.GraphSampleMaxEdgeCount = GetValue(o.GraphSampleMaxEdgeCount, _graphSampleMaxEdgeCount, c);
             o.GraphSampleMode = GetValue(o.GraphSampleMode, _graphSampleModeOption, c);
+            o.GraphSampleRootNodeSelectProb = GetValue(o.GraphSampleRootNodeSelectProb, _graphSampleRootNodeSelectProb, c);
 
             o.WorkingDir = GetValue(o.WorkingDir, _workingDirOption, c);
             o.StatusFile = GetValue(o.StatusFile, _statusFilenameOption, c);

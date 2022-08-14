@@ -317,9 +317,11 @@ namespace BC2G.DAL
             });*/
         }
 
-        public async Task Sampling(Options options, double rootNodesSelectProb = 0.1)
+        public async Task Sampling(Options options)
         {
-            var rndRootNodes = await GetRandomNodes(options.GraphSampleCount, rootNodesSelectProb);
+            var rndRootNodes = await GetRandomNodes(
+                options.GraphSampleCount, 
+                options.GraphSampleRootNodeSelectProb);
 
             var baseOutputDir = options.WorkingDir;
             var counter = -1;
