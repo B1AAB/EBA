@@ -16,7 +16,8 @@ namespace BC2G.CLI
         private readonly Option<string> _workingDirOption = new(
             name: "--working-dir",
             description: "The directory where all the data related " +
-            "to this execution will be stored.");
+            "to this execution will be stored.",
+            getDefaultValue: () => new Options().WorkingDir);
 
         private readonly Option<string> _resumeOption = new(
             name: "--resume",
@@ -26,18 +27,10 @@ namespace BC2G.CLI
         private readonly Option<string> _statusFilenameOption = new(
             name: "--status-filename",
             description: "The JSON file to store the execution status.",
-            isDefault: true,
-            parseArgument: x =>
-            {
-                if (x.Tokens.Count == 0)
-                    return "status.json";
-
-                var filePath = x.Tokens.Single().Value;
-                return filePath;
-            });
+            getDefaultValue: () => new Options().StatusFile);
 
         public CommandLineInterface(
-            Func<Options, Task> BitcoinTraverseCmdHandler, 
+            Func<Options, Task> BitcoinTraverseCmdHandler,
             Func<Options, Task> SampleCmdHandler)
         {
             _rootCmd = new RootCommand(description: "TODO: some description ...")
@@ -61,6 +54,12 @@ namespace BC2G.CLI
 
         private Command GetSampleCmd(Func<Options, Task> handler)
         {
+            // TODO: how can this be fixed?
+            // This is an over-kill, we should need to
+            // create an instance of this type only to get
+            // the default value of a property. 
+            var o = new Options();
+
             var countOption = new Option<int>(
                 name: "--count",
                 description: "The number of graphs to sample.")
@@ -91,22 +90,27 @@ namespace BC2G.CLI
                     return value;
                 });
 
-            var minNodeCountOption = new Option<int>("--min-node-count");
-            var maxNodeCountOption = new Option<int>("--max-node-count");
+            var minNodeCountOption = new Option<int>(
+                "--min-node-count",
+                getDefaultValue: () => o.GraphSampleMinNodeCount);
+            var maxNodeCountOption = new Option<int>(
+                "--max-node-count",
+                getDefaultValue: () => o.GraphSampleMaxNodeCount);
 
-            var minEdgeCountOption = new Option<int>("--min-edge-count");
-            var maxEdgeCountOption = new Option<int>("--max-edge-count");
+            var minEdgeCountOption = new Option<int>(
+                "--min-edge-count",
+                getDefaultValue: () => o.GraphSampleMinEdgeCount);
+            var maxEdgeCountOption = new Option<int>(
+                "--max-edge-count",
+                getDefaultValue: () => o.GraphSampleMaxEdgeCount);
 
             var rootNodeSelectProbOption = new Option<double>(
                 "--root-node-select-prob",
                 description: "The value should be between 0 and 1 (inclusive), " +
                 "if the given value is not in this range, it will be replaced " +
-                "by the default value.", 
-                // TODO: how can this be fixed?
-                // This is an over-kill, we should need to
-                // get an instance of this type only to get
-                // the default value of a property. 
-                getDefaultValue: () => new Options().GraphSampleRootNodeSelectProb);
+                "by the default value.",
+
+                getDefaultValue: () => o.GraphSampleRootNodeSelectProb);
 
             var cmd = new Command(
                 name: "sample",
