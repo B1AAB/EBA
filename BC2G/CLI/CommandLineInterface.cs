@@ -91,6 +91,12 @@ namespace BC2G.CLI
                     return value;
                 });
 
+            var minNodeCountOption = new Option<int>("--min-node-count");
+            var maxNodeCountOption = new Option<int>("--max-node-count");
+
+            var minEdgeCountOption = new Option<int>("--min-edge-count");
+            var maxEdgeCountOption = new Option<int>("--max-edge-count");
+
             var cmd = new Command(
                 name: "sample",
                 description: "TODO: add some description")
@@ -108,6 +114,10 @@ namespace BC2G.CLI
             new OptionsBinder(
                 graphSampleCountOption: countOption,
                 graphSampleHopOption: hopsOption,
+                graphSampleMinNodeCount: minNodeCountOption,
+                graphSampleMaxNodeCount: maxNodeCountOption,
+                graphSampleMinEdgeCount: minEdgeCountOption,
+                graphSampleMaxEdgeCount: maxEdgeCountOption,
                 graphSampleModeOption: modeOption,
                 workingDirOption: _workingDirOption,
                 statusFilenameOption: _statusFilenameOption));

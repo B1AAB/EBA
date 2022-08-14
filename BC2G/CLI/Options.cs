@@ -38,6 +38,10 @@ namespace BC2G.CLI
         public int GraphSampleCount { set; get; }
         public int GraphSampleHops { set; get; }
         public GraphSampleMode GraphSampleMode { set; get; } = GraphSampleMode.A;
+        public int GraphSampleMinNodeCount { set; get; } = 3;
+        public int GraphSampleMaxNodeCount { set; get; } = 200;
+        public int GraphSampleMinEdgeCount { set; get; } = 3;
+        public int GraphSampleMaxEdgeCount { set; get; } = 200;
 
         public string AddressIdMappingFilename { set; get; } = "id_to_address_mapping.tsv";
         //public bool CreatePerBlockFiles { get; set; } = false;

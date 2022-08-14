@@ -19,6 +19,10 @@ namespace BC2G.CLI
         private readonly Option<int>? _granularityOption;
         private readonly Option<int>? _graphSampleCountOption;
         private readonly Option<int>? _graphSampleHopsOption;
+        private readonly Option<int>? _graphSampleMinNodeCount;
+        private readonly Option<int>? _graphSampleMaxNodeCount;
+        private readonly Option<int>? _graphSampleMinEdgeCount;
+        private readonly Option<int>? _graphSampleMaxEdgeCount;
         private readonly Option<GraphSampleMode>? _graphSampleModeOption;
         private readonly Option<string>? _workingDirOption;
         private readonly Option<string>? _statusFilenameOption;
@@ -29,6 +33,10 @@ namespace BC2G.CLI
             Option<int>? toExclusiveOption = null,
             Option<int>? graphSampleCountOption = null,
             Option<int>? graphSampleHopOption = null,
+            Option<int>? graphSampleMinNodeCount = null,
+            Option<int>? graphSampleMaxNodeCount = null,
+            Option<int>? graphSampleMinEdgeCount = null,
+            Option<int>? graphSampleMaxEdgeCount = null,
             Option<GraphSampleMode>? graphSampleModeOption = null,
             Option<int>? granularityOption = null,
             Option<string>? workingDirOption = null,
@@ -39,6 +47,10 @@ namespace BC2G.CLI
             _granularityOption = granularityOption;
             _graphSampleCountOption = graphSampleCountOption;
             _graphSampleHopsOption = graphSampleHopOption;
+            _graphSampleMinNodeCount = graphSampleMinNodeCount;
+            _graphSampleMaxNodeCount = graphSampleMaxNodeCount;
+            _graphSampleMinEdgeCount = graphSampleMinEdgeCount;
+            _graphSampleMaxEdgeCount = graphSampleMaxEdgeCount;
             _graphSampleModeOption = graphSampleModeOption;
             _workingDirOption = workingDirOption;
             _statusFilenameOption = statusFilenameOption;
@@ -61,6 +73,18 @@ namespace BC2G.CLI
 
             if (_graphSampleHopsOption != null)
                 o.GraphSampleHops = c.ParseResult.GetValueForOption(_graphSampleHopsOption);
+
+            if (_graphSampleMinNodeCount != null)
+                o.GraphSampleMinNodeCount = c.ParseResult.GetValueForOption(_graphSampleMinNodeCount);
+
+            if (_graphSampleMaxNodeCount != null)
+                o.GraphSampleMaxNodeCount = c.ParseResult.GetValueForOption(_graphSampleMaxNodeCount);
+
+            if (_graphSampleMinEdgeCount != null)
+                o.GraphSampleMinEdgeCount = c.ParseResult.GetValueForOption(_graphSampleMinEdgeCount);
+
+            if (_graphSampleMaxNodeCount != null)
+                o.GraphSampleMaxEdgeCount = c.ParseResult.GetValueForOption(_graphSampleMaxEdgeCount);
 
             if (_graphSampleModeOption != null)
                 o.GraphSampleMode = c.ParseResult.GetValueForOption(_graphSampleModeOption);
