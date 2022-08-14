@@ -1,4 +1,5 @@
 ﻿using BC2G.Blockchains;
+using BC2G.CLI;
 using BC2G.DAL.Bulkload;
 using BC2G.Graph;
 using BC2G.Model;
@@ -316,19 +317,19 @@ namespace BC2G.DAL
             });*/
         }
 
-        public async Task Sampling(int rootNodesCount, int hops, string workingDir, double rootNodesSelectProb = 0.1)
+        public async Task Sampling(Options options, double rootNodesSelectProb = 0.1)
         {
             var includeRndEdges = true;
 
-            var rndRootNodes = await GetRandomNodes(rootNodesCount, rootNodesSelectProb);
+            var rndRootNodes = await GetRandomNodes(options.GraphSampleCount, rootNodesSelectProb);
 
-            var baseOutputDir = workingDir;
+            var baseOutputDir = options.WorkingDir;
             var counter = -1;
             foreach (var rootNode in rndRootNodes)
             {
                 var features = new Dictionary<string, (List<double[]>, List<double[]>, List<int[]>, List<int[]>)>();
 
-                (var nodes, var edges) = await GetNeighbors(rootNode.Address, hops);
+                (var nodes, var edges) = await GetNeighbors(rootNode.Address, options.GraphSampleHops);
 
                 if (!CanUseGraph(nodes, edges, tolerance: 0))
                     continue;
