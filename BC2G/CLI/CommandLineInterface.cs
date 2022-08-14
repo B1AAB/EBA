@@ -13,17 +13,17 @@ namespace BC2G.CLI
     internal class CommandLineInterface
     {
         private readonly RootCommand _rootCmd;
-        private readonly Option<string?> _workingDirOption = new(
+        private readonly Option<string> _workingDirOption = new(
             name: "--working-dir",
             description: "The directory where all the data related " +
             "to this execution will be stored.");
 
-        private readonly Option<string?> _resumeOption = new(
+        private readonly Option<string> _resumeOption = new(
             name: "--resume",
             description: "The absoloute path to the `status` file " +
             "that can be used to resume a canceled task.");
 
-        private readonly Option<string?> _statusFilenameOption = new(
+        private readonly Option<string> _statusFilenameOption = new(
             name: "--status-filename",
             description: "The JSON file to store the execution status.",
             isDefault: true,
@@ -101,16 +101,16 @@ namespace BC2G.CLI
                 modeOption
             };
 
-            cmd.SetHandler(async (workingDir, options) =>
+            cmd.SetHandler(async (options) =>
             {
-                options.WorkingDir = workingDir;
                 await handler(options);
             },
-            _workingDirOption,
             new OptionsBinder(
                 graphSampleCountOption: countOption,
                 graphSampleHopOption: hopsOption,
-                graphSampleModeOption: modeOption));
+                graphSampleModeOption: modeOption,
+                workingDirOption: _workingDirOption,
+                statusFilenameOption: _statusFilenameOption));
 
             return cmd;
         }
