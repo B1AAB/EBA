@@ -319,8 +319,6 @@ namespace BC2G.DAL
 
         public async Task Sampling(Options options, double rootNodesSelectProb = 0.1)
         {
-            var includeRndEdges = true;
-
             var rndRootNodes = await GetRandomNodes(options.GraphSampleCount, rootNodesSelectProb);
 
             var baseOutputDir = options.WorkingDir;
@@ -339,7 +337,7 @@ namespace BC2G.DAL
                     maxEdgeCount: options.GraphSampleMaxEdgeCount))
                     continue;
 
-                if (includeRndEdges)
+                if (options.GraphSampleMode == GraphSampleMode.A)
                 {
                     (var rnodes, var redges) = await GetRandomEdges(edges.Count);
 
