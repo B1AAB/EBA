@@ -103,7 +103,10 @@ namespace BC2G.CLI
             {
                 countOption,
                 hopsOption,
-                //outputDirOption,
+                minNodeCountOption,
+                maxNodeCountOption,
+                minEdgeCountOption,
+                maxEdgeCountOption,
                 modeOption
             };
 

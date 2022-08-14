@@ -331,7 +331,12 @@ namespace BC2G.DAL
 
                 (var nodes, var edges) = await GetNeighbors(rootNode.Address, options.GraphSampleHops);
 
-                if (!CanUseGraph(nodes, edges, tolerance: 0))
+                if (!CanUseGraph(
+                    nodes, edges, tolerance: 0, 
+                    minNodeCount: options.GraphSampleMinNodeCount, 
+                    maxNodeCount: options.GraphSampleMaxNodeCount, 
+                    minEdgeCount: options.GraphSampleMinEdgeCount, 
+                    maxEdgeCount: options.GraphSampleMaxEdgeCount))
                     continue;
 
                 if (includeRndEdges)

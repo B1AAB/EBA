@@ -28,7 +28,6 @@ namespace BC2G.CLI
         private readonly Option<string>? _statusFilenameOption;
 
         public OptionsBinder(
-
             Option<int>? fromInclusiveOption = null,
             Option<int>? toExclusiveOption = null,
             Option<int>? graphSampleCountOption = null,
@@ -59,51 +58,39 @@ namespace BC2G.CLI
         protected override Options GetBoundValue(BindingContext c)
         {
             var o = new Options();
-            if (_fromInclusiveOption != null)
-                o.FromInclusive = c.ParseResult.GetValueForOption(_fromInclusiveOption);
+            o.FromInclusive = GetValue(o.FromInclusive, _fromInclusiveOption, c);
+            o.ToExclusive = GetValue(o.ToExclusive, _toExclusiveOption, c);
+            o.Granularity = GetValue(o.Granularity, _granularityOption, c);
 
-            if (_toExclusiveOption != null)
-                o.ToExclusive = c.ParseResult.GetValueForOption(_toExclusiveOption);
+            o.GraphSampleCount = GetValue(o.GraphSampleCount, _graphSampleCountOption, c);
+            o.GraphSampleHops = GetValue(o.GraphSampleHops, _graphSampleHopsOption, c);
+            o.GraphSampleMinNodeCount = GetValue(o.GraphSampleMinNodeCount, _graphSampleMinNodeCount, c);
+            o.GraphSampleMaxNodeCount = GetValue(o.GraphSampleMaxNodeCount, _graphSampleMaxNodeCount, c);
+            o.GraphSampleMinEdgeCount = GetValue(o.GraphSampleMinEdgeCount, _graphSampleMinEdgeCount, c);
+            o.GraphSampleMaxEdgeCount = GetValue(o.GraphSampleMaxEdgeCount, _graphSampleMaxEdgeCount, c);
+            o.GraphSampleMode = GetValue(o.GraphSampleMode, _graphSampleModeOption, c);
 
-            if (_granularityOption != null)
-                o.Granularity = c.ParseResult.GetValueForOption(_granularityOption);
-
-            if (_graphSampleCountOption != null)
-                o.GraphSampleCount = c.ParseResult.GetValueForOption(_graphSampleCountOption);
-
-            if (_graphSampleHopsOption != null)
-                o.GraphSampleHops = c.ParseResult.GetValueForOption(_graphSampleHopsOption);
-
-            if (_graphSampleMinNodeCount != null)
-                o.GraphSampleMinNodeCount = c.ParseResult.GetValueForOption(_graphSampleMinNodeCount);
-
-            if (_graphSampleMaxNodeCount != null)
-                o.GraphSampleMaxNodeCount = c.ParseResult.GetValueForOption(_graphSampleMaxNodeCount);
-
-            if (_graphSampleMinEdgeCount != null)
-                o.GraphSampleMinEdgeCount = c.ParseResult.GetValueForOption(_graphSampleMinEdgeCount);
-
-            if (_graphSampleMaxNodeCount != null)
-                o.GraphSampleMaxEdgeCount = c.ParseResult.GetValueForOption(_graphSampleMaxEdgeCount);
-
-            if (_graphSampleModeOption != null)
-                o.GraphSampleMode = c.ParseResult.GetValueForOption(_graphSampleModeOption);
-
-            if (_workingDirOption != null)
-            {
-                var wd = c.ParseResult.GetValueForOption(_workingDirOption);
-                if (wd != null)
-                    o.WorkingDir = wd;
-            }
-
-            if (_statusFilenameOption != null)
-            {
-                var sf = c.ParseResult.GetValueForOption(_statusFilenameOption);
-                if (sf != null)
-                    o.StatusFile = sf;
-            }
+            o.WorkingDir = GetValue(o.WorkingDir, _workingDirOption, c);
+            o.StatusFile = GetValue(o.StatusFile, _statusFilenameOption, c);
 
             return o;
+        }
+
+        private static T GetValue<T>(T defaultValue, Option<T>? option, BindingContext context)
+        {
+            if (option == null)
+                return defaultValue;
+
+            var valueGiven = context.ParseResult.FindResultFor(option) != null;
+
+            if (!valueGiven)
+                return defaultValue;
+
+            var value = context.ParseResult.GetValueForOption(option);
+            if (value == null)
+                return defaultValue;
+
+            return value;
         }
     }
 }
