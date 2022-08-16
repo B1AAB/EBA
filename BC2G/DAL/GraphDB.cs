@@ -323,7 +323,7 @@ namespace BC2G.DAL
                 options.GraphSampleCount, 
                 options.GraphSampleRootNodeSelectProb);
 
-            var baseOutputDir = options.WorkingDir;
+            var baseOutputDir = Path.Join(options.WorkingDir, "sampled_graphs");
             var counter = -1;
             foreach (var rootNode in rndRootNodes)
             {
@@ -343,7 +343,12 @@ namespace BC2G.DAL
                 {
                     (var rnodes, var redges) = await GetRandomEdges(edges.Count);
 
-                    if (!CanUseGraph(rnodes, redges, maxNodeCount: nodes.Count, maxEdgeCount: edges.Count))
+                    if (!CanUseGraph(
+                        rnodes, redges, 
+                        minNodeCount: options.GraphSampleMinNodeCount, 
+                        maxNodeCount: nodes.Count, 
+                        minEdgeCount: options.GraphSampleMinEdgeCount, 
+                        maxEdgeCount: edges.Count))
                         continue;
 
                     (var rNodeFeatures, var rEdgeFeatures, var rPairIndices) = ToMatrix(rnodes, redges);
@@ -383,8 +388,8 @@ namespace BC2G.DAL
             // multiply matrixes of very large size 2**32 or even
             // larger. There should be much better workarounds at
             // Tensorflow level, but for now, we limit the size of graphs.
-            if (nodes.Count < minNodeCount - (minNodeCount * tolerance) || nodes.Count > maxNodeCount + (maxNodeCount * tolerance) ||
-                edges.Count < minEdgeCount - (minEdgeCount * tolerance) || edges.Count > maxEdgeCount + (maxEdgeCount * tolerance))
+            if (nodes.Count <= minNodeCount - (minNodeCount * tolerance) || nodes.Count >= maxNodeCount + (maxNodeCount * tolerance) ||
+                edges.Count <= minEdgeCount - (minEdgeCount * tolerance) || edges.Count >= maxEdgeCount + (maxEdgeCount * tolerance))
                 return false;
 
             return true;
