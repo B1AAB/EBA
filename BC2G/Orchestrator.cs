@@ -309,6 +309,7 @@ namespace BC2G
                     state.Stop();
 
                 blockHeightQueue.TryDequeue(out var h);
+                Logger.LogStartProcessingBlock(h);
                 ProcessBlock(agent, gBuffer, /*serializer,*/ h, /*individualBlocksDir,*/ cT).Wait();
 
                 if (cT.IsCancellationRequested)
@@ -356,8 +357,6 @@ namespace BC2G
         {
             if (cT.IsCancellationRequested) return;
 
-            Logger.LogStartProcessingBlock(height);
-
             BlockGraph graph;
             try { graph = await agent.GetGraph(height); }
             catch (OperationCanceledException) { return; }
@@ -376,11 +375,12 @@ namespace BC2G
             }
             catch (OperationCanceledException) { return; }*/
 
+            /*
             Logger.LogFinishProcessingBlock(
                 graph.Height,
                 1, //_mapper.NodesCount,
                 graph.EdgeCount,
-                graph.Stats.Runtime.TotalSeconds);
+                graph.Stats.Runtime.TotalSeconds);*/
 
             /*if (_options.CreatePerBlockFiles)
                 serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"));*/
