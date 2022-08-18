@@ -23,9 +23,9 @@ namespace BC2G
             CancellationToken cancellationToken) : base(
                 //nodesFilename,
                 //edgesFilename,
-                cancellationToken,
+                cancellationToken/*,
                 Node.Header,
-                Edge.Header)
+                Edge.Header*/)
         {
             _graphDB = graphdb;
             //_mapper = mapper;

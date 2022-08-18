@@ -83,9 +83,9 @@ namespace BC2G
         public PersistentObject(
             //string nodesFilename, 
             //string edgesFilename,
-            CancellationToken cT,
-            string nodesHeader = "",
-            string edgesHeader = "")
+            CancellationToken cT)//,
+            /*string nodesHeader = "",
+            string edgesHeader = "")*/
         {
             /*
             if (!File.Exists(nodesFilename))
