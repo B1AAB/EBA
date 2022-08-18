@@ -25,7 +25,9 @@ namespace BC2G.DAL
         /// Ref: https://neo4j.com/blog/bulk-data-import-neo4j-3-0/
         /// </summary>
         private const int _maxEdgesInCSV = 50000;
-        private int _edgesInCsvCount;
+        private int _scriptEdgesInCsvCount;
+        private int _coinbaseEdgesInCsvCount;
+        private int _blocksInCsvCount;
 
         private readonly BlockMapper _blockMapper;
         private readonly ScriptMapper _scriptMapper;
@@ -34,10 +36,10 @@ namespace BC2G.DAL
         ~GraphDB() => Dispose(false);
 
         public GraphDB(
-            string uri, 
-            string user, 
-            string password, 
-            string neo4jImportDirectory, 
+            string uri,
+            string user,
+            string password,
+            string neo4jImportDirectory,
             string neo4jCypherImportPrefix)
         {
             _driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
@@ -66,7 +68,7 @@ namespace BC2G.DAL
             var v = x.GetType().GetProperty("Id").GetValue(x);*/
 
             // TEMP
-            
+
         }
 
         /* TODO:
@@ -97,42 +99,55 @@ namespace BC2G.DAL
 
             var edges = graph.Edges;
 
-            if (_edgesInCsvCount != 0 && _edgesInCsvCount + edges.Count >= _maxEdgesInCSV)
+            if (_scriptEdgesInCsvCount != 0 && _scriptEdgesInCsvCount + edges.Count >= _maxEdgesInCSV)
                 BulkImportStagedAndReset();
 
-            if (_edgesInCsvCount == 0)
+            if (_scriptEdgesInCsvCount == 0)
+            {
+                using var eWriter = new StreamWriter(_scriptMapper.Filename);
+                eWriter.WriteLine(_scriptMapper.GetCsvHeader());
+            }
+
+            if (_blocksInCsvCount == 0)
             {
                 using var bWriter = new StreamWriter(_blockMapper.Filename);
                 bWriter.WriteLine(_blockMapper.GetCsvHeader());
+            }
 
-                using var eWriter = new StreamWriter(_scriptMapper.Filename);
-                eWriter.WriteLine(_scriptMapper.GetCsvHeader());
-
+            if (_coinbaseEdgesInCsvCount == 0)
+            {
                 using var cWriter = new StreamWriter(_coinbaseMapper.Filename);
                 cWriter.WriteLine(_coinbaseMapper.GetCsvHeader());
             }
 
             using var blocksWriter = new StreamWriter(_blockMapper.Filename, append: true);
             blocksWriter.WriteLine(_blockMapper.ToCsv(graph));
+            _blocksInCsvCount++;
 
             using var edgesWriter = new StreamWriter(_scriptMapper.Filename, append: true);
             using var coinbaseWrite = new StreamWriter(_coinbaseMapper.Filename, append: true);
             foreach (var edge in edges)
                 if (edge.Source.Address == Coinbase)
+                {
+                    _coinbaseEdgesInCsvCount++;
                     coinbaseWrite.WriteLine(_coinbaseMapper.ToCsv(edge));
+                }
                 else
+                {
+                    _scriptEdgesInCsvCount++;
                     edgesWriter.WriteLine(_scriptMapper.ToCsv(edge));
-
-            _edgesInCsvCount += edges.Count;
+                }
         }
 
         private void BulkImportStagedAndReset()
         {
             BulkImport();
-            File.Delete(_scriptMapper.Filename);
             File.Delete(_blockMapper.Filename);
+            File.Delete(_scriptMapper.Filename);
             File.Delete(_coinbaseMapper.Filename);
-            _edgesInCsvCount = 0;
+            _scriptEdgesInCsvCount = 0;
+            _coinbaseEdgesInCsvCount = 0;
+            _blocksInCsvCount = 0;
         }
 
         public void FinishBulkImport()
@@ -165,19 +180,25 @@ namespace BC2G.DAL
             });
             blockBulkLoadResult.Wait();
 
-            var edgeBulkLoadResult = session.WriteTransactionAsync(async x =>
+            if (_scriptEdgesInCsvCount > 0)
             {
-                var result = await x.RunAsync(_scriptMapper.CypherQuery);
-                return result.SingleAsync().Result[0].As<string>();
-            });
-            edgeBulkLoadResult.Wait();
+                var edgeBulkLoadResult = session.WriteTransactionAsync(async x =>
+                {
+                    var result = await x.RunAsync(_scriptMapper.CypherQuery);
+                    return result.SingleAsync().Result[0].As<string>();
+                });
+                edgeBulkLoadResult.Wait();
+            }
 
-            var coinbaseEdgeBulkLoadResult = session.WriteTransactionAsync(async x =>
+            if (_coinbaseEdgesInCsvCount > 0)
             {
-                var result = await x.RunAsync(_coinbaseMapper.CypherQuery);
-                return await result.ToListAsync();
-            });
-            coinbaseEdgeBulkLoadResult.Wait();
+                var coinbaseEdgeBulkLoadResult = session.WriteTransactionAsync(async x =>
+                {
+                    var result = await x.RunAsync(_coinbaseMapper.CypherQuery);
+                    return await result.ToListAsync();
+                });
+                coinbaseEdgeBulkLoadResult.Wait();
+            }
 
             // File deleted before the above query is finished?!!! 
             // One or more errors occurred. (Couldn't load the external resource at:
@@ -320,7 +341,7 @@ namespace BC2G.DAL
         public async Task Sampling(Options options)
         {
             var rndRootNodes = await GetRandomNodes(
-                options.GraphSampleCount, 
+                options.GraphSampleCount,
                 options.GraphSampleRootNodeSelectProb);
 
             var baseOutputDir = Path.Join(options.WorkingDir, "sampled_graphs");
@@ -332,10 +353,10 @@ namespace BC2G.DAL
                 (var nodes, var edges) = await GetNeighbors(rootNode.Address, options.GraphSampleHops);
 
                 if (!CanUseGraph(
-                    nodes, edges, tolerance: 0, 
-                    minNodeCount: options.GraphSampleMinNodeCount, 
-                    maxNodeCount: options.GraphSampleMaxNodeCount, 
-                    minEdgeCount: options.GraphSampleMinEdgeCount, 
+                    nodes, edges, tolerance: 0,
+                    minNodeCount: options.GraphSampleMinNodeCount,
+                    maxNodeCount: options.GraphSampleMaxNodeCount,
+                    minEdgeCount: options.GraphSampleMinEdgeCount,
                     maxEdgeCount: options.GraphSampleMaxEdgeCount))
                     continue;
 
@@ -344,10 +365,10 @@ namespace BC2G.DAL
                     (var rnodes, var redges) = await GetRandomEdges(edges.Count);
 
                     if (!CanUseGraph(
-                        rnodes, redges, 
-                        minNodeCount: options.GraphSampleMinNodeCount, 
-                        maxNodeCount: nodes.Count, 
-                        minEdgeCount: options.GraphSampleMinEdgeCount, 
+                        rnodes, redges,
+                        minNodeCount: options.GraphSampleMinNodeCount,
+                        maxNodeCount: nodes.Count,
+                        minEdgeCount: options.GraphSampleMinEdgeCount,
                         maxEdgeCount: edges.Count))
                         continue;
 
@@ -603,4 +624,3 @@ namespace BC2G.DAL
         }
     }
 }
-
