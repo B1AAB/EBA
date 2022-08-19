@@ -55,8 +55,6 @@ namespace BC2G
         {
             _logger.LogFinishProcessingBlock(
                 obj.Height,
-                1, // TODO: fixme.  //_mapper.NodesCount,
-                obj.EdgeCount,
                 obj.Stats.Runtime.TotalSeconds);
         }
     }

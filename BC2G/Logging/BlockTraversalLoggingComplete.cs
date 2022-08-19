@@ -26,9 +26,9 @@
                 $"\r    Active Blocks: {ActiveBlocks}",
                 $"\r    Completed:     {Completed,9:n0}/{Total:n0} ({Percentage:f2}%)",
                 $"\r    Block Rate:    {BlockRuntimeMovingAvg.Speed,9} blocks/sec",
-                $"\r    Edge Rate:     {EdgeRuntimeMovingAvg.Speed,9} edges/sec",
-                $"\r    Nodes:         {NodesCount,9:n0}",
-                $"\r    Edges:         {EdgesCount,9:n0}"
+                //$"\r    Edge Rate:     {EdgeRuntimeMovingAvg.Speed,9} edges/sec",
+                //$"\r    Nodes:         {NodesCount,9:n0}",
+                //$"\r    Edges:         {EdgesCount,9:n0}"
             };
             AsyncConsole.WriteLines(msgs, _colors);
         }

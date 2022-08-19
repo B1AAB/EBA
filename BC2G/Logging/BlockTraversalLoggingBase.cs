@@ -15,12 +15,6 @@ namespace BC2G.Logging
         public int Completed { get { return _completed; } }
         private int _completed;
 
-        public int NodesCount { get { return _nodesCount; } }
-        private int _nodesCount;
-
-        public int EdgesCount { get { return _edgesCount; } }
-        private int _edgesCount;
-
         public string ActiveBlocks
         {
             get
@@ -34,7 +28,6 @@ namespace BC2G.Logging
         public int ActiveBlocksCount { get { return _activeBlocks.Count; } }
 
         public MovingAverage BlockRuntimeMovingAvg { get; }
-        public MovingAverage EdgeRuntimeMovingAvg { get; }
 
         private const string _cancelling = "Cancelling ... do not turn off your computer.";
 
@@ -49,7 +42,6 @@ namespace BC2G.Logging
             Total = blocksCount; //ToExclusive - FromInclusive;
 
             BlockRuntimeMovingAvg = new MovingAverage(MovingAvgWindowSize);
-            EdgeRuntimeMovingAvg = new MovingAverage(MovingAvgWindowSize);
 
             // The exception is thrown with the message 'The handle is invalid.'
             // only when running the tests, because Xunit does not have a console.
@@ -71,28 +63,18 @@ namespace BC2G.Logging
 
         public virtual string Log(
             int height,
-            int allNodesCount,
-            int addedEdgesCount,
             double runtime)
         {
             _activeBlocks.TryRemove(height, out bool _);
 
             Interlocked.Increment(ref _completed);
-            Interlocked.Add(ref _edgesCount, addedEdgesCount);
-            _nodesCount = allNodesCount;
-
-            BlockRuntimeMovingAvg.Add(runtime);
-            EdgeRuntimeMovingAvg.Add(runtime / addedEdgesCount);
 
             ToConsole();
 
             return
                 $"Active:{ActiveBlocksCount};" +
                 $"Completed:{Completed}/{Total};" +
-                $"{BlockRuntimeMovingAvg.Speed}bps;" +
-                $"{EdgeRuntimeMovingAvg.Speed}eps;" +
-                $"N:{NodesCount};" +
-                $"E:{EdgesCount}.";
+                $"{BlockRuntimeMovingAvg.Speed}bps.";
         }
 
         protected abstract void ToConsole();
