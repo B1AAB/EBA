@@ -28,6 +28,7 @@ namespace BC2G.DAL
         private int _scriptEdgesInCsvCount;
         private int _coinbaseEdgesInCsvCount;
         private int _blocksInCsvCount;
+        private readonly bool _skipLoad;
 
         private readonly BlockMapper _blockMapper;
         private readonly ScriptMapper _scriptMapper;
@@ -40,7 +41,8 @@ namespace BC2G.DAL
             string user,
             string password,
             string neo4jImportDirectory,
-            string neo4jCypherImportPrefix)
+            string neo4jCypherImportPrefix,
+            bool skipLoad = false)
         {
             _driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
 
@@ -53,6 +55,8 @@ namespace BC2G.DAL
             _blockMapper = new BlockMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
             _scriptMapper = new ScriptMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
             _coinbaseMapper = new CoinbaseMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
+
+            _skipLoad = skipLoad;
 
             EnsureCoinbaseNode().Wait();
             EnsureConstraints().Wait();
@@ -141,10 +145,14 @@ namespace BC2G.DAL
 
         private void BulkImportStagedAndReset()
         {
-            BulkImport();
-            File.Delete(_blockMapper.Filename);
-            File.Delete(_scriptMapper.Filename);
-            File.Delete(_coinbaseMapper.Filename);
+            if (_skipLoad)
+            {
+                BulkImport();
+                File.Delete(_blockMapper.Filename);
+                File.Delete(_scriptMapper.Filename);
+                File.Delete(_coinbaseMapper.Filename);
+            }
+
             _scriptEdgesInCsvCount = 0;
             _coinbaseEdgesInCsvCount = 0;
             _blocksInCsvCount = 0;

@@ -17,6 +17,7 @@ namespace BC2G.CLI
         private readonly Option<int>? _fromInclusiveOption;
         private readonly Option<int>? _toExclusiveOption;
         private readonly Option<int>? _granularityOption;
+        private readonly Option<bool>? _skipGraphLoadOption;
         private readonly Option<int>? _graphSampleCountOption;
         private readonly Option<int>? _graphSampleHopsOption;
         private readonly Option<int>? _graphSampleMinNodeCount;
@@ -31,6 +32,8 @@ namespace BC2G.CLI
         public OptionsBinder(
             Option<int>? fromInclusiveOption = null,
             Option<int>? toExclusiveOption = null,
+            Option<int>? granularityOption = null,
+            Option<bool>? skipGraphLoadOption = null,
             Option<int>? graphSampleCountOption = null,
             Option<int>? graphSampleHopOption = null,
             Option<int>? graphSampleMinNodeCount = null,
@@ -39,13 +42,13 @@ namespace BC2G.CLI
             Option<int>? graphSampleMaxEdgeCount = null,
             Option<GraphSampleMode>? graphSampleModeOption = null,
             Option<double>? graphSampleRootNodeSelectProb = null,
-            Option<int>? granularityOption = null,
             Option<string>? workingDirOption = null,
             Option<string>? statusFilenameOption = null)
         {
             _fromInclusiveOption = fromInclusiveOption;
             _toExclusiveOption = toExclusiveOption;
             _granularityOption = granularityOption;
+            _skipGraphLoadOption = skipGraphLoadOption;
             _graphSampleCountOption = graphSampleCountOption;
             _graphSampleHopsOption = graphSampleHopOption;
             _graphSampleMinNodeCount = graphSampleMinNodeCount;
@@ -64,6 +67,7 @@ namespace BC2G.CLI
             o.FromInclusive = GetValue(o.FromInclusive, _fromInclusiveOption, c);
             o.ToExclusive = GetValue(o.ToExclusive, _toExclusiveOption, c);
             o.Granularity = GetValue(o.Granularity, _granularityOption, c);
+            o.SkipLoadGraph = GetValue(o.SkipLoadGraph, _skipGraphLoadOption, c);
 
             o.GraphSampleCount = GetValue(o.GraphSampleCount, _graphSampleCountOption, c);
             o.GraphSampleHops = GetValue(o.GraphSampleHops, _graphSampleHopsOption, c);

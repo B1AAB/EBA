@@ -170,13 +170,22 @@ namespace BC2G.CLI
                 description: "Set the blockchain traversal granularity (default is 1)." +
                 "For instance, if set to `10`, it implies processing every 10 blocks in the blockchain.");
 
+            var skipGraphLoadOption = new Option<bool>(
+                name: "--skip-graph-load",
+                description: "Running BC2G, Bitcoin-qt, and Neo4j at the same time could put " +
+                "a decent amount of compute resource requirement on the system. To alleviate " +
+                "it a bit, setting this option would only store the data to be bulk-loaded into " +
+                "Neo4j in batches and would not try loading them to Neo4j. After the traverse on " +
+                "the chain, these files can be used to load the data into Neo4j.");
+
             var cmd = new Command(
                 name: "bitcoin",
                 description: "TODO ...")
             {
                 fromOption,
                 toOption,
-                granularityOption
+                granularityOption,
+                skipGraphLoadOption
             };
 
             cmd.SetHandler(async (options) =>
@@ -187,6 +196,7 @@ namespace BC2G.CLI
                 fromInclusiveOption: fromOption,
                 toExclusiveOption: toOption,
                 granularityOption: granularityOption,
+                skipGraphLoadOption: skipGraphLoadOption,
                 workingDirOption: _workingDirOption,
                 statusFilenameOption: _statusFilenameOption));
 

@@ -34,6 +34,8 @@ namespace BC2G.CLI
         }
         private int _granularity = 1;
 
+        public bool SkipLoadGraph { get; set; }
+
         public string WorkingDir { set; get; } = Environment.CurrentDirectory;
         public int GraphSampleCount { set; get; }
         public int GraphSampleHops { set; get; }
@@ -72,7 +74,7 @@ namespace BC2G.CLI
 
         public string Neo4jImportDirectory { set; get; } =
             Environment.GetEnvironmentVariable("NEO4J_IMPORTDIRECTORY") ??
-            @"\dbmss\dbms\import";
+            @"\dbmss\dbms-cab7c142-dc7c-4a79-b72c-7ccb253cf000\import";
 
         public string Neo4jCypherImportPrefix { set; get; } =
             Environment.GetEnvironmentVariable("NEO4J_CYPHERIMPORTPREFIX") ??
