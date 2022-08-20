@@ -34,6 +34,8 @@ namespace BC2G.DAL
         private readonly ScriptMapper _scriptMapper;
         private readonly CoinbaseMapper _coinbaseMapper;
 
+        private string CurrentTimeStamp { get { return DateTime.Now.ToString("yyyyMMddHHmmssffff"); } }
+
         ~GraphDB() => Dispose(false);
 
         public GraphDB(
@@ -52,9 +54,10 @@ namespace BC2G.DAL
             // stacktrace. Check if there is a better way of throwing an error with a message
             // that indicates not able to connect to the Neo4j database.
 
-            _blockMapper = new BlockMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
-            _scriptMapper = new ScriptMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
-            _coinbaseMapper = new CoinbaseMapper(neo4jCypherImportPrefix, neo4jImportDirectory);
+            var batch = CurrentTimeStamp;
+            _blockMapper = new BlockMapper(neo4jCypherImportPrefix, neo4jImportDirectory) { Batch = batch };
+            _scriptMapper = new ScriptMapper(neo4jCypherImportPrefix, neo4jImportDirectory) { Batch = batch };
+            _coinbaseMapper = new CoinbaseMapper(neo4jCypherImportPrefix, neo4jImportDirectory) { Batch = batch };
 
             _skipLoad = skipLoad;
 
@@ -108,28 +111,28 @@ namespace BC2G.DAL
 
             if (_scriptEdgesInCsvCount == 0)
             {
-                using var eWriter = new StreamWriter(_scriptMapper.Filename);
+                using var eWriter = new StreamWriter(_scriptMapper.AbsFilename);
                 eWriter.WriteLine(_scriptMapper.GetCsvHeader());
             }
 
             if (_blocksInCsvCount == 0)
             {
-                using var bWriter = new StreamWriter(_blockMapper.Filename);
+                using var bWriter = new StreamWriter(_blockMapper.AbsFilename);
                 bWriter.WriteLine(_blockMapper.GetCsvHeader());
             }
 
             if (_coinbaseEdgesInCsvCount == 0)
             {
-                using var cWriter = new StreamWriter(_coinbaseMapper.Filename);
+                using var cWriter = new StreamWriter(_coinbaseMapper.AbsFilename);
                 cWriter.WriteLine(_coinbaseMapper.GetCsvHeader());
             }
 
-            using var blocksWriter = new StreamWriter(_blockMapper.Filename, append: true);
+            using var blocksWriter = new StreamWriter(_blockMapper.AbsFilename, append: true);
             blocksWriter.WriteLine(_blockMapper.ToCsv(graph));
             _blocksInCsvCount++;
 
-            using var edgesWriter = new StreamWriter(_scriptMapper.Filename, append: true);
-            using var coinbaseWrite = new StreamWriter(_coinbaseMapper.Filename, append: true);
+            using var edgesWriter = new StreamWriter(_scriptMapper.AbsFilename, append: true);
+            using var coinbaseWrite = new StreamWriter(_coinbaseMapper.AbsFilename, append: true);
             foreach (var edge in edges)
                 if (edge.Source.Address == Coinbase)
                 {
@@ -148,11 +151,15 @@ namespace BC2G.DAL
             if (_skipLoad)
             {
                 BulkImport();
-                File.Delete(_blockMapper.Filename);
-                File.Delete(_scriptMapper.Filename);
-                File.Delete(_coinbaseMapper.Filename);
+                File.Delete(_blockMapper.AbsFilename);
+                File.Delete(_scriptMapper.AbsFilename);
+                File.Delete(_coinbaseMapper.AbsFilename);
             }
 
+            var batch = CurrentTimeStamp;
+            _blockMapper.Batch = batch;
+            _scriptMapper.Batch = batch;
+            _coinbaseMapper.Batch = batch;
             _scriptEdgesInCsvCount = 0;
             _coinbaseEdgesInCsvCount = 0;
             _blocksInCsvCount = 0;

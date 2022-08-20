@@ -52,16 +52,26 @@ namespace BC2G.DAL.Bulkload
             get { return $"MERGE (source)-[:Redeems {{{Props[Prop.Height].GetLoadExp(":")}}}]->(block) "; }
         }
 
-        public string Filename { get; }
-        public string CypherQuery { get; }
+        public string Batch { set; get; }
+        private readonly string _filename;
+        public string AbsFilename { get { return Path.Combine(ImportDir, Batch + _filename); } }
+        public string Filename { get { return Batch + _filename; } }
+
+        public string CypherQuery { get { return ComposeCypherQuery(CypherImportPrefix + Filename); } }
+
+        public string CypherImportPrefix { get; }
+        public string ImportDir { get; }
 
         public ModelMapper(
             string cypherImportPrefix,
             string importDirectory,
             string filename)
         {
-            Filename = Path.Combine(importDirectory, filename);
-            CypherQuery = ComposeCypherQuery(cypherImportPrefix + filename);
+            _filename = filename;
+            //Filename = Path.Combine(importDirectory, filename);
+            ImportDir = importDirectory;
+            CypherImportPrefix = cypherImportPrefix;
+            //CypherQuery = ComposeCypherQuery(cypherImportPrefix + filename);
         }
 
         public abstract string GetCsvHeader();
