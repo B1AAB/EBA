@@ -1,8 +1,10 @@
-﻿using BC2G.Exceptions;
+﻿using BC2G.CLI;
+using BC2G.Exceptions;
 using BC2G.Graph;
 using BC2G.Logging;
 using BC2G.Model;
 using BC2G.Serializers;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
 namespace BC2G.Blockchains
@@ -27,9 +29,11 @@ namespace BC2G.Blockchains
 
         private bool _disposed = false;
 
+        private DatabaseContext _cachedOutputDb;
+
         //public AddressToIdMapper AddressToIdMapper { get; set; }
 
-        public BitcoinAgent(HttpClient client, Logger logger, CancellationToken ct)
+        public BitcoinAgent(HttpClient client, Options options, Logger logger, CancellationToken ct)
         {
             _client = client;
 
@@ -39,6 +43,9 @@ namespace BC2G.Blockchains
             //_txCache = txCache;
             _logger = logger;
             _cT = ct;
+
+            _cachedOutputDb = new DatabaseContext(
+                options.PsqlHost, options.PsqlDatabase, options.PsqlUsername, options.PsqlPassword);            
         }
 
         /// <summary>

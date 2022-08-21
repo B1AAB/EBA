@@ -61,6 +61,8 @@ namespace BC2G.CLI
         //public bool CreatePerBlockFiles { get; set; } = false;
         public int MaxConcurrentBlocks { get; set; } = 1;// Environment.ProcessorCount / 2;
 
+        // TODO: Find a better place to define the Neo4j and PostgreSQL related configurations. 
+
         public string Neo4jUri { get; set; } =
             Environment.GetEnvironmentVariable("NEO4J_URI") ??
             "bolt://localhost:7687";
@@ -79,6 +81,11 @@ namespace BC2G.CLI
         public string Neo4jCypherImportPrefix { set; get; } =
             Environment.GetEnvironmentVariable("NEO4J_CYPHERIMPORTPREFIX") ??
             "file:///";
+
+        public string PsqlHost { set; get; } = "localhost";
+        public string PsqlDatabase { set; get; } = "Utxo";
+        public string PsqlUsername { set; get; } = "postgres";
+        public string PsqlPassword { set; get; } = "PassWord";
 
         public string StatusFile { set; get; } = Path.Combine(Environment.CurrentDirectory, "status.json");
     }

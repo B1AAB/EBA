@@ -117,7 +117,7 @@ namespace BC2G
             SetupLogger(options);
             SetupGraphDB(options);
 
-            if (!TryGetBitCoinAgent(_ct, out var agent))
+            if (!TryGetBitCoinAgent(options, _ct, out var agent))
                 return false;
 
             if (!AssertChain(agent, out ChainInfo chaininfo))
@@ -188,11 +188,11 @@ namespace BC2G
             return true;
         }
 
-        private bool TryGetBitCoinAgent(CancellationToken cT, out BitcoinAgent agent)
+        private bool TryGetBitCoinAgent(Options options, CancellationToken cT, out BitcoinAgent agent)
         {
             try
             {
-                agent = new BitcoinAgent(_client, Logger, cT);
+                agent = new BitcoinAgent(_client, options, Logger, cT);
 
                 if (!agent.IsConnected)
                     throw new ClientInaccessible();
