@@ -45,7 +45,9 @@ namespace BC2G.Blockchains
             _cT = ct;
 
             _cachedOutputDb = new DatabaseContext(
-                options.PsqlHost, options.PsqlDatabase, options.PsqlUsername, options.PsqlPassword);            
+                options.PsqlHost, options.PsqlDatabase, options.PsqlUsername, options.PsqlPassword);
+
+            _cachedOutputDb.Database.EnsureCreated();
         }
 
         /// <summary>
@@ -137,6 +139,8 @@ namespace BC2G.Blockchains
             var graph = new BlockGraph(block);
             await ProcessTxes(graph, block);
 
+            await _cachedOutputDb.SaveChangesAsync();
+
             return graph;
         }
 
@@ -163,6 +167,8 @@ namespace BC2G.Blockchains
                 rewardAddresses.Add(node);
                 g.Stats.AddInputTxCount(1);
 
+
+                await _cachedOutputDb.Utxos.AddAsync(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
                 //_txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
             }
 
@@ -196,25 +202,35 @@ namespace BC2G.Blockchains
                 _cT.ThrowIfCancellationRequested();
 
                 double value;
-                /*if (!_txCache.TryGet(
-                    input.TxId,
-                    input.OutputIndex,
-                    out string address,
-                    out double value))
-                {*/
-                // Extended transaction: details of the transaction are
-                // retrieved from the bitcoin client.
-                //var exTx = await GetTransaction(input.TxId);
-                var exTx = await GetTransaction(input.TxId);
-                var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
-                if (vout == null)
-                    // TODO: check when this can be null,
-                    // or if it would ever happen.
-                    throw new NotImplementedException();
+                string address;
+                var utxo = await _cachedOutputDb.Utxos.FindAsync(Utxo.GetId(input.TxId, input.OutputIndex));
+                if (utxo != null)
+                {
+                    value = utxo.Value;
+                    address = utxo.Address;
+                }
+                else
+                {
+                    /*if (!_txCache.TryGet(
+                        input.TxId,
+                        input.OutputIndex,
+                        out string address,
+                        out double value))
+                    {*/
+                    // Extended transaction: details of the transaction are
+                    // retrieved from the bitcoin client.
+                    //var exTx = await GetTransaction(input.TxId);
+                    var exTx = await GetTransaction(input.TxId);
+                    var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
+                    if (vout == null)
+                        // TODO: check when this can be null,
+                        // or if it would ever happen.
+                        throw new NotImplementedException();
 
-                vout.TryGetAddress(out string address);
-                value = vout.Value;
-                //}
+                    vout.TryGetAddress(out address);
+                    value = vout.Value;
+                    //}
+                }
 
                 txGraph.AddSource(
                     new Node(
@@ -235,6 +251,7 @@ namespace BC2G.Blockchains
                         address,
                         output.GetScriptType()),
                     output.Value);
+                await _cachedOutputDb.Utxos.AddAsync(new Utxo(tx.Txid, output.Index, address, output.Value));
                 //_txCache.Add(tx.Txid, output.Index, address, output.Value);
             }
 

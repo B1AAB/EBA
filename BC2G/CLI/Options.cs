@@ -83,7 +83,7 @@ namespace BC2G.CLI
             "file:///";
 
         public string PsqlHost { set; get; } = "localhost";
-        public string PsqlDatabase { set; get; } = "Utxo";
+        public string PsqlDatabase { set; get; } = "BC2G";
         public string PsqlUsername { set; get; } = "postgres";
         public string PsqlPassword { set; get; } = "PassWord";
 
