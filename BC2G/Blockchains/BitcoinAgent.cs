@@ -5,6 +5,7 @@ using BC2G.Logging;
 using BC2G.Model;
 using BC2G.Serializers;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Concurrent;
 using System.Text.Json;
 
 namespace BC2G.Blockchains
@@ -146,6 +147,7 @@ namespace BC2G.Blockchains
 
         private async Task ProcessTxes(BlockGraph g, Block block)
         {
+            var utxos = new ConcurrentBag<Utxo>();
             var generationTxGraph = new TransactionGraph();
 
             // By definition, each block has a generative block that is the
@@ -167,8 +169,9 @@ namespace BC2G.Blockchains
                 rewardAddresses.Add(node);
                 g.Stats.AddInputTxCount(1);
 
+                utxos.Add(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
 
-                await _cachedOutputDb.Utxos.AddAsync(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
+                //await _cachedOutputDb.Utxos.AddAsync(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
                 //_txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
             }
 
@@ -184,11 +187,14 @@ namespace BC2G.Blockchains
                 async (tx, _loopCancellationToken) =>
                 {
                     _loopCancellationToken.ThrowIfCancellationRequested();
-                    await ProcessTx(g, tx);
+                    await ProcessTx(g, tx, utxos);
                 });
+
+            await _cachedOutputDb.AddRangeAsync(utxos);
+            await _cachedOutputDb.SaveChangesAsync();
         }
 
-        private async Task ProcessTx(BlockGraph g, Transaction tx)
+        private async Task ProcessTx(BlockGraph g, Transaction tx, ConcurrentBag<Utxo> utxos)
         {
             var txGraph = new TransactionGraph
             {
@@ -251,7 +257,7 @@ namespace BC2G.Blockchains
                         address,
                         output.GetScriptType()),
                     output.Value);
-                await _cachedOutputDb.Utxos.AddAsync(new Utxo(tx.Txid, output.Index, address, output.Value));
+                utxos.Add(new Utxo(tx.Txid, output.Index, address, output.Value));
                 //_txCache.Add(tx.Txid, output.Index, address, output.Value);
             }
 
