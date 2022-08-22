@@ -82,6 +82,10 @@ namespace BC2G.CLI
             Environment.GetEnvironmentVariable("NEO4J_CYPHERIMPORTPREFIX") ??
             "file:///";
 
+
+        // TODO: 
+        // Store these properties and probably the above on the Neo4j in a better way, e.g.,
+        // https://docs.microsoft.com/en-us/ef/core/miscellaneous/connection-strings
         public string PsqlHost { set; get; } = "localhost";
         public string PsqlDatabase { set; get; } = "BC2G";
         public string PsqlUsername { set; get; } = "postgres";

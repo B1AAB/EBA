@@ -30,9 +30,11 @@ namespace BC2G.Blockchains
 
         private bool _disposed = false;
 
-        private DatabaseContext _cachedOutputDb;
-
         //public AddressToIdMapper AddressToIdMapper { get; set; }
+        private readonly string _psqlHost;
+        private readonly string _psqlDatabase;
+        private readonly string _psqlUsername;
+        private readonly string _psqlPassword;
 
         public BitcoinAgent(HttpClient client, Options options, Logger logger, CancellationToken ct)
         {
@@ -45,10 +47,18 @@ namespace BC2G.Blockchains
             _logger = logger;
             _cT = ct;
 
-            _cachedOutputDb = new DatabaseContext(
-                options.PsqlHost, options.PsqlDatabase, options.PsqlUsername, options.PsqlPassword);
+            _psqlHost = options.PsqlHost;
+            _psqlDatabase = options.PsqlDatabase;
+            _psqlUsername = options.PsqlUsername;
+            _psqlPassword = options.PsqlPassword;
 
-            _cachedOutputDb.Database.EnsureCreated();
+            using var context = GetDbContext();
+            context.Database.EnsureCreated();
+        }
+
+        private DatabaseContext GetDbContext()
+        {
+            return new DatabaseContext(_psqlHost, _psqlDatabase, _psqlUsername, _psqlPassword);
         }
 
         /// <summary>
@@ -140,8 +150,6 @@ namespace BC2G.Blockchains
             var graph = new BlockGraph(block);
             await ProcessTxes(graph, block);
 
-            await _cachedOutputDb.SaveChangesAsync();
-
             return graph;
         }
 
@@ -190,8 +198,9 @@ namespace BC2G.Blockchains
                     await ProcessTx(g, tx, utxos);
                 });
 
-            await _cachedOutputDb.AddRangeAsync(utxos);
-            await _cachedOutputDb.SaveChangesAsync();
+            using var context = GetDbContext();
+            await context.AddRangeAsync(utxos);
+            await context.SaveChangesAsync();
         }
 
         private async Task ProcessTx(BlockGraph g, Transaction tx, ConcurrentBag<Utxo> utxos)
@@ -209,7 +218,12 @@ namespace BC2G.Blockchains
 
                 double value;
                 string address;
-                var utxo = await _cachedOutputDb.Utxos.FindAsync(Utxo.GetId(input.TxId, input.OutputIndex));
+                // TODO:
+                // creating a separate context for each operation is not ideal, though
+                // EF does not currently support concurrency on a context. Therefore, 
+                // a context cannot be re-used on multi-thread setup. 
+                using var context = GetDbContext();
+                var utxo = await context.Utxos.FindAsync(Utxo.GetId(input.TxId, input.OutputIndex));
                 if (utxo != null)
                 {
                     value = utxo.Value;
