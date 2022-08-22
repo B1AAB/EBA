@@ -5,6 +5,7 @@ using BC2G.Logging;
 using BC2G.Model;
 using BC2G.Serializers;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using System.Collections.Concurrent;
 using System.Text.Json;
 
@@ -177,8 +178,10 @@ namespace BC2G.Blockchains
                 rewardAddresses.Add(node);
                 g.Stats.AddInputTxCount(1);
 
-                utxos.Add(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
 
+                // TEMP
+                //utxos.Add(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
+                await AddOrUpdate(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
                 //await _cachedOutputDb.Utxos.AddAsync(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
                 //_txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
             }
@@ -198,9 +201,10 @@ namespace BC2G.Blockchains
                     await ProcessTx(g, tx, utxos);
                 });
 
+            /* TEMP
             using var context = GetDbContext();
             await context.AddRangeAsync(utxos);
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync();*/
         }
 
         private async Task ProcessTx(BlockGraph g, Transaction tx, ConcurrentBag<Utxo> utxos)
@@ -271,13 +275,38 @@ namespace BC2G.Blockchains
                         address,
                         output.GetScriptType()),
                     output.Value);
-                utxos.Add(new Utxo(tx.Txid, output.Index, address, output.Value));
+
+                // TEMP
+                //utxos.Add(new Utxo(tx.Txid, output.Index, address, output.Value));
                 //_txCache.Add(tx.Txid, output.Index, address, output.Value);
+                await AddOrUpdate(new Utxo(tx.Txid, output.Index, address, output.Value));
             }
 
             g.Stats.AddInputTxCount(tx.Inputs.Count);
             g.Stats.AddOutputTxCount(tx.Outputs.Count);
             g.Enqueue(txGraph);
+        }
+
+        private async Task AddOrUpdate(Utxo utxo)
+        {
+            try
+            {
+                using var c = GetDbContext();
+                await c.Utxos.AddAsync(utxo);
+                await c.SaveChangesAsync();
+            }
+            catch (DbUpdateException e) 
+            when (e.InnerException is PostgresException pe && (pe.SqlState ==  "23505" ))
+            {
+                // A list of the error codes are available in the following page.
+                // https://www.postgresql.org/docs/current/errcodes-appendix.html
+                //
+                // - 23505: unique_violation (when adding an entity whose indexed property is already defined).
+                using var c = GetDbContext();
+                var existingUtxo = c.Utxos.Find(utxo.Id);
+                // TODO: modify as needed.
+                await c.SaveChangesAsync();
+            }
         }
 
         private async Task<Stream> GetResource(string endpoint, string hash)
