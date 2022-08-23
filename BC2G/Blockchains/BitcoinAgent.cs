@@ -181,7 +181,7 @@ namespace BC2G.Blockchains
 
                 // TEMP
                 //utxos.Add(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
-                await AddOrUpdate(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
+                await AddOrUpdate(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value, block.Height.ToString()));
                 //await _cachedOutputDb.Utxos.AddAsync(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
                 //_txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
             }
@@ -279,7 +279,7 @@ namespace BC2G.Blockchains
                 // TEMP
                 //utxos.Add(new Utxo(tx.Txid, output.Index, address, output.Value));
                 //_txCache.Add(tx.Txid, output.Index, address, output.Value);
-                await AddOrUpdate(new Utxo(tx.Txid, output.Index, address, output.Value));
+                await AddOrUpdate(new Utxo(tx.Txid, output.Index, address, output.Value, g.Block.Height.ToString()));
             }
 
             g.Stats.AddInputTxCount(tx.Inputs.Count);
@@ -295,8 +295,8 @@ namespace BC2G.Blockchains
                 await c.Utxos.AddAsync(utxo);
                 await c.SaveChangesAsync();
             }
-            catch (DbUpdateException e) 
-            when (e.InnerException is PostgresException pe && (pe.SqlState ==  "23505" ))
+            catch (DbUpdateException e)
+            when (e.InnerException is PostgresException pe && (pe.SqlState == "23505"))
             {
                 // A list of the error codes are available in the following page.
                 // https://www.postgresql.org/docs/current/errcodes-appendix.html
@@ -304,7 +304,13 @@ namespace BC2G.Blockchains
                 // - 23505: unique_violation (when adding an entity whose indexed property is already defined).
                 using var c = GetDbContext();
                 var existingUtxo = c.Utxos.Find(utxo.Id);
-                // TODO: modify as needed.
+                if (existingUtxo == null)
+                    // This case should not happen, because we're here because
+                    // there was a duplicate, hence when search for an entity
+                    // with the given id, there must be a match.
+                    throw new NotImplementedException();
+
+                existingUtxo.CreatedIn += ";" + utxo.CreatedIn;
                 await c.SaveChangesAsync();
             }
         }

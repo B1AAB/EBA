@@ -20,16 +20,32 @@ namespace BC2G.Model
         [Required]
         public double Value { set; get; }
 
+        /// <summary>
+        /// A list of comma-separated block heights where this txo 
+        /// is defined as output.
+        /// </summary>
+        [Required]
+        public string CreatedIn { set; get; }
+
+        /// <summary>
+        /// A list of comma-separated block heights where this txo
+        /// is defined as input. If this list is empty, the tx is 
+        /// unspent (utxo).
+        /// </summary>
+        public string ReferencedIn { set; get; }
+
         // This constructor is required by EF.
-        public Utxo(string id, string address, double value)
+        public Utxo(string id, string address, double value, string createdIn, string referencedIn = "")
         {
             Id = id;
             Address = address;
             Value = value;
+            CreatedIn = createdIn;
+            ReferencedIn = referencedIn;
         }
 
-        public Utxo(string txid, int voutN, string address, double value) : 
-            this(GetId(txid, voutN), address, value) 
+        public Utxo(string txid, int voutN, string address, double value, string createdIn, string referencedIn = "") :
+            this(GetId(txid, voutN), address, value, createdIn, referencedIn)
         { }
 
         public static string GetId(string txid, int voutN)
