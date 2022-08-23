@@ -135,19 +135,21 @@ namespace BC2G.Blockchains
 
         public async Task<BlockGraph> GetGraph(int height)
         {
+            // All the logging in this section are disabled because 
+            // CPU profiling shows ~%24 of the process time is spent on them.
             if (_cT.IsCancellationRequested) throw new OperationCanceledException();
 
-            _logger.Log($"Getting block hash; height {height}.");
+            //_logger.Log($"Getting block hash; height {height}.");
             var blockHash = await GetBlockHash(height);
 
             if (_cT.IsCancellationRequested) throw new OperationCanceledException();
 
-            _logger.Log($"Getting block; height: {height}.");
+            //_logger.Log($"Getting block; height: {height}.");
             var block = await GetBlock(blockHash);
 
             if (_cT.IsCancellationRequested) throw new OperationCanceledException();
 
-            _logger.Log($"Getting graph; height: {height}.");
+            //_logger.Log($"Getting graph; height: {height}.");
             var graph = new BlockGraph(block);
             await ProcessTxes(graph, block);
 
@@ -156,6 +158,8 @@ namespace BC2G.Blockchains
 
         private async Task ProcessTxes(BlockGraph g, Block block)
         {
+            var utxos = new ConcurrentBag<Utxo>();
+
             var generationTxGraph = new TransactionGraph();
 
             // By definition, each block has a generative block that is the
@@ -180,9 +184,10 @@ namespace BC2G.Blockchains
 
                 // TEMP
                 //utxos.Add(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
-                await AddOrUpdate(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value, block.Height.ToString()) { CreatedInCount = 1 });
+                //await AddOrUpdate(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value, block.Height.ToString()) { CreatedInCount = 1 });
                 //await _cachedOutputDb.Utxos.AddAsync(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
                 //_txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
+                utxos.Add(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value, block.Height.ToString()) { CreatedInCount = 1 });
             }
 
             g.RewardsAddresses = rewardAddresses;
@@ -197,16 +202,17 @@ namespace BC2G.Blockchains
                 async (tx, _loopCancellationToken) =>
                 {
                     _loopCancellationToken.ThrowIfCancellationRequested();
-                    await ProcessTx(g, tx);
+                    await ProcessTx(g, tx, utxos);
                 });
 
-            /* TEMP
+            await AddOrUpdateRange(utxos);
+            /*
             using var context = GetDbContext();
             await context.AddRangeAsync(utxos);
             await context.SaveChangesAsync();*/
         }
 
-        private async Task ProcessTx(BlockGraph g, Transaction tx)
+        private async Task ProcessTx(BlockGraph g, Transaction tx, ConcurrentBag<Utxo> utxos)
         {
             var txGraph = new TransactionGraph
             {
@@ -284,7 +290,9 @@ namespace BC2G.Blockchains
                 // TEMP
                 //utxos.Add(new Utxo(tx.Txid, output.Index, address, output.Value));
                 //_txCache.Add(tx.Txid, output.Index, address, output.Value);
-                await AddOrUpdate(new Utxo(tx.Txid, output.Index, address, output.Value, g.Block.Height.ToString()) { CreatedInCount = 1 });
+                //await AddOrUpdate(new Utxo(tx.Txid, output.Index, address, output.Value, g.Block.Height.ToString()) { CreatedInCount = 1 });
+                utxos.Add(new Utxo(tx.Txid, output.Index, address, output.Value, g.Block.Height.ToString()) { CreatedInCount = 1 });
+
             }
 
             g.Stats.AddInputTxCount(tx.Inputs.Count);
@@ -292,12 +300,13 @@ namespace BC2G.Blockchains
             g.Enqueue(txGraph);
         }
 
-        private async Task AddOrUpdate(Utxo utxo)
+        // Based on the cpu profiling, this method takes most of the cpu time (about ~%20). 
+        private async Task AddOrUpdateRange(ConcurrentBag<Utxo> utxos)
         {
             try
             {
                 using var c = GetDbContext();
-                await c.Utxos.AddAsync(utxo);
+                await c.Utxos.AddRangeAsync(utxos);
                 await c.SaveChangesAsync();
             }
             catch (DbUpdateException e)
@@ -307,16 +316,20 @@ namespace BC2G.Blockchains
                 // https://www.postgresql.org/docs/current/errcodes-appendix.html
                 //
                 // - 23505: unique_violation (when adding an entity whose indexed property is already defined).
-                using var c = GetDbContext();
-                var existingUtxo = c.Utxos.Find(utxo.Id);
-                if (existingUtxo == null)
-                    // This case should not happen, because we're here because
-                    // there was a duplicate, hence when search for an entity
-                    // with the given id, there must be a match.
-                    throw new NotImplementedException();
 
-                existingUtxo.CreatedIn += ";" + utxo.CreatedIn;
-                existingUtxo.CreatedInCount++;
+                using var c = GetDbContext();
+                foreach (var utxo in utxos)
+                {
+                    var existingUtxo = c.Utxos.Find(utxo.Id);
+                    if (existingUtxo == null)
+                        // This case should not happen, because we're here because
+                        // there was a duplicate, hence when search for an entity
+                        // with the given id, there must be a match.
+                        throw new NotImplementedException();
+
+                    existingUtxo.CreatedIn += ";" + utxo.CreatedIn;
+                    existingUtxo.CreatedInCount++;
+                }
                 await c.SaveChangesAsync();
             }
         }
