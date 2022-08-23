@@ -89,7 +89,8 @@ namespace BC2G
                 options.Neo4jUser,
                 options.Neo4jPassword,
                 options.Neo4jImportDirectory,
-                options.Neo4jCypherImportPrefix);
+                options.Neo4jCypherImportPrefix,
+                options.SkipLoadGraph);
         }
 
         public async Task<int> InvokeAsync(string[] args)

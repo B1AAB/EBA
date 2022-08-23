@@ -46,23 +46,27 @@ namespace BC2G.DAL
             string neo4jCypherImportPrefix,
             bool skipLoad = false)
         {
-            _driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+            _skipLoad = skipLoad;
 
-            try { _driver.VerifyConnectivityAsync().Wait(); }
-            catch (AggregateException) { Dispose(true); throw; }
-            // TODO: it seems message of an exception cannot be modified without impacting 
-            // stacktrace. Check if there is a better way of throwing an error with a message
-            // that indicates not able to connect to the Neo4j database.
+            if (!_skipLoad)
+            {
+                _driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+
+                try { _driver.VerifyConnectivityAsync().Wait(); }
+                catch (AggregateException) { Dispose(true); throw; }
+                // TODO: it seems message of an exception cannot be modified without impacting 
+                // stacktrace. Check if there is a better way of throwing an error with a message
+                // that indicates not able to connect to the Neo4j database.
+
+                EnsureCoinbaseNode().Wait();
+                EnsureConstraints().Wait();
+            }
 
             var batch = CurrentTimeStamp;
             _blockMapper = new BlockMapper(neo4jCypherImportPrefix, neo4jImportDirectory) { Batch = batch };
             _scriptMapper = new ScriptMapper(neo4jCypherImportPrefix, neo4jImportDirectory) { Batch = batch };
             _coinbaseMapper = new CoinbaseMapper(neo4jCypherImportPrefix, neo4jImportDirectory) { Batch = batch };
 
-            _skipLoad = skipLoad;
-
-            EnsureCoinbaseNode().Wait();
-            EnsureConstraints().Wait();
             /*
             var script = new NodeMapping();
             script.Labels.Add("Script");
@@ -148,7 +152,7 @@ namespace BC2G.DAL
 
         private void BulkImportStagedAndReset()
         {
-            if (_skipLoad)
+            if (!_skipLoad)
             {
                 BulkImport();
                 File.Delete(_blockMapper.AbsFilename);
