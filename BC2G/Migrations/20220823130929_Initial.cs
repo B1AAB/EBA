@@ -16,7 +16,9 @@ namespace BC2G.Migrations
                     Address = table.Column<string>(type: "text", nullable: false),
                     Value = table.Column<double>(type: "double precision", nullable: false),
                     CreatedIn = table.Column<string>(type: "text", nullable: false),
-                    ReferencedIn = table.Column<string>(type: "text", nullable: false)
+                    CreatedInCount = table.Column<int>(type: "integer", nullable: false),
+                    ReferencedIn = table.Column<string>(type: "text", nullable: false),
+                    ReferencedInCount = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {

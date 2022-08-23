@@ -26,6 +26,7 @@ namespace BC2G.Model
         /// </summary>
         [Required]
         public string CreatedIn { set; get; }
+        public int CreatedInCount { set; get; }
 
         /// <summary>
         /// A list of comma-separated block heights where this txo
@@ -33,6 +34,7 @@ namespace BC2G.Model
         /// unspent (utxo).
         /// </summary>
         public string ReferencedIn { set; get; }
+        public int ReferencedInCount { set; get; }
 
         // This constructor is required by EF.
         public Utxo(string id, string address, double value, string createdIn, string referencedIn = "")

@@ -156,7 +156,6 @@ namespace BC2G.Blockchains
 
         private async Task ProcessTxes(BlockGraph g, Block block)
         {
-            var utxos = new ConcurrentBag<Utxo>();
             var generationTxGraph = new TransactionGraph();
 
             // By definition, each block has a generative block that is the
@@ -181,7 +180,7 @@ namespace BC2G.Blockchains
 
                 // TEMP
                 //utxos.Add(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
-                await AddOrUpdate(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value, block.Height.ToString()));
+                await AddOrUpdate(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value, block.Height.ToString()) { CreatedInCount = 1 });
                 //await _cachedOutputDb.Utxos.AddAsync(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
                 //_txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
             }
@@ -198,7 +197,7 @@ namespace BC2G.Blockchains
                 async (tx, _loopCancellationToken) =>
                 {
                     _loopCancellationToken.ThrowIfCancellationRequested();
-                    await ProcessTx(g, tx, utxos);
+                    await ProcessTx(g, tx);
                 });
 
             /* TEMP
@@ -207,7 +206,7 @@ namespace BC2G.Blockchains
             await context.SaveChangesAsync();*/
         }
 
-        private async Task ProcessTx(BlockGraph g, Transaction tx, ConcurrentBag<Utxo> utxos)
+        private async Task ProcessTx(BlockGraph g, Transaction tx)
         {
             var txGraph = new TransactionGraph
             {
@@ -232,6 +231,12 @@ namespace BC2G.Blockchains
                 {
                     value = utxo.Value;
                     address = utxo.Address;
+                    if (string.IsNullOrEmpty(utxo.ReferencedIn))
+                        utxo.ReferencedIn = g.Block.Height.ToString();
+                    else
+                        utxo.ReferencedIn += g.Block.Height.ToString();
+                    utxo.ReferencedInCount++;
+                    await context.SaveChangesAsync();
                 }
                 else
                 {
@@ -279,7 +284,7 @@ namespace BC2G.Blockchains
                 // TEMP
                 //utxos.Add(new Utxo(tx.Txid, output.Index, address, output.Value));
                 //_txCache.Add(tx.Txid, output.Index, address, output.Value);
-                await AddOrUpdate(new Utxo(tx.Txid, output.Index, address, output.Value, g.Block.Height.ToString()));
+                await AddOrUpdate(new Utxo(tx.Txid, output.Index, address, output.Value, g.Block.Height.ToString()) { CreatedInCount = 1 });
             }
 
             g.Stats.AddInputTxCount(tx.Inputs.Count);
@@ -311,6 +316,7 @@ namespace BC2G.Blockchains
                     throw new NotImplementedException();
 
                 existingUtxo.CreatedIn += ";" + utxo.CreatedIn;
+                existingUtxo.CreatedInCount++;
                 await c.SaveChangesAsync();
             }
         }

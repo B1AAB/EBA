@@ -34,9 +34,15 @@ namespace BC2G.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("CreatedInCount")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ReferencedIn")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("ReferencedInCount")
+                        .HasColumnType("integer");
 
                     b.Property<double>("Value")
                         .HasColumnType("double precision");

@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BC2G.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20220823004144_Initial")]
+    [Migration("20220823130929_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,9 +36,15 @@ namespace BC2G.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("CreatedInCount")
+                        .HasColumnType("integer");
+
                     b.Property<string>("ReferencedIn")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("ReferencedInCount")
+                        .HasColumnType("integer");
 
                     b.Property<double>("Value")
                         .HasColumnType("double precision");
