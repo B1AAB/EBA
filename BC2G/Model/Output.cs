@@ -62,19 +62,26 @@ namespace BC2G.Model
             {
                 if (_isValueTransfer == null)
                 {
-                    /*
-                    if (output.GetScriptType() is
-                        ScriptType.Unknown or ScriptType.NullData)
-                        continue;*/
-
-                    // Ideally the above should be sufficient, but
-                    // for dev purposes, we use the following.
-                    _isValueTransfer = GetScriptType() switch
+                    if (Value == 0)
                     {
-                        ScriptType.NullData => false,
-                        ScriptType.Unknown => throw new NotImplementedException(),
-                        _ => true, // all other cases.
-                    };
+                        _isValueTransfer = false;
+                    }
+                    else
+                    {
+                        /*
+                        if (output.GetScriptType() is
+                            ScriptType.Unknown or ScriptType.NullData)
+                            continue;*/
+
+                        // Ideally the above should be sufficient, but
+                        // for dev purposes, we use the following.
+                        _isValueTransfer = GetScriptType() switch
+                        {
+                            ScriptType.NullData => false,
+                            ScriptType.Unknown => throw new NotImplementedException(),
+                            _ => true, // all other cases.
+                        };
+                    }
                 }
 
                 return (bool)_isValueTransfer;
