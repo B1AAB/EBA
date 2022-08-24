@@ -322,13 +322,14 @@ namespace BC2G.Blockchains
                 {
                     var existingUtxo = c.Utxos.Find(utxo.Id);
                     if (existingUtxo == null)
-                        // This case should not happen, because we're here because
-                        // there was a duplicate, hence when search for an entity
-                        // with the given id, there must be a match.
-                        throw new NotImplementedException();
-
-                    existingUtxo.CreatedIn += ";" + utxo.CreatedIn;
-                    existingUtxo.CreatedInCount++;
+                    {
+                        await c.Utxos.AddAsync(utxo);
+                    }
+                    else
+                    {
+                        existingUtxo.CreatedIn += ";" + utxo.CreatedIn;
+                        existingUtxo.CreatedInCount++;
+                    }
                 }
                 await c.SaveChangesAsync();
             }
