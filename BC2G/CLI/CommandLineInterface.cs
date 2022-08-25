@@ -30,8 +30,9 @@ namespace BC2G.CLI
             getDefaultValue: () => new Options().StatusFile);
 
         public CommandLineInterface(
-            Func<Options, Task> BitcoinTraverseCmdHandler,
-            Func<Options, Task> SampleCmdHandler)
+            Func<Options, Task> bitcoinTraverseCmdHandler,
+            Func<Options, Task> sampleCmdHandler,
+            Func<Options, Task> loadGraphCmdHandler)
         {
             _rootCmd = new RootCommand(description: "TODO: some description ...")
             {
@@ -42,9 +43,10 @@ namespace BC2G.CLI
             // This is required to allow using options without specifying any of the subcommands. 
             _rootCmd.SetHandler(x => { });
 
-            var sampleCmd = GetSampleCmd(SampleCmdHandler);
+            var sampleCmd = GetSampleCmd(sampleCmdHandler);
             _rootCmd.AddCommand(sampleCmd);
-            _rootCmd.AddCommand(GetTraverseCmd(BitcoinTraverseCmdHandler));
+            _rootCmd.AddCommand(GetTraverseCmd(bitcoinTraverseCmdHandler));
+            _rootCmd.AddCommand(GetLoadGraphCmd(loadGraphCmdHandler));
         }
 
         public async Task<int> InvokeAsync(string[] args)
@@ -197,6 +199,26 @@ namespace BC2G.CLI
                 toExclusiveOption: toOption,
                 granularityOption: granularityOption,
                 skipGraphLoadOption: skipGraphLoadOption,
+                workingDirOption: _workingDirOption,
+                statusFilenameOption: _statusFilenameOption));
+
+            return cmd;
+        }
+
+        private Command GetLoadGraphCmd(Func<Options, Task> handler)
+        {
+            var o = new Options();
+
+            var cmd = new Command(
+                name: "load-graph",
+                description: "loads the graph from the CSV files created while traversing the blockchain. This command should be used when --skip-graph-load flag was used.")
+            { };
+
+            cmd.SetHandler(async (options) =>
+            {
+                await handler(options);
+            },
+            new OptionsBinder(
                 workingDirOption: _workingDirOption,
                 statusFilenameOption: _statusFilenameOption));
 

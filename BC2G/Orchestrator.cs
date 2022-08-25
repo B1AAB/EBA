@@ -1,4 +1,4 @@
-﻿using BC2G.Blockchains;
+using BC2G.Blockchains;
 using BC2G.CLI;
 using BC2G.DAL;
 using BC2G.Exceptions;
@@ -9,6 +9,7 @@ using BC2G.Serializers;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace BC2G
 {
@@ -32,8 +33,7 @@ namespace BC2G
         {
             _ct = ct;
             _client = client;
-            _cli = new CommandLineInterface(TraverseAsync, Sample);
-
+            _cli = new CommandLineInterface(TraverseAsync, Sample, LoadGraphAsync);
             
             //_options = options;
             //_statusFilename = statusFilename;
@@ -104,6 +104,22 @@ namespace BC2G
             SetupGraphDB(options);
 
             await _graphDB.Sampling(options);
+        }
+
+        private async Task LoadGraphAsync(Options options)
+        {
+            // get graph files.
+            // todo: move this to graphdb or somewhere more relevant
+            var allFiles = Directory.GetFiles(options.Neo4jImportDirectory);
+            var files = new List<string>();
+
+            string pattern = "\\d{18}tmpBulkImportEdges";
+            foreach (var file in allFiles)
+                // it is recommended to use timeout with regex to avoid DOS attack.
+                if (Regex.IsMatch(Path.GetFileName(file), pattern, RegexOptions.Compiled, new TimeSpan(0, 0, 1)))
+                    files.Add(file);
+
+        
         }
 
         private async Task<bool> TraverseAsync(Options options)
