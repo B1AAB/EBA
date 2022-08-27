@@ -153,18 +153,39 @@ namespace BC2G.DAL
 
         public void BulkImport(string directory)
         {
-            var coinbaseFilesBatches = new Dictionary<string, string>();
-            var blockFilesBatches = new Dictionary<string, string>();
-            var scriptFilesBatches = new Dictionary<string, string>();
+            var batchNames = new SortedDictionary<string, int>();
 
-            foreach(var file in Directory.GetFiles(directory))
+            // TODO: is there a case where sorting numbers/datetime
+            // represented as string would lead to a different ordering
+            // than if they were represented as numbers/datetime?
+            // if so, change the dictionary key from string to number/datetime.
+            foreach (var file in Directory.GetFiles(directory))
             {
-                if (_coinbaseMapper.TryParseFilename(file, out string? batchName))
-                    coinbaseFilesBatches[batchName] = file;
-                else if (_blockMapper.TryParseFilename(file, out batchName))
-                    blockFilesBatches[batchName] = file;
-                else if (_scriptMapper.TryParseFilename(file, out batchName))
-                    scriptFilesBatches[batchName] = file;
+                if (_coinbaseMapper.TryParseFilename(file, out string? batchName) ||
+                    _blockMapper.TryParseFilename(file, out batchName) ||
+                    _scriptMapper.TryParseFilename(file, out batchName))
+                    if (!batchNames.ContainsKey(batchName))
+                        batchNames.Add(batchName, 1);
+                    else
+                        batchNames[batchName]++;
+            }
+
+            int counter = 0;
+            foreach(var batch in batchNames)
+            {
+                if (batch.Value != 3)
+                    // TODO: log this.
+                    // This happens if in the given directory,
+                    // some batches miss either coinbase,
+                    // block, or scripts CSV file.
+                    continue;
+
+                _blockMapper.Batch = batch.Key;
+                _scriptMapper.Batch = batch.Key;
+                _coinbaseMapper.Batch = batch.Key;
+                Console.Write($"Loading batch {batch.Key} [{++counter}/{batchNames.Count}] ... ");
+                BulkImport();
+                Console.WriteLine("Done!");
             }
         }
 
@@ -217,25 +238,25 @@ namespace BC2G.DAL
             });
             blockBulkLoadResult.Wait();
 
-            if (_scriptEdgesInCsvCount > 0)
+            //if (_scriptEdgesInCsvCount > 0)
+            //{
+            var edgeBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
-                var edgeBulkLoadResult = session.WriteTransactionAsync(async x =>
-                {
-                    var result = await x.RunAsync(_scriptMapper.CypherQuery);
-                    return result.SingleAsync().Result[0].As<string>();
-                });
-                edgeBulkLoadResult.Wait();
-            }
+                var result = await x.RunAsync(_scriptMapper.CypherQuery);
+                return result.SingleAsync().Result[0].As<string>();
+            });
+            edgeBulkLoadResult.Wait();
+            //}
 
-            if (_coinbaseEdgesInCsvCount > 0)
+            //if (_coinbaseEdgesInCsvCount > 0)
+            //{
+            var coinbaseEdgeBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
-                var coinbaseEdgeBulkLoadResult = session.WriteTransactionAsync(async x =>
-                {
-                    var result = await x.RunAsync(_coinbaseMapper.CypherQuery);
-                    return await result.ToListAsync();
-                });
-                coinbaseEdgeBulkLoadResult.Wait();
-            }
+                var result = await x.RunAsync(_coinbaseMapper.CypherQuery);
+                return await result.ToListAsync();
+            });
+            coinbaseEdgeBulkLoadResult.Wait();
+            //}
 
             // File deleted before the above query is finished?!!! 
             // One or more errors occurred. (Couldn't load the external resource at:
