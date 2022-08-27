@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace BC2G.DAL.Bulkload
@@ -77,5 +78,17 @@ namespace BC2G.DAL.Bulkload
         public abstract string GetCsvHeader();
         public abstract string ToCsv(T obj);
         protected abstract string ComposeCypherQuery(string filename);
+
+        public bool TryParseFilename(string filename, out string batchName)
+        {
+            var pattern = new Regex(
+                @"(?<batchName>\d{18})" + _filename, 
+                RegexOptions.Compiled, 
+                new TimeSpan(0, 0, 1));
+
+            var match = pattern.Match(Path.GetFileName(filename));
+            batchName = match.Groups["batchName"].Value;
+            return match.Success;
+        }
     }
 }

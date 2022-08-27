@@ -4,6 +4,7 @@ using BC2G.DAL.Bulkload;
 using BC2G.Graph;
 using BC2G.Model;
 using Neo4j.Driver;
+using System.Text.RegularExpressions;
 
 namespace BC2G.DAL
 {
@@ -148,6 +149,23 @@ namespace BC2G.DAL
                     _scriptEdgesInCsvCount++;
                     edgesWriter.WriteLine(_scriptMapper.ToCsv(edge));
                 }
+        }
+
+        public void BulkImport(string directory)
+        {
+            var coinbaseFilesBatches = new Dictionary<string, string>();
+            var blockFilesBatches = new Dictionary<string, string>();
+            var scriptFilesBatches = new Dictionary<string, string>();
+
+            foreach(var file in Directory.GetFiles(directory))
+            {
+                if (_coinbaseMapper.TryParseFilename(file, out string? batchName))
+                    coinbaseFilesBatches[batchName] = file;
+                else if (_blockMapper.TryParseFilename(file, out batchName))
+                    blockFilesBatches[batchName] = file;
+                else if (_scriptMapper.TryParseFilename(file, out batchName))
+                    scriptFilesBatches[batchName] = file;
+            }
         }
 
         private void BulkImportStagedAndReset()

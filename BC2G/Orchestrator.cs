@@ -108,18 +108,10 @@ namespace BC2G
 
         private async Task LoadGraphAsync(Options options)
         {
-            // get graph files.
-            // todo: move this to graphdb or somewhere more relevant
-            var allFiles = Directory.GetFiles(options.Neo4jImportDirectory);
-            var files = new List<string>();
+            SetupLogger(options);
+            SetupGraphDB(options);
 
-            string pattern = "\\d{18}tmpBulkImportEdges";
-            foreach (var file in allFiles)
-                // it is recommended to use timeout with regex to avoid DOS attack.
-                if (Regex.IsMatch(Path.GetFileName(file), pattern, RegexOptions.Compiled, new TimeSpan(0, 0, 1)))
-                    files.Add(file);
-
-        
+            _graphDB.BulkImport(options.Neo4jImportDirectory);
         }
 
         private async Task<bool> TraverseAsync(Options options)
