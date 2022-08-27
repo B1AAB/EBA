@@ -59,7 +59,14 @@ namespace BC2G.CLI
 
         public string AddressIdMappingFilename { set; get; } = "id_to_address_mapping.tsv";
         //public bool CreatePerBlockFiles { get; set; } = false;
-        public int MaxConcurrentBlocks { get; set; } = 1;// Environment.ProcessorCount / 2;
+
+
+        public int MaxConcurrentBlocks { get; set; }
+# if (DEBUG)
+            = 1;
+#elif (RELEASE)
+            = Environment.ProcessorCount / 2;
+#endif
 
         // TODO: Find a better place to define the Neo4j and PostgreSQL related configurations. 
 
@@ -76,7 +83,7 @@ namespace BC2G.CLI
 
         public string Neo4jImportDirectory { set; get; } =
             Environment.GetEnvironmentVariable("NEO4J_IMPORTDIRECTORY") ??
-            @"\dbmss\dbms-cab7c142-dc7c-4a79-b72c-7ccb253cf000\import";
+            @"\dbmss\dbms-767f0184-55bd-4192-be0e-294458084cc8\import";
 
         public string Neo4jCypherImportPrefix { set; get; } =
             Environment.GetEnvironmentVariable("NEO4J_CYPHERIMPORTPREFIX") ??

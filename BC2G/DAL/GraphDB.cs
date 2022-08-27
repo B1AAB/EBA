@@ -231,6 +231,8 @@ namespace BC2G.DAL
             // The type of inner exception is: 
             // "Neo.TransientError.Transaction.DeadlockDetected"
 
+            // TODO: check if an exception raised in Neo4j triggers an exception in the following awaits.
+
             var blockBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
                 var result = await x.RunAsync(_blockMapper.CypherQuery);
@@ -243,7 +245,7 @@ namespace BC2G.DAL
             var edgeBulkLoadResult = session.WriteTransactionAsync(async x =>
             {
                 var result = await x.RunAsync(_scriptMapper.CypherQuery);
-                return result.SingleAsync().Result[0].As<string>();
+                return await result.ToListAsync();//.SingleAsync().Result[0].As<string>();
             });
             edgeBulkLoadResult.Wait();
             //}
@@ -643,23 +645,6 @@ namespace BC2G.DAL
                 node.Id.ToString(),
                 (string)props["Address"],
                 Enum.Parse<ScriptType>((string)props["ScriptType"]));
-        }
-
-        public async void PrintGreeting(string message)
-        {
-            using (var session = _driver.AsyncSession())
-            {
-                var greeting = session.WriteTransactionAsync(async tx =>
-                {
-                    var result = await tx.RunAsync("CREATE (a:Greeting) " +
-                                        "SET a.message = $message " +
-                                        "RETURN a.message + ', from node ' + id(a)",
-                        new { message });
-                    return result.SingleAsync().Result[0].As<string>();
-                });
-                var xxx = await greeting;
-                Console.WriteLine(await greeting);
-            }
         }
 
         public void Dispose()
