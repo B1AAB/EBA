@@ -22,10 +22,11 @@ namespace BC2G.DAL.Bulkload
         };
 
         public CoinbaseMapper(
+            string workingDirectory,
             string cypherImportPrefix,
-            string importDirectory,
+            //string importDirectory,
             string filename = "tmpBulkImportCoinbase.csv") :
-            base(cypherImportPrefix, importDirectory, filename)
+            base(workingDirectory, cypherImportPrefix, /*importDirectory,*/ filename)
         { }
 
         public override string GetCsvHeader()

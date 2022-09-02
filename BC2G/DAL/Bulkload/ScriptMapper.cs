@@ -26,10 +26,11 @@ namespace BC2G.DAL.Bulkload
         };
 
         public ScriptMapper(
+            string workingDirectory,
             string cypherImportPrefix,
-            string importDirectory,
+            //string importDirectory,
             string filename = "tmpBulkImportEdges.csv") :
-            base(cypherImportPrefix, importDirectory, filename)
+            base(workingDirectory, cypherImportPrefix, /*importDirectory,*/ filename)
         { }
 
         public override string GetCsvHeader()

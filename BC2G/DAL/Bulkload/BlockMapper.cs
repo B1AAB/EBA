@@ -35,10 +35,11 @@ namespace BC2G.DAL.Bulkload
         };
 
         public BlockMapper(
+            string workingDirectory,
             string importPrefix,
-            string importDirectory,
+            //string importDirectory,
             string filename = "tmpBulkImportBlocks.csv") :
-            base(importPrefix, importDirectory, filename)
+            base(workingDirectory, importPrefix, /*importDirectory,*/ filename)
         { }
 
         public override string GetCsvHeader()

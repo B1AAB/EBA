@@ -53,24 +53,27 @@ namespace BC2G.DAL.Bulkload
             get { return $"MERGE (source)-[:Redeems {{{Props[Prop.Height].GetLoadExp(":")}}}]->(block) "; }
         }
 
-        public string Batch { set; get; }
+        public string Batch { set; get; } = string.Empty;
         private readonly string _filename;
-        public string AbsFilename { get { return Path.Combine(ImportDir, Batch + _filename); } }
+        public string AbsFilename { get { return Path.Combine(WorkingDirectory, Filename); } }
         public string Filename { get { return Batch + _filename; } }
 
         public string CypherQuery { get { return ComposeCypherQuery(CypherImportPrefix + Filename); } }
 
         public string CypherImportPrefix { get; }
-        public string ImportDir { get; }
+        //public string ImportDir { get; }
+        public string WorkingDirectory { get; }
 
         public ModelMapper(
+            string workingDirectory,
             string cypherImportPrefix,
-            string importDirectory,
+            //string importDirectory,
             string filename)
         {
             _filename = filename;
             //Filename = Path.Combine(importDirectory, filename);
-            ImportDir = importDirectory;
+            //ImportDir = importDirectory;
+            WorkingDirectory = workingDirectory;
             CypherImportPrefix = cypherImportPrefix;
             //CypherQuery = ComposeCypherQuery(cypherImportPrefix + filename);
         }

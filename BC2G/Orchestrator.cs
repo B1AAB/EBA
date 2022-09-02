@@ -88,6 +88,7 @@ namespace BC2G
                 options.Neo4jUri,
                 options.Neo4jUser,
                 options.Neo4jPassword,
+                options.WorkingDir,
                 options.Neo4jImportDirectory,
                 options.Neo4jCypherImportPrefix,
                 options.SkipLoadGraph);

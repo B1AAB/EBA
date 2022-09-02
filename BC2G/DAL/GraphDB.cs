@@ -35,6 +35,8 @@ namespace BC2G.DAL
         private readonly ScriptMapper _scriptMapper;
         private readonly CoinbaseMapper _coinbaseMapper;
 
+        private readonly string _neo4jImportDir;
+
         private string CurrentTimeStamp { get { return DateTime.Now.ToString("yyyyMMddHHmmssffff"); } }
 
         ~GraphDB() => Dispose(false);
@@ -43,11 +45,13 @@ namespace BC2G.DAL
             string uri,
             string user,
             string password,
+            string workingDirectory,
             string neo4jImportDirectory,
             string neo4jCypherImportPrefix,
             bool skipLoad = false)
         {
             _skipLoad = skipLoad;
+            _neo4jImportDir = neo4jImportDirectory;
 
             if (!_skipLoad)
             {
@@ -64,9 +68,9 @@ namespace BC2G.DAL
             }
 
             var batch = CurrentTimeStamp;
-            _blockMapper = new BlockMapper(neo4jCypherImportPrefix, neo4jImportDirectory) { Batch = batch };
-            _scriptMapper = new ScriptMapper(neo4jCypherImportPrefix, neo4jImportDirectory) { Batch = batch };
-            _coinbaseMapper = new CoinbaseMapper(neo4jCypherImportPrefix, neo4jImportDirectory) { Batch = batch };
+            _blockMapper = new BlockMapper(workingDirectory, neo4jCypherImportPrefix/*, neo4jImportDirectory*/) { Batch = batch };
+            _scriptMapper = new ScriptMapper(workingDirectory, neo4jCypherImportPrefix/*, neo4jImportDirectory*/) { Batch = batch };
+            _coinbaseMapper = new CoinbaseMapper(workingDirectory, neo4jCypherImportPrefix/*, neo4jImportDirectory*/) { Batch = batch };
 
             /*
             var script = new NodeMapping();
@@ -171,7 +175,7 @@ namespace BC2G.DAL
             }
 
             int counter = 0;
-            foreach(var batch in batchNames)
+            foreach (var batch in batchNames)
             {
                 if (batch.Value != 3)
                     // TODO: log this.
@@ -184,22 +188,30 @@ namespace BC2G.DAL
                 _scriptMapper.Batch = batch.Key;
                 _coinbaseMapper.Batch = batch.Key;
                 Console.Write($"Loading batch {batch.Key} [{++counter}/{batchNames.Count}] ... ");
-                BulkImport();
+                BulkImportStagedAndReset(batch.Key);
                 Console.WriteLine("Done!");
             }
         }
 
-        private void BulkImportStagedAndReset()
+        private void BulkImportStagedAndReset(string? batch = null)
         {
             if (!_skipLoad)
             {
+                var blocksFilename = Path.Combine(_neo4jImportDir, _blockMapper.Filename);
+                var scriptsFilename = Path.Combine(_neo4jImportDir, _scriptMapper.Filename);
+                var coinbaseFilename = Path.Combine(_neo4jImportDir, _coinbaseMapper.Filename);
+
+                File.Copy(_blockMapper.AbsFilename, blocksFilename);
+                File.Copy(_scriptMapper.AbsFilename, scriptsFilename);
+                File.Copy(_coinbaseMapper.AbsFilename, coinbaseFilename);
                 BulkImport();
-                File.Delete(_blockMapper.AbsFilename);
-                File.Delete(_scriptMapper.AbsFilename);
-                File.Delete(_coinbaseMapper.AbsFilename);
+                File.Delete(blocksFilename);
+                File.Delete(scriptsFilename);
+                File.Delete(coinbaseFilename);
             }
 
-            var batch = CurrentTimeStamp;
+            if (batch == null)
+                batch = CurrentTimeStamp;
             _blockMapper.Batch = batch;
             _scriptMapper.Batch = batch;
             _coinbaseMapper.Batch = batch;
