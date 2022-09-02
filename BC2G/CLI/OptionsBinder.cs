@@ -18,6 +18,7 @@ namespace BC2G.CLI
         private readonly Option<int>? _toExclusiveOption;
         private readonly Option<int>? _granularityOption;
         private readonly Option<bool>? _skipGraphLoadOption;
+        private readonly Option<Uri>? _bitcoinClientUri;
         private readonly Option<int>? _graphSampleCountOption;
         private readonly Option<int>? _graphSampleHopsOption;
         private readonly Option<int>? _graphSampleMinNodeCount;
@@ -34,6 +35,7 @@ namespace BC2G.CLI
             Option<int>? toExclusiveOption = null,
             Option<int>? granularityOption = null,
             Option<bool>? skipGraphLoadOption = null,
+            Option<Uri>? bitcoinClientUri = null,
             Option<int>? graphSampleCountOption = null,
             Option<int>? graphSampleHopOption = null,
             Option<int>? graphSampleMinNodeCount = null,
@@ -49,6 +51,7 @@ namespace BC2G.CLI
             _toExclusiveOption = toExclusiveOption;
             _granularityOption = granularityOption;
             _skipGraphLoadOption = skipGraphLoadOption;
+            _bitcoinClientUri = bitcoinClientUri;
             _graphSampleCountOption = graphSampleCountOption;
             _graphSampleHopsOption = graphSampleHopOption;
             _graphSampleMinNodeCount = graphSampleMinNodeCount;
@@ -68,6 +71,7 @@ namespace BC2G.CLI
             o.ToExclusive = GetValue(o.ToExclusive, _toExclusiveOption, c);
             o.Granularity = GetValue(o.Granularity, _granularityOption, c);
             o.SkipLoadGraph = GetValue(o.SkipLoadGraph, _skipGraphLoadOption, c);
+            o.BitcoinClientUri = GetValue(o.BitcoinClientUri, _bitcoinClientUri, c);
 
             o.GraphSampleCount = GetValue(o.GraphSampleCount, _graphSampleCountOption, c);
             o.GraphSampleHops = GetValue(o.GraphSampleHops, _graphSampleHopsOption, c);

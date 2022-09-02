@@ -159,6 +159,9 @@ namespace BC2G.CLI
 
         private Command GetBitcoinCmd(Func<Options, Task> handler)
         {
+            // TODO: it is a bit overkill to get a new instance only to get defaults.
+            var optionsForDefaults = new Options();
+
             var fromOption = new Option<int>(
                 name: "--from",
                 description: "The inclusive height of the block where the traverse should start.");
@@ -180,6 +183,12 @@ namespace BC2G.CLI
                 "Neo4j in batches and would not try loading them to Neo4j. After the traverse on " +
                 "the chain, these files can be used to load the data into Neo4j.");
 
+            var clientUriOption = new Option<Uri>(
+                name: "--client-uri",
+                description: "The URI where the Bitcoin client can be reached. The client should " +
+                "be started with REST endpoint enabled.",
+                getDefaultValue: () => optionsForDefaults.BitcoinClientUri);
+
             var cmd = new Command(
                 name: "bitcoin",
                 description: "TODO ...")
@@ -187,7 +196,8 @@ namespace BC2G.CLI
                 fromOption,
                 toOption,
                 granularityOption,
-                skipGraphLoadOption
+                skipGraphLoadOption,
+                clientUriOption
             };
 
             cmd.SetHandler(async (options) =>
@@ -199,6 +209,7 @@ namespace BC2G.CLI
                 toExclusiveOption: toOption,
                 granularityOption: granularityOption,
                 skipGraphLoadOption: skipGraphLoadOption,
+                bitcoinClientUri: clientUriOption,
                 workingDirOption: _workingDirOption,
                 statusFilenameOption: _statusFilenameOption));
 

@@ -7,6 +7,9 @@ namespace BC2G.CLI
     // Currently defaults are set in different places
     // including here and CLI. 
 
+    // TODO: can this class be static? That could
+    // simplify setting default values of command line options. 
+
     public class Options
     {
         public int FromInclusive { get; set; } = -1;
@@ -59,6 +62,8 @@ namespace BC2G.CLI
 
         public string AddressIdMappingFilename { set; get; } = "id_to_address_mapping.tsv";
         //public bool CreatePerBlockFiles { get; set; } = false;
+
+        public Uri BitcoinClientUri { set; get; } = new Uri("http://127.0.0.1:8332/");
 
 
         public int MaxConcurrentBlocks { get; set; }

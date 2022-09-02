@@ -19,7 +19,7 @@ namespace BC2G.Blockchains
         /// <summary>
         /// Sets and gets the REST API endpoint of the Bitcoin client.
         /// </summary>
-        public Uri BaseUri { set; get; } = new Uri("http://127.0.0.1:8332/rest/");
+        private readonly Uri _baseUri;
 
         private readonly HttpClient _client;
 
@@ -40,6 +40,7 @@ namespace BC2G.Blockchains
         public BitcoinAgent(HttpClient client, Options options, Logger logger, CancellationToken ct)
         {
             _client = client;
+            _baseUri = new Uri(options.BitcoinClientUri, "/rest/");
 
             // the use of Tx cache is disabled since it is not clear 
             // how much improvement it offers to the additional complexity.
@@ -73,7 +74,7 @@ namespace BC2G.Blockchains
             {
                 try
                 {
-                    var _ = _client.GetAsync(new Uri(BaseUri, "chaininfo.json")).Result;
+                    var _ = _client.GetAsync(new Uri(_baseUri, "chaininfo.json")).Result;
                     return true;
                 }
                 catch
@@ -345,7 +346,7 @@ namespace BC2G.Blockchains
             try
             {
                 return await _client.GetStreamAsync(
-                    new Uri(BaseUri, endpoint));
+                    new Uri(_baseUri, endpoint));
             }
             catch when (!IsConnected)
             {
