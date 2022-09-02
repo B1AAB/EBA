@@ -164,16 +164,19 @@ namespace BC2G.CLI
 
             var fromOption = new Option<int>(
                 name: "--from",
-                description: "The inclusive height of the block where the traverse should start.");
+                description: "The inclusive height of the block where the traverse should start.",
+                getDefaultValue: () => optionsForDefaults.FromInclusive);
 
             var toOption = new Option<int>(
                 name: "--to",
-                description: "The exclusive height of the block where the traverse should end (exclusive).");
+                description: "The exclusive height of the block where the traverse should end (exclusive).",
+                getDefaultValue: () => optionsForDefaults.ToExclusive);
 
             var granularityOption = new Option<int>(
                 name: "--granularity",
-                description: "Set the blockchain traversal granularity (default is 1)." +
-                "For instance, if set to `10`, it implies processing every 10 blocks in the blockchain.");
+                description: "Set the blockchain traversal granularity." +
+                "For instance, if set to `10`, it implies processing every 10 blocks in the blockchain.",
+                getDefaultValue: () => optionsForDefaults.Granularity);
 
             var skipGraphLoadOption = new Option<bool>(
                 name: "--skip-graph-load",
@@ -181,7 +184,8 @@ namespace BC2G.CLI
                 "a decent amount of compute resource requirement on the system. To alleviate " +
                 "it a bit, setting this option would only store the data to be bulk-loaded into " +
                 "Neo4j in batches and would not try loading them to Neo4j. After the traverse on " +
-                "the chain, these files can be used to load the data into Neo4j.");
+                "the chain, these files can be used to load the data into Neo4j.",
+                getDefaultValue: () => optionsForDefaults.SkipLoadGraph);
 
             var clientUriOption = new Option<Uri>(
                 name: "--client-uri",
