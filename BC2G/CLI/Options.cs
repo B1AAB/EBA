@@ -104,5 +104,7 @@ namespace BC2G.CLI
         public string PsqlPassword { set; get; } = "PassWord";
 
         public string StatusFile { set; get; } = Path.Combine(Environment.CurrentDirectory, "status.json");
+
+        public int HttpClientTimeout { set; get; } = 300;
     }
 }

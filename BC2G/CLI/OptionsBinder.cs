@@ -29,6 +29,7 @@ namespace BC2G.CLI
         private readonly Option<double>? _graphSampleRootNodeSelectProb;
         private readonly Option<string>? _workingDirOption;
         private readonly Option<string>? _statusFilenameOption;
+        private readonly Option<int>? _httpClientTimeoutOption;
 
         public OptionsBinder(
             Option<int>? fromInclusiveOption = null,
@@ -45,7 +46,8 @@ namespace BC2G.CLI
             Option<GraphSampleMode>? graphSampleModeOption = null,
             Option<double>? graphSampleRootNodeSelectProb = null,
             Option<string>? workingDirOption = null,
-            Option<string>? statusFilenameOption = null)
+            Option<string>? statusFilenameOption = null,
+            Option<int>? httpClientTimeoutOption = null)
         {
             _fromInclusiveOption = fromInclusiveOption;
             _toExclusiveOption = toExclusiveOption;
@@ -62,6 +64,7 @@ namespace BC2G.CLI
             _graphSampleRootNodeSelectProb = graphSampleRootNodeSelectProb;
             _workingDirOption = workingDirOption;
             _statusFilenameOption = statusFilenameOption;
+            _httpClientTimeoutOption = httpClientTimeoutOption;
         }
 
         protected override Options GetBoundValue(BindingContext c)
@@ -84,6 +87,7 @@ namespace BC2G.CLI
 
             o.WorkingDir = GetValue(o.WorkingDir, _workingDirOption, c);
             o.StatusFile = GetValue(o.StatusFile, _statusFilenameOption, c);
+            o.HttpClientTimeout = GetValue(o.HttpClientTimeout, _httpClientTimeoutOption, c);
 
             return o;
         }

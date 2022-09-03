@@ -128,6 +128,7 @@ namespace BC2G
             // in the system.commandline to implement this properly. 
 
             _options = options;
+            Client.Timeout = TimeSpan.FromSeconds(options.HttpClientTimeout);
 
             SetupLogger(options);
             SetupGraphDB(options);
