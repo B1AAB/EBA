@@ -15,7 +15,6 @@ namespace BC2G
 {
     public class Orchestrator : IDisposable
     {
-        private readonly HttpClient _client;
         private GraphDB _graphDB;
         private bool disposed = false;
 
@@ -29,10 +28,16 @@ namespace BC2G
         private readonly CommandLineInterface _cli;
         private readonly CancellationToken _ct;
 
-        public Orchestrator(HttpClient client, CancellationToken ct)
+        private HttpClient Client { get; }
+
+        public Orchestrator(CancellationToken ct)
         {
+            Client = new HttpClient();
+            Client.DefaultRequestHeaders.Accept.Clear();
+            //client.DefaultRequestHeaders.UserAgent.Clear();
+            Client.DefaultRequestHeaders.Add("User-Agent", "BC2G");
+
             _ct = ct;
-            _client = client;
             _cli = new CommandLineInterface(TraverseAsync, Sample, LoadGraphAsync);
             
             //_options = options;
@@ -202,7 +207,7 @@ namespace BC2G
         {
             try
             {
-                agent = new BitcoinAgent(_client, options, Logger, cT);
+                agent = new BitcoinAgent(Client, options, Logger, cT);
 
                 if (!agent.IsConnected)
                     throw new ClientInaccessible();

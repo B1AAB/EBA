@@ -44,11 +44,6 @@ namespace BC2G
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 SetConsoleCtrlHandler(_handler, true);*/
 
-            var client = new HttpClient();
-            client.DefaultRequestHeaders.Accept.Clear();
-            //client.DefaultRequestHeaders.UserAgent.Clear();
-            client.DefaultRequestHeaders.Add("User-Agent", "BitcoinAgent");
-
             var exitCode = 0;
 
             try
@@ -59,7 +54,7 @@ namespace BC2G
                     return;*/
 
                 var orchestrator = new Orchestrator(
-                    /*options,*/ client, cancellationToken);//, cliOptions.StatusFilename);
+                    /*options,*/ cancellationToken);//, cliOptions.StatusFilename);
 
                 Console.CancelKeyPress += new ConsoleCancelEventHandler(
                     (sender, e) => CancelKeyPressHandler(
