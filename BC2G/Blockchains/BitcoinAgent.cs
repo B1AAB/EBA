@@ -154,6 +154,7 @@ namespace BC2G.Blockchains
             var graph = new BlockGraph(block);
             await ProcessTxes(graph, block);
 
+            //_logger.Log($"Completed computing graph for block height {height}.");
             return graph;
         }
 
@@ -341,7 +342,7 @@ namespace BC2G.Blockchains
             return await SendGet($"{endpoint}/{hash}.json");
         }
 
-        private async Task<Stream> SendGet(string endpoint)
+        private async Task<Stream> SendGet(string endpoint, int maxRetries = 3)
         {
             try
             {
@@ -350,7 +351,43 @@ namespace BC2G.Blockchains
             }
             catch when (!IsConnected)
             {
-                throw new ClientInaccessible();
+                if (maxRetries >= 1)
+                    return await SendGet(endpoint, --maxRetries);
+
+                throw new ClientInaccessible(
+                    "Failed to connect to the Bitcoin client after 3 tries. ");
+            }
+            catch (TaskCanceledException e)
+            {
+                // Cancelation triggered by the user. 
+                if (e.CancellationToken == _cT)
+                    throw e;
+
+                if (maxRetries >= 1)
+                {
+                    return await SendGet(endpoint, --maxRetries);
+                }
+                else
+                {
+                    var msg = e.Message;
+                    if (e.InnerException != null)
+                        msg += "Cannot make the request after 3 tries: " + e.InnerException.Message;
+                    throw new TaskCanceledException(msg);
+                }
+            }
+            catch (HttpRequestException e)
+            {
+                if (maxRetries >= 1)
+                {
+                    return await SendGet(endpoint, --maxRetries);
+                }
+                else
+                {
+                    var msg = e.Message;
+                    if (e.InnerException != null)
+                        msg += "Cannot make the request after 3 tries: " + e.InnerException.Message;
+                    throw new HttpRequestException(msg);
+                }
             }
             catch (Exception e)
             {
