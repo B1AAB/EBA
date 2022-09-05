@@ -133,10 +133,10 @@ namespace BC2G
             SetupLogger(options);
             SetupGraphDB(options);
 
-            if (!TryGetBitCoinAgent(options, _ct, out var agent))
-                return false;
+            var agent = await GetBitCoinAgentAsync(options, _ct);
 
-            if (!AssertChain(agent, out ChainInfo chaininfo))
+            (var asserResult, var chaininfo) = await AssertChainAsync(agent);
+            if (!asserResult)
                 return false;
 
             if (_ct.IsCancellationRequested)
@@ -204,40 +204,39 @@ namespace BC2G
             return true;
         }
 
-        private bool TryGetBitCoinAgent(Options options, CancellationToken cT, out BitcoinAgent agent)
+        private async Task<BitcoinAgent> GetBitCoinAgentAsync(
+            Options options, CancellationToken cT)
         {
             try
             {
-                agent = new BitcoinAgent(Client, options, Logger, cT);
+                var agent = new BitcoinAgent(Client, options, Logger, cT);
 
-                if (!agent.IsConnected)
+                if (!(await agent.IsConnectedAsync()))
                     throw new ClientInaccessible();
-                return true;
+                return agent;
             }
             catch (Exception e)
             {
                 Logger.LogException(
                     $"Failed to create/access BitcoinAgent: " +
                     $"{e.Message}");
-
-                agent = default;
-                return false;
+                throw;
             }
         }
 
-        private bool AssertChain(BitcoinAgent agent, out ChainInfo chainInfo)
+        private async Task<(bool, ChainInfo)> AssertChainAsync(BitcoinAgent agent)
         {
-            chainInfo = new ChainInfo();
+            var chainInfo = new ChainInfo();
 
             try
             {
-                chainInfo = agent.GetChainInfoAsync().Result;
+                chainInfo = await agent.GetChainInfoAsync();
                 if (string.IsNullOrEmpty(chainInfo.Chain))
                 {
                     Logger.LogException(
                         "Received empty string as chain name " +
                         "from the chaininfo endpoint.");
-                    return false;
+                    return (false, chainInfo);
                 }
 
                 if (chainInfo.Chain != "main")
@@ -246,15 +245,15 @@ namespace BC2G
                         $"Required to be on the `main` chain, " +
                         $"but the bitcoin client is on the " +
                         $"`{chainInfo.Chain}` chain.");
-                    return false;
+                    return (false, chainInfo);
                 }
 
-                return true;
+                return (true, chainInfo);
             }
             catch (Exception e)
             {
                 Logger.LogException($"Failed getting chain info: {e.Message}");
-                return false;
+                return (false, chainInfo);
             }
         }
 
@@ -284,6 +283,7 @@ namespace BC2G
 
             using var pGraphStat = new PersistentGraphStatistics(
                 Path.Combine(_options.WorkingDir, "blocks_stats.tsv"),
+                Logger,
                 cT);
 
             using var gBuffer = new PersistentGraphBuffer(

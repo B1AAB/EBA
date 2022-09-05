@@ -68,19 +68,16 @@ namespace BC2G.Blockchains
         /// the Bitcoin client via the given value of <paramref name="BaseUri"/>;
         /// false if otherwise.
         /// </summary>
-        public bool IsConnected
+        public async Task<bool> IsConnectedAsync()
         {
-            get
+            try
             {
-                try
-                {
-                    var _ = _client.GetAsync(new Uri(_baseUri, "chaininfo.json")).Result;
-                    return true;
-                }
-                catch
-                {
-                    return false;
-                }
+                var response = await _client.GetAsync(new Uri(_baseUri, "chaininfo.json"));
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
             }
         }
 
@@ -120,6 +117,26 @@ namespace BC2G.Blockchains
 
         public async Task<Block> GetBlock(string hash)
         {
+            /*
+            Stream s = null;
+            try
+            {
+                s = await GetResource("block", hash);
+            }
+            catch(Exception e)
+            {
+                _logger.Log($"**************** 1 {e.Message} {s}");
+            }
+            try
+            {
+                
+                await JsonSerializer.DeserializeAsync<Block>(s);
+            }
+            catch(Exception e)
+            {
+                _logger.Log($"-------- 2 {hash}; {e.Message}");
+            }*/
+
             return
                 await JsonSerializer.DeserializeAsync<Block>(
                     await GetResource("block", hash))
@@ -349,16 +366,9 @@ namespace BC2G.Blockchains
                 return await _client.GetStreamAsync(
                     new Uri(_baseUri, endpoint));
             }
-            catch when (!IsConnected)
-            {
-                if (maxRetries >= 1)
-                    return await SendGet(endpoint, --maxRetries);
-
-                throw new ClientInaccessible(
-                    "Failed to connect to the Bitcoin client after 3 tries. ");
-            }
             catch (TaskCanceledException e)
             {
+                //_logger.Log($"-------- 2 {endpoint}; {e.Message}");
                 // Cancelation triggered by the user. 
                 if (e.CancellationToken == _cT)
                     throw e;
@@ -377,6 +387,7 @@ namespace BC2G.Blockchains
             }
             catch (HttpRequestException e)
             {
+                //_logger.Log($"-------- 3 {endpoint}; {e.Message}");
                 if (maxRetries >= 1)
                 {
                     return await SendGet(endpoint, --maxRetries);
@@ -391,6 +402,18 @@ namespace BC2G.Blockchains
             }
             catch (Exception e)
             {
+                var connected = await IsConnectedAsync();
+                if (!connected)
+                {
+                    if (maxRetries >= 1)
+                        return await SendGet(endpoint, --maxRetries);
+
+                    //_logger.Log($"-------- 5 inaccessible {endpoint}");
+                    throw new ClientInaccessible(
+                        "Failed to connect to the Bitcoin client after 3 tries. ");
+                }
+
+                //_logger.Log($"-------- 4 {endpoint}; {e.Message}");
                 var msg = e.Message;
                 if (e.InnerException != null)
                     msg += " " + e.InnerException.Message;
