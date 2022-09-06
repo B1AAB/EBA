@@ -1,8 +1,10 @@
 ﻿using BC2G.Graph;
+using BC2G.Logging;
 using System.Collections.Concurrent;
 
 namespace BC2G.Serializers
 {
+    /*
     public class AddressToIdMapper : PersistentObject<(string, string)>
     {
         public int NodesCount { get { return _mappings.Count; } }
@@ -24,9 +26,11 @@ namespace BC2G.Serializers
 
         public AddressToIdMapper(
             string filename,
+            Logger logger,
             ConcurrentDictionary<string, string> mappings,
             CancellationToken cancellationToken) : base(
                 filename,
+                logger,
                 cancellationToken)
         {
             _mappings = mappings;
@@ -75,5 +79,5 @@ namespace BC2G.Serializers
         {
             return $"{obj.Item1}{_delimiter}{obj.Item2}{Environment.NewLine}";
         }
-    }
+    }*/
 }
