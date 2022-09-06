@@ -32,8 +32,8 @@ namespace BC2G.Logging
         private const string _cancelling = "Cancelling ... do not turn off your computer.";
 
         public BlockTraversalLoggingBase(
-            int fromInclusive, 
-            int toExclusive, 
+            int fromInclusive,
+            int toExclusive,
             int blocksCount,
             int templateLinesCount)
         {
@@ -72,9 +72,12 @@ namespace BC2G.Logging
             ToConsole();
 
             return
+                $"Active:{ActiveBlocksCount} [{string.Join(";", _activeBlocks.Keys)}]; " +
+                $"Completed:{height} ({Completed}/{Total}).";
+            /*
+            return
                 $"Active:{ActiveBlocksCount};" +
-                $"Completed:{Completed}/{Total};" +
-                $"{BlockRuntimeMovingAvg.Speed}bps.";
+                $"Completed:{Completed}/{Total}.";*/
         }
 
         protected abstract void ToConsole();
