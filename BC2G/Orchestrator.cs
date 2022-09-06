@@ -5,6 +5,7 @@ using BC2G.Exceptions;
 using BC2G.Graph;
 using BC2G.Logging;
 using BC2G.Model;
+using BC2G.PersistentObject;
 using BC2G.Serializers;
 using System.Collections.Concurrent;
 using System.Diagnostics;

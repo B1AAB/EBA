@@ -3,7 +3,7 @@ using BC2G.Graph;
 using BC2G.Logging;
 using BC2G.Serializers;
 
-namespace BC2G
+namespace BC2G.PersistentObject
 {
     public class PersistentGraphBuffer : PersistentObject<BlockGraph>
     {
@@ -21,6 +21,7 @@ namespace BC2G
             PersistentGraphStatistics pGraphStats,
             Logger logger,
             CancellationToken cancellationToken) : base(
+                logger,
                 //nodesFilename,
                 //edgesFilename,
                 cancellationToken/*,

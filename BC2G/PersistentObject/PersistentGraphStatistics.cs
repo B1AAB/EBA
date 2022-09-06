@@ -1,22 +1,18 @@
 ﻿using BC2G.Graph;
+using BC2G.Logging;
 
-namespace BC2G
+namespace BC2G.PersistentObject
 {
     public class PersistentGraphStatistics : PersistentObject<string>
     {
         public PersistentGraphStatistics(
             string filename,
+            Logger logger,
             CancellationToken cancellationToken) : base(
                 filename,
+                logger,
                 cancellationToken,
                 BlockStatistics.GetHeader())
         { }
-
-        public override string Serialize(
-            string obj,
-            CancellationToken cancellationToken)
-        {
-            return obj;
-        }
     }
 }
