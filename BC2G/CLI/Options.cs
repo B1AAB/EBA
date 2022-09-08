@@ -105,6 +105,6 @@ namespace BC2G.CLI
 
         public string StatusFile { set; get; } = Path.Combine(Environment.CurrentDirectory, "status.json");
 
-        public int HttpClientTimeout { set; get; } = 300;
+        public TimeSpan HttpRequestTimeout { set; get; } = new TimeSpan(0, 5, 0);
     }
 }

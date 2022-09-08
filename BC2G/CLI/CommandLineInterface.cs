@@ -29,10 +29,10 @@ namespace BC2G.CLI
             description: "The JSON file to store the execution status.",
             getDefaultValue: () => new Options().StatusFile);
 
-        private readonly Option<int> _httpClientTimeoutOption = new(
-            name: "--httpclient-timeout",
+        private readonly Option<double> _httpRequestTimeoutOption = new(
+            name: "--http-request-timeout",
             description: "The time in seconds to wait before an http request times out.",
-            getDefaultValue: () => new Options().HttpClientTimeout);
+            getDefaultValue: () => new Options().HttpRequestTimeout.TotalSeconds);
 
         public CommandLineInterface(
             Func<Options, Task> bitcoinTraverseCmdHandler,
@@ -45,7 +45,7 @@ namespace BC2G.CLI
             };
             _rootCmd.AddGlobalOption(_workingDirOption);
             _rootCmd.AddGlobalOption(_statusFilenameOption);
-            _rootCmd.AddGlobalOption(_httpClientTimeoutOption);
+            _rootCmd.AddGlobalOption(_httpRequestTimeoutOption);
             // This is required to allow using options without specifying any of the subcommands. 
             _rootCmd.SetHandler(x => { });
 

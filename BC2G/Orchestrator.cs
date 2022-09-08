@@ -129,7 +129,7 @@ namespace BC2G
             // in the system.commandline to implement this properly. 
 
             _options = options;
-            Client.Timeout = TimeSpan.FromSeconds(options.HttpClientTimeout);
+            Client.Timeout = options.HttpRequestTimeout;
 
             SetupLogger(options);
             SetupGraphDB(options);
@@ -320,17 +320,17 @@ namespace BC2G
             // Have tested TPL dataflow as alternative to Parallel.For,
             // it adds more complexity with little performance improvements,
             // and in some cases, slower than Parallel.For and sequential traversal.
-            Parallel.For(0, blockHeightQueue.Count, parallelOptions, (i, state) =>
+            Parallel.For(0, blockHeightQueue.Count, parallelOptions, (i, state_33) =>
             {
                 if (cT.IsCancellationRequested)
-                    state.Stop();
+                    state_33.Stop();
 
                 blockHeightQueue.TryDequeue(out var h);
                 Logger.LogStartProcessingBlock(h);
                 ProcessBlock(agent, gBuffer, /*serializer,*/ h, /*individualBlocksDir,*/ cT).Wait();
 
                 if (cT.IsCancellationRequested)
-                    state.Stop();
+                    state_33.Stop();
             });
 
             _graphDB.FinishBulkImport();
@@ -364,6 +364,9 @@ namespace BC2G
          * object is updated, in particular, the status is updated. 
          */
 
+        int getBlockGraphMaxWaitTimeMilliseconds = 300000;
+        int maxRetries = 3;
+
         private async Task ProcessBlock(
             BitcoinAgent agent,
             PersistentGraphBuffer gBuffer,
@@ -375,11 +378,31 @@ namespace BC2G
             if (cT.IsCancellationRequested) return;
 
             BlockGraph graph;
-            try { graph = await agent.GetGraph(height); }
-            catch (OperationCanceledException) { return; }
-            catch { throw; }
+            int tries = 0;
+            try
+            {
+                while (++tries <= maxRetries)
+                {
+                    var blockGraphTask = agent.GetGraph(height);
+                    if (await Task.WhenAny(blockGraphTask, Task.Delay(getBlockGraphMaxWaitTimeMilliseconds, cT)) == blockGraphTask)
+                    {
+                        // Re-wating will cause throwing any caugh exception. 
+                        graph = await blockGraphTask;
+                        gBuffer.Enqueue(graph);
+                        _options.LastProcessedBlock = height;
 
-            gBuffer.Enqueue(graph);
+                        return;
+                    }
+                    else
+                    {
+                        Logger.Log($"Failed to get the graph of block at height {height}, retries {tries} of {maxRetries}.");
+                    }
+                }
+
+                throw new TimeoutException($"Failed to get the graph of block at height {height} after {tries} unsuccessful tries.");
+            }
+            catch (OperationCanceledException) { return; }
+            
             /*try
             {
                 graph.MergeQueuedTxGraphs(cT);
@@ -402,7 +425,7 @@ namespace BC2G
             /*if (_options.CreatePerBlockFiles)
                 serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"));*/
 
-            _options.LastProcessedBlock = height;
+            //_options.LastProcessedBlock = height;
         }
 
         // The IDisposable interface is implemented following .NET docs:
