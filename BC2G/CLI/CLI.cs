@@ -10,7 +10,7 @@ namespace BC2G.CLI
 {
     // TODO: CLI and the Options type need to be re-writtent for clarity. 
 
-    internal class CommandLineInterface
+    internal class CLI
     {
         private readonly RootCommand _rootCmd;
         private readonly Option<string> _workingDirOption = new(
@@ -34,7 +34,7 @@ namespace BC2G.CLI
             description: "The time in seconds to wait before an http request times out.",
             getDefaultValue: () => new Options().HttpRequestTimeout.TotalSeconds);
 
-        public CommandLineInterface(
+        public CLI(
             Func<Options, Task> bitcoinTraverseCmdHandler,
             Func<Options, Task> sampleCmdHandler,
             Func<Options, Task> loadGraphCmdHandler)

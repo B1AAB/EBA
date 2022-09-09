@@ -26,7 +26,7 @@ namespace BC2G
         private readonly string _loggerTimeStampFormat = "yyyyMMdd_HHmmssfffffff";
         private readonly string _maxLogfileSize = "2GB";
 
-        private readonly CommandLineInterface _cli;
+        private readonly CLI.CLI _cli;
         private readonly CancellationToken _ct;
 
         private HttpClient Client { get; }
@@ -39,7 +39,7 @@ namespace BC2G
             Client.DefaultRequestHeaders.Add("User-Agent", "BC2G");
 
             _ct = ct;
-            _cli = new CommandLineInterface(TraverseAsync, Sample, LoadGraphAsync);
+            _cli = new CLI.CLI(this.TraverseAsync, this.Sample, this.LoadGraphAsync);
             
             //_options = options;
             //_statusFilename = statusFilename;
