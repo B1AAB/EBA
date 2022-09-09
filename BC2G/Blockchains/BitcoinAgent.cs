@@ -50,7 +50,7 @@ namespace BC2G.Blockchains
             //_txCache = txCache;
             _logger = logger;
             _cT = ct;
-            _waitTimeoutMilliseconds = options.HttpRequestTimeout.Milliseconds;
+            _waitTimeoutMilliseconds = (int)options.HttpRequestTimeout.TotalMilliseconds;
 
             _psqlHost = options.PsqlHost;
             _psqlDatabase = options.PsqlDatabase;
@@ -425,7 +425,10 @@ namespace BC2G.Blockchains
                 else
                 {
                     if (maxRetries >= 1)
+                    {
+                        _logger.Log($"Timeout querying {endpoint}, retry {3 - maxRetries} of {maxRetries}");
                         return await SendGet(endpoint, --maxRetries);
+                    }
                     throw new TimeoutException($"Cannot query the endpoint in the given timeframe; endpoint: {endpoint}");
                 }
 
@@ -442,6 +445,7 @@ namespace BC2G.Blockchains
 
                 if (maxRetries >= 1)
                 {
+                    _logger.Log($"TaskCanceledException querying {endpoint}, {e.Message}, retry {3 - maxRetries} of {maxRetries}");
                     return await SendGet(endpoint, --maxRetries);
                 }
                 else
@@ -457,6 +461,7 @@ namespace BC2G.Blockchains
                 //_logger.Log($"-------- 3 {endpoint}; {e.Message}");
                 if (maxRetries >= 1)
                 {
+                    _logger.Log($"HttpRequestException querying {endpoint}, {e.Message}, retry {3 - maxRetries} of {maxRetries}");
                     return await SendGet(endpoint, --maxRetries);
                 }
                 else
