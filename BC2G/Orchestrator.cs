@@ -381,7 +381,7 @@ namespace BC2G
             int tries = 0;
             try
             {
-                while (++tries <= maxRetries)
+                while (++tries < maxRetries)
                 {
                     var blockGraphTask = agent.GetGraph(height);
                     if (await Task.WhenAny(blockGraphTask, Task.Delay(getBlockGraphMaxWaitTimeMilliseconds, cT)) == blockGraphTask)
