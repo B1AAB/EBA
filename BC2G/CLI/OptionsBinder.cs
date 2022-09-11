@@ -1,21 +1,14 @@
-﻿using BC2G.DAL;
-using System;
-using System.Collections.Generic;
+﻿using BC2G.Model.Config;
 using System.CommandLine;
 using System.CommandLine.Binding;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace BC2G.CLI
+namespace BC2G.CommandLineInterface
 {
-    // TODO: read docs: https://docs.microsoft.com/en-us/dotnet/standard/commandline/model-binding
-    // Does not this class seem a bit overkil?! 
-
     internal class OptionsBinder : BinderBase<Options>
     {
-        private readonly Option<int>? _fromInclusiveOption;
-        private readonly Option<int>? _toExclusiveOption;
+        private readonly Options _options;
+        private readonly Option<int?>? _fromInclusiveOption;
+        private readonly Option<int?>? _toExclusiveOption;
         private readonly Option<int>? _granularityOption;
         private readonly Option<bool>? _skipGraphLoadOption;
         private readonly Option<Uri>? _bitcoinClientUri;
@@ -29,11 +22,11 @@ namespace BC2G.CLI
         private readonly Option<double>? _graphSampleRootNodeSelectProb;
         private readonly Option<string>? _workingDirOption;
         private readonly Option<string>? _statusFilenameOption;
-        private readonly Option<double>? _httpRequestTimeoutOption;
 
         public OptionsBinder(
-            Option<int>? fromInclusiveOption = null,
-            Option<int>? toExclusiveOption = null,
+            Options options,
+            Option<int?>? fromInclusiveOption = null,
+            Option<int?>? toExclusiveOption = null,
             Option<int>? granularityOption = null,
             Option<bool>? skipGraphLoadOption = null,
             Option<Uri>? bitcoinClientUri = null,
@@ -46,9 +39,9 @@ namespace BC2G.CLI
             Option<GraphSampleMode>? graphSampleModeOption = null,
             Option<double>? graphSampleRootNodeSelectProb = null,
             Option<string>? workingDirOption = null,
-            Option<string>? statusFilenameOption = null,
-            Option<double>? httpRequestTimeoutOption = null)
+            Option<string>? statusFilenameOption = null)
         {
+            _options = options;
             _fromInclusiveOption = fromInclusiveOption;
             _toExclusiveOption = toExclusiveOption;
             _granularityOption = granularityOption;
@@ -64,36 +57,29 @@ namespace BC2G.CLI
             _graphSampleRootNodeSelectProb = graphSampleRootNodeSelectProb;
             _workingDirOption = workingDirOption;
             _statusFilenameOption = statusFilenameOption;
-            _httpRequestTimeoutOption = httpRequestTimeoutOption;
         }
 
         protected override Options GetBoundValue(BindingContext c)
         {
-            var o = new Options();
-            o.FromInclusive = GetValue(o.FromInclusive, _fromInclusiveOption, c);
-            o.ToExclusive = GetValue(o.ToExclusive, _toExclusiveOption, c);
-            o.Granularity = GetValue(o.Granularity, _granularityOption, c);
-            o.SkipLoadGraph = GetValue(o.SkipLoadGraph, _skipGraphLoadOption, c);
-            o.BitcoinClientUri = GetValue(o.BitcoinClientUri, _bitcoinClientUri, c);
-
-            o.GraphSampleCount = GetValue(o.GraphSampleCount, _graphSampleCountOption, c);
-            o.GraphSampleHops = GetValue(o.GraphSampleHops, _graphSampleHopsOption, c);
-            o.GraphSampleMinNodeCount = GetValue(o.GraphSampleMinNodeCount, _graphSampleMinNodeCount, c);
-            o.GraphSampleMaxNodeCount = GetValue(o.GraphSampleMaxNodeCount, _graphSampleMaxNodeCount, c);
-            o.GraphSampleMinEdgeCount = GetValue(o.GraphSampleMinEdgeCount, _graphSampleMinEdgeCount, c);
-            o.GraphSampleMaxEdgeCount = GetValue(o.GraphSampleMaxEdgeCount, _graphSampleMaxEdgeCount, c);
-            o.GraphSampleMode = GetValue(o.GraphSampleMode, _graphSampleModeOption, c);
-            o.GraphSampleRootNodeSelectProb = GetValue(o.GraphSampleRootNodeSelectProb, _graphSampleRootNodeSelectProb, c);
-
+            var o = _options;
             o.WorkingDir = GetValue(o.WorkingDir, _workingDirOption, c);
             o.StatusFile = GetValue(o.StatusFile, _statusFilenameOption, c);
 
-            if (_httpRequestTimeoutOption != null)
-                if (c.ParseResult.FindResultFor(_httpRequestTimeoutOption) != null)
-                    o.HttpRequestTimeout = TimeSpan.FromSeconds(
-                        c.ParseResult.GetValueForOption(
-                            _httpRequestTimeoutOption));
+            o.Bitcoin.FromInclusive = GetValue(o.Bitcoin.FromInclusive, _fromInclusiveOption, c);
+            o.Bitcoin.ToExclusive = GetValue(o.Bitcoin.ToExclusive, _toExclusiveOption, c);
+            o.Bitcoin.Granularity = GetValue(o.Bitcoin.Granularity, _granularityOption, c);
+            o.Bitcoin.SkipGraphLoad = GetValue(o.Bitcoin.SkipGraphLoad, _skipGraphLoadOption, c);
+            o.Bitcoin.ClientUri = GetValue(o.Bitcoin.ClientUri, _bitcoinClientUri, c);
 
+            o.GraphSample.Count = GetValue(o.GraphSample.Count, _graphSampleCountOption, c);
+            o.GraphSample.Hops = GetValue(o.GraphSample.Hops, _graphSampleHopsOption, c);
+            o.GraphSample.MinNodeCount = GetValue(o.GraphSample.MinNodeCount, _graphSampleMinNodeCount, c);
+            o.GraphSample.MaxNodeCount = GetValue(o.GraphSample.MaxNodeCount, _graphSampleMaxNodeCount, c);
+            o.GraphSample.MinEdgeCount = GetValue(o.GraphSample.MinEdgeCount, _graphSampleMinEdgeCount, c);
+            o.GraphSample.MaxEdgeCount = GetValue(o.GraphSample.MaxEdgeCount, _graphSampleMaxEdgeCount, c);
+            o.GraphSample.Mode = GetValue(o.GraphSample.Mode, _graphSampleModeOption, c);
+            o.GraphSample.RootNodeSelectProb = GetValue(o.GraphSample.RootNodeSelectProb, _graphSampleRootNodeSelectProb, c);
+            
             return o;
         }
 

@@ -1,8 +1,9 @@
 ﻿using BC2G.Blockchains;
-using BC2G.CLI;
+using BC2G.CommandLineInterface;
 using BC2G.DAL.Bulkload;
 using BC2G.Graph;
 using BC2G.Model;
+using BC2G.Model.Config;
 using Neo4j.Driver;
 using System.Text.RegularExpressions;
 
@@ -29,7 +30,6 @@ namespace BC2G.DAL
         private int _scriptEdgesInCsvCount;
         private int _coinbaseEdgesInCsvCount;
         private int _blocksInCsvCount;
-        private readonly bool _skipLoad;
 
         private readonly BlockMapper _blockMapper;
         private readonly ScriptMapper _scriptMapper;
@@ -37,25 +37,22 @@ namespace BC2G.DAL
 
         private readonly string _neo4jImportDir;
 
-        private string CurrentTimeStamp { get { return DateTime.Now.ToString("yyyyMMddHHmmssffff"); } }
+        private static string CurrentTimeStamp { get { return DateTime.Now.ToString("yyyyMMddHHmmssffff"); } }
+
+        private readonly Options _options;
 
         ~GraphDB() => Dispose(false);
 
-        public GraphDB(
-            string uri,
-            string user,
-            string password,
-            string workingDirectory,
-            string neo4jImportDirectory,
-            string neo4jCypherImportPrefix,
-            bool skipLoad = false)
+        public GraphDB(Options options)
         {
-            _skipLoad = skipLoad;
-            _neo4jImportDir = neo4jImportDirectory;
+            _options = options;
+            _neo4jImportDir = _options.Neo4j.ImportDirectory;
 
-            if (!_skipLoad)
+            if (!_options.Bitcoin.SkipGraphLoad)
             {
-                _driver = GraphDatabase.Driver(uri, AuthTokens.Basic(user, password));
+                _driver = GraphDatabase.Driver(
+                    _options.Neo4j.Uri,
+                    AuthTokens.Basic(_options.Neo4j.User, _options.Neo4j.Password));
 
                 try { _driver.VerifyConnectivityAsync().Wait(); }
                 catch (AggregateException) { Dispose(true); throw; }
@@ -63,14 +60,14 @@ namespace BC2G.DAL
                 // stacktrace. Check if there is a better way of throwing an error with a message
                 // that indicates not able to connect to the Neo4j database.
 
-                EnsureCoinbaseNode().Wait();
-                EnsureConstraints().Wait();
+                EnsureCoinbaseNodeAsync().Wait();
+                EnsureConstraintsAsync().Wait();
             }
 
             var batch = CurrentTimeStamp;
-            _blockMapper = new BlockMapper(workingDirectory, neo4jCypherImportPrefix/*, neo4jImportDirectory*/) { Batch = batch };
-            _scriptMapper = new ScriptMapper(workingDirectory, neo4jCypherImportPrefix/*, neo4jImportDirectory*/) { Batch = batch };
-            _coinbaseMapper = new CoinbaseMapper(workingDirectory, neo4jCypherImportPrefix/*, neo4jImportDirectory*/) { Batch = batch };
+            _blockMapper = new BlockMapper(_options.WorkingDir, _options.Neo4j.CypherImportPrefix/*, neo4jImportDirectory*/) { Batch = batch };
+            _scriptMapper = new ScriptMapper(_options.WorkingDir, _options.Neo4j.CypherImportPrefix/*, neo4jImportDirectory*/) { Batch = batch };
+            _coinbaseMapper = new CoinbaseMapper(_options.WorkingDir, _options.Neo4j.CypherImportPrefix/*, neo4jImportDirectory*/) { Batch = batch };
 
             /*
             var script = new NodeMapping();
@@ -195,7 +192,7 @@ namespace BC2G.DAL
 
         private void BulkImportStagedAndReset(string? batch = null)
         {
-            if (!_skipLoad)
+            if (!_options.Bitcoin.SkipGraphLoad)
             {
                 var blocksFilename = Path.Combine(_neo4jImportDir, _blockMapper.Filename);
                 var scriptsFilename = Path.Combine(_neo4jImportDir, _scriptMapper.Filename);
@@ -324,14 +321,14 @@ namespace BC2G.DAL
             });*/
         }
 
-        private async Task EnsureCoinbaseNode()
+        private async Task EnsureCoinbaseNodeAsync()
         {
             int count = 0;
             using (var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read)))
             {
                 count = await session.ReadTransactionAsync(async tx =>
                 {
-                    var result = await tx.RunAsync($"MATCH (n:{BitcoinAgent.coinbase}) RETURN COUNT(n)");
+                    var result = await tx.RunAsync($"MATCH (n:{BitcoinAgent.Coinbase}) RETURN COUNT(n)");
                     return result.SingleAsync().Result[0].As<int>();
                 });
             }
@@ -345,9 +342,9 @@ namespace BC2G.DAL
                         await session.WriteTransactionAsync(async tx =>
                         {
                             await tx.RunAsync(
-                                $"CREATE (:{BitcoinAgent.coinbase} {{" +
+                                $"CREATE (:{BitcoinAgent.Coinbase} {{" +
                                 $"{ScriptMapper.Props[Prop.ScriptAddress].Name}: " +
-                                $"\"{BitcoinAgent.coinbase}\"}})");
+                                $"\"{BitcoinAgent.Coinbase}\"}})");
                         });
                     }
                     break;
@@ -357,7 +354,7 @@ namespace BC2G.DAL
             }
         }
 
-        private async Task EnsureConstraints()
+        private async Task EnsureConstraintsAsync()
         {
             using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
 
@@ -410,37 +407,37 @@ namespace BC2G.DAL
             });*/
         }
 
-        public async Task Sampling(Options options)
+        public async Task Sampling()
         {
             var rndRootNodes = await GetRandomNodes(
-                options.GraphSampleCount,
-                options.GraphSampleRootNodeSelectProb);
+                _options.GraphSample.Count,
+                _options.GraphSample.RootNodeSelectProb);
 
-            var baseOutputDir = Path.Join(options.WorkingDir, "sampled_graphs");
+            var baseOutputDir = Path.Join(_options.WorkingDir, "sampled_graphs");
             var counter = -1;
             foreach (var rootNode in rndRootNodes)
             {
                 var features = new Dictionary<string, (List<double[]>, List<double[]>, List<int[]>, List<int[]>)>();
 
-                (var nodes, var edges) = await GetNeighbors(rootNode.Address, options.GraphSampleHops);
+                (var nodes, var edges) = await GetNeighbors(rootNode.Address, _options.GraphSample.Hops);
 
                 if (!CanUseGraph(
                     nodes, edges, tolerance: 0,
-                    minNodeCount: options.GraphSampleMinNodeCount,
-                    maxNodeCount: options.GraphSampleMaxNodeCount,
-                    minEdgeCount: options.GraphSampleMinEdgeCount,
-                    maxEdgeCount: options.GraphSampleMaxEdgeCount))
+                    minNodeCount: _options.GraphSample.MinNodeCount,
+                    maxNodeCount: _options.GraphSample.MaxNodeCount,
+                    minEdgeCount: _options.GraphSample.MinEdgeCount,
+                    maxEdgeCount: _options.GraphSample.MaxEdgeCount))
                     continue;
 
-                if (options.GraphSampleMode == GraphSampleMode.A)
+                if (_options.GraphSample.Mode == GraphSampleMode.A)
                 {
                     (var rnodes, var redges) = await GetRandomEdges(edges.Count);
 
                     if (!CanUseGraph(
                         rnodes, redges,
-                        minNodeCount: options.GraphSampleMinNodeCount,
+                        minNodeCount: _options.GraphSample.MinNodeCount,
                         maxNodeCount: nodes.Count,
-                        minEdgeCount: options.GraphSampleMinEdgeCount,
+                        minEdgeCount: _options.GraphSample.MinEdgeCount,
                         maxEdgeCount: edges.Count))
                         continue;
 

@@ -1,356 +1,161 @@
 using BC2G.Blockchains;
-using BC2G.CLI;
+using BC2G.CommandLineInterface;
 using BC2G.DAL;
-using BC2G.Exceptions;
 using BC2G.Graph;
-using BC2G.Logging;
 using BC2G.Model;
+using BC2G.Model.Config;
 using BC2G.PersistentObject;
 using BC2G.Serializers;
+using BC2G.StartupSolutions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Serilog;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Globalization;
-using System.Text.RegularExpressions;
 
 namespace BC2G
 {
     public class Orchestrator : IDisposable
     {
-        private GraphDB _graphDB;
+        private readonly CLI _cli;
+        private readonly IHost _host;
+        private readonly Options _options = new();
+        private readonly CancellationToken _cT;
+
         private bool disposed = false;
 
-        private Options _options;
+        public ILogger Logger { get; }
 
-        public Logger Logger { set; get; }
-        private const string _defaultLoggerRepoName = "events_log";
-        private readonly string _loggerTimeStampFormat = "yyyyMMdd_HHmmssfffffff";
-        private readonly string _maxLogfileSize = "2GB";
-
-        private readonly CLI.CLI _cli;
-        private readonly CancellationToken _ct;
-
-        private HttpClient Client { get; }
-
-        public Orchestrator(CancellationToken ct)
+        public Orchestrator(CancellationToken cancelationToken)
         {
-            Client = new HttpClient();
-            Client.DefaultRequestHeaders.Accept.Clear();
-            //client.DefaultRequestHeaders.UserAgent.Clear();
-            Client.DefaultRequestHeaders.Add("User-Agent", "BC2G");
+            _cT = cancelationToken;
+            _cli = new CLI(
+                _options,
+                TraverseAsync,
+                SampleGraph,
+                LoadGraphAsync,
+                (e, c) => { Logger?.Fatal(e.Message); });
 
-            _ct = ct;
-            _cli = new CLI.CLI(this.TraverseAsync, this.Sample, this.LoadGraphAsync);
-            
-            //_options = options;
-            //_statusFilename = statusFilename;
+            var hostBuilder = Startup.GetHostBuilder(_options);
+            _host = hostBuilder.Build();
 
-            // Create the output directory if it does not exist,
-            // and assert if can write to the given directory.
-            /*try
-            {
-                Directory.CreateDirectory(_options.OutputDir);
-
-                var tmpFile = Path.Combine(_options.OutputDir, "tmp_access_test");
-                File.Create(tmpFile).Dispose();
-                File.Delete(tmpFile);
-            }
-            catch (Exception e)
-            {
-                Logger.LogExceptionStatic(
-                    $"Require write access to the path {_options.OutputDir}: " +
-                    $"{e.Message}");
-                throw;
-            }*/
-        }
-
-        private void SetupLogger(Options options)
-        {
-            // Set up logger. 
-            try
-            {
-                var _loggerRepository =
-                    _defaultLoggerRepoName + "_" +
-                    DateTime.Now.ToString(
-                        _loggerTimeStampFormat,
-                        CultureInfo.InvariantCulture);
-
-                Logger = new Logger(
-                    Path.Join(options.WorkingDir, _loggerRepository + ".txt"),
-                    _loggerRepository,
-                    Guid.NewGuid().ToString(),
-                    options.WorkingDir,
-                    _maxLogfileSize);
-            }
-            catch (Exception e)
-            {
-                Logger.LogExceptionStatic($"Logger setup failed: {e.Message}");
-                throw;
-            }
-        }
-
-        private void SetupGraphDB(Options options)
-        {
-            _graphDB = new GraphDB(
-                options.Neo4jUri,
-                options.Neo4jUser,
-                options.Neo4jPassword,
-                options.WorkingDir,
-                options.Neo4jImportDirectory,
-                options.Neo4jCypherImportPrefix,
-                options.SkipLoadGraph);
+            Logger = Log.Logger;
         }
 
         public async Task<int> InvokeAsync(string[] args)
         {
             return await _cli.InvokeAsync(args);
         }
-
-        private async Task Sample(Options options)
+    
+        private async Task SampleGraph()
         {
-            SetupLogger(options);
-            SetupGraphDB(options);
-
-            await _graphDB.Sampling(options);
+            await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
+            var graphDb = _host.Services.GetRequiredService<GraphDB>();
+            await graphDb.Sampling();
         }
 
-        private async Task LoadGraphAsync(Options options)
+        private async Task LoadGraphAsync()
         {
-            SetupLogger(options);
-            SetupGraphDB(options);
-
-            _graphDB.BulkImport(options.Neo4jImportDirectory);
+            await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
+            var graphDb = _host.Services.GetRequiredService<GraphDB>();
+            graphDb.BulkImport(_options.Neo4j.ImportDirectory);
         }
 
-        private async Task<bool> TraverseAsync(Options options)
+        private async Task TraverseAsync()
         {
-            // important TODO:
-            // The booleans returns of this method are ignored.
-            // At the time of writing this, there are limited options
-            // in the system.commandline to implement this properly. 
+            await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
 
-            _options = options;
-            Client.Timeout = options.HttpRequestTimeout;
+            var agent = _host.Services.GetRequiredService<BitcoinAgent>();
+            var chainInfo = await agent.AssertChainAsync(_cT);
 
-            SetupLogger(options);
-            SetupGraphDB(options);
+            _cT.ThrowIfCancellationRequested();
+            using (var dbContext = _host.Services.GetRequiredService<DatabaseContext>())
+                await dbContext.Database.EnsureCreatedAsync(_cT);
 
-            using (var context = new DatabaseContext(
-                options.PsqlHost,
-                options.PsqlDatabase,
-                options.PsqlUsername,
-                options.PsqlPassword))
-            {
-                context.Database.EnsureCreated();
-            }
+            if (_options.Bitcoin.FromInclusive == null)
+                _options.Bitcoin.FromInclusive = _options.Bitcoin.LastProcessedBlock + 1;
+            if (_options.Bitcoin.ToExclusive == null)
+                _options.Bitcoin.ToExclusive = chainInfo.Blocks;
 
-            var agent = await GetBitCoinAgentAsync(options, _ct);
-
-            (var asserResult, var chaininfo) = await AssertChainAsync(agent);
-            if (!asserResult)
-                return false;
-
-            if (_ct.IsCancellationRequested)
-                return false;
-
-            if (_options.FromInclusive == -1)
-                _options.FromInclusive = _options.LastProcessedBlock + 1;
-            if (_options.ToExclusive == -1)
-                _options.ToExclusive = chaininfo.Blocks;
-
-            if (_options.ToExclusive <= _options.FromInclusive)
-            {
-                Logger.LogException(
-                    $"The Start block height must be smaller than the end " +
-                    $"block height: `{_options.FromInclusive}` is not less " +
-                    $"than `{_options.ToExclusive}`.");
-                return false;
-            }
-
-            if (_options.FromInclusive < 0)
-            {
-                Logger.LogException($"Invalid Start block height {_options.FromInclusive}");
-                return false;
-            }
-
-            if (_options.ToExclusive < 0)
-            {
-                Logger.LogException($"Invalid To block height {_options.ToExclusive}");
-                return false;
-            }
+            await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
 
             var stopwatch = new Stopwatch();
             try
             {
                 stopwatch.Start();
-                await TraverseBlocksAsync(agent, _ct);
-
+                await TraverseBlocksAsync(_options, _cT);
                 stopwatch.Stop();
-                if (_ct.IsCancellationRequested)
-                {
-                    Logger.Log(
-                        $"Cancelled successfully.",
-                        writeLine: true,
-                        color: ConsoleColor.Yellow);
-                }
+                if (_cT.IsCancellationRequested)
+                    Logger.Information("Cancelled successfully.");
                 else
-                {
-                    Logger.Log(
-                        $"All process finished successfully in {stopwatch.Elapsed}.",
-                        writeLine: true,
-                        color: ConsoleColor.Green);
-                }
+                    Logger.Information($"All process finished successfully in {stopwatch.Elapsed}.");
             }
-            catch (Exception e)
-            {
-                Logger.LogException(e);
-                return false;
-            }
-            finally
+            catch
             {
                 stopwatch.Stop();
-                agent.Dispose();
-            }
-
-            return true;
-        }
-
-        private async Task<BitcoinAgent> GetBitCoinAgentAsync(
-            Options options, CancellationToken cT)
-        {
-            try
-            {
-                var agent = new BitcoinAgent(Client, options, Logger, cT);
-
-                if (!(await agent.IsConnectedAsync()))
-                    throw new ClientInaccessible();
-                return agent;
-            }
-            catch (Exception e)
-            {
-                Logger.LogException(
-                    $"Failed to create/access BitcoinAgent: " +
-                    $"{e.Message}");
                 throw;
             }
         }
 
-        private async Task<(bool, ChainInfo)> AssertChainAsync(BitcoinAgent agent)
+        private async Task TraverseBlocksAsync(Options options, CancellationToken cT)
         {
-            var chainInfo = new ChainInfo();
-
-            try
-            {
-                chainInfo = await agent.GetChainInfoAsync();
-                if (string.IsNullOrEmpty(chainInfo.Chain))
-                {
-                    Logger.LogException(
-                        "Received empty string as chain name " +
-                        "from the chaininfo endpoint.");
-                    return (false, chainInfo);
-                }
-
-                if (chainInfo.Chain != "main")
-                {
-                    Logger.LogException(
-                        $"Required to be on the `main` chain, " +
-                        $"but the bitcoin client is on the " +
-                        $"`{chainInfo.Chain}` chain.");
-                    return (false, chainInfo);
-                }
-
-                return (true, chainInfo);
-            }
-            catch (Exception e)
-            {
-                Logger.LogException($"Failed getting chain info: {e.Message}");
-                return (false, chainInfo);
-            }
-        }
-
-        private async Task TraverseBlocksAsync(
-            BitcoinAgent agent, CancellationToken cT)
-        {
-            /*
-            var individualBlocksDir = Path.Combine(_options.WorkingDir, "individual_blocks");
-            if (_options.CreatePerBlockFiles && !Directory.Exists(individualBlocksDir))
-                Directory.CreateDirectory(individualBlocksDir);*/
-
-            /* TODO: This object does not scale, 
-             * its memory requirement grows linearly w.r.t. to 
-             * the blocks traversed. This should not be needed
-             * at all when moved to db, but meanwhile, is there
-             * a better solution for running on machines with 
-             * less than 16GB of RAM?! 
-             */
-            /*
-            using var mapper = new AddressToIdMapper(
-                _options.AddressIdMappingFilename,
-                AddressToIdMapper.Deserialize(_options.AddressIdMappingFilename),
-                cT);*/
-            //agent.AddressToIdMapper = mapper;
-
-            //using var serializer = new CSVSerializer();//mapper);
-
             using var pGraphStat = new PersistentGraphStatistics(
-                Path.Combine(_options.WorkingDir, "blocks_stats.tsv"),
-                Logger,
+                Path.Combine(options.WorkingDir, "blocks_stats.tsv"),
                 cT);
 
             using var gBuffer = new PersistentGraphBuffer(
-                _graphDB,
-                //Path.Combine(_options.WorkingDir, "nodes.tsv"),
-                //Path.Combine(_options.WorkingDir, "edges.tsv"),                
-                //mapper,
+                _host.Services.GetRequiredService<GraphDB>(),
+                _host.Services.GetRequiredService<Microsoft.Extensions.Logging.ILogger<PersistentGraphBuffer>>(),            
                 pGraphStat,
-                Logger,
                 cT);
 
-            Logger.Log(
-                $"Traversing blocks [{_options.FromInclusive:n0}, " +
-                $"{_options.ToExclusive:n0}):");
+            Logger.Information(
+                "Traversing blocks [{from}, {to}).", 
+                options.Bitcoin.FromInclusive, 
+                options.Bitcoin.ToExclusive);
 
             var blockHeightQueue = new ConcurrentQueue<int>();
-            for (int h = _options.LastProcessedBlock + 1;
-                     h < _options.ToExclusive;
-                     h += _options.Granularity)
+            for (int h = options.Bitcoin.LastProcessedBlock?? 0 + 1;
+                     h < options.Bitcoin.ToExclusive;
+                     h += options.Bitcoin.Granularity)
                 blockHeightQueue.Enqueue(h);
-
-            Logger.InitBlocksTraverse(_options.FromInclusive, _options.ToExclusive, blockHeightQueue.Count);
 
             var parallelOptions = new ParallelOptions()
             {
-                MaxDegreeOfParallelism = _options.MaxConcurrentBlocks
+                MaxDegreeOfParallelism = options.Bitcoin.MaxConcurrentBlocks
             };
 
-            // Persist the start point so to at least have the starting point
-            // in case the program fails without a chance to persist the current status.
-            await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile);
+            await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, cT);
+
+            cT.ThrowIfCancellationRequested();
 
             // Have tested TPL dataflow as alternative to Parallel.For,
             // it adds more complexity with little performance improvements,
             // and in some cases, slower than Parallel.For and sequential traversal.
-            Parallel.For(0, blockHeightQueue.Count, parallelOptions, (i, state_33) =>
+            Parallel.For(0, blockHeightQueue.Count, parallelOptions, (i, state) =>
             {
                 if (cT.IsCancellationRequested)
-                    state_33.Stop();
+                    state.Stop();
 
                 blockHeightQueue.TryDequeue(out var h);
-                Logger.LogStartProcessingBlock(h);
-                ProcessBlock(agent, gBuffer, /*serializer,*/ h, /*individualBlocksDir,*/ cT).Wait();
+                //Logger.LogStartProcessingBlock(h);
+                ProcessBlock(options, gBuffer, /*serializer,*/ h, /*individualBlocksDir,*/ cT).Wait();
 
                 if (cT.IsCancellationRequested)
-                    state_33.Stop();
+                    state.Stop();
             });
 
-            _graphDB.FinishBulkImport();
+            //graphDb.FinishBulkImport();
 
             //Logger.LogFinishTraverse(cancellationToken.IsCancellationRequested);
 
             // At this method's exist, the dispose method of
             // the types wrapped in `using` will be called that
             // finalizes persisting output.
-            Logger.Log("Finalizing serialized files.");
-            await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile);
+            //Logger.Log("Finalizing serialized files.");
+            await JsonSerializer<Options>.SerializeAsync(_options, options.StatusFile, cT);
+
+            cT.ThrowIfCancellationRequested();
 
             // TODO: this is not a good strategy, it has two drawbacks: 
             // - it is an infinite loop with the assumption that the
@@ -367,63 +172,30 @@ namespace BC2G
             }
         }
 
-        /* TODO: The following error may occur, 
-         * (a) why it occurs? 
-         * (b) when it occurs not every persistence 
-         * object is updated, in particular, the status is updated. 
-         */
-
-        int getBlockGraphMaxWaitTimeMilliseconds = 300000;
-        int maxRetries = 3;
-
         private async Task ProcessBlock(
-            BitcoinAgent agent,
+            Options options,
             PersistentGraphBuffer gBuffer,
-            //CSVSerializer serializer,
             int height,
-            //string individualBlocksDir,
             CancellationToken cT)
         {
-            if (cT.IsCancellationRequested) return;
+            cT.ThrowIfCancellationRequested();
 
-            BlockGraph graph;
-            int tries = 0;
-            try
+            Logger.Information("Started processing block {height}.", height);
+
+            var strategy = ResilienceStrategyFactory.Bitcoin.GetGraphStrategy(
+                options.Bitcoin.BitcoinAgentResilienceStrategy);
+
+            await strategy.ExecuteAsync(async () =>
             {
-                while (++tries < maxRetries)
-                {
-                    var blockGraphTask = agent.GetGraph(height);
-                    if (await Task.WhenAny(blockGraphTask, Task.Delay(getBlockGraphMaxWaitTimeMilliseconds, cT)) == blockGraphTask)
-                    {
-                        // Re-wating will cause throwing any caugh exception. 
-                        graph = await blockGraphTask;
-                        gBuffer.Enqueue(graph);
-                        _options.LastProcessedBlock = height;
+                var agent = _host.Services.GetRequiredService<BitcoinAgent>();
+                var blockGraph = await agent.GetGraph(height, cT);
 
-                        return;
-                    }
-                    else
-                    {
-                        Logger.Log($"Failed to get the graph of block at height {height}, retries {tries} of {maxRetries}.");
-                    }
-                }
-
-                throw new TimeoutException($"Failed to get the graph of block at height {height} after {tries} unsuccessful tries.");
-            }
-            catch (OperationCanceledException) { return; }
+                Logger.Information(
+                    "Obtained block graph for height {height}, enqueued " +
+                    "for graph building and serialization.", height);
+                gBuffer.Enqueue(blockGraph);
+            });
             
-            /*try
-            {
-                graph.MergeQueuedTxGraphs(cT);
-                _graphDB.AddBlock(graph.Block).Wait(cT);
-                foreach (var edge in graph.Edges)
-                    _graphDB.AddEdge(graph.Block, edge).Wait(cT);
-
-                graph.Stats.StopStopwatch();
-                //_pGraphStats.Enqueue(graph.Stats.ToString());
-            }
-            catch (OperationCanceledException) { return; }*/
-
             /*
             Logger.LogFinishProcessingBlock(
                 graph.Height,
@@ -431,10 +203,6 @@ namespace BC2G
                 graph.EdgeCount,
                 graph.Stats.Runtime.TotalSeconds);*/
 
-            /*if (_options.CreatePerBlockFiles)
-                serializer.Serialize(graph, Path.Combine(individualBlocksDir, $"{height}"));*/
-
-            //_options.LastProcessedBlock = height;
         }
 
         // The IDisposable interface is implemented following .NET docs:
@@ -451,7 +219,8 @@ namespace BC2G
             {
                 if (disposing)
                 {
-                    Logger.Dispose();
+                    Log.CloseAndFlush();
+                    //Logger.Dispose();
                     //_txCache.Dispose();
                 }
 

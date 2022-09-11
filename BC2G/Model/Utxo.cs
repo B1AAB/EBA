@@ -54,5 +54,21 @@ namespace BC2G.Model
         {
             return $"{voutN}-{txid}";
         }
+
+        public void AddReferencedIn(string address)
+        {
+            ReferencedInCount++;
+            if (!string.IsNullOrEmpty(ReferencedIn))
+                ReferencedIn += ";";
+            ReferencedIn += address;
+        }
+
+        public void AddCreatedIn(string address)
+        {
+            CreatedInCount++;
+            if (!string.IsNullOrEmpty(CreatedIn))
+                CreatedIn += ";";
+            CreatedIn += address;
+        }
     }
 }

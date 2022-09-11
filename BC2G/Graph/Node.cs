@@ -6,7 +6,7 @@ namespace BC2G.Graph
     public class Node : IComparable<Node>, IEquatable<Node>
     {
         public string Id { get; } = "0";
-        public string Address { get; } = BitcoinAgent.coinbase;
+        public string Address { get; } = BitcoinAgent.Coinbase;
         public ScriptType ScriptType { get; } = ScriptType.Coinbase;
 
         public static string Header

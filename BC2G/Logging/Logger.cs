@@ -1,4 +1,5 @@
-﻿using log4net;
+﻿/*
+using log4net;
 using log4net.Appender;
 using log4net.Core;
 using log4net.Layout;
@@ -120,7 +121,7 @@ namespace BC2G.Logging
             log.Info(_linkToIssuesPage);
             log.Info(HintHelpMessage);
             log.Info(_cannotContinue);*/
-        }
+        /*}
 
         public static void LogExceptionStatic(string message)
         {
@@ -168,4 +169,4 @@ namespace BC2G.Logging
             }
         }
     }
-}
+}*/

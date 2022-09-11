@@ -95,15 +95,15 @@ namespace BC2G.Graph
             // from sender to miner. 
             Parallel.ForEach(
                 _txGraphsQueue.Where(x => !x.Sources.IsEmpty),
-                (txGraph, state) =>
+                (txGraph, state_2) =>
                 {
                     if (ct.IsCancellationRequested)
-                    { state.Stop(); return; }
+                    { state_2.Stop(); return; }
 
                     Merge(txGraph, coinbaseTxG, totalPaidToMiner, ct);
 
                     if (ct.IsCancellationRequested)
-                    { state.Stop(); return; }
+                    { state_2.Stop(); return; }
                 });
 
             foreach (var item in coinbaseTxG.Targets)

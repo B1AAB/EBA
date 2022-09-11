@@ -33,9 +33,9 @@ namespace BC2G.PersistentObject
 
         private readonly Task _listner;
 
-        private readonly Logger _logger;
+        //private readonly Logger _logger;
 
-        public PersistentObject(string filename, Logger logger, CancellationToken cT, string header = "")
+        public PersistentObject(string filename, /*Logger logger, */CancellationToken cT, string header = "")
         {
             if (string.IsNullOrEmpty(filename))
                 throw new ArgumentException(
@@ -50,7 +50,7 @@ namespace BC2G.PersistentObject
             }
 
             _buffer = new();
-            _logger = logger;
+            //_logger = logger;
 
             _stream = File.AppendText(filename);
             _stream.AutoFlush = true;
@@ -99,7 +99,7 @@ namespace BC2G.PersistentObject
         // Ideally this and the previous constructors
         // should be merged into a single constructor.
         public PersistentObject(
-            Logger logger,
+            //Logger logger,
             //string nodesFilename, 
             //string edgesFilename,
             CancellationToken cT)//,
@@ -131,7 +131,7 @@ namespace BC2G.PersistentObject
             //_edgesStream.AutoFlush = true;
 
             _buffer = new();
-            _logger = logger;
+            //_logger = logger;
             _stream = null;
 
             _listner = Task.Factory.StartNew(
@@ -297,9 +297,9 @@ namespace BC2G.PersistentObject
                         _edgesStream.Dispose();*/
                     //}
                 }
-            }
 
-            _disposed = true;
+                _disposed = true;
+            }
         }
     }
 }

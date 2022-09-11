@@ -1,16 +1,5 @@
-﻿using BC2G.CLI;
-using BC2G.Logging;
-using System.Runtime.InteropServices;
-
-namespace BC2G
+﻿namespace BC2G
 {
-    /*
-     * TODO: 
-     * Should not need/check a running bitcoin client if it is not running traversal task.
-     */
-
-
-
     internal class BC2G
     {
         /* TODO: how this can be made cross-platform?!
@@ -48,22 +37,18 @@ namespace BC2G
 
             try
             {
-                /*var cliOptions = new CommandLineOptionsOld();
-                var options = cliOptions.Parse(args, out bool helpOrVersionIsDisplayed);
-                if (helpOrVersionIsDisplayed)
-                    return;*/
-
-                var orchestrator = new Orchestrator(
-                    /*options,*/ cancellationToken);//, cliOptions.StatusFilename);
+                var orchestrator = new Orchestrator(cancellationToken);
+                var logger = orchestrator.Logger;
 
                 Console.CancelKeyPress += new ConsoleCancelEventHandler(
-                    (sender, e) => CancelKeyPressHandler(
-                        e, _tokenSource, orchestrator.Logger));
-
-                AsyncConsole.CancellationToken = cancellationToken;
+                    (sender, e) =>
+                    {
+                        _tokenSource.Cancel();
+                        e.Cancel = true;
+                        logger.Information("Cancelling");
+                    });
 
                 exitCode = await orchestrator.InvokeAsync(args);
-                //success = orchestrator.RunAsync(cancellationToken).Result;
             }
             catch (Exception e)
             {
@@ -71,11 +56,6 @@ namespace BC2G
             }
             finally
             {
-                AsyncConsole.WaitUntilBufferEmpty();
-                // The exception is thrown with the message 'The handle is invalid.'
-                // only when running the tests, because Xunit does not have a console.
-                try { Console.CursorVisible = true; }
-                catch (IOException) { }
                 Environment.Exit(exitCode);
             }
         }
@@ -90,7 +70,7 @@ namespace BC2G
             // HOWEVER, NOTE THAT THIS METHOD NEEDS TO WRAP-UP
             // IN __5__ SECONDS (depending on the host OS), 
             // OR IT WILL BE FORCE-TERMINATED BY THE HOST. HENCE,
-            // AFTER THE CANCEL FLAG, ALL THE RUNNING PROCESSED
+            // AFTER THE CANCEL FLAG, ALL THE RUNNING PROCESSES
             // NEED TO SAFELY RETURN QUICKEST POSSIBLE. 
             // THEREFORE, LIMIT THE SCOPE TO CLOSE THE MOST
             // CRITICAL HANDLES.
@@ -108,16 +88,6 @@ namespace BC2G
                     return false;
             }
             return true;
-        }
-
-        static void CancelKeyPressHandler(
-            ConsoleCancelEventArgs e,
-            CancellationTokenSource tokenSource,
-            Logger logger)
-        {
-            tokenSource.Cancel();
-            e.Cancel = true;
-            logger.LogCancelling();
         }
     }
 }

@@ -7,10 +7,10 @@ namespace BC2G.PersistentObject
     {
         public PersistentGraphStatistics(
             string filename,
-            Logger logger,
+            //Logger logger,
             CancellationToken cancellationToken) : base(
                 filename,
-                logger,
+                //logger,
                 cancellationToken,
                 BlockStatistics.GetHeader())
         { }

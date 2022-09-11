@@ -56,7 +56,7 @@ namespace BC2G.DAL.Bulkload
             return
                 $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
                 $"FIELDTERMINATOR '{csvDelimiter}' " +
-                $"MATCH (coinbase:{BitcoinAgent.coinbase}) " +
+                $"MATCH (coinbase:{BitcoinAgent.Coinbase}) " +
                 $"MERGE (target:{labels} {{" +
                 $"{Props[Prop.EdgeTargetAddress].GetLoadExp(":")}}}) " +
                 $"SET target.{Props[Prop.EdgeTargetType].GetLoadExp("=")} " +

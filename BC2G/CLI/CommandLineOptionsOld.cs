@@ -1,9 +1,10 @@
-﻿using BC2G.Serializers;
+﻿using BC2G.Model.Config;
+using BC2G.Serializers;
 using Microsoft.Extensions.CommandLineUtils;
 using System.Reflection;
 using System.Text;
 
-namespace BC2G.CLI
+namespace BC2G.CommandLineInterface
 {
     public class CommandLineOptionsOld
     {
@@ -168,7 +169,7 @@ namespace BC2G.CLI
                 var resumeFromFilename = Path.GetFullPath(_resumeFromOption.Value());
                 try
                 {
-                    _parsedOptions = JsonSerializer<Options>.DeserializeAsync(resumeFromFilename).Result;
+                    //_parsedOptions = JsonSerializer<Options>.DeserializeAsync(resumeFromFilename).Result;
                     return;
                 }
                 catch (Exception e)
@@ -201,8 +202,8 @@ namespace BC2G.CLI
                     $"than the value provided for " +
                     $"{_fromOption.LongName} ({_fromOption.Value})");
 
-            _parsedOptions.FromInclusive = from;
-            _parsedOptions.ToExclusive = to;
+            //_parsedOptions.FromInclusive = from;
+            //_parsedOptions.ToExclusive = to;
 
             var output = string.Empty;
             if (_outputOption.HasValue())
@@ -244,8 +245,8 @@ namespace BC2G.CLI
             {
                 try
                 {
-                    _parsedOptions.AddressIdMappingFilename =
-                        Path.GetFullPath(_addressIdMappingFilenameOption.Value());
+                    /*_parsedOptions.AddressIdMappingFilename =
+                        Path.GetFullPath(_addressIdMappingFilenameOption.Value());*/
                 }
                 catch (Exception e)
                 {
@@ -257,8 +258,8 @@ namespace BC2G.CLI
             }
             else
             {
-                _parsedOptions.AddressIdMappingFilename =
-                    Path.Combine(output, _parsedOptions.AddressIdMappingFilename);
+                /*_parsedOptions.AddressIdMappingFilename =
+                    Path.Combine(output, _parsedOptions.AddressIdMappingFilename);*/
             }
 
             if (_granularityOption.HasValue())
@@ -271,7 +272,7 @@ namespace BC2G.CLI
                 }
                 else
                 {
-                    _parsedOptions.Granularity = granularity;
+                    //_parsedOptions.Granularity = granularity;
                 }
             }
 

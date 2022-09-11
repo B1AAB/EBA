@@ -1,0 +1,31 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace BC2G.Model.Config
+{
+    public class Neo4jOptions
+    {
+        public string Uri { get; set; } =
+            Environment.GetEnvironmentVariable("NEO4J_URI") ??
+            "bolt://localhost:7687";
+
+        public string User { get; set; } =
+            Environment.GetEnvironmentVariable("NEO4J_USER") ??
+            "neo4j";
+
+        public string Password { set; get; } =
+            Environment.GetEnvironmentVariable("NEO4J_PASSWORD") ??
+            "password";
+
+        public string ImportDirectory { set; get; } =
+            Environment.GetEnvironmentVariable("NEO4J_IMPORTDIRECTORY") ??
+            @"\dbmss\dbms-767f0184-55bd-4192-be0e-294458084cc8\import";
+
+        public string CypherImportPrefix { set; get; } =
+            Environment.GetEnvironmentVariable("NEO4J_CYPHERIMPORTPREFIX") ??
+            "file:///";
+    }
+}

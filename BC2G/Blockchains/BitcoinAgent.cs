@@ -1,236 +1,168 @@
-﻿using BC2G.CLI;
-using BC2G.Exceptions;
-using BC2G.Graph;
-using BC2G.Logging;
+﻿using BC2G.Graph;
 using BC2G.Model;
-using BC2G.Serializers;
+using BC2G.StartupSolutions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Npgsql;
+using Polly;
 using System.Collections.Concurrent;
 using System.Text.Json;
+
+// BitcoinAgent and all similar agents must implement co-operative cancellation semantics:
+// https://learn.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads?redirectedfrom=MSDN
 
 namespace BC2G.Blockchains
 {
     public class BitcoinAgent : IDisposable
     {
-        public const string coinbase = "Coinbase";
-        public static uint GenesisTimestamp { get { return 1231006505; } }
-
-        /// <summary>
-        /// Sets and gets the REST API endpoint of the Bitcoin client.
-        /// </summary>
-        private readonly Uri _baseUri;
+        public const string Coinbase = "Coinbase";
+        public const uint GenesisTimestamp = 1231006505;
 
         private readonly HttpClient _client;
-
-        private readonly Logger _logger;
-
-        //private readonly TxCache _txCache;
-
-        private readonly CancellationToken _cT;
+        private readonly ILogger<BitcoinAgent> _logger;
+        private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
 
         private bool _disposed = false;
 
-        //public AddressToIdMapper AddressToIdMapper { get; set; }
-        private readonly string _psqlHost;
-        private readonly string _psqlDatabase;
-        private readonly string _psqlUsername;
-        private readonly string _psqlPassword;
-
-        private readonly int _waitTimeoutMilliseconds;
-
-        public BitcoinAgent(HttpClient client, Options options, Logger logger, CancellationToken ct)
+        public BitcoinAgent(
+            HttpClient client,
+            IDbContextFactory<DatabaseContext> dbContextFactory,
+            ILogger<BitcoinAgent> logger)
         {
             _client = client;
-            _baseUri = new Uri(options.BitcoinClientUri, "/rest/");
-
-            // the use of Tx cache is disabled since it is not clear 
-            // how much improvement it offers to the additional complexity.
-            // TODO: needs more experimenting.
-            //_txCache = txCache;
+            _dbContextFactory = dbContextFactory;
             _logger = logger;
-            _cT = ct;
-            _waitTimeoutMilliseconds = (int)options.HttpRequestTimeout.TotalMilliseconds;
-
-            _psqlHost = options.PsqlHost;
-            _psqlDatabase = options.PsqlDatabase;
-            _psqlUsername = options.PsqlUsername;
-            _psqlPassword = options.PsqlPassword;
-
-            /*
-            using var context = GetDbContext();
-            context.Database.EnsureCreated();*/
         }
 
-        private DatabaseContext GetDbContext()
+        private async Task<Stream> GetResourceAsync(string endpoint, string hash, CancellationToken cT)
         {
-            return new DatabaseContext(_psqlHost, _psqlDatabase, _psqlUsername, _psqlPassword);
+            return await GetStreamAsync($"{endpoint}/{hash}.json", cT);
+        }
+
+        private async Task<Stream> GetStreamAsync(string endpoint, CancellationToken cT)
+        {
+            return await _client.GetStreamAsync(endpoint, cT);
         }
 
         /// <summary>
         /// Is true if it can successfully query the `chaininfo` endpoint of 
-        /// the Bitcoin client via the given value of <paramref name="BaseUri"/>;
-        /// false if otherwise.
+        /// the Bitcoin client, false if otherwise.
+        /// 
+        /// This will break as soon as the circuit breaker breaks the circuit
+        /// for the first time; hence, will not retry if the circuit returns
+        /// half-open or is reseted.
         /// </summary>
-        public async Task<bool> IsConnectedAsync()
+        public async Task<(bool, ChainInfo?)> IsConnectedAsync(CancellationToken cT)
         {
             try
             {
-                var response = await _client.GetAsync(new Uri(_baseUri, "chaininfo.json"));
-                return response.IsSuccessStatusCode;
+                var request = new HttpRequestMessage(
+                    HttpMethod.Get, "chaininfo.json");
+
+                request.SetPolicyExecutionContext(
+                    new Context().SetLogger<BitcoinAgent>(_logger));
+
+                var response = await _client.SendAsync(request, cT);
+                response.EnsureSuccessStatusCode();
+
+                var chainInfo = await JsonSerializer.DeserializeAsync<ChainInfo>(
+                    await response.Content.ReadAsStreamAsync(cT),
+                    cancellationToken: cT);
+
+                return (response.IsSuccessStatusCode, chainInfo);
             }
-            catch
+            catch (Exception ex)
             {
-                return false;
+                _logger.LogWarning(
+                    "Failed to communicate with the Bitcoin client at {clientBaseAddress}. " +
+                    "Double-check if the client is running and listening " +
+                    "at the given endpoint and port. Also, make sure the " +
+                    "client is started with the REST endpoint enabled " +
+                    "(see the docs). {exception}", // TODO: add link to related docs. 
+                    $"{_client.BaseAddress}/chaininfo.json",
+                    ex.Message);
+                return (false, null);
             }
         }
 
-        public async Task<ChainInfo> GetChainInfoAsync()
+        public async Task<ChainInfo> AssertChainAsync(CancellationToken cT)
         {
-            try
-            {
-                var stream = await SendGet($"chaininfo.json");
-                return
-                    await JsonSerializer.DeserializeAsync<ChainInfo>(stream)
-                    ?? throw new Exception("Error reading chain info.");
-            }
-            catch (Exception e) when (e is not ClientInaccessible)
-            {
-                throw new Exception($"Error getting chain info.");
-            }
+            (var isConnected, var chainInfo) = await IsConnectedAsync(cT);
+
+            if (!isConnected || chainInfo is null)
+                throw new Exception(
+                    $"Failed to communicate with the Bitcoin client at {_client.BaseAddress}. " +
+                    "Double-check if the client is running and listening " +
+                    "at the given endpoint and port. Also, make sure the " +
+                    "client is started with the REST endpoint enabled " +
+                    "(see the docs)."); // TODO: add link to related docs.
+
+            if (chainInfo.Chain != "main")
+                throw new Exception(
+                    $"Required to be on the `main` chain, " +
+                    $"but the bitcoin client is on the " +
+                    $"`{chainInfo.Chain}` chain.");
+
+            return chainInfo;
         }
 
-        public async Task<string> GetBlockHash(int height)
+        public async Task<string> GetBlockHashAsync(int height, CancellationToken cT)
         {
-            Stream stream;
             try
             {
-                stream = await SendGet($"blockhashbyheight/{height}.hex");
+                var stream = await GetStreamAsync($"blockhashbyheight/{height}.hex", cT);
                 using var reader = new StreamReader(stream);
                 return reader.ReadToEnd().Trim();
             }
-            catch (Exception e) when (e is not ClientInaccessible)
+            catch (Exception e)
             {
                 throw;
                 // The exception can happen when the given block height 
-                // is invalid, or the service is not availabe (e.g., the 
-                // bitcoin agent is not responding. 
-                // throw new Exception($"Invalid height {height}");
+                // is invalid throw new Exception($"Invalid height {height}");
             }
         }
 
-        public async Task<Block> GetBlock(string hash)
+        public async Task<Block> GetBlockAsync(string hash, CancellationToken cT)
         {
-            /// Implementation note. 
-            /// There is a possibility of deadlock in the following code. 
-            ///
-            ///  return
-            ///      await JsonSerializer.DeserializeAsync<Block>(
-            ///      await GetResource("block", hash))
-            ///      ?? throw new Exception("Invalid block.");
-            ///
-            /// Therefore, it is replaced by the following. 
-            /// This could possibly be improved by first identifying
-            /// the corner cases that cause deadlock and try to avoid 
-            /// them. 
-            /// See the following blog post and SO question for 
-            /// implementaiton details.
-            ///
-            /// https://stackoverflow.com/a/11191070/947889
-            /// https://devblogs.microsoft.com/pfxteam/crafting-a-task-timeoutafter-method/
-
-            var getBlockTask = GetResource("block", hash);
-            if (await Task.WhenAny(getBlockTask, Task.Delay(_waitTimeoutMilliseconds, _cT)) == getBlockTask)
-            {
-                // Re-wating will cause throwing any caugh exception. 
-                var blockStream = await getBlockTask;
-                return 
-                    JsonSerializer.Deserialize<Block>(blockStream) 
-                    ?? throw new Exception("Invalid block.");
-            }
-            else
-            {
-                throw new TimeoutException(
-                    $"Cannot block hash in the given time frame, hash: {hash}");
-            }
-            /*
-            Stream s = null;
-            try
-            {
-                s = await GetResource("block", hash);
-            }
-            catch(Exception e)
-            {
-                _logger.Log($"**************** 1 {e.Message} {s}");
-            }
-            try
-            {
-                
-                await JsonSerializer.DeserializeAsync<Block>(s);
-            }
-            catch(Exception e)
-            {
-                _logger.Log($"-------- 2 {hash}; {e.Message}");
-            }*/
-
-            /*
+            var stream = await GetResourceAsync("block", hash, cT);
             return
                 await JsonSerializer.DeserializeAsync<Block>(
-                    await GetResource("block", hash))
-                ?? throw new Exception("Invalid block.");*/
+                    stream, cancellationToken: cT)
+                ?? throw new Exception("Invalid block.");
         }
 
-        public async Task<Transaction> GetTransaction(string hash)
+        public async Task<Transaction> GetTransactionAsync(string hash, CancellationToken cT)
         {
-            // See the comment in the GetBlock method for implementation details.
-            var streamTask = GetResource("tx", hash);
-            if (await Task.WhenAny(streamTask, Task.Delay(_waitTimeoutMilliseconds, _cT)) == streamTask)
-            {
-                var stream = await streamTask;
-
-                return
-                    JsonSerializer.Deserialize<Transaction>(stream)
-                    ?? throw new Exception("Invalid transaction.");
-            }
-            else
-            {
-                throw new TimeoutException($"Cannot get the transaction in the given timeframe; hash: {hash}");
-            }
-
-            /*
+            var stream = await GetResourceAsync("tx", hash, cT);
             return
-                await JsonSerializer.DeserializeAsync<Transaction>(
-                    await GetResource("tx", hash))
-                ?? throw new Exception("Invalid transaction.");*/
+                await JsonSerializer.DeserializeAsync<Transaction>(stream, cancellationToken: cT)
+                ?? throw new Exception("Invalid transaction.");
         }
 
-        public async Task<BlockGraph> GetGraph(int height)
+        public async Task<BlockGraph> GetGraph(int height, CancellationToken cT)
         {
-            // All the logging in this section are disabled because 
+            // All the logging in this section are removed because 
             // CPU profiling shows ~%24 of the process time is spent on them.
-            if (_cT.IsCancellationRequested) throw new OperationCanceledException();
 
-            //_logger.Log($"Getting block hash; height {height}.");
-            var blockHash = await GetBlockHash(height);
+            cT.ThrowIfCancellationRequested();
 
-            if (_cT.IsCancellationRequested) throw new OperationCanceledException();
+            var blockHash = await GetBlockHashAsync(height, cT);
 
-            //_logger.Log($"Getting block; height: {height}.");
-            var block = await GetBlock(blockHash);
+            cT.ThrowIfCancellationRequested();
 
-            if (_cT.IsCancellationRequested) throw new OperationCanceledException();
+            var block = await GetBlockAsync(blockHash, cT);
 
-            //_logger.Log($"Getting graph; height: {height}.");
+            cT.ThrowIfCancellationRequested();
+
             var graph = new BlockGraph(block);
-            await ProcessTxes(graph, block);
+            await ProcessTxesAsync(graph, block, cT);
 
-            //_logger.Log($"Completed computing graph for block height {height}.");
             return graph;
         }
 
-        private async Task ProcessTxes(BlockGraph g, Block block)
+        private async Task ProcessTxesAsync(BlockGraph g, Block block, CancellationToken cT)
         {
-            var utxos = new ConcurrentBag<Utxo>();
+            var utxos = new ConcurrentDictionary<string, Utxo>();
 
             var generationTxGraph = new TransactionGraph();
 
@@ -244,90 +176,106 @@ namespace BC2G.Blockchains
             {
                 output.TryGetAddress(out string address);
                 var node = generationTxGraph.AddTarget(
-                    new Node(
-                        //AddressToIdMapper.GetId(address),
-                        address,
-                        output.GetScriptType()),
+                    new Node(address, output.GetScriptType()),
                     output.Value);
 
                 rewardAddresses.Add(node);
                 g.Stats.AddInputTxCount(1);
 
+                var utxo = new Utxo(
+                    coinbaseTx.Txid,
+                    output.Index,
+                    address,
+                    output.Value,
+                    block.Height.ToString())
+                { CreatedInCount = 1 };
 
-                // TEMP
-                //utxos.Add(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
-                //await AddOrUpdate(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value, block.Height.ToString()) { CreatedInCount = 1 });
-                //await _cachedOutputDb.Utxos.AddAsync(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value));
-                //_txCache.Add(coinbaseTx.Txid, output.Index, address, output.Value);
-                utxos.Add(new Utxo(coinbaseTx.Txid, output.Index, address, output.Value, block.Height.ToString()) { CreatedInCount = 1 });
+                utxos.AddOrUpdate(
+                    utxo.Id, utxo,
+                    (k, oldValue) =>
+                    {
+                        oldValue.AddCreatedIn(block.Height.ToString());
+                        return oldValue;
+                    });
             }
+
+            cT.ThrowIfCancellationRequested();
 
             g.RewardsAddresses = rewardAddresses;
             g.Enqueue(generationTxGraph);
 
-            // If cancelled, the it will throw the OperationCanceledException
-            // which is caught at the orchestrator in order to better handle logging.
-            var options = new ParallelOptions() { CancellationToken = _cT };
+            var dbContextLock = new object();
+            var dbContext = _dbContextFactory.CreateDbContext();
+            var options = new ParallelOptions()
+            {
+                CancellationToken = cT,
+                #if (DEBUG)
+                MaxDegreeOfParallelism = 1
+                #endif
+            };
             await Parallel.ForEachAsync(
                 block.Transactions.Where(x => !x.IsCoinbase),
                 options,
                 async (tx, _loopCancellationToken) =>
                 {
                     _loopCancellationToken.ThrowIfCancellationRequested();
-                    await ProcessTx(g, tx, utxos);
+                    await ProcessTx(g, tx, utxos, dbContext, dbContextLock, cT);
                 });
 
-            await AddOrUpdateRange(utxos);
-            /*
-            using var context = GetDbContext();
-            await context.AddRangeAsync(utxos);
-            await context.SaveChangesAsync();*/
+            await dbContext.SaveChangesAsync(cT);
+            dbContext.Dispose();
+
+            cT.ThrowIfCancellationRequested();
+            await AddOrUpdateRange(utxos, cT);
         }
 
-        private async Task ProcessTx(BlockGraph g, Transaction tx, ConcurrentBag<Utxo> utxos)
+        private async Task ProcessTx(
+            BlockGraph g,
+            Transaction tx,
+            ConcurrentDictionary<string, Utxo> utxos,
+            DatabaseContext dbContext,
+            object dbContextLock,
+            CancellationToken cT)
         {
-            var txGraph = new TransactionGraph
-            {
-                Fee = tx.Fee
-            };
-
-            _cT.ThrowIfCancellationRequested();
+            var txGraph = new TransactionGraph { Fee = tx.Fee };
 
             foreach (var input in tx.Inputs)
             {
-                _cT.ThrowIfCancellationRequested();
+                cT.ThrowIfCancellationRequested();
 
                 double value;
                 string address;
-                // TODO:
-                // creating a separate context for each operation is not ideal, though
+
+                // Creating a separate context for each operation is not ideal, though
                 // EF does not currently support concurrency on a context. Therefore, 
                 // a context cannot be re-used on multi-thread setup. 
-                using var context = GetDbContext();
-                var utxo = await context.Utxos.FindAsync(Utxo.GetId(input.TxId, input.OutputIndex));
+                //using var context = _dbContextFactory.CreateDbContext();
+
+                // Do NOT pass the cancelation token to following FindAsync, it seems there are 
+                // known complications related to this: https://github.com/dotnet/efcore/issues/12012
+                // #pragma warning disable CA2016 // Forward the 'CancellationToken' parameter to methods
+                // var utxo = await context.Utxos.FindAsync(Utxo.GetId(input.TxId, input.OutputIndex));
+                // #pragma warning restore CA2016 // Forward the 'CancellationToken' parameter to methods
+
+                Utxo? utxo;
+                lock(dbContextLock)
+                    utxo = dbContext.Utxos.Find(
+                        Utxo.GetId(input.TxId, input.OutputIndex));
+
                 if (utxo != null)
                 {
                     value = utxo.Value;
                     address = utxo.Address;
-                    if (string.IsNullOrEmpty(utxo.ReferencedIn))
-                        utxo.ReferencedIn = g.Block.Height.ToString();
-                    else
-                        utxo.ReferencedIn += g.Block.Height.ToString();
+                    if (!string.IsNullOrEmpty(utxo.ReferencedIn))
+                        utxo.ReferencedIn += ";";
+                    utxo.ReferencedIn += g.Block.Height.ToString();
                     utxo.ReferencedInCount++;
-                    await context.SaveChangesAsync();
                 }
                 else
                 {
-                    /*if (!_txCache.TryGet(
-                        input.TxId,
-                        input.OutputIndex,
-                        out string address,
-                        out double value))
-                    {*/
                     // Extended transaction: details of the transaction are
                     // retrieved from the bitcoin client.
-                    //var exTx = await GetTransaction(input.TxId);
-                    var exTx = await GetTransaction(input.TxId);
+                    var exTx = await GetTransactionAsync(input.TxId, cT);
                     var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
                     if (vout == null)
                         // TODO: check when this can be null,
@@ -336,35 +284,36 @@ namespace BC2G.Blockchains
 
                     vout.TryGetAddress(out address);
                     value = vout.Value;
-                    //}
+
+                    // TODO: it would require much less chars to serialize if 
+                    // we would store block height instead of block hash. However, 
+                    // for exTx that would require an additional API call to the
+                    // bitcoin client, which may not be the most efficient.
+
+                    CreateOrUpdateUtxo(
+                        dbContext, dbContextLock, utxos,
+                        Utxo.GetId(input.TxId, input.OutputIndex),
+                        address, value, exTx.BlockHash, g.Height.ToString());
                 }
 
                 txGraph.AddSource(
-                    new Node(
-                        //AddressToIdMapper.GetId(address),
-                        address,
-                        ScriptType.Unknown), /* TODO: can this set to a better value? */
+                    new Node(address, ScriptType.Unknown), // TODO: can this set to a better value?
                     value);
             }
 
             foreach (var output in tx.Outputs.Where(x => x.IsValueTransfer))
             {
-                _cT.ThrowIfCancellationRequested();
+                cT.ThrowIfCancellationRequested();
 
                 output.TryGetAddress(out string address);
                 txGraph.AddTarget(
-                    new Node(
-                        //AddressToIdMapper.GetId(address),
-                        address,
-                        output.GetScriptType()),
+                    new Node(address, output.GetScriptType()),
                     output.Value);
 
-                // TEMP
-                //utxos.Add(new Utxo(tx.Txid, output.Index, address, output.Value));
-                //_txCache.Add(tx.Txid, output.Index, address, output.Value);
-                //await AddOrUpdate(new Utxo(tx.Txid, output.Index, address, output.Value, g.Block.Height.ToString()) { CreatedInCount = 1 });
-                utxos.Add(new Utxo(tx.Txid, output.Index, address, output.Value, g.Block.Height.ToString()) { CreatedInCount = 1 });
-
+                CreateOrUpdateUtxo(
+                    dbContext, dbContextLock, utxos,
+                    Utxo.GetId(tx.Txid, output.Index),
+                    address, output.Value, g.Block.Height.ToString(), string.Empty);
             }
 
             g.Stats.AddInputTxCount(tx.Inputs.Count);
@@ -372,126 +321,142 @@ namespace BC2G.Blockchains
             g.Enqueue(txGraph);
         }
 
+        private static void CreateOrUpdateUtxo(
+            DatabaseContext dbContext,
+            object dbContextLock,
+            ConcurrentDictionary<string, Utxo> utxos,
+            string id,
+            string address,
+            double value,
+            string createdIn,
+            string referencedIn)
+        {
+            lock (dbContextLock)
+            {
+                var trackedUtxo = dbContext.Utxos.Local.FirstOrDefault(x => x.Id == id);
+                if (trackedUtxo != null)
+                {
+                    trackedUtxo.AddCreatedIn(createdIn);
+                    if (!string.IsNullOrEmpty(referencedIn))
+                        trackedUtxo.AddReferencedIn(referencedIn);
+                }
+                else
+                {
+                    var utxo = new Utxo(id, address, value, createdIn, referencedIn)
+                    {
+                        CreatedInCount = 1
+                    };
+
+                    if (!string.IsNullOrEmpty(referencedIn))
+                        utxo.ReferencedInCount = 1;
+
+                    utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
+                    {
+                        oldValue.AddCreatedIn(createdIn);
+                        if (!string.IsNullOrEmpty(referencedIn))
+                            oldValue.AddReferencedIn(referencedIn);
+                        return oldValue;
+                    });
+                }
+            }
+        }
+
         // Based on the cpu profiling, this method takes most of the cpu time (about ~%20). 
-        private async Task AddOrUpdateRange(ConcurrentBag<Utxo> utxos)
+        private async Task AddOrUpdateRange(ConcurrentDictionary<string, Utxo> utxos, CancellationToken cT)
         {
             try
             {
-                using var c = GetDbContext();
-                await c.Utxos.AddRangeAsync(utxos);
-                await c.SaveChangesAsync();
+                using var c = _dbContextFactory.CreateDbContext();
+                await c.Utxos.AddRangeAsync(utxos.Values, cT);
+                await c.SaveChangesAsync(cT);
             }
+            catch (Exception e)
+            {
+                switch (e)
+                {
+                    case InvalidOperationException:
+                    case DbUpdateException when (
+                        e.InnerException is PostgresException pe && 
+                        pe.SqlState == "23505"):
+                        // A list of the error codes are available in the following page.
+                        // https://www.postgresql.org/docs/current/errcodes-appendix.html
+                        //
+                        // - 23505: unique_violation (when adding an entity whose indexed property is already defined).
+
+                        _logger.LogInformation(
+                            "The exception with the following error message is handled. " +
+                            "There are a few corner cases when this error is thrown and " +
+                            "handled by design; however, one of the most common reasons " +
+                            "for this exception is re-running  BC2G on blocks that were " +
+                            "already processed without clearing the database first. {error}",
+                            e.Message);
+
+                        var c = _dbContextFactory.CreateDbContext();
+                        foreach (var utxo in utxos.Values)
+                        {
+                            var existingUtxo = c.Utxos.Find(utxo.Id);
+                            if (existingUtxo == null)
+                            {
+                                await c.Utxos.AddAsync(utxo, cT);
+                            }
+                            else
+                            {
+                                existingUtxo.AddCreatedIn(utxo.CreatedIn);
+                                existingUtxo.AddReferencedIn(utxo.ReferencedIn);
+                            }
+                        }
+                        await c.SaveChangesAsync(cT);
+                        c.Dispose();
+                        break;
+
+                    default:
+                        throw;
+                }
+            }
+            /*
             catch (DbUpdateException e)
-            when (e.InnerException is PostgresException pe && (pe.SqlState == "23505"))
+                when (e.InnerException is PostgresException pe && pe.SqlState == "23505")
             {
                 // A list of the error codes are available in the following page.
                 // https://www.postgresql.org/docs/current/errcodes-appendix.html
                 //
                 // - 23505: unique_violation (when adding an entity whose indexed property is already defined).
 
-                using var c = GetDbContext();
+                _logger.LogInformation(
+                    "The exception with the following error message is handled. {error}",
+                    e.Message);
+
+                using var c = _dbContextFactory.CreateDbContext();
                 foreach (var utxo in utxos)
                 {
                     var existingUtxo = c.Utxos.Find(utxo.Id);
                     if (existingUtxo == null)
                     {
-                        await c.Utxos.AddAsync(utxo);
+                        await c.Utxos.AddAsync(utxo, cT);
                     }
                     else
                     {
-                        existingUtxo.CreatedIn += ";" + utxo.CreatedIn;
+                        if (!string.IsNullOrEmpty(existingUtxo.CreatedIn))
+                            existingUtxo.CreatedIn += ";";
+                        existingUtxo.CreatedIn += utxo.CreatedIn;
                         existingUtxo.CreatedInCount++;
+
+                        if (!string.IsNullOrEmpty(existingUtxo.ReferencedIn))
+                            existingUtxo.ReferencedIn += ";";
+                        existingUtxo.ReferencedIn += utxo.ReferencedIn;
+                        existingUtxo.ReferencedInCount++;
                     }
                 }
-                await c.SaveChangesAsync();
+                await c.SaveChangesAsync(cT);
             }
-        }
-
-        private async Task<Stream> GetResource(string endpoint, string hash)
-        {
-            return await SendGet($"{endpoint}/{hash}.json");
-        }
-
-        private async Task<Stream> SendGet(string endpoint, int maxRetries = 3)
-        {
-            try
+            catch (InvalidOperationException e)
             {
-                // See the comment in the GetBlock method for implementation details.
-                var streamTask = _client.GetStreamAsync(new Uri(_baseUri, endpoint), _cT);
-                if (await Task.WhenAny(streamTask, Task.Delay(_waitTimeoutMilliseconds, _cT)) == streamTask)
-                {
-                    var stream = await streamTask;
-                    return stream;
-                }
-                else
-                {
-                    if (maxRetries >= 1)
-                    {
-                        _logger.Log($"Timeout querying {endpoint}, retry {3 - maxRetries} of {maxRetries}");
-                        return await SendGet(endpoint, --maxRetries);
-                    }
-                    throw new TimeoutException($"Cannot query the endpoint in the given timeframe; endpoint: {endpoint}");
-                }
 
-                /*
-                return await _client.GetStreamAsync(
-                    new Uri(_baseUri, endpoint));*/
-            }
-            catch (TaskCanceledException e)
-            {
-                //_logger.Log($"-------- 2 {endpoint}; {e.Message}");
-                // Cancelation triggered by the user. 
-                if (e.CancellationToken == _cT)
-                    throw e;
-
-                if (maxRetries >= 1)
-                {
-                    _logger.Log($"TaskCanceledException querying {endpoint}, {e.Message}, retry {3 - maxRetries} of {maxRetries}");
-                    return await SendGet(endpoint, --maxRetries);
-                }
-                else
-                {
-                    var msg = e.Message;
-                    if (e.InnerException != null)
-                        msg += "Cannot make the request after 3 tries: " + e.InnerException.Message;
-                    throw new TaskCanceledException(msg);
-                }
-            }
-            catch (HttpRequestException e)
-            {
-                //_logger.Log($"-------- 3 {endpoint}; {e.Message}");
-                if (maxRetries >= 1)
-                {
-                    _logger.Log($"HttpRequestException querying {endpoint}, {e.Message}, retry {3 - maxRetries} of {maxRetries}");
-                    return await SendGet(endpoint, --maxRetries);
-                }
-                else
-                {
-                    var msg = e.Message;
-                    if (e.InnerException != null)
-                        msg += "Cannot make the request after 3 tries: " + e.InnerException.Message;
-                    throw new HttpRequestException(msg);
-                }
             }
             catch (Exception e)
             {
-                var connected = await IsConnectedAsync();
-                if (!connected)
-                {
-                    if (maxRetries >= 1)
-                        return await SendGet(endpoint, --maxRetries);
 
-                    //_logger.Log($"-------- 5 inaccessible {endpoint}");
-                    throw new ClientInaccessible(
-                        "Failed to connect to the Bitcoin client after 3 tries. ");
-                }
-
-                //_logger.Log($"-------- 4 {endpoint}; {e.Message}");
-                var msg = e.Message;
-                if (e.InnerException != null)
-                    msg += " " + e.InnerException.Message;
-                throw new Exception(msg);
-            }
+            }*/
         }
 
         public void Dispose()

@@ -4,6 +4,9 @@ namespace BC2G.Model
 {
     public class Transaction
     {
+        [JsonPropertyName("blockhash")]
+        public string BlockHash { set; get; } = string.Empty;
+
         [JsonPropertyName("txid")]
         public string Txid { set; get; } = string.Empty;
 
