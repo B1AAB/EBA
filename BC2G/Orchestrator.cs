@@ -134,6 +134,15 @@ namespace BC2G
             SetupLogger(options);
             SetupGraphDB(options);
 
+            using (var context = new DatabaseContext(
+                options.PsqlHost,
+                options.PsqlDatabase,
+                options.PsqlUsername,
+                options.PsqlPassword))
+            {
+                context.Database.EnsureCreated();
+            }
+
             var agent = await GetBitCoinAgentAsync(options, _ct);
 
             (var asserResult, var chaininfo) = await AssertChainAsync(agent);

@@ -57,8 +57,9 @@ namespace BC2G.Blockchains
             _psqlUsername = options.PsqlUsername;
             _psqlPassword = options.PsqlPassword;
 
+            /*
             using var context = GetDbContext();
-            context.Database.EnsureCreated();
+            context.Database.EnsureCreated();*/
         }
 
         private DatabaseContext GetDbContext()
