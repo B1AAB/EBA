@@ -1,6 +1,6 @@
 ﻿using BC2G.Blockchains;
 using BC2G.DAL;
-using BC2G.Model;
+using BC2G.Infrastructure;
 using BC2G.Model.Config;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -133,7 +133,10 @@ namespace BC2G.StartupSolutions
                     $"Username={options.Psql.Username};" +
                     $"Password={options.Psql.Password}");
 
+                // Read these docs on the effect of the following settings: 
+                // https://www.npgsql.org/doc/connection-string-parameters.html
                 optionsBuilder.EnableSensitiveDataLogging();
+                optionsBuilder.EnableDetailedErrors();
             });
         }
     }
