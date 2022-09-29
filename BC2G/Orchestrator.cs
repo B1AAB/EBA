@@ -2,7 +2,7 @@ using BC2G.Blockchains;
 using BC2G.CommandLineInterface;
 using BC2G.DAL;
 using BC2G.Graph;
-using BC2G.Model;
+using BC2G.Infrastructure;
 using BC2G.Model.Config;
 using BC2G.PersistentObject;
 using BC2G.Serializers;
@@ -122,6 +122,7 @@ namespace BC2G
 
             var parallelOptions = new ParallelOptions()
             {
+                CancellationToken = cT,
                 MaxDegreeOfParallelism = options.Bitcoin.MaxConcurrentBlocks
             };
 
@@ -132,18 +133,19 @@ namespace BC2G
             // Have tested TPL dataflow as alternative to Parallel.For,
             // it adds more complexity with little performance improvements,
             // and in some cases, slower than Parallel.For and sequential traversal.
-            Parallel.For(0, blockHeightQueue.Count, parallelOptions, (i, state) =>
-            {
-                if (cT.IsCancellationRequested)
-                    state.Stop();
+            await Parallel.ForEachAsync(
+                new bool[blockHeightQueue.Count],
+                parallelOptions,
+                async (_, _loopCancellationToken) =>
+                {
+                    _loopCancellationToken.ThrowIfCancellationRequested();
 
-                blockHeightQueue.TryDequeue(out var h);
-                //Logger.LogStartProcessingBlock(h);
-                ProcessBlock(options, gBuffer, /*serializer,*/ h, /*individualBlocksDir,*/ cT).Wait();
+                    blockHeightQueue.TryDequeue(out var h);
+                    //Logger.LogStartProcessingBlock(h);
+                    await ProcessBlock(options, gBuffer, /*serializer,*/ h, /*individualBlocksDir,*/ cT);
 
-                if (cT.IsCancellationRequested)
-                    state.Stop();
-            });
+                    _loopCancellationToken.ThrowIfCancellationRequested();
+                });
 
             //graphDb.FinishBulkImport();
 
