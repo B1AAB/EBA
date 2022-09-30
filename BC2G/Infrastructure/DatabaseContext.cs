@@ -1,11 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using BC2G.Model;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BC2G.Model
+namespace BC2G.Infrastructure
 {
     public class DatabaseContext : DbContext
     {
@@ -34,6 +35,14 @@ namespace BC2G.Model
         protected override void OnModelCreating(ModelBuilder builder)
         {
             builder.Entity<Utxo>().HasKey(x => x.Id);
+
+            // This is used to set a system column as
+            // concurrency token for optimistic concurrency
+            // since Psql does not currently have
+            // auto-incremented columns.
+            // Read the following docs for details:
+            // https://www.npgsql.org/efcore/modeling/concurrency.html
+            builder.Entity<Utxo>().UseXminAsConcurrencyToken();
         }
         /*
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
