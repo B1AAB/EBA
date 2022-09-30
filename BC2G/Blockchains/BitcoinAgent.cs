@@ -1,4 +1,5 @@
 ﻿using BC2G.Graph;
+using BC2G.Infrastructure;
 using BC2G.Model;
 using BC2G.StartupSolutions;
 using Microsoft.EntityFrameworkCore;
@@ -41,7 +42,8 @@ namespace BC2G.Blockchains
 
         private async Task<Stream> GetStreamAsync(string endpoint, CancellationToken cT)
         {
-            return await _client.GetStreamAsync(endpoint, cT);
+            var response = await _client.GetAsync(endpoint, HttpCompletionOption.ResponseHeadersRead, cT);
+            return await response.Content.ReadAsStreamAsync(cT);
         }
 
         /// <summary>
@@ -110,7 +112,7 @@ namespace BC2G.Blockchains
         {
             try
             {
-                var stream = await GetStreamAsync($"blockhashbyheight/{height}.hex", cT);
+                await using var stream = await GetStreamAsync($"blockhashbyheight/{height}.hex", cT);
                 using var reader = new StreamReader(stream);
                 return reader.ReadToEnd().Trim();
             }
@@ -124,7 +126,7 @@ namespace BC2G.Blockchains
 
         public async Task<Block> GetBlockAsync(string hash, CancellationToken cT)
         {
-            var stream = await GetResourceAsync("block", hash, cT);
+            await using var stream = await GetResourceAsync("block", hash, cT);
             return
                 await JsonSerializer.DeserializeAsync<Block>(
                     stream, cancellationToken: cT)
@@ -133,7 +135,7 @@ namespace BC2G.Blockchains
 
         public async Task<Transaction> GetTransactionAsync(string hash, CancellationToken cT)
         {
-            var stream = await GetResourceAsync("tx", hash, cT);
+            await using var stream = await GetResourceAsync("tx", hash, cT);
             return
                 await JsonSerializer.DeserializeAsync<Transaction>(stream, cancellationToken: cT)
                 ?? throw new Exception("Invalid transaction.");
@@ -226,7 +228,7 @@ namespace BC2G.Blockchains
             dbContext.Dispose();
 
             cT.ThrowIfCancellationRequested();
-            await AddOrUpdateRange(utxos, cT);
+            await AddOrUpdateRange(utxos.Values, cT);
         }
 
         private async Task ProcessTx(
@@ -362,12 +364,18 @@ namespace BC2G.Blockchains
         }
 
         // Based on the cpu profiling, this method takes most of the cpu time (about ~%20). 
-        private async Task AddOrUpdateRange(ConcurrentDictionary<string, Utxo> utxos, CancellationToken cT)
+        private async Task AddOrUpdateRange(ICollection<Utxo> utxos, CancellationToken cT)
         {
+            // VERY IMPORTANT TODO:
+            // This method must go through a complete re-write for simplicy and performance,
+            // see the linked docs for a better implementation tips.
+            // https://learn.microsoft.com/en-us/ef/core/saving/concurrency
+
+            using var c = _dbContextFactory.CreateDbContext();
+
             try
             {
-                using var c = _dbContextFactory.CreateDbContext();
-                await c.Utxos.AddRangeAsync(utxos.Values, cT);
+                await c.Utxos.AddRangeAsync(utxos, cT);
                 await c.SaveChangesAsync(cT);
             }
             catch (Exception e)
@@ -375,13 +383,22 @@ namespace BC2G.Blockchains
                 switch (e)
                 {
                     case InvalidOperationException:
+                    case DbUpdateConcurrencyException:
                     case DbUpdateException when (
-                        e.InnerException is PostgresException pe && 
+                        e.InnerException is PostgresException pe &&
                         pe.SqlState == "23505"):
                         // A list of the error codes are available in the following page.
                         // https://www.postgresql.org/docs/current/errcodes-appendix.html
                         //
-                        // - 23505: unique_violation (when adding an entity whose indexed property is already defined).
+                        // - 23505: unique_violation (when adding an entity whose indexed
+                        //   property is already defined).
+
+                        // TODO:
+                        // There is a much better implementation of this that can 
+                        // better handle concurrency issues at the following, 
+                        // this should be updated according to the example in 
+                        // the following link.
+                        // https://learn.microsoft.com/en-us/ef/core/saving/concurrency
 
                         _logger.LogInformation(
                             "The exception with the following error message is handled. " +
@@ -391,72 +408,56 @@ namespace BC2G.Blockchains
                             "already processed without clearing the database first. {error}",
                             e.Message);
 
-                        var c = _dbContextFactory.CreateDbContext();
-                        foreach (var utxo in utxos.Values)
+                        foreach (var utxo in utxos)
                         {
-                            var existingUtxo = c.Utxos.Find(utxo.Id);
-                            if (existingUtxo == null)
+                            var saved = false;
+                            var tries = 0;
+                            while (!saved && tries++ < 3)
                             {
-                                await c.Utxos.AddAsync(utxo, cT);
+                                try
+                                {
+                                    var existingUtxo = c.Utxos.Find(utxo.Id);
+                                    if (existingUtxo == null)
+                                    {
+                                        await c.Utxos.AddAsync(utxo, cT);
+                                    }
+                                    else
+                                    {
+                                        existingUtxo.AddCreatedIn(utxo.CreatedIn);
+                                        existingUtxo.AddReferencedIn(utxo.ReferencedIn);
+                                    }
+
+                                    await c.SaveChangesAsync(cT);
+                                    saved = true;
+                                    break;
+                                }
+                                catch (Exception _e)
+                                {
+                                    switch (_e)
+                                    {
+                                        case DbUpdateConcurrencyException:
+                                        case DbUpdateException when (
+                                        _e.InnerException is PostgresException _pe &&
+                                        _pe.SqlState == "23505"):
+                                            // Let it retry.
+                                            Thread.Sleep(5000);
+                                            break;
+                                        default:
+                                            throw;
+                                    }
+
+                                }
                             }
-                            else
-                            {
-                                existingUtxo.AddCreatedIn(utxo.CreatedIn);
-                                existingUtxo.AddReferencedIn(utxo.ReferencedIn);
-                            }
+
+                            if (!saved)
+                                throw;
                         }
-                        await c.SaveChangesAsync(cT);
-                        c.Dispose();
                         break;
 
                     default:
                         throw;
                 }
             }
-            /*
-            catch (DbUpdateException e)
-                when (e.InnerException is PostgresException pe && pe.SqlState == "23505")
-            {
-                // A list of the error codes are available in the following page.
-                // https://www.postgresql.org/docs/current/errcodes-appendix.html
-                //
-                // - 23505: unique_violation (when adding an entity whose indexed property is already defined).
-
-                _logger.LogInformation(
-                    "The exception with the following error message is handled. {error}",
-                    e.Message);
-
-                using var c = _dbContextFactory.CreateDbContext();
-                foreach (var utxo in utxos)
-                {
-                    var existingUtxo = c.Utxos.Find(utxo.Id);
-                    if (existingUtxo == null)
-                    {
-                        await c.Utxos.AddAsync(utxo, cT);
-                    }
-                    else
-                    {
-                        if (!string.IsNullOrEmpty(existingUtxo.CreatedIn))
-                            existingUtxo.CreatedIn += ";";
-                        existingUtxo.CreatedIn += utxo.CreatedIn;
-                        existingUtxo.CreatedInCount++;
-
-                        if (!string.IsNullOrEmpty(existingUtxo.ReferencedIn))
-                            existingUtxo.ReferencedIn += ";";
-                        existingUtxo.ReferencedIn += utxo.ReferencedIn;
-                        existingUtxo.ReferencedInCount++;
-                    }
-                }
-                await c.SaveChangesAsync(cT);
-            }
-            catch (InvalidOperationException e)
-            {
-
-            }
-            catch (Exception e)
-            {
-
-            }*/
         }
 
         public void Dispose()
