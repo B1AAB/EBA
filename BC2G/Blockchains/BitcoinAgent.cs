@@ -224,11 +224,11 @@ namespace BC2G.Blockchains
                     await ProcessTx(g, tx, utxos, dbContext, dbContextLock, cT);
                 });
 
-            await dbContext.SaveChangesAsync(cT);
-            dbContext.Dispose();
-
             cT.ThrowIfCancellationRequested();
-            await AddOrUpdateRange(utxos.Values, cT);
+            await DatabaseContext.OptimisticAddOrUpdate(dbContext, _dbContextFactory, cT);
+            dbContext.Dispose();
+            await DatabaseContext.OptimisticAddOrUpdate(utxos.Values, _dbContextFactory, cT);
+            //await AddOrUpdateRange(utxos.Values, cT);
         }
 
         private async Task ProcessTx(
@@ -339,24 +339,16 @@ namespace BC2G.Blockchains
                 if (trackedUtxo != null)
                 {
                     trackedUtxo.AddCreatedIn(createdIn);
-                    if (!string.IsNullOrEmpty(referencedIn))
-                        trackedUtxo.AddReferencedIn(referencedIn);
+                    trackedUtxo.AddReferencedIn(referencedIn);
                 }
                 else
                 {
-                    var utxo = new Utxo(id, address, value, createdIn, referencedIn)
-                    {
-                        CreatedInCount = 1
-                    };
-
-                    if (!string.IsNullOrEmpty(referencedIn))
-                        utxo.ReferencedInCount = 1;
+                    var utxo = new Utxo(id, address, value, createdIn, referencedIn);
 
                     utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
                     {
                         oldValue.AddCreatedIn(createdIn);
-                        if (!string.IsNullOrEmpty(referencedIn))
-                            oldValue.AddReferencedIn(referencedIn);
+                        oldValue.AddReferencedIn(referencedIn);
                         return oldValue;
                     });
                 }
@@ -456,6 +448,54 @@ namespace BC2G.Blockchains
 
                     default:
                         throw;
+                }
+            }
+        }
+
+        private async Task OptimisticAddOrUpdate(DbContext context, CancellationToken cT)
+        {
+            try
+            {
+                await context.SaveChangesAsync(cT);
+            }
+            catch (Exception e)
+            {
+                switch (e)
+                {
+                    case InvalidOperationException:
+                    case DbUpdateConcurrencyException:
+                    case DbUpdateException when (
+                        e.InnerException is PostgresException pe &&
+                        pe.SqlState == "23505"):
+                        foreach(var dbEntity in  context.ChangeTracker.Entries<Utxo>())
+                        {
+                            var x = dbEntity.Entity;
+                        }
+                        
+                        break;
+                    default: throw;
+                }
+            }
+        }
+
+        private async Task OptimisticAddOrUpdateRange(ICollection<Utxo> utxos, CancellationToken cT)
+        {
+            try
+            {
+
+            }
+            catch (Exception e)
+            {
+                switch (e)
+                {
+                    case InvalidOperationException:
+                    case DbUpdateConcurrencyException:
+                    case DbUpdateException when (
+                        e.InnerException is PostgresException pe &&
+                        pe.SqlState == "23505"):
+
+                        break;
+                    default: throw;
                 }
             }
         }
