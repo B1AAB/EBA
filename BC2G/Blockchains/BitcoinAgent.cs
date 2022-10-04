@@ -224,11 +224,9 @@ namespace BC2G.Blockchains
                     await ProcessTx(g, tx, utxos, dbContext, dbContextLock, cT);
                 });
 
-            cT.ThrowIfCancellationRequested();
-            await DatabaseContext.OptimisticAddOrUpdate(dbContext, _dbContextFactory, cT);
             dbContext.Dispose();
+            cT.ThrowIfCancellationRequested();
             await DatabaseContext.OptimisticAddOrUpdate(utxos.Values, _dbContextFactory, cT);
-            //await AddOrUpdateRange(utxos.Values, cT);
         }
 
         private async Task ProcessTx(
@@ -248,11 +246,6 @@ namespace BC2G.Blockchains
                 double value;
                 string address;
 
-                // Creating a separate context for each operation is not ideal, though
-                // EF does not currently support concurrency on a context. Therefore, 
-                // a context cannot be re-used on multi-thread setup. 
-                //using var context = _dbContextFactory.CreateDbContext();
-
                 // Do NOT pass the cancelation token to following FindAsync, it seems there are 
                 // known complications related to this: https://github.com/dotnet/efcore/issues/12012
                 // #pragma warning disable CA2016 // Forward the 'CancellationToken' parameter to methods
@@ -260,18 +253,20 @@ namespace BC2G.Blockchains
                 // #pragma warning restore CA2016 // Forward the 'CancellationToken' parameter to methods
 
                 Utxo? utxo;
-                lock(dbContextLock)
-                    utxo = dbContext.Utxos.Find(
-                        Utxo.GetId(input.TxId, input.OutputIndex));
+                lock (dbContextLock)
+                    utxo = dbContext.Utxos.Find(Utxo.GetId(input.TxId, input.OutputIndex));
 
                 if (utxo != null)
                 {
                     value = utxo.Value;
                     address = utxo.Address;
-                    if (!string.IsNullOrEmpty(utxo.ReferencedIn))
-                        utxo.ReferencedIn += ";";
-                    utxo.ReferencedIn += g.Block.Height.ToString();
-                    utxo.ReferencedInCount++;
+                    var refdIn = g.Block.Hash;
+                    utxo.AddReferencedIn(refdIn);
+                    utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
+                    {
+                        oldValue.AddReferencedIn(refdIn);
+                        return oldValue;
+                    });
                 }
                 else
                 {
@@ -280,22 +275,13 @@ namespace BC2G.Blockchains
                     var exTx = await GetTransactionAsync(input.TxId, cT);
                     var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
                     if (vout == null)
-                        // TODO: check when this can be null,
-                        // or if it would ever happen.
-                        throw new NotImplementedException();
+                        throw new NotImplementedException($"{vout} not in {input.TxId}; not expected.");
 
                     vout.TryGetAddress(out address);
                     value = vout.Value;
 
-                    // TODO: it would require much less chars to serialize if 
-                    // we would store block height instead of block hash. However, 
-                    // for exTx that would require an additional API call to the
-                    // bitcoin client, which may not be the most efficient.
-
-                    CreateOrUpdateUtxo(
-                        dbContext, dbContextLock, utxos,
-                        Utxo.GetId(input.TxId, input.OutputIndex),
-                        address, value, exTx.BlockHash, g.Height.ToString());
+                    AddOrUpdateUtxo(utxos, Utxo.GetId(input.TxId, input.OutputIndex),
+                        address, value, exTx.BlockHash, g.Block.Hash);
                 }
 
                 txGraph.AddSource(
@@ -312,10 +298,8 @@ namespace BC2G.Blockchains
                     new Node(address, output.GetScriptType()),
                     output.Value);
 
-                CreateOrUpdateUtxo(
-                    dbContext, dbContextLock, utxos,
-                    Utxo.GetId(tx.Txid, output.Index),
-                    address, output.Value, g.Block.Height.ToString(), string.Empty);
+                AddOrUpdateUtxo(utxos, Utxo.GetId(tx.Txid, output.Index),
+                    address, output.Value, g.Block.Hash, string.Empty);
             }
 
             g.Stats.AddInputTxCount(tx.Inputs.Count);
@@ -323,9 +307,7 @@ namespace BC2G.Blockchains
             g.Enqueue(txGraph);
         }
 
-        private static void CreateOrUpdateUtxo(
-            DatabaseContext dbContext,
-            object dbContextLock,
+        private static void AddOrUpdateUtxo(
             ConcurrentDictionary<string, Utxo> utxos,
             string id,
             string address,
@@ -333,26 +315,14 @@ namespace BC2G.Blockchains
             string createdIn,
             string referencedIn)
         {
-            lock (dbContextLock)
-            {
-                var trackedUtxo = dbContext.Utxos.Local.FirstOrDefault(x => x.Id == id);
-                if (trackedUtxo != null)
-                {
-                    trackedUtxo.AddCreatedIn(createdIn);
-                    trackedUtxo.AddReferencedIn(referencedIn);
-                }
-                else
-                {
-                    var utxo = new Utxo(id, address, value, createdIn, referencedIn);
+            var utxo = new Utxo(id, address, value, createdIn, referencedIn);
 
-                    utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
-                    {
-                        oldValue.AddCreatedIn(createdIn);
-                        oldValue.AddReferencedIn(referencedIn);
-                        return oldValue;
-                    });
-                }
-            }
+            utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
+            {
+                oldValue.AddCreatedIn(createdIn);
+                oldValue.AddReferencedIn(referencedIn);
+                return oldValue;
+            });
         }
 
         // Based on the cpu profiling, this method takes most of the cpu time (about ~%20). 
