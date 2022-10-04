@@ -13,18 +13,18 @@ using System.Threading.Tasks;
 
 namespace BC2G.Infrastructure
 {
-/*
-    public class BloggingContextFactory : IDesignTimeDbContextFactory<DatabaseContext>
-    {
-        public DatabaseContext CreateDbContext(string[] args)
+    /*
+        public class BloggingContextFactory : IDesignTimeDbContextFactory<DatabaseContext>
         {
-            Console.WriteLine("I am used.------------------");
-            var optionsBuilder = new DbContextOptionsBuilder<DatabaseContext>();
-            optionsBuilder.UseNpgsql("Data Source=blog.db");
+            public DatabaseContext CreateDbContext(string[] args)
+            {
+                Console.WriteLine("I am used.------------------");
+                var optionsBuilder = new DbContextOptionsBuilder<DatabaseContext>();
+                optionsBuilder.UseNpgsql("Data Source=blog.db");
 
-            return new DatabaseContext(optionsBuilder.Options);
-        }
-    }*/
+                return new DatabaseContext(optionsBuilder.Options);
+            }
+        }*/
 
     /*
     public class DatabaseContext : DbContext
@@ -115,16 +115,17 @@ namespace BC2G.Infrastructure
             IDbContextFactory<DatabaseContext> contextFactory,
             CancellationToken ct)
         {
-            await OptimisticTx(async () =>
-            {
-                using var c = contextFactory.CreateDbContext();
-                await c.Utxos.AddRangeAsync(utxos, ct);
-                await c.SaveChangesAsync(ct);
-            },
-            async () =>
-            {
-                await ResilientAddOrUpdate(utxos, contextFactory, ct);
-            });
+            await OptimisticTx(
+                async () =>
+                {
+                    using var c = contextFactory.CreateDbContext();
+                    await c.Utxos.AddRangeAsync(utxos, ct);
+                    await c.SaveChangesAsync(ct);
+                },
+                async () =>
+                {
+                    await ResilientAddOrUpdate(utxos, contextFactory, ct);
+                });
         }
 
         private static async Task OptimisticTx(Func<Task> tx, Func<Task> onFailure)

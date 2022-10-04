@@ -1,6 +1,6 @@
 ﻿using BC2G.Infrastructure;
+using BC2G.Infrastructure.StartupSolutions;
 using BC2G.Model.Config;
-using BC2G.StartupSolutions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;

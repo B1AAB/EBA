@@ -7,7 +7,7 @@ using Polly.Timeout;
 using Polly.Wrap;
 using System.Net.Sockets;
 
-namespace BC2G.StartupSolutions
+namespace BC2G.Infrastructure.StartupSolutions
 {
     /// Useful links: 
     /// - Circuit breaker in general: https://learn.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/implement-circuit-breaker-pattern

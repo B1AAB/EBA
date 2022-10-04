@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace BC2G.Migrations
+namespace BC2G.Infrastructure.Migrations
 {
     public partial class Initial : Migration
     {

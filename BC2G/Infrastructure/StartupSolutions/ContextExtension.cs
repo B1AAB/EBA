@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace BC2G.StartupSolutions
+namespace BC2G.Infrastructure.StartupSolutions
 {
     internal static class ContextExtension
     {
