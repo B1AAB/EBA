@@ -8,8 +8,6 @@ using System.Threading.Tasks;
 
 namespace BC2G.Model
 {
-    // TODO: can this be merged with the Output type?!
-
     [Table("Utxo")]
     public class Utxo
     {
@@ -17,8 +15,10 @@ namespace BC2G.Model
 
         [Required]
         public string Id { set; get; } = string.Empty;
+
         [Required]
         public string Address { set; get; } = string.Empty;
+
         [Required]
         public double Value { set; get; }
 

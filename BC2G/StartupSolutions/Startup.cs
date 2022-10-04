@@ -25,9 +25,9 @@ namespace BC2G.StartupSolutions
 
             // Setup logging using Serilog.
             var logFilename = Path.Join(
-                options.WorkingDir, 
-                options.Logger.RepoName + 
-                DateTimeOffset.Now.ToUnixTimeSeconds().ToString() + 
+                options.WorkingDir,
+                options.Logger.RepoName +
+                DateTimeOffset.Now.ToUnixTimeSeconds().ToString() +
                 ".log");
 
             Log.Logger =
@@ -37,7 +37,7 @@ namespace BC2G.StartupSolutions
                     "System.Net.Http.HttpClient",
                     Serilog.Events.LogEventLevel.Warning)
                 .MinimumLevel.Override(
-                    "Microsoft.EntityFrameworkCore.Database.Command", 
+                    "Microsoft.EntityFrameworkCore.Database.Command",
                     Serilog.Events.LogEventLevel.Warning)
                 .MinimumLevel.Override(
                     "Microsoft.EntityFrameworkCore.Database.Connection",
@@ -47,8 +47,8 @@ namespace BC2G.StartupSolutions
                     Serilog.Events.LogEventLevel.Warning)
                 .Enrich.FromLogContext()
                 .WriteTo.File(
-                    path: logFilename, 
-                    rollingInterval: RollingInterval.Hour, 
+                    path: logFilename,
+                    rollingInterval: RollingInterval.Hour,
                     outputTemplate: options.Logger.MessageTemplate)
                 .WriteTo.Console(
                     theme: AnsiConsoleTheme.Code)

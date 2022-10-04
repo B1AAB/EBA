@@ -1,4 +1,11 @@
-﻿namespace BC2G
+﻿using BC2G.Infrastructure;
+using BC2G.Model.Config;
+using BC2G.StartupSolutions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Serilog;
+
+namespace BC2G
 {
     internal class BC2G
     {
@@ -24,7 +31,7 @@
 
         private static readonly CancellationTokenSource _tokenSource = new();
 
-        static async Task Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
             var cancellationToken = _tokenSource.Token;
 
@@ -37,9 +44,13 @@
 
             try
             {
-                var orchestrator = new Orchestrator(cancellationToken);
-                var logger = orchestrator.Logger;
+                var options = new Options();
+                var hostBuilder = Startup.GetHostBuilder(options);
+                var host = hostBuilder.Build();
+                await host.StartAsync();
 
+                var logger = Log.Logger;
+                var orchestrator = new Orchestrator(host, options, cancellationToken);
                 Console.CancelKeyPress += new ConsoleCancelEventHandler(
                     (sender, e) =>
                     {
@@ -53,11 +64,12 @@
             catch (Exception e)
             {
                 Console.Error.WriteLine(e.Message);
+                exitCode = 1;
             }
-            finally
-            {
-                Environment.Exit(exitCode);
-            }
+
+            // Do not enable the following as it causes issues with building migration scripts.
+            //Environment.Exit(exitCode);
+            return exitCode;
         }
 
         private static bool ConsoleEventCallback(

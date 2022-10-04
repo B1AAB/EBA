@@ -9,7 +9,7 @@ using BC2G.Serializers;
 using BC2G.StartupSolutions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
@@ -19,27 +19,25 @@ namespace BC2G
     {
         private readonly CLI _cli;
         private readonly IHost _host;
-        private readonly Options _options = new();
+        private readonly Options _options;
         private readonly CancellationToken _cT;
 
         private bool disposed = false;
 
         public ILogger Logger { get; }
 
-        public Orchestrator(CancellationToken cancelationToken)
+        public Orchestrator(IHost host, Options options, CancellationToken cancelationToken)
         {
+            _host = host;
             _cT = cancelationToken;
+            _options = options;
+            Logger = _host.Services.GetRequiredService<ILogger<Orchestrator>>();
             _cli = new CLI(
                 _options,
                 TraverseAsync,
                 SampleGraph,
                 LoadGraphAsync,
-                (e, c) => { Logger?.Fatal(e.Message); });
-
-            var hostBuilder = Startup.GetHostBuilder(_options);
-            _host = hostBuilder.Build();
-
-            Logger = Log.Logger;
+                (e, c) => { Logger?.LogCritical("{error}", e.Message); });
         }
 
         public async Task<int> InvokeAsync(string[] args)
@@ -86,9 +84,9 @@ namespace BC2G
                 await TraverseBlocksAsync(_options, _cT);
                 stopwatch.Stop();
                 if (_cT.IsCancellationRequested)
-                    Logger.Information("Cancelled successfully.");
+                    Logger.LogInformation("Cancelled successfully.");
                 else
-                    Logger.Information($"All process finished successfully in {stopwatch.Elapsed}.");
+                    Logger.LogInformation($"All process finished successfully in {stopwatch.Elapsed}.");
             }
             catch
             {
@@ -105,11 +103,11 @@ namespace BC2G
 
             using var gBuffer = new PersistentGraphBuffer(
                 _host.Services.GetRequiredService<GraphDB>(),
-                _host.Services.GetRequiredService<Microsoft.Extensions.Logging.ILogger<PersistentGraphBuffer>>(),            
+                _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),            
                 pGraphStat,
                 cT);
 
-            Logger.Information(
+            Logger.LogInformation(
                 "Traversing blocks [{from}, {to}).", 
                 options.Bitcoin.FromInclusive, 
                 options.Bitcoin.ToExclusive);
@@ -182,7 +180,7 @@ namespace BC2G
         {
             cT.ThrowIfCancellationRequested();
 
-            Logger.Information("Started processing block {height}.", height);
+            Logger.LogInformation("Started processing block {height}.", height);
 
             var strategy = ResilienceStrategyFactory.Bitcoin.GetGraphStrategy(
                 options.Bitcoin.BitcoinAgentResilienceStrategy);
@@ -192,11 +190,11 @@ namespace BC2G
                 // Note that _ct is linked cancellation token, linking
                 // user's token and the timeout policy's cancellation token.
 
-                Logger.Information("Trying processing block {height}.", height);
+                Logger.LogInformation("Trying processing block {height}.", height);
                 var agent = _host.Services.GetRequiredService<BitcoinAgent>();
                 var blockGraph = await agent.GetGraph(height, _ct);
 
-                Logger.Information(
+                Logger.LogInformation(
                     "Obtained block graph for height {height}, enqueued " +
                     "for graph building and serialization.", height);
                 gBuffer.Enqueue(blockGraph);
@@ -217,7 +215,7 @@ namespace BC2G
             {
                 if (disposing)
                 {
-                    Log.CloseAndFlush();
+                    //Log.CloseAndFlush();
                     //Logger.Dispose();
                     //_txCache.Dispose();
                 }
