@@ -18,7 +18,8 @@ namespace BC2G.Migrations
                     CreatedIn = table.Column<string>(type: "text", nullable: false),
                     CreatedInCount = table.Column<int>(type: "integer", nullable: false),
                     ReferencedIn = table.Column<string>(type: "text", nullable: false),
-                    ReferencedInCount = table.Column<int>(type: "integer", nullable: false)
+                    ReferencedInCount = table.Column<int>(type: "integer", nullable: false),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {

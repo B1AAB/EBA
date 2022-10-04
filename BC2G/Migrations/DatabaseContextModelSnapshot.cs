@@ -47,6 +47,11 @@ namespace BC2G.Migrations
                     b.Property<double>("Value")
                         .HasColumnType("double precision");
 
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid");
+
                     b.HasKey("Id");
 
                     b.ToTable("Utxo");
