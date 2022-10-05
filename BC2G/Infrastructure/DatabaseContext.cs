@@ -13,72 +13,13 @@ using System.Threading.Tasks;
 
 namespace BC2G.Infrastructure
 {
-    /*
-        public class BloggingContextFactory : IDesignTimeDbContextFactory<DatabaseContext>
-        {
-            public DatabaseContext CreateDbContext(string[] args)
-            {
-                Console.WriteLine("I am used.------------------");
-                var optionsBuilder = new DbContextOptionsBuilder<DatabaseContext>();
-                optionsBuilder.UseNpgsql("Data Source=blog.db");
-
-                return new DatabaseContext(optionsBuilder.Options);
-            }
-        }*/
-
-    /*
     public class DatabaseContext : DbContext
     {
-        public DatabaseContext(DbContextOptions<DatabaseContext> options)
-            : base(options)
-        {
-        }
-
-        private readonly string _connectionString;
-
-        public DatabaseContext(string connectionString)
-        {
-            _connectionString = connectionString;
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            Console.WriteLine("I am called ***********************");
-            optionsBuilder.UseNpgsql("Host=localhost");
-        }
-    }*/
-
-
-    public class DatabaseContext : DbContext
-    {
-        /*
-        private readonly string _host;
-        private readonly string _database;
-        private readonly string _username;
-        private readonly string _password;*/
-
         public DbSet<Utxo> Utxos => Set<Utxo>();
-        //public DbSet<UtxoB> UtxosB;
-
-        // TODO: Currently this constructor is needed to add migration scripts, 
-        // see how this requirement can be better addressed. 
-        /*public DatabaseContext() : base()
-        {
-            Console.WriteLine("I am called 2");
-        }*/
 
         // Needed by the migration scripts
         public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
         { }
-
-        /*
-        public DatabaseContext(string host, string database, string username, string password)
-        {
-            _host = host;
-            _database = database;
-            _username = username;
-            _password = password;
-        }*/
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -184,8 +125,3 @@ namespace BC2G.Infrastructure
         }
     }
 }
-
-
-
-
-
