@@ -189,8 +189,7 @@ namespace BC2G.Blockchains
                     output.Index,
                     address,
                     output.Value,
-                    block.Height.ToString())
-                { CreatedInCount = 1 };
+                    block.Hash);
 
                 utxos.AddOrUpdate(
                     utxo.Id, utxo,
@@ -224,6 +223,9 @@ namespace BC2G.Blockchains
                     await ProcessTx(g, tx, utxos, dbContext, dbContextLock, cT);
                 });
 
+            
+            cT.ThrowIfCancellationRequested();
+            await DatabaseContext.OptimisticAddOrUpdate(dbContext, _dbContextFactory, cT);
             dbContext.Dispose();
             cT.ThrowIfCancellationRequested();
             await DatabaseContext.OptimisticAddOrUpdate(utxos.Values, _dbContextFactory, cT);
@@ -253,20 +255,23 @@ namespace BC2G.Blockchains
                 // #pragma warning restore CA2016 // Forward the 'CancellationToken' parameter to methods
 
                 Utxo? utxo;
+                var id = Utxo.GetId(input.TxId, input.OutputIndex);
                 lock (dbContextLock)
-                    utxo = dbContext.Utxos.Find(Utxo.GetId(input.TxId, input.OutputIndex));
+                    utxo = dbContext.Utxos.Find(id);
+
+                if (utxo == null)
+                    utxos.TryGetValue(id, out utxo);
 
                 if (utxo != null)
                 {
                     value = utxo.Value;
                     address = utxo.Address;
-                    var refdIn = g.Block.Hash;
-                    utxo.AddReferencedIn(refdIn);
-                    utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
+                    utxo.AddReferencedIn(g.Block.Hash);
+                    /*utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
                     {
                         oldValue.AddReferencedIn(refdIn);
                         return oldValue;
-                    });
+                    });*/
                 }
                 else
                 {
@@ -280,8 +285,9 @@ namespace BC2G.Blockchains
                     vout.TryGetAddress(out address);
                     value = vout.Value;
 
-                    AddOrUpdateUtxo(utxos, Utxo.GetId(input.TxId, input.OutputIndex),
-                        address, value, exTx.BlockHash, g.Block.Hash);
+                    AddOrUpdateUtxo(
+                        dbContext, dbContextLock, utxos,
+                        id, address, value, exTx.BlockHash, g.Block.Hash);
                 }
 
                 txGraph.AddSource(
@@ -298,7 +304,9 @@ namespace BC2G.Blockchains
                     new Node(address, output.GetScriptType()),
                     output.Value);
 
-                AddOrUpdateUtxo(utxos, Utxo.GetId(tx.Txid, output.Index),
+                AddOrUpdateUtxo(
+                    dbContext, dbContextLock, utxos,
+                    Utxo.GetId(tx.Txid, output.Index),
                     address, output.Value, g.Block.Hash, string.Empty);
             }
 
@@ -308,6 +316,8 @@ namespace BC2G.Blockchains
         }
 
         private static void AddOrUpdateUtxo(
+            DatabaseContext dbContext,
+            object dbContextLock,
             ConcurrentDictionary<string, Utxo> utxos,
             string id,
             string address,
@@ -315,14 +325,26 @@ namespace BC2G.Blockchains
             string createdIn,
             string referencedIn)
         {
-            var utxo = new Utxo(id, address, value, createdIn, referencedIn);
-
-            utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
+            lock (dbContextLock)
             {
-                oldValue.AddCreatedIn(createdIn);
-                oldValue.AddReferencedIn(referencedIn);
-                return oldValue;
-            });
+                var trackedUtxo = dbContext.Utxos.Local.FirstOrDefault(x => x.Id == id);
+                if (trackedUtxo != null)
+                {
+                    trackedUtxo.AddCreatedIn(createdIn);
+                    trackedUtxo.AddReferencedIn(referencedIn);
+                }
+                else
+                {
+                    var utxo = new Utxo(id, address, value, createdIn, referencedIn);
+
+                    utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
+                    {
+                        oldValue.AddCreatedIn(createdIn);
+                        oldValue.AddReferencedIn(referencedIn);
+                        return oldValue;
+                    });
+                }
+            }
         }
 
         public void Dispose()
