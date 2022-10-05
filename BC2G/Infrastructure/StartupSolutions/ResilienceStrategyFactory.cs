@@ -87,7 +87,7 @@ namespace BC2G.Infrastructure.StartupSolutions
             public static IAsyncPolicy GetGraphStrategy(ResilienceStrategyOptions options)
             {
                 var retry = Policy
-                    .Handle<Exception>()
+                    .Handle<Exception>(e => e is not OperationCanceledException)
                     .WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(
                         retryCount: options.RetryCount,
                         medianFirstRetryDelay: options.MedianFirstRetryDelay),
