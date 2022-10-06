@@ -10,6 +10,7 @@ using BC2G.Serializers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Polly;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
@@ -185,7 +186,7 @@ namespace BC2G
             var strategy = ResilienceStrategyFactory.Bitcoin.GetGraphStrategy(
                 options.Bitcoin.BitcoinAgentResilienceStrategy);
 
-            await strategy.ExecuteAsync(async (_ct) =>
+            await strategy.ExecuteAsync(async (context, _ct) =>
             {
                 // Note that _ct is linked cancellation token, linking
                 // user's token and the timeout policy's cancellation token.
@@ -198,7 +199,7 @@ namespace BC2G
                     "Obtained block graph for height {height}, enqueued " +
                     "for graph building and serialization.", height);
                 gBuffer.Enqueue(blockGraph);
-            }, cT);
+            }, new Context().SetLogger<Orchestrator>(Logger), cT);
         }
 
         // The IDisposable interface is implemented following .NET docs:
