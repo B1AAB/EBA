@@ -93,15 +93,16 @@ namespace BC2G.Infrastructure.StartupSolutions
                         medianFirstRetryDelay: options.MedianFirstRetryDelay),
                         onRetry: (exception, timeSpan, retryAttempt, context) =>
                         {
-                            Console.WriteLine("------------------- in RETRY");
-                            Console.WriteLine(exception.Message);
-                            Console.WriteLine("-------------------");
-
-                            context.GetLogger()?.LogWarning(
-                                "Waiting for {timespan} " +
-                                "seconds before {retryAttempt} retry; " +
-                                "previous attempt failed {message}",
-                                timeSpan.TotalSeconds, retryAttempt, exception.Message);
+                            var logger = context.GetLogger();
+                            if (logger != null)
+                                logger.LogWarning(
+                                    "Retry: {message} Waiting for {timespan} " +
+                                    "seconds before {retryAttempt} retry.}",
+                                    exception.Message, timeSpan.TotalSeconds, retryAttempt);
+                            else
+                                Console.Error.WriteLine(
+                                    $"Retry: {exception.Message} Waiting for " +
+                                    $"{timeSpan.TotalSeconds} second before {retryAttempt} retry.");
                         });
 
                 var circuitBreaker = Policy
@@ -113,37 +114,44 @@ namespace BC2G.Infrastructure.StartupSolutions
                         durationOfBreak: options.DurationOfBreak,
                         onBreak: (exception, timeSpan, context) =>
                         {
-                            Console.WriteLine("------------------- on BREAK");
-                            Console.WriteLine(exception.Message);
-                            Console.WriteLine("-------------------");
-
-                            context.GetLogger()?.LogWarning(
-                                "Circuit on break; exception message: " +
-                                "{exMsg}; timespan: {timeSpan}.",
-                                exception.Message, timeSpan);
+                            var logger = context.GetLogger();
+                            if (logger != null)
+                                logger.LogWarning(
+                                    "CircuitBreaker: Circuit on break; exception message: " +
+                                    "{exMsg}; timespan: {timeSpan}.",
+                                    exception.Message, timeSpan);
+                            else
+                                Console.Error.WriteLine(
+                                    $"CircuitBreaker: Circuit on break; last exception: " +
+                                    $"{exception.Message}; waiting for " +
+                                    $"{timeSpan.TotalSeconds} seconds");
                         },
                         onReset: (context) =>
                         {
-                            Console.WriteLine("------------------- in RESET");
-                            context.GetLogger()?.LogWarning(
-                                "Circuit on reset");
+                            var logger = context.GetLogger();
+                            if (logger != null)
+                                logger.LogWarning("CircuitBreaker: Reset.");
+                            else
+                                Console.Error.WriteLine("CircuitBreaker: Reset.");
                         },
                         onHalfOpen: () =>
                         {
-                            Console.WriteLine("------------------- in HalfOpen");
+                            Console.WriteLine("CircuitBreaker: Half open.");
                         });
 
                 var timeout = Policy.TimeoutAsync(
                     timeout: options.Timeout,
                     onTimeoutAsync: async (context, timespan, task) =>
                     {
-                        Console.WriteLine("------------------- in TIMEOUT");
-                        Console.WriteLine(context);
-                        Console.WriteLine("-------------------");
-
-                        context.GetLogger()?.LogWarning(
-                            "Timeout after waiting for {timespan} on {task}.",
-                            timespan, task);
+                        var logger = context.GetLogger();
+                        if (logger != null)
+                            logger.LogError(
+                                "Timeout getting graph after {timespan} seconds. {context}",
+                                timespan.TotalSeconds, context);
+                        else
+                            Console.Error.WriteLine(
+                                $"Timeout getting graph after {timespan.TotalSeconds} seconds." +
+                                $"{context}");
                     });
 
                 var strategy = Policy.WrapAsync(retry, circuitBreaker, timeout);
