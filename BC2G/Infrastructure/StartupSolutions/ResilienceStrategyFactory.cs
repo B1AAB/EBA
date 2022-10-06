@@ -23,6 +23,7 @@ namespace BC2G.Infrastructure.StartupSolutions
             {
                 var retry = HttpPolicyExtensions
                     .HandleTransientHttpError()
+                    .Or<IOException>()
                     .WaitAndRetryAsync(Backoff.DecorrelatedJitterBackoffV2(
                         retryCount: options.RetryCount,
                         medianFirstRetryDelay: options.MedianFirstRetryDelay),
@@ -40,11 +41,18 @@ namespace BC2G.Infrastructure.StartupSolutions
                             if (outcome.Result != null)
                                 msg += $"status code `{outcome.Result.StatusCode}`";
 
-                            context.GetLogger()?.LogWarning(
-                                "Waiting for {timespan} " +
-                                "seconds before {retryAttempt} retry; " +
-                                "previous attempt failed {message}",
-                                timeSpan.TotalSeconds, retryAttempt, msg);
+                            var logger = context.GetLogger();
+                            if (logger != null)
+                                logger.LogWarning(
+                                    "HttpClientPolicy: Waiting for {timespan} seconds" +
+                                    "before {retryAttempt} retry; " +
+                                    "previous attempt failed {message}",
+                                    timeSpan.TotalSeconds, retryAttempt, msg);
+                            else
+                                Console.Error.WriteLine(
+                                    $"HttpClientPolicy: Waiting for {timeSpan.TotalSeconds} seconds " +
+                                    $"before {retryAttempt} retry; " +
+                                    $"previous attempt failed {msg}.");
                         });
 
                 var circuitBreaker =
@@ -58,26 +66,43 @@ namespace BC2G.Infrastructure.StartupSolutions
                         durationOfBreak: options.DurationOfBreak,
                         onBreak: (result, timeSpan, context) =>
                         {
-                            context.GetLogger()?.LogWarning(
-                                "Circuit on break; exception message: " +
-                                "{exMsg}; timespan: {timeSpan}.",
-                                result.Exception.Message, timeSpan);
+                            var logger = context.GetLogger();
+                            if (logger != null)
+                                logger.LogWarning(
+                                    "HttpClientPolicy: Circuit on break; exception message: " +
+                                    "{exMsg}; timespan: {timeSpan} seconds.",
+                                    result.Exception.Message, timeSpan.TotalSeconds);
+                            else
+                                Console.Error.WriteLine(
+                                    $"HttpClientPolicy: Circuit on break; exception message: " +
+                                    $"{result.Exception.Message}; timespan: {timeSpan.TotalSeconds} seconds");
                         },
                         onReset: (context) =>
                         {
-                            context.GetLogger()?.LogWarning(
-                                "Circuit on reset");
+                            var logger = context.GetLogger();
+                            if (logger != null)
+                                logger.LogWarning("HttpClientPolicy: Circuit on reset");
+                            else
+                                Console.Error.WriteLine("HttpClientPolicy: Circuit on reset.");
                         },
                         onHalfOpen: () =>
-                        { });
+                        {
+                            Console.Error.WriteLine("HttpClientPolicy: Circuit breaker: half open");
+                        });
 
                 var timeout = Policy.TimeoutAsync<HttpResponseMessage>(
                     timeout: options.Timeout,
                     onTimeoutAsync: async (context, timespan, task) =>
                     {
-                        context.GetLogger()?.LogWarning(
-                            "Timeout after waiting for {timespan} on {task}.",
-                            timespan, task);
+                        var logger = context.GetLogger();
+                        if (logger != null)
+                            logger.LogWarning(
+                            "HttpClientPolicy: Timeout after waiting for {timespan} seconds on {task}.",
+                            timespan.TotalSeconds, task);
+                        else
+                            Console.Error.WriteLine(
+                                $"HttpClientPolicy: Timeout after waiting for " +
+                                $"{timespan.TotalSeconds} seconds on {task}.");
                     });
 
                 var strategy = Policy.WrapAsync(retry, circuitBreaker, timeout);
