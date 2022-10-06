@@ -256,8 +256,12 @@ namespace BC2G.Blockchains
 
                 Utxo? utxo;
                 var id = Utxo.GetId(input.TxId, input.OutputIndex);
-                lock (dbContextLock)
-                    utxo = dbContext.Utxos.Find(id);
+
+                if(!utxos.TryGetValue(id, out utxo))
+                {
+                    lock (dbContextLock)
+                        utxo = dbContext.Utxos.Find(id);
+                }
 
                 if (utxo == null)
                     utxos.TryGetValue(id, out utxo);
