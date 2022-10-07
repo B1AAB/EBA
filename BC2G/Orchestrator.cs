@@ -122,12 +122,13 @@ namespace BC2G
             var parallelOptions = new ParallelOptions()
             {
                 CancellationToken = cT,
-                MaxDegreeOfParallelism = options.Bitcoin.MaxConcurrentBlocks
+                //MaxDegreeOfParallelism = options.Bitcoin.MaxConcurrentBlocks
             };
 
             await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, cT);
 
             cT.ThrowIfCancellationRequested();
+            var dbContextLock = new object();
 
             // Have tested TPL dataflow as alternative to Parallel.For,
             // it adds more complexity with little performance improvements,
@@ -141,7 +142,7 @@ namespace BC2G
 
                     blockHeightQueue.TryDequeue(out var h);
                     //Logger.LogStartProcessingBlock(h);
-                    await ProcessBlock(options, gBuffer, /*serializer,*/ h, /*individualBlocksDir,*/ cT);
+                    await ProcessBlock(options, gBuffer, /*serializer,*/ h, dbContextLock, /*individualBlocksDir,*/ cT);
 
                     _loopCancellationToken.ThrowIfCancellationRequested();
                 });
@@ -177,6 +178,7 @@ namespace BC2G
             Options options,
             PersistentGraphBuffer gBuffer,
             int height,
+            object dbContextLock,
             CancellationToken cT)
         {
             cT.ThrowIfCancellationRequested();
@@ -193,7 +195,7 @@ namespace BC2G
 
                 Logger.LogInformation("Trying processing block {height}.", height);
                 var agent = _host.Services.GetRequiredService<BitcoinAgent>();
-                var blockGraph = await agent.GetGraph(height, _ct);
+                var blockGraph = await agent.GetGraph(height, dbContextLock, _ct);
 
                 Logger.LogInformation(
                     "Obtained block graph for height {height}, enqueued " +

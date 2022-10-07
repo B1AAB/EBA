@@ -141,7 +141,7 @@ namespace BC2G.Blockchains
                 ?? throw new Exception("Invalid transaction.");
         }
 
-        public async Task<BlockGraph> GetGraph(int height, CancellationToken cT)
+        public async Task<BlockGraph> GetGraph(int height, object dbContextLock, CancellationToken cT)
         {
             // All the logging in this section are removed because 
             // CPU profiling shows ~%24 of the process time is spent on them.
@@ -157,12 +157,12 @@ namespace BC2G.Blockchains
             cT.ThrowIfCancellationRequested();
 
             var graph = new BlockGraph(block);
-            await ProcessTxesAsync(graph, block, cT);
+            await ProcessTxesAsync(graph, block, dbContextLock, cT);
 
             return graph;
         }
 
-        private async Task ProcessTxesAsync(BlockGraph g, Block block, CancellationToken cT)
+        private async Task ProcessTxesAsync(BlockGraph g, Block block, object dbContextLock, CancellationToken cT)
         {
             var utxos = new ConcurrentDictionary<string, Utxo>();
 
@@ -205,7 +205,6 @@ namespace BC2G.Blockchains
             g.RewardsAddresses = rewardAddresses;
             g.Enqueue(generationTxGraph);
 
-            var dbContextLock = new object();
             var dbContext = _dbContextFactory.CreateDbContext();
             var options = new ParallelOptions()
             {
@@ -245,53 +244,62 @@ namespace BC2G.Blockchains
             {
                 cT.ThrowIfCancellationRequested();
 
-                double value;
-                string address;
+                double value = 0;
+                string address = string.Empty; ;
 
-                // Do NOT pass the cancelation token to following FindAsync, it seems there are 
-                // known complications related to this: https://github.com/dotnet/efcore/issues/12012
-                // #pragma warning disable CA2016 // Forward the 'CancellationToken' parameter to methods
-                // var utxo = await context.Utxos.FindAsync(Utxo.GetId(input.TxId, input.OutputIndex));
-                // #pragma warning restore CA2016 // Forward the 'CancellationToken' parameter to methods
-
-                Utxo? utxo;
                 var id = Utxo.GetId(input.TxId, input.OutputIndex);
 
-                if(!utxos.TryGetValue(id, out utxo))
-                {
-                    lock (dbContextLock)
-                        utxo = dbContext.Utxos.Find(id);
-                }
-
-                if (utxo == null)
-                    utxos.TryGetValue(id, out utxo);
-
-                if (utxo != null)
+                // This tries to find the output that the given input references, 
+                // it performs it in the following order: 
+                // - search among the newly created but not in the db instances,
+                //   if found, update accordingly;
+                // - search db, if found, update it and save changes---all under
+                //   a lock synchronized through-out the program;
+                // - query the bitcoin client, and add the determined output 
+                //   to the utxo dict so it will be persisted in the db. 
+                if (utxos.TryGetValue(id, out Utxo? utxo))
                 {
                     value = utxo.Value;
                     address = utxo.Address;
                     utxo.AddReferencedIn(g.Block.Hash);
-                    /*utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
-                    {
-                        oldValue.AddReferencedIn(refdIn);
-                        return oldValue;
-                    });*/
                 }
                 else
                 {
-                    // Extended transaction: details of the transaction are
-                    // retrieved from the bitcoin client.
-                    var exTx = await GetTransactionAsync(input.TxId, cT);
-                    var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
-                    if (vout == null)
-                        throw new NotImplementedException($"{vout} not in {input.TxId}; not expected.");
+                    lock (dbContextLock)
+                    {
+                        utxo = dbContext.Utxos.Find(id);
+                        if (utxo != null)
+                        {
+                            value = utxo.Value;
+                            address = utxo.Address;
+                            utxo.AddReferencedIn(g.Block.Hash);
+                            dbContext.SaveChanges();
+                        }
+                    }
 
-                    vout.TryGetAddress(out address);
-                    value = vout.Value;
+                    if (utxo == null)
+                    {
+                        // Extended transaction: details of the transaction are
+                        // retrieved from the bitcoin client.
+                        var exTx = await GetTransactionAsync(input.TxId, cT);
+                        var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
+                        if (vout == null)
+                            throw new NotImplementedException($"{vout} not in {input.TxId}; not expected.");
 
-                    AddOrUpdateUtxo(
-                        dbContext, dbContextLock, utxos,
-                        id, address, value, exTx.BlockHash, g.Block.Hash);
+                        vout.TryGetAddress(out address);
+                        value = vout.Value;
+
+                        var cIn = exTx.BlockHash;
+                        var rIn = g.Block.Hash;
+                        utxo = new Utxo(id, address, value, cIn, rIn);
+
+                        utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
+                        {
+                            oldValue.AddCreatedIn(cIn);
+                            oldValue.AddReferencedIn(rIn);
+                            return oldValue;
+                        });
+                    }
                 }
 
                 txGraph.AddSource(
