@@ -316,47 +316,19 @@ namespace BC2G.Blockchains
                     new Node(address, output.GetScriptType()),
                     output.Value);
 
-                AddOrUpdateUtxo(
-                    dbContext, dbContextLock, utxos,
-                    Utxo.GetId(tx.Txid, output.Index),
-                    address, output.Value, g.Block.Hash, string.Empty);
+                var cIn = g.Block.Hash;
+                var utxo = new Utxo(tx.Txid, output.Index, address, output.Value, cIn);
+
+                utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
+                {
+                    oldValue.AddCreatedIn(cIn);
+                    return oldValue;
+                });
             }
 
             g.Stats.AddInputTxCount(tx.Inputs.Count);
             g.Stats.AddOutputTxCount(tx.Outputs.Count);
             g.Enqueue(txGraph);
-        }
-
-        private static void AddOrUpdateUtxo(
-            DatabaseContext dbContext,
-            object dbContextLock,
-            ConcurrentDictionary<string, Utxo> utxos,
-            string id,
-            string address,
-            double value,
-            string createdIn,
-            string referencedIn)
-        {
-            lock (dbContextLock)
-            {
-                var trackedUtxo = dbContext.Utxos.Local.FirstOrDefault(x => x.Id == id);
-                if (trackedUtxo != null)
-                {
-                    trackedUtxo.AddCreatedIn(createdIn);
-                    trackedUtxo.AddReferencedIn(referencedIn);
-                }
-                else
-                {
-                    var utxo = new Utxo(id, address, value, createdIn, referencedIn);
-
-                    utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
-                    {
-                        oldValue.AddCreatedIn(createdIn);
-                        oldValue.AddReferencedIn(referencedIn);
-                        return oldValue;
-                    });
-                }
-            }
         }
 
         public void Dispose()
