@@ -34,29 +34,52 @@ namespace BC2G.Infrastructure
             builder.Entity<Utxo>().UseXminAsConcurrencyToken();
         }
 
-        public static async Task OptimisticAddOrUpdate(
+        public static async Task OptimisticAddOrUpdateAsync(
             DatabaseContext context,
             IDbContextFactory<DatabaseContext> contextFactory,
             CancellationToken ct)
         {
-            await OptimisticTx(async () =>
-            {
-                await context.SaveChangesAsync(ct);
-            },
-            async () =>
-            {
-                var enties = context.ChangeTracker.Entries<Utxo>();
-                var utxos = enties.Select(x => (Utxo)x.CurrentValues.ToObject());
-                await ResilientAddOrUpdate(utxos, contextFactory, ct);
-            });
+            await OptimisticTxAsync(
+                async () =>
+                {
+                    await context.SaveChangesAsync(ct);
+                },
+                async () =>
+                {
+                    var enties = context.ChangeTracker.Entries<Utxo>();
+                    var utxos = enties.Select(x => (Utxo)x.CurrentValues.ToObject());
+                    await ResilientAddOrUpdateAsync(utxos, contextFactory, ct);
+                });
         }
 
-        public static async Task OptimisticAddOrUpdate(
+        public static void OptimisticAddOrUpdate(
+            object dbLock,
+            ICollection<Utxo> utxos,
+            IDbContextFactory<DatabaseContext> contextFactory)
+        {
+            lock (dbLock)
+            {
+                OptimisticTx(
+                    () =>
+                    {
+                        using var c = contextFactory.CreateDbContext();
+                        c.Utxos.AddRange(utxos);
+                        c.SaveChanges();
+                    },
+                    () =>
+                    {
+                        ResilientAddOrUpdate(utxos, contextFactory);
+                    });
+            }
+        }
+
+        /*
+        public static async Task OptimisticAddOrUpdateAsync(
             ICollection<Utxo> utxos,
             IDbContextFactory<DatabaseContext> contextFactory,
             CancellationToken ct)
         {
-            await OptimisticTx(
+            await OptimisticTxAsync(
                 async () =>
                 {
                     using var c = contextFactory.CreateDbContext();
@@ -65,13 +88,13 @@ namespace BC2G.Infrastructure
                 },
                 async () =>
                 {
-                    await ResilientAddOrUpdate(utxos, contextFactory, ct);
+                    await ResilientAddOrUpdateAsync(utxos, contextFactory, ct);
                 });
-        }
+        }*/
 
-        private static async Task OptimisticTx(Func<Task> tx, Func<Task> onFailure)
+        private static async Task OptimisticTxAsync(Func<Task> txAsync, Func<Task> onFailureAsync)
         {
-            try { await tx(); }
+            try { await txAsync(); }
             catch (Exception e)
             {
                 switch (e)
@@ -81,7 +104,7 @@ namespace BC2G.Infrastructure
                     case DbUpdateException when (
                         e.InnerException is PostgresException pe &&
                         pe.SqlState == "23505"):
-                        await onFailure();
+                        await onFailureAsync();
                         break;
 
                     default: throw;
@@ -89,7 +112,60 @@ namespace BC2G.Infrastructure
             }
         }
 
-        private static async Task ResilientAddOrUpdate(
+        private static void OptimisticTx(Action tx, Action onFailure)
+        {
+            try { tx(); }
+            catch (Exception e)
+            {
+                switch (e)
+                {
+                    case InvalidOperationException:
+                    case DbUpdateConcurrencyException:
+                    case DbUpdateException when (
+                        e.InnerException is PostgresException pe &&
+                        pe.SqlState == "23505"):
+                        onFailure();
+                        break;
+
+                    default: throw;
+                }
+            }
+        }
+
+        private static void ResilientAddOrUpdate(
+            IEnumerable<Utxo> utxos, IDbContextFactory<DatabaseContext> contextFactory)
+        {
+            foreach (var utxo in utxos)
+            {
+                var policy = Policy
+                    .Handle<InvalidOperationException>()
+                    .Or<DbUpdateConcurrencyException>()
+                    .Or<DbUpdateException>(
+                        e => e.InnerException is PostgresException pe &&
+                        pe.SqlState == "23505")
+                    .WaitAndRetry(Backoff.DecorrelatedJitterBackoffV2(
+                        TimeSpan.FromSeconds(10), 3));
+
+                policy.Execute(() =>
+                {
+                    using var c = contextFactory.CreateDbContext();
+                    var inDbUtxo = c.Utxos.Find(utxo.Id);
+                    if (inDbUtxo == null)
+                    {
+                        c.Utxos.Add(utxo);
+                    }
+                    else
+                    {
+                        inDbUtxo.AddCreatedIn(utxo.CreatedIn);
+                        inDbUtxo.AddReferencedIn(utxo.ReferencedIn);
+                    }
+
+                    c.SaveChanges();
+                });
+            }
+        }
+
+        private static async Task ResilientAddOrUpdateAsync(
             IEnumerable<Utxo> utxos,
             IDbContextFactory<DatabaseContext> contextFactory,
             CancellationToken ct)

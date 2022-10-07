@@ -100,24 +100,10 @@ namespace BC2G.Model.Config
 
         public bool SkipGraphLoad { get; set; }
 
+        public int MaxUtxoBufferSize { set; get; } = 10000;
 
-        // Can safely handle running multiple blocks concurrently
-        // with one caveat: UTXO! since multiple blocks are running
-        // concurrently there is a very high chance that they will 
-        // introduce conflicting changes to the database. BC2G can 
-        // handle the conflicts using "optimistic update" strategy.
-        // However, in most cases this will lead to many conflicts 
-        // since transactions commonly refer to an output in recent
-        // blocks, and resolving conflicts will slow the program 
-        // such that the advantage of running multiple blocks in 
-        // parallel will be minimal. A different strategy than 
-        // the "optimistic update" is to ensure a utxo is persisted 
-        // as soon as it is created/updated. This will lead to 
-        // complicated locks cross different runs, and importantly 
-        // to using a db context for a long time which is kinda
-        // anti-pattern as db context is generally suggested to
-        // be alive for the duration of a single db operation.
-        public int MaxConcurrentBlocks { get; set; } = 1;
+        // null default lets runtime decide on max concurrency which is not static and changes w.r.t the load.
+        public int? MaxConcurrentBlocks { get; set; } = null;
 
         // When setting this, make sure it is more than the timeout of related Resilience strategies.
         public TimeSpan HttpClientTimeout { set; get; } = TimeSpan.FromMinutes(10);

@@ -141,7 +141,11 @@ namespace BC2G.Blockchains
                 ?? throw new Exception("Invalid transaction.");
         }
 
-        public async Task<BlockGraph> GetGraph(int height, object dbContextLock, CancellationToken cT)
+        public async Task<BlockGraph> GetGraph(
+            int height, 
+            ConcurrentDictionary<string, Utxo> utxos, 
+            object dbContextLock, 
+            CancellationToken cT)
         {
             // All the logging in this section are removed because 
             // CPU profiling shows ~%24 of the process time is spent on them.
@@ -157,15 +161,18 @@ namespace BC2G.Blockchains
             cT.ThrowIfCancellationRequested();
 
             var graph = new BlockGraph(block);
-            await ProcessTxesAsync(graph, block, dbContextLock, cT);
+            await ProcessTxesAsync(graph, block, utxos, dbContextLock, cT);
 
             return graph;
         }
 
-        private async Task ProcessTxesAsync(BlockGraph g, Block block, object dbContextLock, CancellationToken cT)
+        private async Task ProcessTxesAsync(
+            BlockGraph g, 
+            Block block, 
+            ConcurrentDictionary<string, Utxo> utxos,
+            object dbContextLock, 
+            CancellationToken cT)
         {
-            var utxos = new ConcurrentDictionary<string, Utxo>();
-
             var generationTxGraph = new TransactionGraph();
 
             // By definition, each block has a generative block that is the
@@ -224,10 +231,10 @@ namespace BC2G.Blockchains
 
             
             cT.ThrowIfCancellationRequested();
-            await DatabaseContext.OptimisticAddOrUpdate(dbContext, _dbContextFactory, cT);
+            await DatabaseContext.OptimisticAddOrUpdateAsync(dbContext, _dbContextFactory, cT);
             dbContext.Dispose();
             cT.ThrowIfCancellationRequested();
-            await DatabaseContext.OptimisticAddOrUpdate(utxos.Values, _dbContextFactory, cT);
+            //await DatabaseContext.OptimisticAddOrUpdate(utxos.Values, _dbContextFactory, cT);
         }
 
         private async Task ProcessTx(
@@ -273,6 +280,10 @@ namespace BC2G.Blockchains
                             value = utxo.Value;
                             address = utxo.Address;
                             utxo.AddReferencedIn(g.Block.Hash);
+
+                            // This invalidates the ACID property since if the
+                            // block process is canceled before it completes, 
+                            // some related changes are already saved in the db. 
                             dbContext.SaveChanges();
                         }
                     }
