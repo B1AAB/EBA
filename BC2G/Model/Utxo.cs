@@ -32,7 +32,7 @@ namespace BC2G.Model
             set { _createdIn = value; }
             get { return _createdIn; }
         }
-        private string _createdIn;
+        private string _createdIn = string.Empty;
 
         public int CreatedInCount
         {
@@ -51,7 +51,7 @@ namespace BC2G.Model
             set { _refdIn = value; }
             get { return _refdIn; }
         }
-        private string _refdIn;
+        private string _refdIn = string.Empty;
 
         public int ReferencedInCount
         {
@@ -61,21 +61,27 @@ namespace BC2G.Model
         private int _refdInCount;
 
         // This constructor is required by EF.
-        public Utxo(string id, string address, double value, string createdIn, string referencedIn = "")
+        public Utxo(string id, string address, double value, string createdIn, string? referencedIn = null)
         {
             Id = id;
             Address = address;
             Value = value;
-            CreatedIn = createdIn;
-            ReferencedIn = referencedIn;
 
             if (!string.IsNullOrEmpty(createdIn))
+            {
                 CreatedInCount = 1;
+                CreatedIn = createdIn;
+            }
             if (!string.IsNullOrEmpty(referencedIn))
+            {
                 ReferencedInCount = 1;
+                ReferencedIn = referencedIn;
+            }
         }
 
-        public Utxo(string txid, int voutN, string address, double value, string createdIn, string referencedIn = "") :
+        public Utxo(
+            string txid, int voutN, string address, double value,
+            string createdIn, string? referencedIn = null) :
             this(GetId(txid, voutN), address, value, createdIn, referencedIn)
         { }
 
@@ -96,7 +102,7 @@ namespace BC2G.Model
 
         private static void UpdateRefs(ref string refs, ref int counts, string newRef)
         {
-            if (string.IsNullOrEmpty(newRef))
+            if (string.IsNullOrWhiteSpace(newRef))
                 return;
 
             var existingRefs = refs.Split(_delimiter);
