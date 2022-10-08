@@ -231,7 +231,7 @@ namespace BC2G.Blockchains
 
             
             cT.ThrowIfCancellationRequested();
-            await DatabaseContext.OptimisticAddOrUpdateAsync(dbContext, _dbContextFactory, cT);
+            //await DatabaseContext.OptimisticAddOrUpdateAsync(dbContext, _dbContextFactory, cT);
             dbContext.Dispose();
             cT.ThrowIfCancellationRequested();
             //await DatabaseContext.OptimisticAddOrUpdate(utxos.Values, _dbContextFactory, cT);
