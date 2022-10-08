@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -118,6 +119,9 @@ namespace BC2G.Infrastructure.StartupSolutions
                         provider,
                         options.Bitcoin.HttpClientResilienceStrategy);
                 });
+
+            // This sets the limit for all the endpoints globally. 
+            ServicePointManager.DefaultConnectionLimit = options.DefaultConnectionLimit;
 
             // I am using DbContextFactory instead of DbContext because
             // an scoped instance of database (mainly in BitcoinAgent)

@@ -100,7 +100,7 @@ namespace BC2G.Model.Config
 
         public bool SkipGraphLoad { get; set; }
 
-        public int MaxUtxoBufferSize { set; get; } = 10000;
+        public int DbCommitAtUtxoBufferSize { set; get; } = 2000000;
 
         // null default lets runtime decide on max concurrency which is not static and changes w.r.t the load.
         public int? MaxConcurrentBlocks { get; set; } = null;
@@ -112,7 +112,7 @@ namespace BC2G.Model.Config
 
         public ResilienceStrategyOptions BitcoinAgentResilienceStrategy { set; get; } = new()
         {
-            Timeout = TimeSpan.FromMinutes(10),
+            Timeout = TimeSpan.FromMinutes(3),
             RetryCount = 3,
             MedianFirstRetryDelay = TimeSpan.FromSeconds(15),
             SamplingDuration = TimeSpan.FromMinutes(10),

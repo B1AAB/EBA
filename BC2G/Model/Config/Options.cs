@@ -18,6 +18,8 @@ namespace BC2G.Model.Config
         public Neo4jOptions Neo4j { set; get; } = new();
         public PsqlOptions Psql { set; get; } = new();
 
+        public int DefaultConnectionLimit { set; get; } = 50;
+
         public Options()
         {
             TimeStamp = DateTimeOffset.Now.ToUnixTimeSeconds();

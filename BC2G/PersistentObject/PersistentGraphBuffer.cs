@@ -58,7 +58,7 @@ namespace BC2G.PersistentObject
 
         public override void PostPersistence(BlockGraph obj)
         {
-            _logger.LogInformation("Finished processing block {height}.", obj.Height);
+            _logger.LogInformation("Finished processing block {height} in {runtime}.", obj.Height, obj.Stats.Runtime);
             /*_logger.LogFinishProcessingBlock(
                 obj.Height,
                 obj.Stats.Runtime.TotalSeconds);*/

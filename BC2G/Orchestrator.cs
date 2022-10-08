@@ -160,7 +160,7 @@ namespace BC2G
                     //Logger.LogStartProcessingBlock(h);
                     await ProcessBlock(options, gBuffer, /*serializer,*/ h, utxos, dbContextLock, /*individualBlocksDir,*/ cT);
 
-                    if (utxos.Count >= options.Bitcoin.MaxUtxoBufferSize)
+                    if (utxos.Count >= options.Bitcoin.DbCommitAtUtxoBufferSize)
                     {
                         Logger.LogInformation(
                             "Max UTXO buffer size reached, waiting for {count} " +

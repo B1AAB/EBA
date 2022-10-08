@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
 	<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+	<AssemblyName>$(MSBuildProjectName.ToLower())</AssemblyName>
   </PropertyGroup>
   
 

@@ -3,6 +3,7 @@ using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
 using System.CommandLine.Parsing;
+using System.Security;
 
 namespace BC2G.CommandLineInterface
 {
@@ -26,6 +27,41 @@ namespace BC2G.CommandLineInterface
                 description: "The directory where all the data related " +
                 "to this execution will be stored.",
                 getDefaultValue: () => options.WorkingDir);
+            _workingDirOption.AddValidator(x =>
+            {
+                var result = x.FindResultFor(_workingDirOption);
+                if (result is null)
+                {
+                    x.ErrorMessage = "Working directory cannot be null";
+                }
+                else
+                {
+                    var value = result.GetValueOrDefault<string>();
+                    if (value is null)
+                    {
+                        x.ErrorMessage = "Working directory cannot be null";
+                    }
+                    else
+                    {
+                        string wd;
+                        try
+                        {
+                            wd = Path.GetFullPath(value);
+                        }
+                        catch (Exception e) when (
+                            e is ArgumentException ||
+                            e is SecurityException ||
+                            e is NotSupportedException ||
+                            e is PathTooLongException)
+                        {
+                            x.ErrorMessage = $"Invalid path `{value}`";
+                            return;
+                        }
+
+                        Directory.CreateDirectory(wd);
+                    }
+                }
+            });
 
             _resumeOption = new(
                 name: "--resume",
