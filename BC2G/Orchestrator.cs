@@ -59,7 +59,7 @@ namespace BC2G
         {
             await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
             var graphDb = _host.Services.GetRequiredService<GraphDB>();
-            graphDb.BulkImport(_options.Neo4j.ImportDirectory);
+            graphDb.BulkImport(_options.WorkingDir);
         }
 
         private async Task TraverseAsync()
