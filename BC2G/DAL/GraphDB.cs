@@ -339,7 +339,7 @@ namespace BC2G.DAL
                 case 0:
                     using (var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write)))
                     {
-                        await session.WriteTransactionAsync(async tx =>
+                        await session.ExecuteWriteAsync(async tx =>
                         {
                             await tx.RunAsync(
                                 $"CREATE (:{BitcoinAgent.Coinbase} {{" +
@@ -365,38 +365,11 @@ namespace BC2G.DAL
             // already exists, 'Constraint( id=4,
             // name='UniqueAddressContraint', type='UNIQUENESS',
             // schema=(:Script {Address}), ownedIndex=3 )'.)
-
-            // TODO: handle the exceptions raised in running the following.
-            // Note that the exceptions are stored in the Exceptions property
-            // and do not log and stop execution when raised. 
-            var addressUniquenessContraint = await session.WriteTransactionAsync(async x =>
-            {
-                var result = await x.RunAsync(
-                    "CREATE CONSTRAINT UniqueAddressContraint " +
-                    $"FOR (script:{ScriptMapper.labels}) " +
-                    $"REQUIRE script.{ScriptMapper.Props[Prop.ScriptAddress].Name} IS UNIQUE");
-
-                return result.ToListAsync();
-            });
-
-            var indexAddress = await session.WriteTransactionAsync(async x =>
-            {
-                var result = await x.RunAsync(
-                    $"CREATE INDEX FOR (script:{ScriptMapper.labels}) " +
-                    $"ON (script.{ScriptMapper.Props[Prop.ScriptAddress].Name})");
-                return result.ToListAsync();
-            });
-
-            var indexBlockHeight = await session.WriteTransactionAsync(async x =>
-            {
-                var result = await x.RunAsync(
-                    $"CREATE INDEX FOR (block:{BlockMapper.label})" +
-                    $" on (block.{BlockMapper.Props[Prop.Height].Name})");
-                return result.ToListAsync();
-            });
-
-
-            // TODO: check if existing contraints as the following, and add contrains only
+            //
+            // Solution: first check if the constraint exists, and only 
+            // create if not.
+            //
+            // Check if existing contraints as the following, and add contrains only
             // if they are not already defined. Alternatively, try creating the contrains, 
             // and if they already exist, you'll see an Exception (non-blocking) in the
             // above code. 
@@ -405,6 +378,53 @@ namespace BC2G.DAL
                 var result = await x.RunAsync("CALL db.constraints");
                 return result.ToListAsync();
             });*/
+
+            // TODO: handle the exceptions raised in running the following.
+            // Note that the exceptions are stored in the Exceptions property
+            // and do not log and stop execution when raised. 
+
+            try
+            {
+                await session.ExecuteWriteAsync(async x =>
+                {
+                    var result = await x.RunAsync(
+                        "CREATE CONSTRAINT UniqueAddressContraint " +
+                        $"FOR (script:{ScriptMapper.labels}) " +
+                        $"REQUIRE script.{ScriptMapper.Props[Prop.ScriptAddress].Name} IS UNIQUE");
+                });
+            }
+            catch (Exception e)
+            {
+                
+            }
+
+            try
+            {
+                await session.ExecuteWriteAsync(async x =>
+                {
+                    var result = await x.RunAsync(
+                        $"CREATE INDEX FOR (script:{ScriptMapper.labels}) " +
+                        $"ON (script.{ScriptMapper.Props[Prop.ScriptAddress].Name})");
+                });
+            }
+            catch(Exception e)
+            {
+
+            }
+
+            try
+            {
+                await session.ExecuteWriteAsync(async x =>
+                {
+                    var result = await x.RunAsync(
+                        $"CREATE INDEX FOR (block:{BlockMapper.label})" +
+                        $" on (block.{BlockMapper.Props[Prop.Height].Name})");
+                });
+            }
+            catch(Exception e)
+            {
+
+            }
         }
 
         public async Task Sampling()

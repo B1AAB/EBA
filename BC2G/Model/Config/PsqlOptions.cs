@@ -11,6 +11,6 @@ namespace BC2G.Model.Config
         public string Host { set; get; } = "localhost";
         public string Database { set; get; } = "BC2G";
         public string Username { set; get; } = "postgres";
-        public string Password { set; get; } = "PassWord";
+        public string Password { set; get; } = "password";
     }
 }

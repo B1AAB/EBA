@@ -22,7 +22,7 @@ namespace BC2G.Model.Config
 
         public string ImportDirectory { set; get; } =
             Environment.GetEnvironmentVariable("NEO4J_IMPORTDIRECTORY") ??
-            @"\dbmss\dbms-767f0184-55bd-4192-be0e-294458084cc8\import";
+            @"E:\neo4j\relate-data\dbmss\dbms-c69cf826-4c55-4600-bd25-49113cbdde6e\import";
 
         public string CypherImportPrefix { set; get; } =
             Environment.GetEnvironmentVariable("NEO4J_CYPHERIMPORTPREFIX") ??
