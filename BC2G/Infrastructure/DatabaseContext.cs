@@ -1,17 +1,4 @@
-﻿using BC2G.Model;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.EntityFrameworkCore.Design;
-using Npgsql;
-using Polly;
-using Polly.Contrib.WaitAndRetry;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BC2G.Infrastructure
+﻿namespace BC2G.Infrastructure
 {
     public class DatabaseContext : DbContext
     {

@@ -1,7 +1,4 @@
-﻿using BC2G.Logging;
-using System.Collections.Concurrent;
-
-namespace BC2G.PersistentObject
+﻿namespace BC2G.PersistentObject
 {
     /// <summary>
     /// This type persists enqueued objects on disk, in 

@@ -1,6 +1,4 @@
-﻿using BC2G.Graph;
-
-namespace BC2G.Serializers
+﻿namespace BC2G.Serializers
 {
     public abstract class SerializerBase
     {

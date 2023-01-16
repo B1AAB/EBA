@@ -1,13 +1,4 @@
-﻿using BC2G.Blockchains;
-using BC2G.CommandLineInterface;
-using BC2G.DAL.Bulkload;
-using BC2G.Graph;
-using BC2G.Model;
-using BC2G.Model.Config;
-using Neo4j.Driver;
-using System.Text.RegularExpressions;
-
-namespace BC2G.DAL
+﻿namespace BC2G.DAL
 {
 
     // TODO: there is a bug: why many redeems per node in a given block? 

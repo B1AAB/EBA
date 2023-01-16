@@ -1,6 +1,4 @@
-﻿using System.Collections.Concurrent;
-
-namespace BC2G.Logging
+﻿namespace BC2G.Logging
 {
     public static class AsyncConsole
     {

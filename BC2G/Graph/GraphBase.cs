@@ -1,6 +1,4 @@
-﻿using System.Collections.Concurrent;
-
-namespace BC2G.Graph
+﻿namespace BC2G.Graph
 {
     public class GraphBase : IEquatable<GraphBase>
     {

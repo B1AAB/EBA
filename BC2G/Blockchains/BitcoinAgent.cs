@@ -1,15 +1,4 @@
-﻿using BC2G.Graph;
-using BC2G.Infrastructure;
-using BC2G.Infrastructure.StartupSolutions;
-using BC2G.Model;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Npgsql;
-using Polly;
-using System.Collections.Concurrent;
-using System.Text.Json;
-
-// BitcoinAgent and all similar agents must implement co-operative cancellation semantics:
+﻿// BitcoinAgent and all similar agents must implement co-operative cancellation semantics:
 // https://learn.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads?redirectedfrom=MSDN
 
 namespace BC2G.Blockchains

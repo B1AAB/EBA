@@ -1,8 +1,4 @@
-﻿using BC2G.Model.Config;
-using System.CommandLine;
-using System.CommandLine.Binding;
-
-namespace BC2G.CommandLineInterface
+﻿namespace BC2G.CommandLineInterface
 {
     internal class OptionsBinder : BinderBase<Options>
     {

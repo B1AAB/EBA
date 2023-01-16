@@ -1,7 +1,4 @@
-﻿using BC2G.Model;
-using System.Diagnostics;
-
-namespace BC2G.Graph
+﻿namespace BC2G.Graph
 {
     public class BlockStatistics
     {

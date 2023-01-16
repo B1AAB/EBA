@@ -1,7 +1,4 @@
-﻿using BC2G.DAL;
-using System.Text.Json.Serialization;
-
-namespace BC2G.Model.Config
+﻿namespace BC2G.Model.Config
 {
     public class Options
     {

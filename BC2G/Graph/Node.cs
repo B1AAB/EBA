@@ -1,7 +1,4 @@
-﻿using BC2G.Blockchains;
-using BC2G.Model;
-
-namespace BC2G.Graph
+﻿namespace BC2G.Graph
 {
     public class Node : IComparable<Node>, IEquatable<Node>
     {

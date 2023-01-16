@@ -1,6 +1,3 @@
-using BC2G.Model;
-using System.Collections.Concurrent;
-
 namespace BC2G.Graph
 {
     public class TransactionGraph : GraphBase

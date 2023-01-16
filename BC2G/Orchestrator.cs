@@ -1,20 +1,4 @@
-using BC2G.Blockchains;
-using BC2G.CommandLineInterface;
-using BC2G.DAL;
-using BC2G.Graph;
-using BC2G.Infrastructure;
-using BC2G.Infrastructure.StartupSolutions;
-using BC2G.Model;
-using BC2G.Model.Config;
-using BC2G.PersistentObject;
-using BC2G.Serializers;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Polly;
-using System.Collections.Concurrent;
-using System.Diagnostics;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace BC2G
 {

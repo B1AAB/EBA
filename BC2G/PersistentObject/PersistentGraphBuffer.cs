@@ -1,10 +1,4 @@
-﻿using BC2G.DAL;
-using BC2G.Graph;
-using BC2G.Logging;
-using BC2G.Serializers;
-using Microsoft.Extensions.Logging;
-
-namespace BC2G.PersistentObject
+﻿namespace BC2G.PersistentObject
 {
     public class PersistentGraphBuffer : PersistentObject<BlockGraph>, IDisposable
     {

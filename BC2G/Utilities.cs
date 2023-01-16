@@ -1,7 +1,4 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-
-namespace BC2G
+﻿namespace BC2G
 {
     internal class Utilities
     {

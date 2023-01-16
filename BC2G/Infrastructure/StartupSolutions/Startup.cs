@@ -1,22 +1,4 @@
-﻿using BC2G.Blockchains;
-using BC2G.DAL;
-using BC2G.Infrastructure;
-using BC2G.Model.Config;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Serilog;
-using Serilog.Sinks.SystemConsole.Themes;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BC2G.Infrastructure.StartupSolutions
+﻿namespace BC2G.Infrastructure.StartupSolutions
 {
     public class Startup
     {

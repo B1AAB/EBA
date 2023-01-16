@@ -1,10 +1,4 @@
-﻿using BC2G.Model.Config;
-using BC2G.Serializers;
-using Microsoft.Extensions.CommandLineUtils;
-using System.Reflection;
-using System.Text;
-
-namespace BC2G.CommandLineInterface
+﻿namespace BC2G.CommandLineInterface
 {
     public class CommandLineOptionsOld
     {

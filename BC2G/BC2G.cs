@@ -1,11 +1,4 @@
-﻿using BC2G.Infrastructure;
-using BC2G.Infrastructure.StartupSolutions;
-using BC2G.Model.Config;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Serilog;
-
-namespace BC2G
+﻿namespace BC2G
 {
     internal class BC2G
     {

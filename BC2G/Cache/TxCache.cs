@@ -1,8 +1,4 @@
-﻿using BC2G.DTO;
-using System.Collections.Concurrent;
-using System.Text;
-
-namespace BC2G
+﻿namespace BC2G
 {
     // TODO: this could be better implemented using a 
     // database; e.g., RavenDb (https://ravendb.net).

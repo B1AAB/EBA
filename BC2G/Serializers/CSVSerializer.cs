@@ -1,9 +1,4 @@
-﻿using BC2G.Graph;
-using BC2G.Model;
-using System.Collections.Concurrent;
-using System.Text;
-
-namespace BC2G.Serializers
+﻿namespace BC2G.Serializers
 {
     public class CSVSerializer : SerializerBase, IDisposable
     {
