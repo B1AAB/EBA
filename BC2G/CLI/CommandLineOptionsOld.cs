@@ -1,279 +1,278 @@
-﻿namespace BC2G.CommandLineInterface
+﻿namespace BC2G.CommandLineInterface;
+
+public class CommandLineOptionsOld
 {
-    public class CommandLineOptionsOld
+    public string StatusFilename { get { return _statusFilename; } }
+    private string _statusFilename = "status.json";
+
+    private readonly CommandLineApplication _cla;
+
+    private readonly CommandOption _fromOption = new(
+        "-f | --from <value>",
+        CommandOptionType.SingleValue)
     {
-        public string StatusFilename { get { return _statusFilename; } }
-        private string _statusFilename = "status.json";
+        Description = "Sets the height of the block where " +
+        "the traverse should start (inclusive)."
+    };
 
-        private readonly CommandLineApplication _cla;
+    private readonly CommandOption _toOption = new(
+        "-t | --to <value>",
+        CommandOptionType.SingleValue)
+    {
+        Description = "Sets the height of the block where " +
+        "the traverse should end (exclusive)."
+    };
 
-        private readonly CommandOption _fromOption = new(
-            "-f | --from <value>",
-            CommandOptionType.SingleValue)
+    private readonly CommandOption _outputOption = new(
+        "-o | --output <value>",
+        CommandOptionType.SingleValue)
+    {
+        Description = "Sets a path where the result of " +
+        "block traversal should be persisted."
+    };
+
+    private readonly CommandOption _statusFilenameOption = new(
+        "-s | --status-filename <value>",
+        CommandOptionType.SingleValue)
+    {
+        Description = "The file where the execution status " +
+        "is presisted in JSON format."
+    };
+
+    private readonly CommandOption _addressIdMappingFilenameOption = new(
+        "-m | --mapping-filename <value>",
+        CommandOptionType.SingleValue)
+    {
+        Description = "The filename of transaction address " +
+        "to its correspoinding ID mapping."
+    };
+
+    private readonly CommandOption _resumeFromOption = new(
+        "-r | --resume-from <value>",
+        CommandOptionType.SingleValue)
+    {
+        Description = "Resumes a canceled execution based " +
+        "on the given status filename."
+    };
+
+    private readonly CommandOption _createPerBlockFilesOption = new(
+        "-p | --create-per-block-files",
+        CommandOptionType.NoValue)
+    {
+        Description = "If provided, for each block it traverses, " +
+        "it creates `[block_height]_edges.tsv` and `[block_height]_nodes.tsv. "
+    };
+
+    private readonly CommandOption _granularityOption = new(
+        "-g | --granularity",
+        CommandOptionType.SingleValue)
+    {
+        Description = "Sets the blockchain traversal granularity " +
+        "(default is 1). For instance, `-g 10` means processing " +
+        "every 10 blocks in the blockchain."
+    };
+
+    private Options _parsedOptions = new();
+
+    public static string HelpOption
+    {
+        get { return "-? | -h | --help"; }
+    }
+
+    /* TODO: -s and -r are confusing; should not it be possible to 
+     resume a stopped task based on the info in a given status file?
+     i.e., given -s should be able to resume, and if so, not sure why
+     -r is needed.
+    */
+
+    public CommandLineOptionsOld()
+    {
+        _cla = new CommandLineApplication
         {
-            Description = "Sets the height of the block where " +
-            "the traverse should start (inclusive)."
+            Name = "BC2G",
+            FullName = "bitcoin Chain to Graph",
         };
 
-        private readonly CommandOption _toOption = new(
-            "-t | --to <value>",
-            CommandOptionType.SingleValue)
-        {
-            Description = "Sets the height of the block where " +
-            "the traverse should end (exclusive)."
-        };
+        _cla.Options.Add(_fromOption);
+        _cla.Options.Add(_toOption);
+        _cla.Options.Add(_outputOption);
+        _cla.Options.Add(_statusFilenameOption);
+        _cla.Options.Add(_resumeFromOption);
+        _cla.Options.Add(_createPerBlockFilesOption);
+        _cla.Options.Add(_granularityOption);
 
-        private readonly CommandOption _outputOption = new(
-            "-o | --output <value>",
-            CommandOptionType.SingleValue)
+        var version = "Unknown (Called from unmanaged code)";
+        var assembly = Assembly.GetEntryAssembly();
+        if (assembly != null)
         {
-            Description = "Sets a path where the result of " +
-            "block traversal should be persisted."
-        };
-
-        private readonly CommandOption _statusFilenameOption = new(
-            "-s | --status-filename <value>",
-            CommandOptionType.SingleValue)
-        {
-            Description = "The file where the execution status " +
-            "is presisted in JSON format."
-        };
-
-        private readonly CommandOption _addressIdMappingFilenameOption = new(
-            "-m | --mapping-filename <value>",
-            CommandOptionType.SingleValue)
-        {
-            Description = "The filename of transaction address " +
-            "to its correspoinding ID mapping."
-        };
-
-        private readonly CommandOption _resumeFromOption = new(
-            "-r | --resume-from <value>",
-            CommandOptionType.SingleValue)
-        {
-            Description = "Resumes a canceled execution based " +
-            "on the given status filename."
-        };
-
-        private readonly CommandOption _createPerBlockFilesOption = new(
-            "-p | --create-per-block-files",
-            CommandOptionType.NoValue)
-        {
-            Description = "If provided, for each block it traverses, " +
-            "it creates `[block_height]_edges.tsv` and `[block_height]_nodes.tsv. "
-        };
-
-        private readonly CommandOption _granularityOption = new(
-            "-g | --granularity",
-            CommandOptionType.SingleValue)
-        {
-            Description = "Sets the blockchain traversal granularity " +
-            "(default is 1). For instance, `-g 10` means processing " +
-            "every 10 blocks in the blockchain."
-        };
-
-        private Options _parsedOptions = new();
-
-        public static string HelpOption
-        {
-            get { return "-? | -h | --help"; }
+            var attribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+            if (attribute != null)
+                version = attribute.InformationalVersion;
         }
 
-        /* TODO: -s and -r are confusing; should not it be possible to 
-         resume a stopped task based on the info in a given status file?
-         i.e., given -s should be able to resume, and if so, not sure why
-         -r is needed.
-        */
-
-        public CommandLineOptionsOld()
+        _cla.HelpOption(HelpOption);
+        _cla.VersionOption("-v | --version", () =>
         {
-            _cla = new CommandLineApplication
-            {
-                Name = "BC2G",
-                FullName = "bitcoin Chain to Graph",
-            };
+            return $"Version {version}";
+        });
 
-            _cla.Options.Add(_fromOption);
-            _cla.Options.Add(_toOption);
-            _cla.Options.Add(_outputOption);
-            _cla.Options.Add(_statusFilenameOption);
-            _cla.Options.Add(_resumeFromOption);
-            _cla.Options.Add(_createPerBlockFilesOption);
-            _cla.Options.Add(_granularityOption);
+        Func<int> assertArguments = AssertArguments;
+        _cla.OnExecute(assertArguments);
+    }
 
-            var version = "Unknown (Called from unmanaged code)";
-            var assembly = Assembly.GetEntryAssembly();
-            if (assembly != null)
+    public Options Parse(string[] args, out bool helpOrVersionIsDisplayed)
+    {
+        helpOrVersionIsDisplayed = _cla.Execute(args) != 1;
+        return _parsedOptions;
+    }
+
+    private int AssertArguments()
+    {
+        AssertRequiredArgsAreGiven();
+        AssertGivenArgs();
+        return 1;
+    }
+
+    private void AssertRequiredArgsAreGiven()
+    {
+        var missingArgs = new List<string>();
+        // Any required argument?! 
+        // For any required argument, check if a value is provided
+        // and if not, add the argument to the missingArgs list.
+
+        if (missingArgs.Count > 0)
+        {
+            var msgBuilder = new StringBuilder(
+                "The following required arguments are missing: ");
+            for (int i = 0; i < missingArgs.Count - 1; i++)
+                msgBuilder.Append(missingArgs[i] + "; and ");
+            msgBuilder.Append(missingArgs[^1] + ".");
+
+            throw new ArgumentException(msgBuilder.ToString());
+        }
+    }
+
+    private void AssertGivenArgs()
+    {
+        // TODO: if a value for this argument is given,
+        // no value for other arguments should be
+        // provided, throw a warning that other arguments
+        // will be ignored. 
+        if (_resumeFromOption.HasValue())
+        {
+            var resumeFromFilename = Path.GetFullPath(_resumeFromOption.Value());
+            try
             {
-                var attribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
-                if (attribute != null)
-                    version = attribute.InformationalVersion;
+                //_parsedOptions = JsonSerializer<Options>.DeserializeAsync(resumeFromFilename).Result;
+                return;
             }
-
-            _cla.HelpOption(HelpOption);
-            _cla.VersionOption("-v | --version", () =>
+            catch (Exception e)
             {
-                return $"Version {version}";
-            });
-
-            Func<int> assertArguments = AssertArguments;
-            _cla.OnExecute(assertArguments);
-        }
-
-        public Options Parse(string[] args, out bool helpOrVersionIsDisplayed)
-        {
-            helpOrVersionIsDisplayed = _cla.Execute(args) != 1;
-            return _parsedOptions;
-        }
-
-        private int AssertArguments()
-        {
-            AssertRequiredArgsAreGiven();
-            AssertGivenArgs();
-            return 1;
-        }
-
-        private void AssertRequiredArgsAreGiven()
-        {
-            var missingArgs = new List<string>();
-            // Any required argument?! 
-            // For any required argument, check if a value is provided
-            // and if not, add the argument to the missingArgs list.
-
-            if (missingArgs.Count > 0)
-            {
-                var msgBuilder = new StringBuilder(
-                    "The following required arguments are missing: ");
-                for (int i = 0; i < missingArgs.Count - 1; i++)
-                    msgBuilder.Append(missingArgs[i] + "; and ");
-                msgBuilder.Append(missingArgs[^1] + ".");
-
-                throw new ArgumentException(msgBuilder.ToString());
+                throw new ArgumentException(
+                    $"Failed loading status from " +
+                    $"`{resumeFromFilename}`: {e.Message}");
             }
         }
 
-        private void AssertGivenArgs()
+        _parsedOptions = new Options();
+
+        int from = -1, to = -1;
+        if (_fromOption.HasValue() &&
+            !int.TryParse(_fromOption.Value(), out from))
+            throw new ArgumentException(
+                $"Invalid value given for the " +
+                $"`{_fromOption.LongName}` argument.");
+
+        if (_toOption.HasValue() &&
+            !int.TryParse(_toOption.Value(), out to))
+            throw new ArgumentException(
+                $"Invalid value given for the " +
+                $"`{_toOption.LongName}` argument.");
+
+        if (to != -1 && from != -1 && to <= from)
+            throw new ArgumentException(
+                $"Provided value for {_toOption.LongName} " +
+                $"({_toOption.Value}) should be greater " +
+                $"than the value provided for " +
+                $"{_fromOption.LongName} ({_fromOption.Value})");
+
+        //_parsedOptions.FromInclusive = from;
+        //_parsedOptions.ToExclusive = to;
+
+        var output = string.Empty;
+        if (_outputOption.HasValue())
         {
-            // TODO: if a value for this argument is given,
-            // no value for other arguments should be
-            // provided, throw a warning that other arguments
-            // will be ignored. 
-            if (_resumeFromOption.HasValue())
+            try
             {
-                var resumeFromFilename = Path.GetFullPath(_resumeFromOption.Value());
-                try
-                {
-                    //_parsedOptions = JsonSerializer<Options>.DeserializeAsync(resumeFromFilename).Result;
-                    return;
-                }
-                catch (Exception e)
-                {
-                    throw new ArgumentException(
-                        $"Failed loading status from " +
-                        $"`{resumeFromFilename}`: {e.Message}");
-                }
+                output = Path.GetFullPath(_outputOption.Value());
+                //_parsedOptions.OutputDir = output;
             }
-
-            _parsedOptions = new Options();
-
-            int from = -1, to = -1;
-            if (_fromOption.HasValue() &&
-                !int.TryParse(_fromOption.Value(), out from))
+            catch (Exception e)
+            {
                 throw new ArgumentException(
                     $"Invalid value given for the " +
-                    $"`{_fromOption.LongName}` argument.");
+                    $"`{_outputOption.LongName}` argument: {e.Message}");
+            }
+        }
 
-            if (_toOption.HasValue() &&
-                !int.TryParse(_toOption.Value(), out to))
+        if (_statusFilenameOption.HasValue())
+        {
+            try
+            {
+                _statusFilename = Path.GetFullPath(
+                    _statusFilenameOption.Value());
+            }
+            catch (Exception e)
+            {
                 throw new ArgumentException(
                     $"Invalid value given for the " +
-                    $"`{_toOption.LongName}` argument.");
-
-            if (to != -1 && from != -1 && to <= from)
-                throw new ArgumentException(
-                    $"Provided value for {_toOption.LongName} " +
-                    $"({_toOption.Value}) should be greater " +
-                    $"than the value provided for " +
-                    $"{_fromOption.LongName} ({_fromOption.Value})");
-
-            //_parsedOptions.FromInclusive = from;
-            //_parsedOptions.ToExclusive = to;
-
-            var output = string.Empty;
-            if (_outputOption.HasValue())
-            {
-                try
-                {
-                    output = Path.GetFullPath(_outputOption.Value());
-                    //_parsedOptions.OutputDir = output;
-                }
-                catch (Exception e)
-                {
-                    throw new ArgumentException(
-                        $"Invalid value given for the " +
-                        $"`{_outputOption.LongName}` argument: {e.Message}");
-                }
+                    $"`{_statusFilenameOption.LongName}` " +
+                    $"argument: {e.Message}");
             }
+        }
+        else
+        {
+            _statusFilename = Path.Combine(output, _statusFilename);
+        }
 
-            if (_statusFilenameOption.HasValue())
-            {
-                try
-                {
-                    _statusFilename = Path.GetFullPath(
-                        _statusFilenameOption.Value());
-                }
-                catch (Exception e)
-                {
-                    throw new ArgumentException(
-                        $"Invalid value given for the " +
-                        $"`{_statusFilenameOption.LongName}` " +
-                        $"argument: {e.Message}");
-                }
-            }
-            else
-            {
-                _statusFilename = Path.Combine(output, _statusFilename);
-            }
-
-            if (_addressIdMappingFilenameOption.HasValue())
-            {
-                try
-                {
-                    /*_parsedOptions.AddressIdMappingFilename =
-                        Path.GetFullPath(_addressIdMappingFilenameOption.Value());*/
-                }
-                catch (Exception e)
-                {
-                    throw new ArgumentException(
-                        $"Invalid value given for the " +
-                        $"`{_addressIdMappingFilenameOption.LongName}` " +
-                        $"argument: {e.Message}");
-                }
-            }
-            else
+        if (_addressIdMappingFilenameOption.HasValue())
+        {
+            try
             {
                 /*_parsedOptions.AddressIdMappingFilename =
-                    Path.Combine(output, _parsedOptions.AddressIdMappingFilename);*/
+                    Path.GetFullPath(_addressIdMappingFilenameOption.Value());*/
             }
-
-            if (_granularityOption.HasValue())
+            catch (Exception e)
             {
-                if (!int.TryParse(_granularityOption.Value(), out int granularity))
-                {
-                    throw new ArgumentException(
-                        $"Invalid value given for the " +
-                        $"`{_granularityOption.LongName}`.");
-                }
-                else
-                {
-                    //_parsedOptions.Granularity = granularity;
-                }
+                throw new ArgumentException(
+                    $"Invalid value given for the " +
+                    $"`{_addressIdMappingFilenameOption.LongName}` " +
+                    $"argument: {e.Message}");
             }
-
-
-            /*
-            if (_createPerBlockFilesOption.HasValue())
-                _parsedOptions.CreatePerBlockFiles = true;*/
         }
+        else
+        {
+            /*_parsedOptions.AddressIdMappingFilename =
+                Path.Combine(output, _parsedOptions.AddressIdMappingFilename);*/
+        }
+
+        if (_granularityOption.HasValue())
+        {
+            if (!int.TryParse(_granularityOption.Value(), out int granularity))
+            {
+                throw new ArgumentException(
+                    $"Invalid value given for the " +
+                    $"`{_granularityOption.LongName}`.");
+            }
+            else
+            {
+                //_parsedOptions.Granularity = granularity;
+            }
+        }
+
+
+        /*
+        if (_createPerBlockFilesOption.HasValue())
+            _parsedOptions.CreatePerBlockFiles = true;*/
     }
 }

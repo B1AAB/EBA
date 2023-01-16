@@ -1,8 +1,7 @@
-﻿namespace BC2G.Logging
+﻿namespace BC2G.Logging;
+
+public enum ConsoleLoggingInterface
 {
-    public enum ConsoleLoggingInterface
-    {
-        Minimal,
-        Complete
-    }
+    Minimal,
+    Complete
 }

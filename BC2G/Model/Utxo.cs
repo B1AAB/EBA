@@ -1,118 +1,109 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace BC2G.Model;
 
-namespace BC2G.Model
+[Table("Utxo")]
+public class Utxo
 {
-    [Table("Utxo")]
-    public class Utxo
+    private const char _delimiter = ';';
+
+    [Required]
+    public string Id { set; get; } = string.Empty;
+
+    [Required]
+    public string Address { set; get; } = string.Empty;
+
+    [Required]
+    public double Value { set; get; }
+
+    /// <summary>
+    /// A list of comma-separated block heights where this txo 
+    /// is defined as output.
+    /// </summary>
+    [Required]
+    public string CreatedIn
     {
-        private const char _delimiter = ';';
+        set { _createdIn = value; }
+        get { return _createdIn; }
+    }
+    private string _createdIn = string.Empty;
 
-        [Required]
-        public string Id { set; get; } = string.Empty;
+    public int CreatedInCount
+    {
+        set { _createdInCount = value; }
+        get { return _createdInCount; }
+    }
+    private int _createdInCount;
 
-        [Required]
-        public string Address { set; get; } = string.Empty;
+    /// <summary>
+    /// A list of comma-separated block heights where this txo
+    /// is defined as input. If this list is empty, the tx is 
+    /// unspent (utxo).
+    /// </summary>
+    public string ReferencedIn
+    {
+        set { _refdIn = value; }
+        get { return _refdIn; }
+    }
+    private string _refdIn = string.Empty;
 
-        [Required]
-        public double Value { set; get; }
+    public int ReferencedInCount
+    {
+        set { _refdInCount = value; }
+        get { return _refdInCount; }
+    }
+    private int _refdInCount;
 
-        /// <summary>
-        /// A list of comma-separated block heights where this txo 
-        /// is defined as output.
-        /// </summary>
-        [Required]
-        public string CreatedIn
+    // This constructor is required by EF.
+    public Utxo(string id, string address, double value, string createdIn, string? referencedIn = null)
+    {
+        Id = id;
+        Address = address;
+        Value = value;
+
+        if (!string.IsNullOrEmpty(createdIn))
         {
-            set { _createdIn = value; }
-            get { return _createdIn; }
+            CreatedInCount = 1;
+            CreatedIn = createdIn;
         }
-        private string _createdIn = string.Empty;
-
-        public int CreatedInCount
+        if (!string.IsNullOrEmpty(referencedIn))
         {
-            set { _createdInCount = value; }
-            get { return _createdInCount; }
+            ReferencedInCount = 1;
+            ReferencedIn = referencedIn;
         }
-        private int _createdInCount;
+    }
 
-        /// <summary>
-        /// A list of comma-separated block heights where this txo
-        /// is defined as input. If this list is empty, the tx is 
-        /// unspent (utxo).
-        /// </summary>
-        public string ReferencedIn
-        {
-            set { _refdIn = value; }
-            get { return _refdIn; }
-        }
-        private string _refdIn = string.Empty;
+    public Utxo(
+        string txid, int voutN, string address, double value,
+        string createdIn, string? referencedIn = null) :
+        this(GetId(txid, voutN), address, value, createdIn, referencedIn)
+    { }
 
-        public int ReferencedInCount
-        {
-            set { _refdInCount = value; }
-            get { return _refdInCount; }
-        }
-        private int _refdInCount;
+    public static string GetId(string txid, int voutN)
+    {
+        return $"{voutN}-{txid}";
+    }
 
-        // This constructor is required by EF.
-        public Utxo(string id, string address, double value, string createdIn, string? referencedIn = null)
-        {
-            Id = id;
-            Address = address;
-            Value = value;
+    public void AddReferencedIn(string address)
+    {
+        UpdateRefs(ref _refdIn, ref _refdInCount, address);
+    }
 
-            if (!string.IsNullOrEmpty(createdIn))
-            {
-                CreatedInCount = 1;
-                CreatedIn = createdIn;
-            }
-            if (!string.IsNullOrEmpty(referencedIn))
-            {
-                ReferencedInCount = 1;
-                ReferencedIn = referencedIn;
-            }
-        }
+    public void AddCreatedIn(string address)
+    {
+        UpdateRefs(ref _createdIn, ref _createdInCount, address);
+    }
 
-        public Utxo(
-            string txid, int voutN, string address, double value,
-            string createdIn, string? referencedIn = null) :
-            this(GetId(txid, voutN), address, value, createdIn, referencedIn)
-        { }
+    private static void UpdateRefs(ref string refs, ref int counts, string newRef)
+    {
+        if (string.IsNullOrWhiteSpace(newRef))
+            return;
 
-        public static string GetId(string txid, int voutN)
-        {
-            return $"{voutN}-{txid}";
-        }
+        var existingRefs = refs.Split(_delimiter);
+        if (existingRefs.Contains(newRef))
+            return;
 
-        public void AddReferencedIn(string address)
-        {
-            UpdateRefs(ref _refdIn, ref _refdInCount, address);
-        }
-
-        public void AddCreatedIn(string address)
-        {
-            UpdateRefs(ref _createdIn, ref _createdInCount, address);
-        }
-
-        private static void UpdateRefs(ref string refs, ref int counts, string newRef)
-        {
-            if (string.IsNullOrWhiteSpace(newRef))
-                return;
-
-            var existingRefs = refs.Split(_delimiter);
-            if (existingRefs.Contains(newRef))
-                return;
-
-            counts++;
-            if (existingRefs.Length > 0)
-                refs += _delimiter;
-            refs += newRef;
-        }
+        counts++;
+        if (existingRefs.Length > 0)
+            refs += _delimiter;
+        refs += newRef;
     }
 }

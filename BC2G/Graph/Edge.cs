@@ -1,91 +1,90 @@
-﻿namespace BC2G.Graph
+﻿namespace BC2G.Graph;
+
+public class Edge
 {
-    public class Edge
+    public Node Source { get; }
+    public Node Target { get; }
+    public double Value { get; }
+    public EdgeType Type { get; }
+    public uint Timestamp { get; }
+    public int BlockHeight { get; }
+
+    public static string Header
     {
-        public Node Source { get; }
-        public Node Target { get; }
-        public double Value { get; }
-        public EdgeType Type { get; }
-        public uint Timestamp { get; }
-        public int BlockHeight { get; }
-
-        public static string Header
-        {
-            get
-            {
-                return string.Join(_delimiter, new string[]
-                {
-                    "Source",
-                    "Target",
-                    "Value",
-                    "EdgeType",
-                    "TimeOffsetFromGenesisBlock",
-                    "BlockHeight"
-                });
-            }
-        }
-
-        private const string _delimiter = "\t";
-
-
-        public Edge(
-            Node source, Node target,
-            double value, EdgeType type,
-            uint timestamp, int blockHeight)
-        {
-            Source = source;
-            Target = target;
-            Value = value;
-            Type = type;
-            Timestamp = timestamp;
-            BlockHeight = blockHeight;
-        }
-
-        public double[] GetFeatures()
-        {
-            return new double[] {
-                Value,
-                (double)Type,
-                Timestamp - BitcoinAgent.GenesisTimestamp,
-                BlockHeight };
-        }
-
-        public string ToString(string sourceId, string targetId)
+        get
         {
             return string.Join(_delimiter, new string[]
             {
-                sourceId,
-                targetId,
-                Value.ToString(),
-                ((int)Type).ToString(),
-                (Timestamp - BitcoinAgent.GenesisTimestamp).ToString(),
-                BlockHeight.ToString()
+                "Source",
+                "Target",
+                "Value",
+                "EdgeType",
+                "TimeOffsetFromGenesisBlock",
+                "BlockHeight"
             });
         }
+    }
 
-        public static Edge FromString(string[] fields, string sourceAddress, string targetAddress)
-        {
-            // TODO: fix creating node correctly.
-            return new Edge(
-                source: new Node(fields[0], sourceAddress, ScriptType.Unknown),
-                target: new Node(fields[1], targetAddress, ScriptType.Unknown),
-                value: double.Parse(fields[2]),
-                type: Enum.Parse<EdgeType>(fields[3]),
-                timestamp: BitcoinAgent.GenesisTimestamp + uint.Parse(fields[4]),
-                blockHeight: int.Parse(fields[5]));
-        }
+    private const string _delimiter = "\t";
 
-        public int GetHashCode(bool ignoreValue)
-        {
-            if (ignoreValue)
-                return HashCode.Combine(Source, Target, Type, Timestamp);
-            else
-                return GetHashCode();
-        }
 
-        public override int GetHashCode()
+    public Edge(
+        Node source, Node target,
+        double value, EdgeType type,
+        uint timestamp, int blockHeight)
+    {
+        Source = source;
+        Target = target;
+        Value = value;
+        Type = type;
+        Timestamp = timestamp;
+        BlockHeight = blockHeight;
+    }
+
+    public double[] GetFeatures()
+    {
+        return new double[] {
+            Value,
+            (double)Type,
+            Timestamp - BitcoinAgent.GenesisTimestamp,
+            BlockHeight };
+    }
+
+    public string ToString(string sourceId, string targetId)
+    {
+        return string.Join(_delimiter, new string[]
         {
-            return HashCode.Combine(Source, Target, Value, Type, Timestamp);
-        }
+            sourceId,
+            targetId,
+            Value.ToString(),
+            ((int)Type).ToString(),
+            (Timestamp - BitcoinAgent.GenesisTimestamp).ToString(),
+            BlockHeight.ToString()
+        });
+    }
+
+    public static Edge FromString(string[] fields, string sourceAddress, string targetAddress)
+    {
+        // TODO: fix creating node correctly.
+        return new Edge(
+            source: new Node(fields[0], sourceAddress, ScriptType.Unknown),
+            target: new Node(fields[1], targetAddress, ScriptType.Unknown),
+            value: double.Parse(fields[2]),
+            type: Enum.Parse<EdgeType>(fields[3]),
+            timestamp: BitcoinAgent.GenesisTimestamp + uint.Parse(fields[4]),
+            blockHeight: int.Parse(fields[5]));
+    }
+
+    public int GetHashCode(bool ignoreValue)
+    {
+        if (ignoreValue)
+            return HashCode.Combine(Source, Target, Type, Timestamp);
+        else
+            return GetHashCode();
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Source, Target, Value, Type, Timestamp);
     }
 }

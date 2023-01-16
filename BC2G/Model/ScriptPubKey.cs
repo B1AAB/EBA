@@ -1,49 +1,46 @@
-﻿using System.Text.Json.Serialization;
+﻿namespace BC2G.Model;
 
-namespace BC2G.Model
+public class ScriptPubKey : BasePaymentType, IBase64Serializable
 {
-    public class ScriptPubKey : BasePaymentType, IBase64Serializable
+    [JsonPropertyName("asm")]
+    public string Asm { get; set; } = string.Empty;
+
+    [JsonPropertyName("hex")]
+    public string Hex { get; set; } = string.Empty;
+
+    [JsonPropertyName("address")]
+    public string Address { get; set; } = string.Empty;
+
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = string.Empty;
+
+    public override ScriptType ScriptType
     {
-        [JsonPropertyName("asm")]
-        public string Asm { get; set; } = string.Empty;
-
-        [JsonPropertyName("hex")]
-        public string Hex { get; set; } = string.Empty;
-
-        [JsonPropertyName("address")]
-        public string Address { get; set; } = string.Empty;
-
-        [JsonPropertyName("type")]
-        public string Type { get; set; } = string.Empty;
-
-        public override ScriptType ScriptType
+        get
         {
-            get
-            {
-                return
-                    Enum.TryParse(
-                        Type, ignoreCase:true, 
-                        out ScriptType scriptType)
-                    ? scriptType : ScriptType.Unknown;
-            }
+            return
+                Enum.TryParse(
+                    Type, ignoreCase:true, 
+                    out ScriptType scriptType)
+                ? scriptType : ScriptType.Unknown;
         }
+    }
 
-        public override string GetAddress()
-        {
-            return Address;
-        }
+    public override string GetAddress()
+    {
+        return Address;
+    }
 
-        public string ToBase64String()
+    public string ToBase64String()
+    {
+        using var stream = new MemoryStream();
+        using (var writer = new BinaryWriter(stream))
         {
-            using var stream = new MemoryStream();
-            using (var writer = new BinaryWriter(stream))
-            {
-                writer.Write(Asm);
-                writer.Write(Hex);
-                writer.Write(Address);
-                writer.Write(Type);
-            }
-            return Convert.ToBase64String(stream.ToArray());
+            writer.Write(Asm);
+            writer.Write(Hex);
+            writer.Write(Address);
+            writer.Write(Type);
         }
+        return Convert.ToBase64String(stream.ToArray());
     }
 }

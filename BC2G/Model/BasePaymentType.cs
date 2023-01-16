@@ -1,9 +1,8 @@
-﻿namespace BC2G.Model
-{
-    public abstract class BasePaymentType
-    {
-        public abstract ScriptType ScriptType { get; }
+﻿namespace BC2G.Model;
 
-        public abstract string GetAddress();
-    }
+public abstract class BasePaymentType
+{
+    public abstract ScriptType ScriptType { get; }
+
+    public abstract string GetAddress();
 }

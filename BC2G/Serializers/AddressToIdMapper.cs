@@ -1,79 +1,78 @@
-﻿namespace BC2G.Serializers
+﻿namespace BC2G.Serializers;
+
+/*
+public class AddressToIdMapper : PersistentObject<(string, string)>
 {
-    /*
-    public class AddressToIdMapper : PersistentObject<(string, string)>
+    public int NodesCount { get { return _mappings.Count; } }
+
+    private const string _delimiter = "\t";
+
+    private readonly object _locker = new();
+
+    private readonly ConcurrentDictionary<string, string> _mappings;
+
+    // Cannot take the filename and call the Deserializers
+    // from the constructor, because the base type needs to
+    // create a write stream to the file, and since that
+    // handle will be created before running the constructor
+    // body, it will fail complaning the file is open in 
+    // another process. There are a few hacky workarounds, 
+    // but probably the most intuitive approach is to 
+    // require the mappings in the constructor.
+
+    public AddressToIdMapper(
+        string filename,
+        Logger logger,
+        ConcurrentDictionary<string, string> mappings,
+        CancellationToken cancellationToken) : base(
+            filename,
+            logger,
+            cancellationToken)
     {
-        public int NodesCount { get { return _mappings.Count; } }
+        _mappings = mappings;
 
-        private const string _delimiter = "\t";
-
-        private readonly object _locker = new();
-
-        private readonly ConcurrentDictionary<string, string> _mappings;
-
-        // Cannot take the filename and call the Deserializers
-        // from the constructor, because the base type needs to
-        // create a write stream to the file, and since that
-        // handle will be created before running the constructor
-        // body, it will fail complaning the file is open in 
-        // another process. There are a few hacky workarounds, 
-        // but probably the most intuitive approach is to 
-        // require the mappings in the constructor.
-
-        public AddressToIdMapper(
-            string filename,
-            Logger logger,
-            ConcurrentDictionary<string, string> mappings,
-            CancellationToken cancellationToken) : base(
-                filename,
-                logger,
-                cancellationToken)
+        if (_mappings.IsEmpty)
         {
-            _mappings = mappings;
-
-            if (_mappings.IsEmpty)
-            {
-                // Add coinbase node. 
-                GetId(new Node().Address);
-            }
+            // Add coinbase node. 
+            GetId(new Node().Address);
         }
+    }
 
-        public string GetId(string address)
+    public string GetId(string address)
+    {
+        lock (_locker)
         {
-            lock (_locker)
-            {
-                var potentialId = _mappings.Count.ToString();
-                var id = _mappings.GetOrAdd(address, potentialId);
-                if (id == potentialId)
-                    Enqueue((id, address));
-                return id;
-            }
+            var potentialId = _mappings.Count.ToString();
+            var id = _mappings.GetOrAdd(address, potentialId);
+            if (id == potentialId)
+                Enqueue((id, address));
+            return id;
         }
+    }
 
-        public static ConcurrentDictionary<string, string> Deserialize(string filename)
-        {
-            var mappings = new ConcurrentDictionary<string, string>();
+    public static ConcurrentDictionary<string, string> Deserialize(string filename)
+    {
+        var mappings = new ConcurrentDictionary<string, string>();
 
-            if (!File.Exists(filename))
-                return mappings;
-
-            using var reader = new StreamReader(filename);
-            string? line;
-            while ((line = reader.ReadLine()) != null)
-            {
-                var sLine = line.Split(_delimiter);
-                if (sLine.Length != 2)
-                    throw new FormatException(
-                        $"Expected two columns, found {sLine.Length}: {line}");
-                mappings.TryAdd(sLine[1], sLine[0]);
-            }
-
+        if (!File.Exists(filename))
             return mappings;
+
+        using var reader = new StreamReader(filename);
+        string? line;
+        while ((line = reader.ReadLine()) != null)
+        {
+            var sLine = line.Split(_delimiter);
+            if (sLine.Length != 2)
+                throw new FormatException(
+                    $"Expected two columns, found {sLine.Length}: {line}");
+            mappings.TryAdd(sLine[1], sLine[0]);
         }
 
-        public override string Serialize((string, string) obj, CancellationToken cT)
-        {
-            return $"{obj.Item1}{_delimiter}{obj.Item2}{Environment.NewLine}";
-        }
-    }*/
-}
+        return mappings;
+    }
+
+    public override string Serialize((string, string) obj, CancellationToken cT)
+    {
+        return $"{obj.Item1}{_delimiter}{obj.Item2}{Environment.NewLine}";
+    }
+}*/

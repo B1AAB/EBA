@@ -1,9 +1,8 @@
-﻿namespace BC2G.Graph
+﻿namespace BC2G.Graph;
+
+public enum EdgeType
 {
-    public enum EdgeType
-    {
-        Generation = 0,
-        Transfer = 1,
-        Fee = 2
-    }
+    Generation = 0,
+    Transfer = 1,
+    Fee = 2
 }

@@ -1,7 +1,6 @@
-﻿namespace BC2G.Model
+﻿namespace BC2G.Model;
+
+internal interface IBase64Serializable
 {
-    internal interface IBase64Serializable
-    {
-        string ToBase64String();
-    }
+    string ToBase64String();
 }
