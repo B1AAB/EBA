@@ -65,21 +65,58 @@ public class Orchestrator : IDisposable
         await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
 
         var stopwatch = new Stopwatch();
+
+        var canRun = true;
+        while (canRun)
+        {
         try
         {
             stopwatch.Start();
             await TraverseBlocksAsync(_options, _cT);
             stopwatch.Stop();
+
             if (_cT.IsCancellationRequested)
                 Logger.LogInformation("Cancelled successfully.");
             else
-                Logger.LogInformation($"All process finished successfully in {stopwatch.Elapsed}.");
+                    Logger.LogInformation("All process finished successfully in {et}", stopwatch.Elapsed);
+                break;
+            }
+            catch (Polly.CircuitBreaker.BrokenCircuitException e)
+            {
+                stopwatch.Stop();
+                Logger.LogError(e.Message);
+                var validChoice = true;
+                do
+                {
+                    Console.Write("Do you want to retry? [Y/N] ");
+                    var keyInfo = Console.ReadKey();
+                    Console.WriteLine();
+                    switch (keyInfo.Key.ToString().ToUpper())
+                    {
+                        case "Y":
+                            validChoice = true;
+                            canRun = true;
+                            break;
+                        case "N":
+                            Logger.LogCritical(
+                                "Aborting execution due to circuit break " +
+                                "and user's decision to avoid a re-attempt");
+                            validChoice = true;
+                            canRun = false;
+                            break;
+                        default:
+                            Console.WriteLine("Invalid choice.");
+                            break;
+                    }
+                }
+                while (!validChoice);
         }
         catch
         {
             stopwatch.Stop();
             throw;
         }
+    }
     }
 
     private async Task TraverseBlocksAsync(Options options, CancellationToken cT)
