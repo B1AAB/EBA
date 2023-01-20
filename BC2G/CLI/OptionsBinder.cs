@@ -3,7 +3,7 @@
 internal class OptionsBinder : BinderBase<Options>
 {
     private readonly Options _options;
-    private readonly Option<int?>? _fromInclusiveOption;
+    private readonly Option<int>? _fromInclusiveOption;
     private readonly Option<int?>? _toExclusiveOption;
     private readonly Option<int>? _granularityOption;
     private readonly Option<bool>? _skipGraphLoadOption;
@@ -21,7 +21,7 @@ internal class OptionsBinder : BinderBase<Options>
 
     public OptionsBinder(
         Options options,
-        Option<int?>? fromInclusiveOption = null,
+        Option<int>? fromInclusiveOption = null,
         Option<int?>? toExclusiveOption = null,
         Option<int>? granularityOption = null,
         Option<bool>? skipGraphLoadOption = null,

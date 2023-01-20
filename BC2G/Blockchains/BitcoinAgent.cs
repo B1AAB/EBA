@@ -78,6 +78,10 @@ public class BitcoinAgent : IDisposable
 
     public async Task<ChainInfo> AssertChainAsync(CancellationToken cT)
     {
+        _logger.LogInformation(
+            "Checking if can communicate with Bitcoin-qt, " +
+            "and getting Bitcoin chain information.");
+
         (var isConnected, var chainInfo) = await IsConnectedAsync(cT);
 
         if (!isConnected || chainInfo is null)
@@ -93,6 +97,10 @@ public class BitcoinAgent : IDisposable
                 $"Required to be on the `main` chain, " +
                 $"but the bitcoin client is on the " +
                 $"`{chainInfo.Chain}` chain.");
+
+        _logger.LogInformation(
+            "Successfully communicated with Bitcoin-qt, " +
+            "and received chain information.");
 
         return chainInfo;
     }

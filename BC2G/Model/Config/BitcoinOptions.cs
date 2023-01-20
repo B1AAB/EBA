@@ -15,7 +15,7 @@ public class BitcoinOptions
     }
     private Uri _clientUri = new("http://localhost:8332/rest/");
 
-    public int? FromInclusive
+    public int FromInclusive
     {
         set
         {
@@ -28,7 +28,7 @@ public class BitcoinOptions
         }
         get { return _fromInclusive; }
     }
-    private int? _fromInclusive = null;
+    private int _fromInclusive = 0;
 
     public int? ToExclusive
     {
@@ -52,31 +52,6 @@ public class BitcoinOptions
     }
     private int? _toExclusive = null;
 
-
-    // TODO: Using LastProcessedBlock to determine
-    // the tip of the processing queue is not very
-    // accurate, because the blocks may not finish
-    // in the given order. For instance, block 10
-    // may finish before blocks 8 and 9. Hence
-    // resuming from block 10 will lead to skipping
-    // blocks 8 and 9.
-
-    public int? LastProcessedBlock
-    {
-        set
-        {
-            _lastProcessedBlock = value;
-        }
-        get
-        {
-            if (_lastProcessedBlock is null)
-                return FromInclusive == null ? null : FromInclusive - 1;
-            else
-                return _lastProcessedBlock;
-        }
-    }
-    private int? _lastProcessedBlock = null;
-
     public int Granularity
     {
         set
@@ -92,12 +67,14 @@ public class BitcoinOptions
     }
     private int _granularity = 1;
 
+    public string BlocksToProcessListFilename { set; get; } = string.Empty;
+
     public bool SkipGraphLoad { get; set; }
 
     public int DbCommitAtUtxoBufferSize { set; get; } = 2000000;
 
     // null default lets runtime decide on max concurrency which is not static and changes w.r.t the load.
-    public int? MaxConcurrentBlocks { get; set; } = null;
+    public int? MaxConcurrentBlocks { get; set; } = 1;// = null;
 
     // When setting this, make sure it is more than the timeout of related Resilience strategies.
     public TimeSpan HttpClientTimeout { set; get; } = TimeSpan.FromMinutes(10);

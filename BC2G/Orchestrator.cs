@@ -1,3 +1,4 @@
+using BC2G.Model;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace BC2G;
@@ -57,10 +58,35 @@ public class Orchestrator : IDisposable
         using (var dbContext = _host.Services.GetRequiredService<DatabaseContext>())
             await dbContext.Database.EnsureCreatedAsync(_cT);
 
-        if (_options.Bitcoin.FromInclusive == null)
-            _options.Bitcoin.FromInclusive = _options.Bitcoin.LastProcessedBlock + 1;
         if (_options.Bitcoin.ToExclusive == null)
             _options.Bitcoin.ToExclusive = chainInfo.Blocks;
+
+        if (string.IsNullOrEmpty(_options.Bitcoin.BlocksToProcessListFilename))
+            _options.Bitcoin.BlocksToProcessListFilename = 
+                Path.Combine(
+                    _options.WorkingDir, 
+                    $"blocks_to_process_in_range_" +
+                    $"{_options.Bitcoin.FromInclusive}" +
+                    $"_to_" +
+                    $"{_options.Bitcoin.ToExclusive}.bc2g");
+
+        PersistentConcurrentQueue blockHeightQueue;
+        if (!File.Exists(_options.Bitcoin.BlocksToProcessListFilename))
+        {
+            var heights = new List<int>();
+            for (int h = _options.Bitcoin.FromInclusive;
+                h < _options.Bitcoin.ToExclusive;
+                h += _options.Bitcoin.Granularity)
+                heights.Add(h);
+            blockHeightQueue = new PersistentConcurrentQueue(
+                _options.Bitcoin.BlocksToProcessListFilename, heights);
+            blockHeightQueue.Serialize();
+        }
+        else
+        {
+            blockHeightQueue = PersistentConcurrentQueue.Deserialize(
+                _options.Bitcoin.BlocksToProcessListFilename);
+        }
 
         await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
 
@@ -69,15 +95,15 @@ public class Orchestrator : IDisposable
         var canRun = true;
         while (canRun)
         {
-        try
-        {
-            stopwatch.Start();
-            await TraverseBlocksAsync(_options, _cT);
-            stopwatch.Stop();
+            try
+            {
+                stopwatch.Start();
+                await TraverseBlocksAsync(_options, blockHeightQueue, _cT);
+                stopwatch.Stop();
 
-            if (_cT.IsCancellationRequested)
-                Logger.LogInformation("Cancelled successfully.");
-            else
+                if (_cT.IsCancellationRequested)
+                    Logger.LogInformation("Cancelled successfully.");
+                else
                     Logger.LogInformation("All process finished successfully in {et}", stopwatch.Elapsed);
                 break;
             }
@@ -110,16 +136,16 @@ public class Orchestrator : IDisposable
                     }
                 }
                 while (!validChoice);
+            }
+            catch
+            {
+                stopwatch.Stop();
+                throw;
+            }
         }
-        catch
-        {
-            stopwatch.Stop();
-            throw;
-        }
-    }
     }
 
-    private async Task TraverseBlocksAsync(Options options, CancellationToken cT)
+    private async Task TraverseBlocksAsync(Options options, PersistentConcurrentQueue blocksQueue, CancellationToken cT)
     {
         using var pGraphStat = new PersistentGraphStatistics(
             Path.Combine(options.WorkingDir, "blocks_stats.tsv"),
@@ -132,15 +158,14 @@ public class Orchestrator : IDisposable
             cT);
 
         Logger.LogInformation(
-            "Traversing blocks [{from}, {to}).", 
+            "Traversing blocks [{from:n0}, {to:n0}).", 
             options.Bitcoin.FromInclusive, 
             options.Bitcoin.ToExclusive);
 
-        var blockHeightQueue = new ConcurrentQueue<int>();
-        for (int h = options.Bitcoin.LastProcessedBlock?? 0 + 1;
-                 h < options.Bitcoin.ToExclusive;
-                 h += options.Bitcoin.Granularity)
-            blockHeightQueue.Enqueue(h);
+        Logger.LogInformation(
+            "{count:n0} blocks to process; {processed:n0} blocks are previously processed.", 
+            blocksQueue.Count, 
+            options.Bitcoin.ToExclusive - options.Bitcoin.FromInclusive - blocksQueue.Count);
 
         var parallelOptions = new ParallelOptions()
         { CancellationToken = cT };
@@ -170,16 +195,17 @@ public class Orchestrator : IDisposable
         // it adds more complexity with little performance improvements,
         // and in some cases, slower than Parallel.For and sequential traversal.
         await Parallel.ForEachAsync(
-            new bool[blockHeightQueue.Count],
+            new bool[blocksQueue.Count],
             parallelOptions,
             async (_, _loopCancellationToken) =>
             {
                 _loopCancellationToken.ThrowIfCancellationRequested();
 
                 barrier.AddParticipant();
-                blockHeightQueue.TryDequeue(out var h);
+                blocksQueue.TryDequeue(out var h);
                 //Logger.LogStartProcessingBlock(h);
                 await ProcessBlock(options, gBuffer, /*serializer,*/ h, utxos, dbContextLock, /*individualBlocksDir,*/ cT);
+                blocksQueue.Serialize();
 
                 if (utxos.Count >= options.Bitcoin.DbCommitAtUtxoBufferSize)
                 {
@@ -203,6 +229,7 @@ public class Orchestrator : IDisposable
         // finalizes persisting output.
         //Logger.Log("Finalizing serialized files.");
         await JsonSerializer<Options>.SerializeAsync(_options, options.StatusFile, cT);
+        blocksQueue.Serialize();
 
         cT.ThrowIfCancellationRequested();
 
@@ -231,7 +258,7 @@ public class Orchestrator : IDisposable
     {
         cT.ThrowIfCancellationRequested();
 
-        Logger.LogInformation("Started processing block {height}.", height);
+        Logger.LogInformation("Started processing block {height:n0}.", height);
 
         var strategy = ResilienceStrategyFactory.Bitcoin.GetGraphStrategy(
             options.Bitcoin.BitcoinAgentResilienceStrategy);
@@ -241,12 +268,12 @@ public class Orchestrator : IDisposable
             // Note that _ct is linked cancellation token, linking
             // user's token and the timeout policy's cancellation token.
 
-            Logger.LogInformation("Trying processing block {height}.", height);
+            Logger.LogInformation("Trying processing block {height:n0}.", height);
             var agent = _host.Services.GetRequiredService<BitcoinAgent>();
             var blockGraph = await agent.GetGraph(height, utxos, dbContextLock, _ct);
 
             Logger.LogInformation(
-                "Obtained block graph for height {height}, enqueued " +
+                "Obtained block graph for height {height:n0}, enqueued " +
                 "for graph building and serialization.", height);
             gBuffer.Enqueue(blockGraph);
         }, new Context().SetLogger<Orchestrator>(Logger), cT);

@@ -214,7 +214,7 @@ internal class CLI
 
     private Command GetBitcoinCmd(Options options, Func<Task> handler)
     {
-        var fromOption = new Option<int?>(
+        var fromOption = new Option<int>(
             name: "--from",
             description: "The inclusive height of the block where the " +
             "traverse should start. If not provided, starts from the " +
