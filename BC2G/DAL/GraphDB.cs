@@ -198,8 +198,7 @@ public class GraphDB : IDisposable
             File.Delete(coinbaseFilename);
         }
 
-        if (batch == null)
-            batch = CurrentTimeStamp;
+        batch ??= CurrentTimeStamp;
         _blockMapper.Batch = batch;
         _scriptMapper.Batch = batch;
         _coinbaseMapper.Batch = batch;
