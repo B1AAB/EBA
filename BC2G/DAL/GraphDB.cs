@@ -1,4 +1,6 @@
-﻿namespace BC2G.DAL;
+﻿using System.Diagnostics.Metrics;
+
+namespace BC2G.DAL;
 
 
 // TODO: there is a bug: why many redeems per node in a given block? 
@@ -419,58 +421,74 @@ public class GraphDB : IDisposable
 
     public async Task Sampling()
     {
-        var rndRootNodes = await GetRandomNodes(
-            _options.GraphSample.Count,
-            _options.GraphSample.RootNodeSelectProb);
-
+        var sampledGraphsCounter = 0;
+        int attemps = 0, maxAttemps = 3;
         var baseOutputDir = Path.Join(_options.WorkingDir, "sampled_graphs");
-        var counter = -1;
-        foreach (var rootNode in rndRootNodes)
-        {
-            var features = new Dictionary<string, (List<double[]>, List<double[]>, List<int[]>, List<int[]>)>();
 
-            (var nodes, var edges) = await GetNeighbors(rootNode.Address, _options.GraphSample.Hops);
+        while (sampledGraphsCounter < _options.GraphSample.Count 
+            && ++attemps <= maxAttemps)
+        {
+            var rndRootNodes = await GetRandomNodes(
+                _options.GraphSample.Count,
+                _options.GraphSample.RootNodeSelectProb);
+
+            foreach (var rootNode in rndRootNodes)
+                if (await TrySampleGraphAsync(rootNode, baseOutputDir))
+                    sampledGraphsCounter++;
+        }
+
+        if (attemps >= maxAttemps)
+            throw new Exception(
+                $"Failed creating {_options.GraphSample.Count} graphs; " +
+                $"created {sampledGraphsCounter} after {attemps} attemps.");
+    }
+
+    private async Task<bool> TrySampleGraphAsync(Node rootNode, string baseOutputDir)
+    {
+        var features = new Dictionary<string, (List<double[]>, List<double[]>, List<int[]>, List<int[]>)>();
+
+        (var nodes, var edges) = await GetNeighbors(rootNode.Address, _options.GraphSample.Hops);
+
+        if (!CanUseGraph(
+            nodes, edges, tolerance: 0,
+            minNodeCount: _options.GraphSample.MinNodeCount,
+            maxNodeCount: _options.GraphSample.MaxNodeCount,
+            minEdgeCount: _options.GraphSample.MinEdgeCount,
+            maxEdgeCount: _options.GraphSample.MaxEdgeCount))
+            return false;
+
+        if (_options.GraphSample.Mode == GraphSampleMode.A)
+        {
+            (var rnodes, var redges) = await GetRandomEdges(edges.Count);
 
             if (!CanUseGraph(
-                nodes, edges, tolerance: 0,
+                rnodes, redges,
                 minNodeCount: _options.GraphSample.MinNodeCount,
-                maxNodeCount: _options.GraphSample.MaxNodeCount,
+                maxNodeCount: nodes.Count,
                 minEdgeCount: _options.GraphSample.MinEdgeCount,
-                maxEdgeCount: _options.GraphSample.MaxEdgeCount))
-                continue;
+                maxEdgeCount: edges.Count))
+                return false;
 
-            if (_options.GraphSample.Mode == GraphSampleMode.A)
-            {
-                (var rnodes, var redges) = await GetRandomEdges(edges.Count);
-
-                if (!CanUseGraph(
-                    rnodes, redges,
-                    minNodeCount: _options.GraphSample.MinNodeCount,
-                    maxNodeCount: nodes.Count,
-                    minEdgeCount: _options.GraphSample.MinEdgeCount,
-                    maxEdgeCount: edges.Count))
-                    continue;
-
-                (var rNodeFeatures, var rEdgeFeatures, var rPairIndices) = ToMatrix(rnodes, redges);
-                features.Add("RandomEdges", (rNodeFeatures, rEdgeFeatures, rPairIndices, new List<int[]> { new int[] { 1 } }));
-            }
-
-            (var nodeFeatures, var edgeFeatures, var pairIndices) = ToMatrix(nodes, edges);
-            features.Add("Graph", (nodeFeatures, edgeFeatures, pairIndices, new List<int[]> { new int[] { 0 } }));
-
-            counter++;
-            foreach (var graphFeatures in features)
-            {
-                var outputDir = Path.Join(baseOutputDir, counter.ToString(), graphFeatures.Key);
-                Directory.CreateDirectory(outputDir);
-
-                (var nFeatures, var eFeatures, var pIndices, var labels) = graphFeatures.Value;
-                ToTSV(nFeatures, Path.Join(outputDir, "node_features.tsv"));
-                ToTSV(eFeatures, Path.Join(outputDir, "edge_features.tsv"));
-                ToTSV(pIndices, Path.Join(outputDir, "pair_indices.tsv"));
-                ToTSV(labels, Path.Join(outputDir, "labels.tsv"));
-            }
+            (var rNodeFeatures, var rEdgeFeatures, var rPairIndices) = ToMatrix(rnodes, redges);
+            features.Add("RandomEdges", (rNodeFeatures, rEdgeFeatures, rPairIndices, new List<int[]> { new int[] { 1 } }));
         }
+
+        (var nodeFeatures, var edgeFeatures, var pairIndices) = ToMatrix(nodes, edges);
+        features.Add("Graph", (nodeFeatures, edgeFeatures, pairIndices, new List<int[]> { new int[] { 0 } }));
+
+        foreach (var graphFeatures in features)
+        {
+            var outputDir = Path.Join(baseOutputDir, graphFeatures.Key);
+            Directory.CreateDirectory(outputDir);
+
+            (var nFeatures, var eFeatures, var pIndices, var labels) = graphFeatures.Value;
+            ToTSV(nFeatures, Path.Join(outputDir, "node_features.tsv"));
+            ToTSV(eFeatures, Path.Join(outputDir, "edge_features.tsv"));
+            ToTSV(pIndices, Path.Join(outputDir, "pair_indices.tsv"));
+            ToTSV(labels, Path.Join(outputDir, "labels.tsv"));
+        }
+
+        return true;
     }
 
     private static bool CanUseGraph(
@@ -595,6 +613,9 @@ public class GraphDB : IDisposable
         foreach (var hop in samplingResult.Result)
         {
             var root = hop.Values["root"].As<List<INode>>()[0];
+            if (root is null)
+                continue;
+
             nodes[root.Id] = ParseNode(root);
 
             var neo4jNodes = hop.Values["nodes"].As<List<object>>();
