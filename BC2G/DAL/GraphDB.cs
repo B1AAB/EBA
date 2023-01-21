@@ -435,7 +435,7 @@ public class GraphDB : IDisposable
                 _options.GraphSample.RootNodeSelectProb);
 
             foreach (var rootNode in rndRootNodes)
-                if (await TrySampleGraphAsync(rootNode, baseOutputDir))
+                if (await TrySampleNeighborsAsync(rootNode, baseOutputDir))
                     sampledGraphsCounter++;
         }
 
@@ -457,7 +457,7 @@ public class GraphDB : IDisposable
         }
     }
 
-    private async Task<bool> TrySampleGraphAsync(Node rootNode, string baseOutputDir)
+    private async Task<bool> TrySampleNeighborsAsync(Node rootNode, string baseOutputDir)
     {
         var features = new Dictionary<string, (List<double[]>, List<double[]>, List<int[]>, List<int[]>)>();
 
@@ -473,17 +473,17 @@ public class GraphDB : IDisposable
 
         if (_options.GraphSample.Mode == GraphSampleMode.A)
         {
-            (var rnodes, var redges) = await GetRandomEdges(edges.Count);
+            (var rndNodes, var rndEdges) = await GetRandomEdges(edges.Count);
 
             if (!CanUseGraph(
-                rnodes, redges,
+                rndNodes, rndEdges,
                 minNodeCount: _options.GraphSample.MinNodeCount,
                 maxNodeCount: nodes.Count,
                 minEdgeCount: _options.GraphSample.MinEdgeCount,
                 maxEdgeCount: edges.Count))
                 return false;
 
-            (var rNodeFeatures, var rEdgeFeatures, var rPairIndices) = ToMatrix(rnodes, redges);
+            (var rNodeFeatures, var rEdgeFeatures, var rPairIndices) = ToMatrix(rndNodes, rndEdges);
             features.Add("RandomEdges", (rNodeFeatures, rEdgeFeatures, rPairIndices, new List<int[]> { new int[] { 1 } }));
         }
 
@@ -506,7 +506,7 @@ public class GraphDB : IDisposable
     }
 
     private static bool CanUseGraph(
-        Dictionary<long, Node> nodes,
+        Dictionary<string, Node> nodes,
         List<IRelationship> edges,
         int minNodeCount = 3, int maxNodeCount = 200,
         int minEdgeCount = 3, int maxEdgeCount = 200,
@@ -558,7 +558,9 @@ public class GraphDB : IDisposable
         return rndNodes;
     }
 
-    private async Task<(Dictionary<long, Node>, List<IRelationship>)> GetRandomEdges(int edgeCount, double edgeSelectProb = 0.1)
+    private async Task<(Dictionary<string, Node>, List<IRelationship>)> GetRandomEdges(
+        int edgeCount, 
+        double edgeSelectProb = 0.1)
     {
         using var session = _driver.AsyncSession(
             x => x.WithDefaultAccessMode(AccessMode.Read));
@@ -574,7 +576,7 @@ public class GraphDB : IDisposable
         });
         await rndNodesResult;
 
-        var rndNodes = new Dictionary<long, Node>();
+        var rndNodes = new Dictionary<string, Node>();
         var rndEdges = new List<IRelationship>();
         foreach (var n in rndNodesResult.Result)
         {
@@ -583,15 +585,15 @@ public class GraphDB : IDisposable
             var source = ParseNode(isource);
             var target = ParseNode(itarget);
 
-            rndNodes[isource.Id] = source;
-            rndNodes[itarget.Id] = target;
+            rndNodes[isource.ElementId] = source;
+            rndNodes[itarget.ElementId] = target;
             rndEdges.Add(n.Values["edge"].As<IRelationship>());
         }
 
         return (rndNodes, rndEdges);
     }
 
-    private async Task<(Dictionary<long, Node>, List<IRelationship>)> GetNeighbors(
+    private async Task<(Dictionary<string, Node>, List<IRelationship>)> GetNeighbors(
         string rootScriptAddress, int maxHops)
     {
         using var session = _driver.AsyncSession(
@@ -621,7 +623,7 @@ public class GraphDB : IDisposable
         });
         await samplingResult;
 
-        var nodes = new Dictionary<long, Node>();
+        var nodes = new Dictionary<string, Node>();
         var edges = new List<IRelationship>();
 
         foreach (var hop in samplingResult.Result)
@@ -630,7 +632,7 @@ public class GraphDB : IDisposable
             if (root is null)
                 continue;
 
-            nodes[root.Id] = ParseNode(root);
+            nodes[root.ElementId] = ParseNode(root);
 
             var neo4jNodes = hop.Values["nodes"].As<List<object>>();
             var neo4jEdges = hop.Values["relationships"].As<List<object>>();
@@ -638,7 +640,7 @@ public class GraphDB : IDisposable
             foreach (var neo4jNode in neo4jNodes)
             {
                 var node = neo4jNode.As<INode>();
-                nodes[node.Id] = ParseNode(node);
+                nodes[node.ElementId] = ParseNode(node);
             }
 
             foreach (var neo4jEdge in neo4jEdges)
@@ -648,10 +650,12 @@ public class GraphDB : IDisposable
         return (nodes, edges);
     }
 
-    private static (List<double[]>, List<double[]>, List<int[]>) ToMatrix(Dictionary<long, Node> nodes, List<IRelationship> edges)
+    private static (List<double[]>, List<double[]>, List<int[]>) ToMatrix(
+        Dictionary<string, Node> nodes, 
+        List<IRelationship> edges)
     {
         var nodeFeatures = new List<double[]>();
-        var nodeIdToIdx = new Dictionary<long, int>();
+        var nodeIdToIdx = new Dictionary<string, int>();
         foreach (var node in nodes)
         {
             nodeFeatures.Add(node.Value.GetFeatures());
@@ -670,21 +674,21 @@ public class GraphDB : IDisposable
                 return 1;
             }));
 
-
         foreach (var edge in edges)
         {
             var e = new Edge(
-                nodes[edge.StartNodeId],
-                nodes[edge.EndNodeId],
+                nodes[edge.StartNodeElementId],
+                nodes[edge.EndNodeElementId],
                 (double)edge.Properties["Value"],
                 Enum.Parse<EdgeType>(edge.Type),
                 0, // TODO: fixme.
                 (int)(long)edge.Properties["Height"]); // TODO: fixme: here we are casting from int64 to int32, how hard is it to change the type of Height in the Edge from 32-bit int to 64-bit int?
 
             edgeFeatures.Add(
-                new int[] { nodeIdToIdx[edge.StartNodeId], nodeIdToIdx[edge.EndNodeId] },
+                new int[] {
+                    nodeIdToIdx[edge.StartNodeElementId],
+                    nodeIdToIdx[edge.EndNodeElementId] },
                 e.GetFeatures());
-
         }
 
         var pairIndices = edgeFeatures.Keys.ToList();
