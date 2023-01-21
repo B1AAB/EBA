@@ -232,7 +232,7 @@ public class GraphDB : IDisposable
 
         // TODO: check if an exception raised in Neo4j triggers an exception in the following awaits.
 
-        var blockBulkLoadResult = session.WriteTransactionAsync(async x =>
+        var blockBulkLoadResult = session.ExecuteWriteAsync(async x =>
         {
             var result = await x.RunAsync(_blockMapper.CypherQuery);
             return await result.ToListAsync();
@@ -241,7 +241,7 @@ public class GraphDB : IDisposable
 
         //if (_scriptEdgesInCsvCount > 0)
         //{
-        var edgeBulkLoadResult = session.WriteTransactionAsync(async x =>
+        var edgeBulkLoadResult = session.ExecuteWriteAsync(async x =>
         {
             var result = await x.RunAsync(_scriptMapper.CypherQuery);
             return await result.ToListAsync();//.SingleAsync().Result[0].As<string>();
@@ -251,7 +251,7 @@ public class GraphDB : IDisposable
 
         //if (_coinbaseEdgesInCsvCount > 0)
         //{
-        var coinbaseEdgeBulkLoadResult = session.WriteTransactionAsync(async x =>
+        var coinbaseEdgeBulkLoadResult = session.ExecuteWriteAsync(async x =>
         {
             var result = await x.RunAsync(_coinbaseMapper.CypherQuery);
             return await result.ToListAsync();
@@ -270,7 +270,7 @@ public class GraphDB : IDisposable
         var dataFile2 = "data2.csv";
         using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
 
-        var a0 = await session.WriteTransactionAsync(async x =>
+        var a0 = await session.ExecuteWriteAsync(async x =>
         {
             var result = await x.RunAsync(
                 $"LOAD CSV WITH HEADERS FROM 'file:///{dataFile2}' AS line FIELDTERMINATOR '\t'" +
@@ -280,7 +280,7 @@ public class GraphDB : IDisposable
             return result.ToListAsync();
         });
 
-        var aa = await session.WriteTransactionAsync(async x =>
+        var aa = await session.ExecuteWriteAsync(async x =>
         {
             var result = await x.RunAsync(
                 "CREATE CONSTRAINT personIdConstraint " +
@@ -290,13 +290,13 @@ public class GraphDB : IDisposable
             return result.ToListAsync();
         });
 
-        var yy = await session.ReadTransactionAsync(async x =>
+        var yy = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync("SHOW EXISTENCE CONSTRAINTS WHERE name = 'personIdConstraint'");
             return result.ToListAsync();
         });
 
-        await session.WriteTransactionAsync(async tx =>
+        await session.ExecuteWriteAsync(async tx =>
         {
             var result = await tx.RunAsync(
                 $"LOAD CSV WITH HEADERS FROM 'file:///{dataFile}' AS line FIELDTERMINATOR ','" +
@@ -316,7 +316,7 @@ public class GraphDB : IDisposable
         int count = 0;
         using (var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read)))
         {
-            count = await session.ReadTransactionAsync(async tx =>
+            count = await session.ExecuteReadAsync(async tx =>
             {
                 var result = await tx.RunAsync($"MATCH (n:{BitcoinAgent.Coinbase}) RETURN COUNT(n)");
                 return result.SingleAsync().Result[0].As<int>();
@@ -508,7 +508,7 @@ public class GraphDB : IDisposable
         using var session = _driver.AsyncSession(
             x => x.WithDefaultAccessMode(AccessMode.Read));
 
-        var rndNodesResult = session.ReadTransactionAsync(async x =>
+        var rndNodesResult = session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
                 $"MATCH (rndScript:Script)-[:Transfer]->() " +
@@ -531,7 +531,7 @@ public class GraphDB : IDisposable
         using var session = _driver.AsyncSession(
             x => x.WithDefaultAccessMode(AccessMode.Read));
 
-        var rndNodesResult = session.ReadTransactionAsync(async x =>
+        var rndNodesResult = session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
                 $"Match (source)-[edge:Transfer]->(target) " +
@@ -565,7 +565,7 @@ public class GraphDB : IDisposable
         using var session = _driver.AsyncSession(
             x => x.WithDefaultAccessMode(AccessMode.Read));
 
-        var samplingResult = session.ReadTransactionAsync(async x =>
+        var samplingResult = session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
                 $"MATCH path = (p: Script {{ Address: \"{rootScriptAddress}\"}}) -[:Transfer * 1..{maxHops}]->(p2: Script) " +
