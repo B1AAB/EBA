@@ -33,12 +33,14 @@ public class GraphDB : IDisposable
     private static string CurrentTimeStamp { get { return DateTime.Now.ToString("yyyyMMddHHmmssffff"); } }
 
     private readonly Options _options;
+    private readonly ILogger<GraphDB> _logger;
 
     ~GraphDB() => Dispose(false);
 
-    public GraphDB(Options options)
+    public GraphDB(Options options, ILogger<GraphDB> logger)
     {
         _options = options;
+        _logger = logger;
         _neo4jImportDir = _options.Neo4j.ImportDirectory;
 
         if (!_options.Bitcoin.SkipGraphLoad)
@@ -419,13 +421,13 @@ public class GraphDB : IDisposable
         }
     }
 
-    public async Task Sampling()
+    public async Task<bool> TrySampleAsync()
     {
         var sampledGraphsCounter = 0;
         int attemps = 0, maxAttemps = 3;
         var baseOutputDir = Path.Join(_options.WorkingDir, "sampled_graphs");
 
-        while (sampledGraphsCounter < _options.GraphSample.Count 
+        while (sampledGraphsCounter < _options.GraphSample.Count
             && ++attemps <= maxAttemps)
         {
             var rndRootNodes = await GetRandomNodes(
@@ -438,9 +440,21 @@ public class GraphDB : IDisposable
         }
 
         if (attemps >= maxAttemps)
-            throw new Exception(
-                $"Failed creating {_options.GraphSample.Count} graphs; " +
-                $"created {sampledGraphsCounter} after {attemps} attemps.");
+        {
+            _logger.LogError(
+                "Failed creating {g} {g_msg} after {a} {a_msg}; created {c} {c_msg}.",
+                _options.GraphSample.Count,
+                _options.GraphSample.Count > 1 ? "graphs" : "graph",
+                attemps,
+                attemps > 1 ? "attempts" : "attempt",
+                sampledGraphsCounter,
+                sampledGraphsCounter > 1 ? "graphs" : "graph");
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
 
     private async Task<bool> TrySampleGraphAsync(Node rootNode, string baseOutputDir)
