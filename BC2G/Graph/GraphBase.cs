@@ -112,10 +112,25 @@ public class GraphBase2 : IEquatable<GraphBase2>
         var x = GetFeatures();
         Directory.CreateDirectory(outputDir);
 
-        Utilities.CsvSerialize(x.NodeFeatures, Path.Join(outputDir, nodeFeaturesFilename));
-        Utilities.CsvSerialize(x.EdgeFeatures, Path.Join(outputDir, edgeFeaturesFilename));
-        Utilities.CsvSerialize(x.PairIndices, Path.Join(outputDir, pairIndicesFilename));
-        Utilities.CsvSerialize(x.Labels, Path.Combine(outputDir, labelsFilename));
+        Utilities.CsvSerialize(
+            x.NodeFeatures,
+            Path.Join(outputDir, nodeFeaturesFilename),
+            x.NodeFeaturesHeader);
+
+        Utilities.CsvSerialize(
+            x.EdgeFeatures,
+            Path.Join(outputDir, edgeFeaturesFilename),
+            x.EdgeFeaturesHeader);
+
+        Utilities.CsvSerialize(
+            x.PairIndices,
+            Path.Join(outputDir, pairIndicesFilename),
+            x.PairIndicesHeader);
+
+        Utilities.CsvSerialize(
+            x.Labels,
+            Path.Combine(outputDir, labelsFilename),
+            x.LabelsHeader);
     }
 
     public bool Equals(GraphBase2? other)

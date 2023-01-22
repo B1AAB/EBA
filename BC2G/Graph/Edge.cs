@@ -57,6 +57,15 @@ public class Edge
         BlockHeight = (int)(long)relationship.Properties["Height"];
     }
 
+    public static string[] GetFeaturesName()
+    {
+        return new string[] {
+            nameof(Value),
+            nameof(Type),
+            nameof(Timestamp),
+            nameof(BlockHeight) };
+    }
+
     public double[] GetFeatures()
     {
         return new double[] {

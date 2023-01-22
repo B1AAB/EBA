@@ -99,9 +99,12 @@ internal class Utilities
     public static void CsvSerialize<T>(
         IEnumerable<T[]> data,
         string filename,
+        IEnumerable<string>? header = null,
         char delimiter = '\t')
     {
         using var writter = new StreamWriter(filename);
+        if (header != null)
+            writter.WriteLine(string.Join(delimiter, header));
         foreach (var item in data)
             writter.WriteLine(string.Join(delimiter, item));
     }

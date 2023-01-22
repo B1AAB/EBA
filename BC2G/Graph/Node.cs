@@ -76,6 +76,11 @@ public class Node : IComparable<Node>, IEquatable<Node>
         OutgoingEdges.Add(outgoingEdge);
     }
 
+    public static string[] GetFeaturesName()
+    {
+        return new string[] { nameof(ScriptType), nameof(InDegree), nameof(OutDegree) };
+    }
+
     public double[] GetFeatures()
     {
         return new double[] { (double)ScriptType, InDegree, OutDegree };

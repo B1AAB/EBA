@@ -3,9 +3,16 @@
 public class GraphFeatures
 {
     public ReadOnlyCollection<double[]> NodeFeatures { get; }
+    public ReadOnlyCollection<string> NodeFeaturesHeader { get; }
+
     public ReadOnlyCollection<double[]> EdgeFeatures { get; }
+    public ReadOnlyCollection<string> EdgeFeaturesHeader { get; }
+
     public ReadOnlyCollection<int[]> PairIndices { get; }
+    public ReadOnlyCollection<string> PairIndicesHeader { get; }
+
     public ReadOnlyCollection<double[]> Labels { get; }
+    public ReadOnlyCollection<string> LabelsHeader { get; }
 
     public GraphFeatures(GraphBase2 graph)
     {
@@ -45,5 +52,10 @@ public class GraphFeatures
         Labels = new ReadOnlyCollection<double[]>(
             (from x in graph.Labels select new double[] { x })
             .ToList());
+
+        NodeFeaturesHeader = new ReadOnlyCollection<string>(Node.GetFeaturesName());
+        EdgeFeaturesHeader = new ReadOnlyCollection<string>(Edge.GetFeaturesName());
+        PairIndicesHeader = new ReadOnlyCollection<string>(new string[] { "SourceNodeIndex", "TargetNodeIndex" });
+        LabelsHeader = new ReadOnlyCollection<string>(new string[] { "GraphOrRandomEdges" });
     }
 }
