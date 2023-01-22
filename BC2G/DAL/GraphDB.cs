@@ -451,13 +451,19 @@ public class GraphDB : IDisposable
         if (attemps >= maxAttemps)
         {
             _logger.LogError(
-                "Failed creating {g} {g_msg} after {a} {a_msg}; created {c} {c_msg}.",
+                "Failed creating {g} {g_msg} after {a} {a_msg}; created {c} {c_msg}. " +
+                "You may retry, and if the error persists, try adjusting the values of " +
+                "{minN}, {maxN}, {minE}, and {maxE}.",
                 _options.GraphSample.Count,
                 _options.GraphSample.Count > 1 ? "graphs" : "graph",
                 attemps,
                 attemps > 1 ? "attempts" : "attempt",
                 sampledGraphsCounter,
-                sampledGraphsCounter > 1 ? "graphs" : "graph");
+                sampledGraphsCounter > 1 ? "graphs" : "graph",
+                nameof(_options.GraphSample.MinNodeCount),
+                nameof(_options.GraphSample.MaxNodeCount),
+                nameof(_options.GraphSample.MinEdgeCount),
+                nameof(_options.GraphSample.MaxEdgeCount));
             return false;
         }
         else
