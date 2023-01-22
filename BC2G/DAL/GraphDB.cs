@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Metrics;
+﻿using BC2G.Graph;
+using System.Diagnostics.Metrics;
 
 namespace BC2G.DAL;
 
@@ -389,7 +390,7 @@ public class GraphDB : IDisposable
         }
         catch (Exception e)
         {
-            
+
         }
 
         try
@@ -401,7 +402,7 @@ public class GraphDB : IDisposable
                     $"ON (script.{ScriptMapper.Props[Prop.ScriptAddress].Name})");
             });
         }
-        catch(Exception e)
+        catch (Exception e)
         {
 
         }
@@ -415,7 +416,7 @@ public class GraphDB : IDisposable
                     $" on (block.{BlockMapper.Props[Prop.Height].Name})");
             });
         }
-        catch(Exception e)
+        catch (Exception e)
         {
 
         }
@@ -507,7 +508,7 @@ public class GraphDB : IDisposable
 
     private static bool CanUseGraph(
         Dictionary<string, Node> nodes,
-        List<IRelationship> edges,
+        List<Edge> edges,
         int minNodeCount = 3, int maxNodeCount = 200,
         int minEdgeCount = 3, int maxEdgeCount = 200,
         double tolerance = 0.5)
@@ -558,8 +559,8 @@ public class GraphDB : IDisposable
         return rndNodes;
     }
 
-    private async Task<(Dictionary<string, Node>, List<IRelationship>)> GetRandomEdges(
-        int edgeCount, 
+    private async Task<(Dictionary<string, Node>, List<Edge>)> GetRandomEdges(
+        int edgeCount,
         double edgeSelectProb = 0.1)
     {
         using var session = _driver.AsyncSession(
@@ -577,7 +578,7 @@ public class GraphDB : IDisposable
         await rndNodesResult;
 
         var rndNodes = new Dictionary<string, Node>();
-        var rndEdges = new List<IRelationship>();
+        var rndEdges = new List<Edge>();
         foreach (var n in rndNodesResult.Result)
         {
             var source = new Node(n.Values["source"].As<INode>());
@@ -592,7 +593,7 @@ public class GraphDB : IDisposable
         return (rndNodes, rndEdges);
     }
 
-    private async Task<(Dictionary<string, Node>, List<IRelationship>)> GetNeighbors(
+    private async Task<(Dictionary<string, Node>, List<Edge>)> GetNeighbors(
         string rootScriptAddress, int maxHops)
     {
         using var session = _driver.AsyncSession(
@@ -623,7 +624,7 @@ public class GraphDB : IDisposable
         await samplingResult;
 
         var nodes = new Dictionary<string, Node>();
-        var edges = new List<IRelationship>();
+        var edges = new List<Edge>();
 
         foreach (var hop in samplingResult.Result)
         {
@@ -643,15 +644,20 @@ public class GraphDB : IDisposable
             }
 
             foreach (var neo4jEdge in neo4jEdges)
-                edges.Add(neo4jEdge.As<IRelationship>());
+            {
+                var e = neo4jEdge.As<IRelationship>();
+                var source = nodes[e.StartNodeElementId];
+                var target = nodes[e.EndNodeElementId];
+                edges.Add(new Edge(source, target, e));
+            }
         }
 
         return (nodes, edges);
     }
 
     private static (List<double[]>, List<double[]>, List<int[]>) ToMatrix(
-        Dictionary<string, Node> nodes, 
-        List<IRelationship> edges)
+        Dictionary<string, Node> nodes,
+        List<Edge> edges)
     {
         var nodeFeatures = new List<double[]>();
         var nodeIdToIdx = new Dictionary<string, int>();
@@ -675,20 +681,13 @@ public class GraphDB : IDisposable
 
         foreach (var edge in edges)
         {
-            var e = new Edge(
-                nodes[edge.StartNodeElementId],
-                nodes[edge.EndNodeElementId],
-                (double)edge.Properties["Value"],
-                Enum.Parse<EdgeType>(edge.Type),
-                0, // TODO: fixme.
-                (int)(long)edge.Properties["Height"]); // TODO: fixme: here we are casting from int64 to int32, how hard is it to change the type of Height in the Edge from 32-bit int to 64-bit int?
-
             edgeFeatures.Add(
                 new int[] {
-                    nodeIdToIdx[edge.StartNodeElementId],
-                    nodeIdToIdx[edge.EndNodeElementId] },
-                e.GetFeatures());
+                    nodeIdToIdx[edge.Source.Id],
+                    nodeIdToIdx[edge.Target.Id] },
+                edge.GetFeatures());
         }
+        
 
         var pairIndices = edgeFeatures.Keys.ToList();
         return (nodeFeatures, edgeFeatures.Values.ToList(), pairIndices);
