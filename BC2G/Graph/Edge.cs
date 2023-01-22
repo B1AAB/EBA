@@ -51,7 +51,10 @@ public class Edge
         Id = relationship.ElementId;
         Value = (double)relationship.Properties["Value"];
         Type = Enum.Parse<EdgeType>(relationship.Type);
-        BlockHeight = (int)relationship.Properties["Height"];
+
+        // TODO: FIXME
+        // change the type of Height to long and avoid casting int to long
+        BlockHeight = (int)(long)relationship.Properties["Height"];
     }
 
     public double[] GetFeatures()

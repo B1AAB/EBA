@@ -632,15 +632,16 @@ public class GraphDB : IDisposable
             if (root is null)
                 continue;
 
-            nodes[root.ElementId] = new Node(root);
+            var rootNode = new Node(root);
+            nodes[rootNode.Id] = rootNode;
 
             var neo4jNodes = hop.Values["nodes"].As<List<object>>();
             var neo4jEdges = hop.Values["relationships"].As<List<object>>();
 
             foreach (var neo4jNode in neo4jNodes)
             {
-                var node = neo4jNode.As<INode>();
-                nodes[node.ElementId] = new Node(node);
+                var node = new Node(neo4jNode.As<INode>());
+                nodes[node.Id] = node;
             }
 
             foreach (var neo4jEdge in neo4jEdges)
@@ -648,7 +649,11 @@ public class GraphDB : IDisposable
                 var e = neo4jEdge.As<IRelationship>();
                 var source = nodes[e.StartNodeElementId];
                 var target = nodes[e.EndNodeElementId];
-                edges.Add(new Edge(source, target, e));
+                var edge = new Edge(source, target, e);                
+
+                edges.Add(edge);
+                source.AddOutgoingEdges(edge);
+                target.AddIncomingEdges(edge);
             }
         }
 
@@ -688,7 +693,6 @@ public class GraphDB : IDisposable
                 edge.GetFeatures());
         }
         
-
         var pairIndices = edgeFeatures.Keys.ToList();
         return (nodeFeatures, edgeFeatures.Values.ToList(), pairIndices);
     }

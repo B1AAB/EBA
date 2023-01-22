@@ -6,6 +6,12 @@ public class Node : IComparable<Node>, IEquatable<Node>
     public string Address { get; } = BitcoinAgent.Coinbase;
     public ScriptType ScriptType { get; } = ScriptType.Coinbase;
 
+    public int InDegree { get { return IncomingEdges.Count; } }
+    public int OutDegree { get { return OutgoingEdges.Count; } }
+
+    public List<Edge> IncomingEdges { private set; get; } = new();
+    public List<Edge> OutgoingEdges { private set; get; } = new();
+
     public static string Header
     {
         get
@@ -45,6 +51,26 @@ public class Node : IComparable<Node>, IEquatable<Node>
             Enum.Parse<ScriptType>((string)node.Properties["ScriptType"]))
     { }
 
+    public void AddIncomingEdges(Edge incomingEdge)
+    {
+        IncomingEdges.Add(incomingEdge);
+    }
+
+    public void AddIncomingEdges(List<Edge> incomingEdges)
+    {
+        IncomingEdges.AddRange(incomingEdges);
+    }
+
+    public void AddOutgoingEdges(List<Edge> outgoingEdges)
+    {
+        OutgoingEdges.AddRange(outgoingEdges);
+    }
+
+    public void AddOutgoingEdges(Edge outgoingEdge)
+    {
+        OutgoingEdges.Add(outgoingEdge);
+    }
+
     public double[] GetFeatures()
     {
         return new double[] { (double)ScriptType };
@@ -79,6 +105,8 @@ public class Node : IComparable<Node>, IEquatable<Node>
         if (other == null) 
             return false;
 
-        return Address == other.Address && ScriptType == other.ScriptType;
+        return 
+            Address == other.Address && 
+            ScriptType == other.ScriptType;
     }
 }
