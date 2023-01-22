@@ -23,7 +23,7 @@ public class Orchestrator : IDisposable
         _cli = new CLI(
             _options,
             TraverseAsync,
-            SampleGraph,
+            SampleGraphAsync,
             LoadGraphAsync,
             (e, c) => { Logger?.LogCritical("{error}", e.Message); });
     }
@@ -33,11 +33,11 @@ public class Orchestrator : IDisposable
         return await _cli.InvokeAsync(args);
     }
 
-    private async Task SampleGraph()
+    private async Task SampleGraphAsync()
     {
         await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
         var graphDb = _host.Services.GetRequiredService<GraphDB>();
-        await graphDb.Sampling();
+        await graphDb.TrySampleAsync();
     }
 
     private async Task LoadGraphAsync()

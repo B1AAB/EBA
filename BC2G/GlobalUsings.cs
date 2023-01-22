@@ -9,21 +9,27 @@ global using BC2G.Model;
 global using BC2G.Model.Config;
 global using BC2G.PersistentObject;
 global using BC2G.Serializers;
+
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.Extensions.CommandLineUtils;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Logging;
+
 global using Neo4j.Driver;
+
 global using Npgsql;
+
 global using Polly;
 global using Polly.Contrib.WaitAndRetry;
 global using Polly.Extensions.Http;
 global using Polly.Timeout;
 global using Polly.Wrap;
+
 global using Serilog;
 global using Serilog.Sinks.SystemConsole.Themes;
+
 global using System.Collections.Concurrent;
 global using System.Collections.ObjectModel;
 global using System.CommandLine;
