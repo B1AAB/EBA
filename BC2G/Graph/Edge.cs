@@ -2,6 +2,7 @@
 
 public class Edge
 {
+    public string Id { get; }
     public Node Source { get; }
     public Node Target { get; }
     public double Value { get; }
@@ -39,6 +40,18 @@ public class Edge
         Type = type;
         Timestamp = timestamp;
         BlockHeight = blockHeight;
+    }
+
+    public Edge(
+        Node source, Node target,
+        IRelationship relationship)
+    {
+        Source = source;
+        Target = target;
+        Id = relationship.ElementId;
+        Value = (double)relationship.Properties["Value"];
+        Type = Enum.Parse<EdgeType>(relationship.Type);
+        BlockHeight = (int)relationship.Properties["Height"];
     }
 
     public double[] GetFeatures()

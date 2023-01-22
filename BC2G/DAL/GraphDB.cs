@@ -553,7 +553,7 @@ public class GraphDB : IDisposable
 
         var rndNodes = new List<Node>();
         foreach (var n in rndNodesResult.Result)
-            rndNodes.Add(ParseNode(n.Values["rndScript"].As<INode>()));
+            rndNodes.Add(new Node(n.Values["rndScript"].As<INode>()));
 
         return rndNodes;
     }
@@ -580,14 +580,13 @@ public class GraphDB : IDisposable
         var rndEdges = new List<IRelationship>();
         foreach (var n in rndNodesResult.Result)
         {
-            var isource = n.Values["source"].As<INode>();
-            var itarget = n.Values["target"].As<INode>();
-            var source = ParseNode(isource);
-            var target = ParseNode(itarget);
+            var source = new Node(n.Values["source"].As<INode>());
+            var target = new Node(n.Values["target"].As<INode>());
 
-            rndNodes[isource.ElementId] = source;
-            rndNodes[itarget.ElementId] = target;
-            rndEdges.Add(n.Values["edge"].As<IRelationship>());
+            rndNodes[source.Id] = source;
+            rndNodes[target.Id] = target;
+            rndEdges.Add(
+                new Edge(source, target, n.Values["edge"].As<IRelationship>()));
         }
 
         return (rndNodes, rndEdges);
@@ -632,7 +631,7 @@ public class GraphDB : IDisposable
             if (root is null)
                 continue;
 
-            nodes[root.ElementId] = ParseNode(root);
+            nodes[root.ElementId] = new Node(root);
 
             var neo4jNodes = hop.Values["nodes"].As<List<object>>();
             var neo4jEdges = hop.Values["relationships"].As<List<object>>();
@@ -640,7 +639,7 @@ public class GraphDB : IDisposable
             foreach (var neo4jNode in neo4jNodes)
             {
                 var node = neo4jNode.As<INode>();
-                nodes[node.ElementId] = ParseNode(node);
+                nodes[node.ElementId] = new Node(node);
             }
 
             foreach (var neo4jEdge in neo4jEdges)
@@ -693,16 +692,6 @@ public class GraphDB : IDisposable
 
         var pairIndices = edgeFeatures.Keys.ToList();
         return (nodeFeatures, edgeFeatures.Values.ToList(), pairIndices);
-    }
-
-    private static Node ParseNode(INode node)
-    {
-        var props = node.Properties;
-
-        return new Node(
-            node.Id.ToString(),
-            (string)props["Address"],
-            Enum.Parse<ScriptType>((string)props["ScriptType"]));
     }
 
     public void Dispose()

@@ -39,6 +39,12 @@ public class Node : IComparable<Node>, IEquatable<Node>
         ScriptType = scriptType;
     }
 
+    public Node(INode node) :
+        this(node.ElementId,
+            (string)node.Properties["Address"],
+            Enum.Parse<ScriptType>((string)node.Properties["ScriptType"]))
+    { }
+
     public double[] GetFeatures()
     {
         return new double[] { (double)ScriptType };
