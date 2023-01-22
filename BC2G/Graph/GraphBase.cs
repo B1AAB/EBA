@@ -2,8 +2,6 @@
 
 public class GraphBase : IEquatable<GraphBase>
 {
-    public const string CoinbaseTxLabel = "Coinbase";
-
     protected readonly ConcurrentDictionary<Node, double> _sources = new();
     protected readonly ConcurrentDictionary<Node, double> _targets = new();
 

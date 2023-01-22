@@ -74,7 +74,7 @@ public class BitcoinOptions
     public int DbCommitAtUtxoBufferSize { set; get; } = 2000000;
 
     // null default lets runtime decide on max concurrency which is not static and changes w.r.t the load.
-    public int? MaxConcurrentBlocks { get; set; } = 1;// = null;
+    public int? MaxConcurrentBlocks { get; set; } = null;
 
     // When setting this, make sure it is more than the timeout of related Resilience strategies.
     public TimeSpan HttpClientTimeout { set; get; } = TimeSpan.FromMinutes(10);

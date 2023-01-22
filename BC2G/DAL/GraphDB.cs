@@ -1,7 +1,4 @@
-﻿using BC2G.Graph;
-using System.Diagnostics.Metrics;
-
-namespace BC2G.DAL;
+﻿namespace BC2G.DAL;
 
 
 // TODO: there is a bug: why many redeems per node in a given block? 
@@ -50,11 +47,15 @@ public class GraphDB : IDisposable
                 _options.Neo4j.Uri,
                 AuthTokens.Basic(_options.Neo4j.User, _options.Neo4j.Password));
 
-            try { _driver.VerifyConnectivityAsync().Wait(); }
-            catch (AggregateException) { Dispose(true); throw; }
-            // TODO: it seems message of an exception cannot be modified without impacting 
-            // stacktrace. Check if there is a better way of throwing an error with a message
-            // that indicates not able to connect to the Neo4j database.
+            try
+            {
+                _driver.VerifyConnectivityAsync().Wait();
+            }
+            catch (AggregateException)
+            {
+                Dispose(true);
+                throw;
+            }
 
             EnsureCoinbaseNodeAsync().Wait();
             EnsureConstraintsAsync().Wait();
@@ -443,7 +444,7 @@ public class GraphDB : IDisposable
                     Path.Join(baseOutputDir, sampledGraphsCounter.ToString())))
                 {
                     sampledGraphsCounter++;
-        }
+                }
             }
         }
 
@@ -615,7 +616,7 @@ public class GraphDB : IDisposable
             g.AddNode(root);
             g.AddNodes(hop.Values["nodes"].As<List<INode>>());
             g.AddEdges(hop.Values["relationships"].As<List<IRelationship>>());
-            }
+        }
 
         return g;
     }
