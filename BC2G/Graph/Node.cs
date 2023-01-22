@@ -78,7 +78,7 @@ public class Node : IComparable<Node>, IEquatable<Node>
 
     public double[] GetFeatures()
     {
-        return new double[] { (double)ScriptType };
+        return new double[] { (double)ScriptType, InDegree, OutDegree };
     }
 
     public override string ToString()
