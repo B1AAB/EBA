@@ -31,6 +31,11 @@ public class Node : IComparable<Node>, IEquatable<Node>
     /// </summary>
     public Node() { }
 
+    public Node(string id)
+    {
+        Id = id;
+    }
+
     public Node(string address, ScriptType scriptType)
     {
         Address = address;

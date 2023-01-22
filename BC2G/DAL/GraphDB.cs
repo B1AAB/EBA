@@ -428,7 +428,8 @@ public class GraphDB : IDisposable
         int attemps = 0, maxAttemps = 3;
         var baseOutputDir = Path.Join(_options.WorkingDir, "sampled_graphs");
 
-        while (sampledGraphsCounter < _options.GraphSample.Count
+        while (
+            sampledGraphsCounter < _options.GraphSample.Count
             && ++attemps <= maxAttemps)
         {
             var rndRootNodes = await GetRandomNodes(
@@ -436,8 +437,14 @@ public class GraphDB : IDisposable
                 _options.GraphSample.RootNodeSelectProb);
 
             foreach (var rootNode in rndRootNodes)
-                if (await TrySampleNeighborsAsync(rootNode, baseOutputDir))
+            {
+                if (await TrySampleNeighborsAsync(
+                    rootNode,
+                    Path.Join(baseOutputDir, sampledGraphsCounter.ToString())))
+                {
                     sampledGraphsCounter++;
+        }
+            }
         }
 
         if (attemps >= maxAttemps)
@@ -460,12 +467,10 @@ public class GraphDB : IDisposable
 
     private async Task<bool> TrySampleNeighborsAsync(Node rootNode, string baseOutputDir)
     {
-        var features = new Dictionary<string, (List<double[]>, List<double[]>, List<int[]>, List<int[]>)>();
-
-        (var nodes, var edges) = await GetNeighbors(rootNode.Address, _options.GraphSample.Hops);
+        var graph = await GetNeighbors(rootNode.Address, _options.GraphSample.Hops);
 
         if (!CanUseGraph(
-            nodes, edges, tolerance: 0,
+            graph, tolerance: 0,
             minNodeCount: _options.GraphSample.MinNodeCount,
             maxNodeCount: _options.GraphSample.MaxNodeCount,
             minEdgeCount: _options.GraphSample.MinEdgeCount,
@@ -474,41 +479,28 @@ public class GraphDB : IDisposable
 
         if (_options.GraphSample.Mode == GraphSampleMode.A)
         {
-            (var rndNodes, var rndEdges) = await GetRandomEdges(edges.Count);
+            var rndGraph = await GetRandomEdges(graph.EdgeCount);
 
             if (!CanUseGraph(
-                rndNodes, rndEdges,
+                rndGraph,
                 minNodeCount: _options.GraphSample.MinNodeCount,
-                maxNodeCount: nodes.Count,
+                maxNodeCount: graph.NodeCount,
                 minEdgeCount: _options.GraphSample.MinEdgeCount,
-                maxEdgeCount: edges.Count))
+                maxEdgeCount: graph.EdgeCount))
                 return false;
 
-            (var rNodeFeatures, var rEdgeFeatures, var rPairIndices) = ToMatrix(rndNodes, rndEdges);
-            features.Add("RandomEdges", (rNodeFeatures, rEdgeFeatures, rPairIndices, new List<int[]> { new int[] { 1 } }));
+            rndGraph.AddLabel(1);
+            rndGraph.GetFeatures(Path.Join(baseOutputDir, "random_edges"));
         }
 
-        (var nodeFeatures, var edgeFeatures, var pairIndices) = ToMatrix(nodes, edges);
-        features.Add("Graph", (nodeFeatures, edgeFeatures, pairIndices, new List<int[]> { new int[] { 0 } }));
-
-        foreach (var graphFeatures in features)
-        {
-            var outputDir = Path.Join(baseOutputDir, graphFeatures.Key);
-            Directory.CreateDirectory(outputDir);
-
-            (var nFeatures, var eFeatures, var pIndices, var labels) = graphFeatures.Value;
-            ToTSV(nFeatures, Path.Join(outputDir, "node_features.tsv"));
-            ToTSV(eFeatures, Path.Join(outputDir, "edge_features.tsv"));
-            ToTSV(pIndices, Path.Join(outputDir, "pair_indices.tsv"));
-            ToTSV(labels, Path.Join(outputDir, "labels.tsv"));
-        }
+        graph.AddLabel(0);
+        graph.GetFeatures(Path.Join(baseOutputDir, "graph"));
 
         return true;
     }
 
     private static bool CanUseGraph(
-        Dictionary<string, Node> nodes,
-        List<Edge> edges,
+        GraphBase2 g,
         int minNodeCount = 3, int maxNodeCount = 200,
         int minEdgeCount = 3, int maxEdgeCount = 200,
         double tolerance = 0.5)
@@ -521,18 +513,11 @@ public class GraphDB : IDisposable
         // multiply matrixes of very large size 2**32 or even
         // larger. There should be much better workarounds at
         // Tensorflow level, but for now, we limit the size of graphs.
-        if (nodes.Count <= minNodeCount - (minNodeCount * tolerance) || nodes.Count >= maxNodeCount + (maxNodeCount * tolerance) ||
-            edges.Count <= minEdgeCount - (minEdgeCount * tolerance) || edges.Count >= maxEdgeCount + (maxEdgeCount * tolerance))
+        if (g.NodeCount <= minNodeCount - (minNodeCount * tolerance) || g.NodeCount >= maxNodeCount + (maxNodeCount * tolerance) ||
+            g.EdgeCount <= minEdgeCount - (minEdgeCount * tolerance) || g.EdgeCount >= maxEdgeCount + (maxEdgeCount * tolerance))
             return false;
 
         return true;
-    }
-
-    private void ToTSV<T>(List<T[]> data, string filename)
-    {
-        using var writer = new StreamWriter(filename);
-        foreach (var x in data)
-            writer.WriteLine(string.Join("\t", x));
     }
 
     private async Task<List<Node>> GetRandomNodes(
@@ -559,7 +544,7 @@ public class GraphDB : IDisposable
         return rndNodes;
     }
 
-    private async Task<(Dictionary<string, Node>, List<Edge>)> GetRandomEdges(
+    private async Task<GraphBase2> GetRandomEdges(
         int edgeCount,
         double edgeSelectProb = 0.1)
     {
@@ -577,23 +562,19 @@ public class GraphDB : IDisposable
         });
         await rndNodesResult;
 
-        var rndNodes = new Dictionary<string, Node>();
-        var rndEdges = new List<Edge>();
+        var g = new GraphBase2();
+
         foreach (var n in rndNodesResult.Result)
         {
-            var source = new Node(n.Values["source"].As<INode>());
-            var target = new Node(n.Values["target"].As<INode>());
-
-            rndNodes[source.Id] = source;
-            rndNodes[target.Id] = target;
-            rndEdges.Add(
-                new Edge(source, target, n.Values["edge"].As<IRelationship>()));
+            g.AddNode(n.Values["source"].As<INode>());
+            g.AddNode(n.Values["target"].As<INode>());
+            g.AddEdge(n.Values["edge"].As<IRelationship>());
         }
 
-        return (rndNodes, rndEdges);
+        return g;
     }
 
-    private async Task<(Dictionary<string, Node>, List<Edge>)> GetNeighbors(
+    private async Task<GraphBase2> GetNeighbors(
         string rootScriptAddress, int maxHops)
     {
         using var session = _driver.AsyncSession(
@@ -623,8 +604,7 @@ public class GraphDB : IDisposable
         });
         await samplingResult;
 
-        var nodes = new Dictionary<string, Node>();
-        var edges = new List<Edge>();
+        var g = new GraphBase2();
 
         foreach (var hop in samplingResult.Result)
         {
@@ -632,69 +612,12 @@ public class GraphDB : IDisposable
             if (root is null)
                 continue;
 
-            var rootNode = new Node(root);
-            nodes[rootNode.Id] = rootNode;
-
-            var neo4jNodes = hop.Values["nodes"].As<List<object>>();
-            var neo4jEdges = hop.Values["relationships"].As<List<object>>();
-
-            foreach (var neo4jNode in neo4jNodes)
-            {
-                var node = new Node(neo4jNode.As<INode>());
-                nodes[node.Id] = node;
+            g.AddNode(root);
+            g.AddNodes(hop.Values["nodes"].As<List<INode>>());
+            g.AddEdges(hop.Values["relationships"].As<List<IRelationship>>());
             }
 
-            foreach (var neo4jEdge in neo4jEdges)
-            {
-                var e = neo4jEdge.As<IRelationship>();
-                var source = nodes[e.StartNodeElementId];
-                var target = nodes[e.EndNodeElementId];
-                var edge = new Edge(source, target, e);                
-
-                edges.Add(edge);
-                source.AddOutgoingEdges(edge);
-                target.AddIncomingEdges(edge);
-            }
-        }
-
-        return (nodes, edges);
-    }
-
-    private static (List<double[]>, List<double[]>, List<int[]>) ToMatrix(
-        Dictionary<string, Node> nodes,
-        List<Edge> edges)
-    {
-        var nodeFeatures = new List<double[]>();
-        var nodeIdToIdx = new Dictionary<string, int>();
-        foreach (var node in nodes)
-        {
-            nodeFeatures.Add(node.Value.GetFeatures());
-            nodeIdToIdx.Add(node.Key, nodeIdToIdx.Count);
-        }
-
-        var edgeFeatures = new SortedList<int[], double[]>(
-            Comparer<int[]>.Create((x, y) =>
-            {
-                // This comparer allows duplicates,
-                // and treats equal items as x greater than y.
-                var r = x[0].CompareTo(y[0]);
-                if (r != 0) return r;
-                r = x[1].CompareTo(y[1]);
-                if (r != 0) return r;
-                return 1;
-            }));
-
-        foreach (var edge in edges)
-        {
-            edgeFeatures.Add(
-                new int[] {
-                    nodeIdToIdx[edge.Source.Id],
-                    nodeIdToIdx[edge.Target.Id] },
-                edge.GetFeatures());
-        }
-        
-        var pairIndices = edgeFeatures.Keys.ToList();
-        return (nodeFeatures, edgeFeatures.Values.ToList(), pairIndices);
+        return g;
     }
 
     public void Dispose()

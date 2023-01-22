@@ -95,4 +95,14 @@ internal class Utilities
         }
         return builder.ToString();
     }
+
+    public static void CsvSerialize<T>(
+        IEnumerable<T[]> data,
+        string filename,
+        char delimiter = '\t')
+    {
+        using var writter = new StreamWriter(filename);
+        foreach (var item in data)
+            writter.WriteLine(string.Join(delimiter, item));
+    }
 }
