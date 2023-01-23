@@ -1,4 +1,3 @@
-using BC2G.Model;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace BC2G;
@@ -39,7 +38,7 @@ public class Orchestrator : IDisposable
     private async Task SampleGraphAsync()
     {
         await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
-        var graphDb = _host.Services.GetRequiredService<GraphDB>();
+        var graphDb = _host.Services.GetRequiredService<GraphDb>();
         var successfull = await graphDb.TrySampleAsync();
         if (successfull)
             Logger.LogInformation("Successfully completed sampling graphs.");
@@ -48,7 +47,7 @@ public class Orchestrator : IDisposable
     private async Task LoadGraphAsync()
     {
         await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
-        var graphDb = _host.Services.GetRequiredService<GraphDB>();
+        var graphDb = _host.Services.GetRequiredService<GraphDb>();
         graphDb.BulkImport(_options.WorkingDir);
     }
 
@@ -157,7 +156,7 @@ public class Orchestrator : IDisposable
             cT);
 
         using var gBuffer = new PersistentGraphBuffer(
-            _host.Services.GetRequiredService<GraphDB>(),
+            _host.Services.GetRequiredService<GraphDb>(),
             _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),            
             pGraphStat,
             cT);

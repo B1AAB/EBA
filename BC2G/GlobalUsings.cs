@@ -1,8 +1,8 @@
 ﻿global using BC2G.Blockchains;
 global using BC2G.CommandLineInterface;
-global using BC2G.DAL;
-global using BC2G.DAL.Bulkload;
-global using BC2G.Graph;
+global using BC2G.Graph.Db;
+global using BC2G.Graph.Db.Bulkload;
+global using BC2G.Graph.Model;
 global using BC2G.Infrastructure;
 global using BC2G.Infrastructure.StartupSolutions;
 global using BC2G.Model;

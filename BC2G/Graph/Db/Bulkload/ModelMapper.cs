@@ -1,4 +1,4 @@
-﻿namespace BC2G.DAL.Bulkload;
+﻿namespace BC2G.Graph.Db.Bulkload;
 
 internal abstract class ModelMapper<T> : ModelMapper
 {

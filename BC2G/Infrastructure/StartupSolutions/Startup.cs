@@ -79,7 +79,7 @@ public class Startup
     private static void ConfigureServices(IServiceCollection services, Options options)
     {
         services.AddSingleton(options);
-        services.AddSingleton<GraphDB>();
+        services.AddSingleton<GraphDb>();
 
         // Passing BitcoinAgent type as the generic argument
         // to AddHttpClient will cause registering it 

@@ -1,4 +1,4 @@
-﻿namespace BC2G.Graph;
+﻿namespace BC2G.Graph.Model;
 
 public class BlockStatistics
 {

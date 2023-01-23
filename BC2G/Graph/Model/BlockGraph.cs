@@ -4,7 +4,7 @@
 // create one node instance and re-use it.
 
 
-namespace BC2G.Graph;
+namespace BC2G.Graph.Model;
 
 public class BlockGraph : GraphBase, IEquatable<BlockGraph>
 {

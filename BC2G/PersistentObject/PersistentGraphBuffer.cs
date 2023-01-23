@@ -6,12 +6,12 @@ public class PersistentGraphBuffer : PersistentObject<BlockGraph>, IDisposable
     private readonly PersistentGraphStatistics _pGraphStats;
     private readonly ILogger<PersistentGraphBuffer> _logger;
 
-    private readonly GraphDB _graphDB;
+    private readonly GraphDb _graphDB;
 
     private bool _disposed = false;
 
     public PersistentGraphBuffer(
-        GraphDB graphdb,
+        GraphDb graphdb,
         ILogger<PersistentGraphBuffer> logger,
         //string nodesFilename,
         //string edgesFilename,

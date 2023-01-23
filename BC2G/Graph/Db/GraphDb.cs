@@ -1,10 +1,10 @@
-﻿namespace BC2G.DAL;
+﻿namespace BC2G.Graph.Db;
 
 
 // TODO: there is a bug: why many redeems per node in a given block? 
 // TODO: add time stamp to edge.
 
-public class GraphDB : IDisposable
+public class GraphDb : IDisposable
 {
     public static string Coinbase { get { return "Coinbase"; } }
 
@@ -31,11 +31,11 @@ public class GraphDB : IDisposable
     private static string CurrentTimeStamp { get { return DateTime.Now.ToString("yyyyMMddHHmmssffff"); } }
 
     private readonly Options _options;
-    private readonly ILogger<GraphDB> _logger;
+    private readonly ILogger<GraphDb> _logger;
 
-    ~GraphDB() => Dispose(false);
+    ~GraphDb() => Dispose(false);
 
-    public GraphDB(Options options, ILogger<GraphDB> logger)
+    public GraphDb(Options options, ILogger<GraphDb> logger)
     {
         _options = options;
         _logger = logger;
