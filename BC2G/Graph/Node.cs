@@ -108,7 +108,6 @@ public class Node : IComparable<Node>, IEquatable<Node>
         if (r != 0) return r;
         return ScriptType.CompareTo(other.ScriptType);
     }
-
     
     public bool Equals(Node? other)
     {

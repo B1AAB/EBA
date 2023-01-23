@@ -2,35 +2,6 @@
 
 public class GraphBase : IEquatable<GraphBase>
 {
-    protected readonly ConcurrentDictionary<Node, double> _sources = new();
-    protected readonly ConcurrentDictionary<Node, double> _targets = new();
-
-    public List<Node> RewardsAddresses { set; get; } = new();
-
-    public GraphBase()
-    { }
-
-    public bool Equals(GraphBase? other)
-    {   
-        if (other == null)
-            return false;
-
-        return ReferenceEquals(this, other);
-    }
-
-    public override bool Equals(object? obj)
-    {
-        return Equals(obj as GraphBase);
-    }
-
-    public override int GetHashCode()
-    {
-        throw new NotImplementedException();
-    }
-}
-
-public class GraphBase2 : IEquatable<GraphBase2>
-{
     public int NodeCount { get { return _nodes.Count; } }
     public int EdgeCount { get { return _edges.Count; } }
 
@@ -46,7 +17,6 @@ public class GraphBase2 : IEquatable<GraphBase2>
     {
         get { return new ReadOnlyCollection<double>(_labels); }
     }
-
 
     private readonly ConcurrentDictionary<string, Node> _nodes = new();
     private readonly ConcurrentDictionary<string, Edge> _edges = new();
@@ -133,16 +103,16 @@ public class GraphBase2 : IEquatable<GraphBase2>
             x.LabelsHeader);
     }
 
-    public bool Equals(GraphBase2? other)
+    public bool Equals(GraphBase? other)
     {
         if (other == null)
             return false;
 
         return ReferenceEquals(this, other);
     }
-    public bool Equals(object? other)
+    public override bool Equals(object? other)
     {
-        return Equals(other as GraphBase2);
+        return Equals(other as GraphBase);
     }
     public override int GetHashCode()
     {

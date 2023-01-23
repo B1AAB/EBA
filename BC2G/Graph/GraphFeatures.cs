@@ -14,7 +14,7 @@ public class GraphFeatures
     public ReadOnlyCollection<double[]> Labels { get; }
     public ReadOnlyCollection<string> LabelsHeader { get; }
 
-    public GraphFeatures(GraphBase2 graph)
+    public GraphFeatures(GraphBase graph)
     {
         var nodeFeatures = new List<double[]>();
         var nodeIdToIdx = new Dictionary<string, int>();

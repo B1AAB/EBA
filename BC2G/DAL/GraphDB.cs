@@ -507,7 +507,7 @@ public class GraphDB : IDisposable
     }
 
     private static bool CanUseGraph(
-        GraphBase2 g,
+        GraphBase g,
         int minNodeCount = 3, int maxNodeCount = 200,
         int minEdgeCount = 3, int maxEdgeCount = 200,
         double tolerance = 0.5)
@@ -551,7 +551,7 @@ public class GraphDB : IDisposable
         return rndNodes;
     }
 
-    private async Task<GraphBase2> GetRandomEdges(
+    private async Task<GraphBase> GetRandomEdges(
         int edgeCount,
         double edgeSelectProb = 0.1)
     {
@@ -569,7 +569,7 @@ public class GraphDB : IDisposable
         });
         await rndNodesResult;
 
-        var g = new GraphBase2();
+        var g = new GraphBase();
 
         foreach (var n in rndNodesResult.Result)
         {
@@ -581,7 +581,7 @@ public class GraphDB : IDisposable
         return g;
     }
 
-    private async Task<GraphBase2> GetNeighbors(
+    private async Task<GraphBase> GetNeighbors(
         string rootScriptAddress, int maxHops)
     {
         using var session = _driver.AsyncSession(
@@ -611,7 +611,7 @@ public class GraphDB : IDisposable
         });
         await samplingResult;
 
-        var g = new GraphBase2();
+        var g = new GraphBase();
 
         foreach (var hop in samplingResult.Result)
         {

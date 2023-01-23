@@ -2,10 +2,6 @@
 // TODO: 
 // instead of creating one a new node instance for the Coinbase node, 
 // create one node instance and re-use it.
-// 
-//
-// TODO:
-// remove the RewardAddress from the BaseGraph.
 
 
 namespace BC2G.Graph;
@@ -17,13 +13,15 @@ public class BlockGraph : GraphBase, IEquatable<BlockGraph>
     public Block Block { get; }
     public BlockStatistics Stats { set; get; }
 
+    public List<Node> RewardsAddresses { set; get; } = new();
+
     /// <summary>
     /// Is the sum of all the tranactions fee.
     /// </summary>
     public double TotalFee { get { return _totalFee; } }
     private double _totalFee;
 
-    public ReadOnlyCollection<Edge> Edges
+    public new ReadOnlyCollection<Edge> Edges
     {
         get
         {
@@ -32,7 +30,7 @@ public class BlockGraph : GraphBase, IEquatable<BlockGraph>
     }
     private readonly ConcurrentDictionary<int, Edge> _edges = new();
 
-    public ReadOnlyCollection<Node> Nodes
+    public new ReadOnlyCollection<Node> Nodes
     {
         get
         {
@@ -40,9 +38,6 @@ public class BlockGraph : GraphBase, IEquatable<BlockGraph>
         }
     }
     private readonly ConcurrentDictionary<Node, byte> _nodes = new();
-
-    public int NodeCount { get { return _nodes.Count; } }
-    public int EdgeCount { get { return _edges.Count; } }
 
     private readonly ConcurrentQueue<TransactionGraph> _txGraphsQueue = new();
 
@@ -91,15 +86,15 @@ public class BlockGraph : GraphBase, IEquatable<BlockGraph>
         // from sender to miner. 
         Parallel.ForEach(
             _txGraphsQueue.Where(x => !x.Sources.IsEmpty),
-            (txGraph, state_2) =>
+            (txGraph, state) =>
             {
                 if (ct.IsCancellationRequested)
-                { state_2.Stop(); return; }
+                { state.Stop(); return; }
 
                 Merge(txGraph, coinbaseTxG, totalPaidToMiner, ct);
 
                 if (ct.IsCancellationRequested)
-                { state_2.Stop(); return; }
+                { state.Stop(); return; }
             });
 
         foreach (var item in coinbaseTxG.Targets)
@@ -115,9 +110,9 @@ public class BlockGraph : GraphBase, IEquatable<BlockGraph>
     }
 
     private void Merge(
-        TransactionGraph txGraph, 
-        TransactionGraph coinbaseTxG, 
-        double totalPaidToMiner, 
+        TransactionGraph txGraph,
+        TransactionGraph coinbaseTxG,
+        double totalPaidToMiner,
         CancellationToken ct)
     {
         var fee = txGraph.Fee;
@@ -189,7 +184,7 @@ public class BlockGraph : GraphBase, IEquatable<BlockGraph>
                 edge.Timestamp,
                 edge.BlockHeight));
 
-        if(double.IsNaN(edge.Value))
+        if (double.IsNaN(edge.Value))
         {
 
         }
