@@ -8,7 +8,7 @@ namespace BC2G.Graph;
 
 public class BlockGraph : GraphBase, IEquatable<BlockGraph>
 {
-    public int Height { get; }
+    public long Height { get; }
     public uint Timestamp { get; }
     public Block Block { get; }
     public BlockStatistics Stats { set; get; }
@@ -59,7 +59,7 @@ public class BlockGraph : GraphBase, IEquatable<BlockGraph>
     // TODO: this constructor is required by the deserializer
     // mostly for testing purposes, should improve avoid
     // needing constructor.
-    public BlockGraph(int height)
+    public BlockGraph(long height)
     {
         Height = height;
         Stats = new BlockStatistics(height);

@@ -8,7 +8,7 @@ public class Edge
     public double Value { get; }
     public EdgeType Type { get; }
     public uint Timestamp { get; }
-    public int BlockHeight { get; }
+    public long BlockHeight { get; }
 
     public static string Header
     {
@@ -32,7 +32,7 @@ public class Edge
     public Edge(
         Node source, Node target,
         double value, EdgeType type,
-        uint timestamp, int blockHeight)
+        uint timestamp, long blockHeight)
     {
         Source = source;
         Target = target;
@@ -51,10 +51,7 @@ public class Edge
         Id = relationship.ElementId;
         Value = (double)relationship.Properties["Value"];
         Type = Enum.Parse<EdgeType>(relationship.Type);
-
-        // TODO: FIXME
-        // change the type of Height to long and avoid casting int to long
-        BlockHeight = (int)(long)relationship.Properties["Height"];
+        BlockHeight = (long)relationship.Properties["Height"];
     }
 
     public static string[] GetFeaturesName()

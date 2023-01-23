@@ -67,7 +67,7 @@ public class CSVSerializer : SerializerBase, IDisposable
         return ReadEdges(Path.Combine(path, $"{blockHeight}_edges.tsv"), blockHeight, nodeIds);
     }
 
-    public static Dictionary<int, BlockGraph> Deserialize(string edges, string addressIdMapping)
+    public static Dictionary<long, BlockGraph> Deserialize(string edges, string addressIdMapping)
     {
         var mappings = new Dictionary<string, string>();
         foreach (var l in File.ReadAllLines(addressIdMapping))
@@ -76,7 +76,7 @@ public class CSVSerializer : SerializerBase, IDisposable
             mappings.Add(cols[0], cols[1]);
         }
 
-        var blockGraphs = new Dictionary<int, BlockGraph>();
+        var blockGraphs = new Dictionary<long, BlockGraph>();
 
         string? line;
         using var reader = new StreamReader(edges);

@@ -9,7 +9,7 @@ public class Block
     public int Confirmations { set; get; }
 
     [JsonPropertyName("height")]
-    public int Height { set; get; }
+    public long Height { set; get; }
 
     [JsonPropertyName("version")]
     public int Version { set; get; }

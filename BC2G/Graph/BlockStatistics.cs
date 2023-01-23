@@ -2,7 +2,7 @@
 
 public class BlockStatistics
 {
-    public int Height { get; }
+    public long Height { get; }
     public int Confirmations { get; }
     public string Bits { get; }
     public double Difficulty { get; }
@@ -63,7 +63,7 @@ public class BlockStatistics
         TransactionsCount = block.TransactionsCount;
     }
 
-    public BlockStatistics(int height)
+    public BlockStatistics(long height)
     {
         Height = height;
     }
