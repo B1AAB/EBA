@@ -6,15 +6,15 @@ internal class ScriptMapper : ModelMapper<Edge>
 
     /// Note that the ordre of the items in this array should 
     /// match those in the `ToCSV` method.
-    private readonly Prop[] _properties = new Prop[]
+    private readonly Property[] _properties = new Property[]
     {
-        Prop.EdgeSourceAddress,
-        Prop.EdgeSourceType,
-        Prop.EdgeTargetAddress,
-        Prop.EdgeTargetType,
-        Prop.EdgeType,
-        Prop.EdgeValue,
-        Prop.Height
+        Props.EdgeSourceAddress,
+        Props.EdgeSourceType,
+        Props.EdgeTargetAddress,
+        Props.EdgeTargetType,
+        Props.EdgeType,
+        Props.EdgeValue,
+        Props.Height
     };
 
     public ScriptMapper(
@@ -28,7 +28,7 @@ internal class ScriptMapper : ModelMapper<Edge>
     public override string GetCsvHeader()
     {
         return string.Join(csvDelimiter,
-            from x in _properties select Props[x].CsvHeader);
+            from x in _properties select x.CsvHeader);
     }
 
     public override string ToCsv(Edge edge)
@@ -70,26 +70,26 @@ internal class ScriptMapper : ModelMapper<Edge>
             $"FIELDTERMINATOR '{csvDelimiter}' " +
             // Load source
             $"MERGE (source:{labels} {{" +
-            $"{Props[Prop.EdgeSourceAddress].GetLoadExp(":")}}}) " +
-            $"ON CREATE SET source.{Props[Prop.EdgeSourceType].GetLoadExp("=")} " +
-            $"ON MATCH SET source.{Props[Prop.EdgeSourceType].Name} = " +
-            $"CASE {l}.{Props[Prop.EdgeSourceType].CsvHeader} " +
-            $"WHEN '{unknown}' THEN source.{Props[Prop.EdgeSourceType].Name} " +
-            $"ELSE {l}.{Props[Prop.EdgeSourceType].CsvHeader} " +
+            $"{Props.EdgeSourceAddress.GetLoadExp(":")}}}) " +
+            $"ON CREATE SET source.{Props.EdgeSourceType.GetLoadExp("=")} " +
+            $"ON MATCH SET source.{Props.EdgeSourceType.Name} = " +
+            $"CASE {l}.{Props.EdgeSourceType.CsvHeader} " +
+            $"WHEN '{unknown}' THEN source.{Props.EdgeSourceType.Name} " +
+            $"ELSE {l}.{Props.EdgeSourceType.CsvHeader} " +
             $"END " +
             // Load target
             $"MERGE (target:{labels} {{" +
-            $"{Props[Prop.EdgeTargetAddress].GetLoadExp(":")}}}) " +
-            $"ON CREATE SET target.{Props[Prop.EdgeTargetType].GetLoadExp("=")} " +
-            $"ON MATCH SET target.{Props[Prop.EdgeTargetType].Name} = " +
-            $"CASE {l}.{Props[Prop.EdgeTargetType].CsvHeader} " +
-            $"WHEN '{unknown}' THEN target.{Props[Prop.EdgeTargetType].Name} " +
-            $"ELSE {l}.{Props[Prop.EdgeTargetType].CsvHeader} " +
+            $"{Props.EdgeTargetAddress.GetLoadExp(":")}}}) " +
+            $"ON CREATE SET target.{Props.EdgeTargetType.GetLoadExp("=")} " +
+            $"ON MATCH SET target.{Props.EdgeTargetType.Name} = " +
+            $"CASE {l}.{Props.EdgeTargetType.CsvHeader} " +
+            $"WHEN '{unknown}' THEN target.{Props.EdgeTargetType.Name} " +
+            $"ELSE {l}.{Props.EdgeTargetType.CsvHeader} " +
             $"END " +
             $"WITH source, target, {l} " +
             // Find the block
             $"MATCH (block:{BlockMapper.label} {{" +
-            $"{Props[Prop.Height].GetLoadExp(":")}" +
+            $"{Props.Height.GetLoadExp(":")}" +
             "}) " +
             // Create relationship between the block node and the scripts nodes. 
             RedeemsEdgeQuery +
@@ -99,10 +99,10 @@ internal class ScriptMapper : ModelMapper<Edge>
             // where the type of the relationship is read from the CSV file.
             "CALL apoc.merge.relationship(" +
             "source, " + // source
-            $"{l}.{Props[Prop.EdgeType].CsvHeader}, " + // relationship type
+            $"{l}.{Props.EdgeType.CsvHeader}, " + // relationship type
             $"{{" + // properties
-            $"{Props[Prop.EdgeValue].GetLoadExp(":")}, " + 
-            $"{Props[Prop.Height].GetLoadExp(":")}" +
+            $"{Props.EdgeValue.GetLoadExp(":")}, " + 
+            $"{Props.Height.GetLoadExp(":")}" +
             $"}}, " +
             $"{{ Count : 0}}, " + // on create
             $"target, " + // target

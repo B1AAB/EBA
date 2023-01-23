@@ -4,13 +4,13 @@ internal class CoinbaseMapper : ScriptMapper
 {
     /// Note that the ordre of the items in this array should 
     /// match those in the `ToCSV` method.
-    private readonly Prop[] _properties = new Prop[]
+    private readonly Property[] _properties = new Property[]
     {
-        Prop.EdgeTargetAddress,
-        Prop.EdgeTargetType,
-        Prop.EdgeType,
-        Prop.EdgeValue,
-        Prop.Height
+        Props.EdgeTargetAddress,
+        Props.EdgeTargetType,
+        Props.EdgeType,
+        Props.EdgeValue,
+        Props.Height
     };
 
     public CoinbaseMapper(
@@ -24,7 +24,7 @@ internal class CoinbaseMapper : ScriptMapper
     public override string GetCsvHeader()
     {
         return string.Join(csvDelimiter,
-            from x in _properties select Props[x].CsvHeader);
+            from x in _properties select x.CsvHeader);
     }
 
     public override string ToCsv(Edge edge)
@@ -50,11 +50,11 @@ internal class CoinbaseMapper : ScriptMapper
             $"FIELDTERMINATOR '{csvDelimiter}' " +
             $"MATCH (coinbase:{BitcoinAgent.Coinbase}) " +
             $"MERGE (target:{labels} {{" +
-            $"{Props[Prop.EdgeTargetAddress].GetLoadExp(":")}}}) " +
-            $"SET target.{Props[Prop.EdgeTargetType].GetLoadExp("=")} " +
+            $"{Props.EdgeTargetAddress.GetLoadExp(":")}}}) " +
+            $"SET target.{Props.EdgeTargetType.GetLoadExp("=")} " +
             $"WITH coinbase, target, {l} " +
             $"MATCH (block:{BlockMapper.label} {{" +
-            $"{Props[Prop.Height].GetLoadExp(":")}" +
+            $"{Props.Height.GetLoadExp(":")}" +
             $"}}) " +
             // Create edge between the script and its corresponding block
             CreatesEdgeQuery +
@@ -62,10 +62,10 @@ internal class CoinbaseMapper : ScriptMapper
             // Create edge between the coinbase node and the script
             $"CALL apoc.merge.relationship (" +
             $"coinbase, " + // source
-            $"{l}.{Props[Prop.EdgeType].CsvHeader}, " + // relationship type
+            $"{l}.{Props.EdgeType.CsvHeader}, " + // relationship type
             $"{{" + // properties
-            $"{Props[Prop.EdgeValue].GetLoadExp(":")}, " +
-            $"{Props[Prop.Height].GetLoadExp(":")}" +
+            $"{Props.EdgeValue.GetLoadExp(":")}, " +
+            $"{Props.Height.GetLoadExp(":")}" +
             $"}}, " +
             $"{{ Count : 0 }}, " + // on create
             $"target, " + // target

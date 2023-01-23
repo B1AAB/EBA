@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Bulkload;
 
-internal class Property
+public class Property
 {
     public const string lineVarName = "line";
     public string Name { get; }

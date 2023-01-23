@@ -339,7 +339,7 @@ public class GraphDb : IDisposable
                     {
                         await tx.RunAsync(
                             $"CREATE (:{BitcoinAgent.Coinbase} {{" +
-                            $"{ScriptMapper.Props[Prop.ScriptAddress].Name}: " +
+                            $"{Props.ScriptAddress.Name}: " +
                             $"\"{BitcoinAgent.Coinbase}\"}})");
                     });
                 }
@@ -386,7 +386,7 @@ public class GraphDb : IDisposable
                 var result = await x.RunAsync(
                     "CREATE CONSTRAINT UniqueAddressContraint " +
                     $"FOR (script:{ScriptMapper.labels}) " +
-                    $"REQUIRE script.{ScriptMapper.Props[Prop.ScriptAddress].Name} IS UNIQUE");
+                    $"REQUIRE script.{Props.ScriptAddress.Name} IS UNIQUE");
             });
         }
         catch (Exception e)
@@ -400,7 +400,7 @@ public class GraphDb : IDisposable
             {
                 var result = await x.RunAsync(
                     $"CREATE INDEX FOR (script:{ScriptMapper.labels}) " +
-                    $"ON (script.{ScriptMapper.Props[Prop.ScriptAddress].Name})");
+                    $"ON (script.{Props.ScriptAddress.Name})");
             });
         }
         catch (Exception e)
@@ -414,7 +414,7 @@ public class GraphDb : IDisposable
             {
                 var result = await x.RunAsync(
                     $"CREATE INDEX FOR (block:{BlockMapper.label})" +
-                    $" on (block.{BlockMapper.Props[Prop.Height].Name})");
+                    $" on (block.{Props.Height.Name})");
             });
         }
         catch (Exception e)

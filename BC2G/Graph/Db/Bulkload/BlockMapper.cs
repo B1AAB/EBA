@@ -5,25 +5,25 @@ internal class BlockMapper : ModelMapper<BlockGraph>
     public const string label = "Block";
 
     /// Note that the ordre of the items in this array should 
-    /// match those returned from the `ToCsv()` method.. 
-    private static readonly Prop[] _properties = new Prop[]
+    /// match those returned from the `ToCsv()` method.
+    private static readonly Property[] _properties = new Property[]
     {
-        Prop.Height,
-        Prop.BlockMedianTime,
-        Prop.BlockConfirmations,
-        Prop.BlockDifficulty,
-        Prop.BlockTxCount,
-        Prop.BlockSize,
-        Prop.BlockStrippedSize,
-        Prop.BlockWeight,
-        Prop.NumGenerationEdges,
-        Prop.NumTransferEdges,
-        Prop.NumChangeEdges,
-        Prop.NumFeeEdges,
-        Prop.SumGenerationEdges,
-        Prop.SumTransferEdges,
-        Prop.SumChangeEdges,
-        Prop.SumFeeEdges
+        Props.Height,
+        Props.BlockMedianTime,
+        Props.BlockConfirmations,
+        Props.BlockDifficulty,
+        Props.BlockTxCount,
+        Props.BlockSize,
+        Props.BlockStrippedSize,
+        Props.BlockWeight,
+        Props.NumGenerationEdges,
+        Props.NumTransferEdges,
+        Props.NumChangeEdges,
+        Props.NumFeeEdges,
+        Props.SumGenerationEdges,
+        Props.SumTransferEdges,
+        Props.SumChangeEdges,
+        Props.SumFeeEdges
     };
 
     public BlockMapper(
@@ -38,7 +38,7 @@ internal class BlockMapper : ModelMapper<BlockGraph>
     {
         return string.Join(
             csvDelimiter,
-            from x in _properties select Props[x].CsvHeader);
+            from x in _properties select x.CsvHeader);
     }
 
     public override string ToCsv(BlockGraph bgraph)
@@ -74,19 +74,22 @@ internal class BlockMapper : ModelMapper<BlockGraph>
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {Property.lineVarName} " +
             $"FIELDTERMINATOR '{csvDelimiter}' " +
             $"MERGE (b: {label} {{" +
-            $"{Props[Prop.Height].GetLoadExp(":")}}})" +
+            $"{Props.Height.GetLoadExp(":")}}})" +
             $"ON CREATE SET ");
 
         string comma = "";
-        foreach (var p in _properties) if (p != Prop.Height)
+        foreach (var p in _properties)
+        {
+            if (p.Name != Props.Height.Name)
             {
-                builder.Append($"{comma}b.{Props[p].GetLoadExp()}");
+                builder.Append($"{comma}b.{p.GetLoadExp()}");
                 comma = ", ";
             }
+        }
 
         builder.Append(
             " ON MATCH SET " +
-            $"b.{Props[Prop.BlockConfirmations].GetLoadExp()}");
+            $"b.{Props.BlockConfirmations.GetLoadExp()}");
 
         return builder.ToString();
     }
