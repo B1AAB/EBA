@@ -49,9 +49,9 @@ public class Edge
         Source = source;
         Target = target;
         Id = relationship.ElementId;
-        Value = (double)relationship.Properties["Value"];
+        Value = (double)relationship.Properties[ModelMapper.Props[Prop.EdgeValue].Name];
         Type = Enum.Parse<EdgeType>(relationship.Type);
-        BlockHeight = (long)relationship.Properties["Height"];
+        BlockHeight = (long)relationship.Properties[ModelMapper.Props[Prop.Height].Name];
     }
 
     public static string[] GetFeaturesName()

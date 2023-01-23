@@ -51,9 +51,12 @@ public class Node : IComparable<Node>, IEquatable<Node>
     }
 
     public Node(INode node) :
-        this(node.ElementId,
-            (string)node.Properties["Address"],
-            Enum.Parse<ScriptType>((string)node.Properties["ScriptType"]))
+        this(node.ElementId, 
+            (string)node.Properties[
+                ModelMapper.Props[Prop.ScriptAddress].Name],
+            
+            Enum.Parse<ScriptType>((string)node.Properties[
+                ModelMapper.Props[Prop.ScriptType].Name]))
     { }
 
     public void AddIncomingEdges(Edge incomingEdge)

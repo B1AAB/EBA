@@ -1,6 +1,18 @@
 ﻿namespace BC2G.DAL.Bulkload;
 
-internal abstract class ModelMapper<T>
+internal abstract class ModelMapper<T> : ModelMapper
+{
+    public ModelMapper(
+    string workingDirectory,
+    string cypherImportPrefix,
+    //string importDirectory,
+    string filename) : base(workingDirectory, cypherImportPrefix, filename)
+    { }
+
+    public abstract string ToCsv(T obj);
+}
+
+internal abstract class ModelMapper
 {
     public const string csvDelimiter = "\t";
     public const string labelsDelimiter = ":";
@@ -71,14 +83,14 @@ internal abstract class ModelMapper<T>
     }
 
     public abstract string GetCsvHeader();
-    public abstract string ToCsv(T obj);
+
     protected abstract string ComposeCypherQuery(string filename);
 
     public bool TryParseFilename(string filename, out string batchName)
     {
         var pattern = new Regex(
-            @"(?<batchName>\d{18})" + _filename, 
-            RegexOptions.Compiled, 
+            @"(?<batchName>\d{18})" + _filename,
+            RegexOptions.Compiled,
             new TimeSpan(0, 0, 1));
 
         var match = pattern.Match(Path.GetFileName(filename));
