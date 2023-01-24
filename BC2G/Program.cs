@@ -1,6 +1,6 @@
 ﻿namespace BC2G;
 
-internal class BC2G
+internal class Program
 {
     /* TODO: how this can be made cross-platform?!
     // See the following SO topics handeling resource
