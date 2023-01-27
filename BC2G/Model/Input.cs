@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace BC2G.Model;
+﻿namespace BC2G.Model;
 
 public class Input
 {
