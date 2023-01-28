@@ -2,7 +2,12 @@
 
 public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 {
-    public Transaction Tx { get; }    
+    public Transaction Tx { get; }
+
+    public TxNode(string txid) : base(txid)
+    {
+
+    }
 
     public TxNode(Transaction tx) : base(tx.Txid)
     {

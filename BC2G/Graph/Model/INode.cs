@@ -8,4 +8,6 @@ public interface INode
 
     public List<IEdge<INode, INode>> IncomingEdges { get; }
     public List<IEdge<INode, INode>> OutgoingEdges { get; }
+
+    public double[] GetFeatures();
 }

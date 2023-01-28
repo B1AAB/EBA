@@ -53,8 +53,8 @@ public class GraphFeatures
             (from x in graph.Labels select new double[] { x })
             .ToList());
 
-        NodeFeaturesHeader = new ReadOnlyCollection<string>(Node.GetFeaturesName());
-        EdgeFeaturesHeader = new ReadOnlyCollection<string>(Edge.GetFeaturesName());
+        NodeFeaturesHeader = new ReadOnlyCollection<string>(ScriptNode.GetFeaturesName());
+        EdgeFeaturesHeader = new ReadOnlyCollection<string>(S2SEdge.GetFeaturesName());
         PairIndicesHeader = new ReadOnlyCollection<string>(new string[] { "SourceNodeIndex", "TargetNodeIndex" });
         LabelsHeader = new ReadOnlyCollection<string>(new string[] { "GraphOrRandomEdges" });
     }

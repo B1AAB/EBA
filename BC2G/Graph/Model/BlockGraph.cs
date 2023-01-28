@@ -13,7 +13,7 @@ public class BlockGraph : GraphBase, IEquatable<BlockGraph>
     public Block Block { get; }
     public BlockStatistics Stats { set; get; }
 
-    public List<Node> RewardsAddresses { set; get; } = new();
+    public List<ScriptNode> RewardsAddresses { set; get; } = new();
 
     /// <summary>
     /// Is the sum of all the tranactions fee.
@@ -21,23 +21,24 @@ public class BlockGraph : GraphBase, IEquatable<BlockGraph>
     public double TotalFee { get { return _totalFee; } }
     private double _totalFee;
 
-    public new ReadOnlyCollection<Edge> Edges
+    // TODO: can base types used for this purpose?!!
+    public new ReadOnlyCollection<S2SEdge> Edges
     {
         get
         {
-            return new ReadOnlyCollection<Edge>(_edges.Values.ToList());
+            return new ReadOnlyCollection<S2SEdge>(_edges.Values.ToList());
         }
     }
-    private readonly ConcurrentDictionary<int, Edge> _edges = new();
+    private readonly ConcurrentDictionary<int, S2SEdge> _edges = new();
 
-    public new ReadOnlyCollection<Node> Nodes
+    public new ReadOnlyCollection<ScriptNode> Nodes
     {
         get
         {
-            return new ReadOnlyCollection<Node>(_nodes.Keys.ToList());
+            return new ReadOnlyCollection<ScriptNode>(_nodes.Keys.ToList());
         }
     }
-    private readonly ConcurrentDictionary<Node, byte> _nodes = new();
+    private readonly ConcurrentDictionary<ScriptNode, byte> _nodes = new();    
 
     private readonly ConcurrentQueue<TransactionGraph> _txGraphsQueue = new();
 
@@ -99,13 +100,21 @@ public class BlockGraph : GraphBase, IEquatable<BlockGraph>
 
         foreach (var item in coinbaseTxG.Targets)
         {
-            AddEdge(new Edge(
-                new Node(),
+            AddEdge(new S2SEdge(
+                new ScriptNode(),
                 item.Key,
                 Utilities.Round((item.Value * blockReward) / totalPaidToMiner),
                 EdgeType.Generation,
                 Timestamp,
                 Height));
+        }
+
+        foreach (var txG in _txGraphsQueue)
+        {
+            foreach (var source in txG.SourceTxes)
+            {
+                AddEdge(new T2TEdge(txG.TxNode, new TxNode(source.Key)));
+            }
         }
     }
 
@@ -153,7 +162,7 @@ public class BlockGraph : GraphBase, IEquatable<BlockGraph>
                 if (d != 0)
                     v = Utilities.Round(t.Value * Utilities.Round(s.Value / d));
 
-                AddEdge(new Edge(
+                AddEdge(new S2SEdge(
                     s.Key, t.Key, v,
                     EdgeType.Transfer,
                     Timestamp,
@@ -163,20 +172,20 @@ public class BlockGraph : GraphBase, IEquatable<BlockGraph>
             var x = fee * Utilities.Round(s.Value / sumInputWithoutFee == 0 ? 1 : sumInputWithoutFee);
             if (fee > 0)
                 foreach (var m in coinbaseTxG.Targets)
-                    AddEdge(new Edge(s.Key, m.Key,
+                    AddEdge(new S2SEdge(s.Key, m.Key,
                         Utilities.Round(x * Utilities.Round(m.Value / totalPaidToMiner)),
                         EdgeType.Fee, Timestamp, Height));
         }
     }
 
-    public void AddEdge(Edge edge)
+    public void AddEdge(S2SEdge edge)
     {
         /// Note that the hashkey is invariant to the edge value.
         /// If this is changed, the `Equals` method needs to be
         /// updated accordingly.
         _edges.AddOrUpdate(
             edge.GetHashCode(true), edge,
-            (key, oldValue) => new Edge(
+            (key, oldValue) => new S2SEdge(
                 edge.Source,
                 edge.Target,
                 edge.Value + oldValue.Value,
@@ -189,8 +198,10 @@ public class BlockGraph : GraphBase, IEquatable<BlockGraph>
 
         }
 
+        // TODO: are these needed?!!
         _nodes.TryAdd(edge.Source, 0);
         _nodes.TryAdd(edge.Target, 0);
+
         Stats.IncrementEdgeType(edge.Type, edge.Value);
     }
 

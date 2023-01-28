@@ -84,7 +84,7 @@ public class CSVSerializer : SerializerBase, IDisposable
         while ((line = reader.ReadLine()) != null)
         {
             var cols = line.Trim().Split(_delimiter);
-            var edge = Edge.FromString(cols, mappings[cols[0]], mappings[cols[1]]);
+            var edge = S2SEdge.FromString(cols, mappings[cols[0]], mappings[cols[1]]);
 
             if (!blockGraphs.ContainsKey(edge.BlockHeight))
                 blockGraphs.Add(edge.BlockHeight, new BlockGraph(edge.BlockHeight));
@@ -129,7 +129,7 @@ public class CSVSerializer : SerializerBase, IDisposable
     private void WriteEdges(BlockGraph g, string filename)
     {
         var csvBuilder = new StringBuilder();
-        csvBuilder.AppendLine(Edge.Header);
+        csvBuilder.AppendLine(S2SEdge.Header);
 
         foreach (var edge in g.Edges)
             csvBuilder.AppendLine(
@@ -148,9 +148,9 @@ public class CSVSerializer : SerializerBase, IDisposable
         {
             var x = line.Split(_delimiter);
             // TODO: fix setting node script type.
-            g.AddEdge(new Edge(
-                new Node(x[0], nodeIds[x[0]], ScriptType.Unknown),
-                new Node(x[1], nodeIds[x[1]], ScriptType.Unknown),
+            g.AddEdge(new S2SEdge(
+                new ScriptNode(x[0], nodeIds[x[0]], ScriptType.Unknown),
+                new ScriptNode(x[1], nodeIds[x[1]], ScriptType.Unknown),
                 double.Parse(x[2]),
                 (EdgeType)int.Parse(x[3]),
                 uint.Parse(x[4]),

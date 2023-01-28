@@ -170,19 +170,19 @@ public class BitcoinAgent : IDisposable
         object dbContextLock, 
         CancellationToken cT)
     {
-        var generationTxGraph = new TransactionGraph();
-
         // By definition, each block has a generative block that is the
         // reward of the miner. Hence, this should never raise an 
         // exception if the block is not corrupt.
         var coinbaseTx = block.Transactions.First(x => x.IsCoinbase);
 
-        var rewardAddresses = new List<Node>();
+        var generationTxGraph = new TransactionGraph(coinbaseTx);
+
+        var rewardAddresses = new List<ScriptNode>();
         foreach (var output in coinbaseTx.Outputs.Where(x => x.IsValueTransfer))
         {
             output.TryGetAddress(out string address);
             var node = generationTxGraph.AddTarget(
-                new Node(address, output.GetScriptType()),
+                new ScriptNode(address, output.GetScriptType()),
                 output.Value);
 
             rewardAddresses.Add(node);
@@ -242,7 +242,7 @@ public class BitcoinAgent : IDisposable
         object dbContextLock,
         CancellationToken cT)
     {
-        var txGraph = new TransactionGraph { Fee = tx.Fee };
+        var txGraph = new TransactionGraph(tx) { Fee = tx.Fee };
 
         foreach (var input in tx.Inputs)
         {
@@ -311,7 +311,8 @@ public class BitcoinAgent : IDisposable
             }
 
             txGraph.AddSource(
-                new Node(address, ScriptType.Unknown), // TODO: can this set to a better value?
+                input.TxId,
+                new ScriptNode(address, ScriptType.Unknown), // TODO: can this set to a better value?
                 value);
         }
 
@@ -321,7 +322,7 @@ public class BitcoinAgent : IDisposable
 
             output.TryGetAddress(out string address);
             txGraph.AddTarget(
-                new Node(address, output.GetScriptType()),
+                new ScriptNode(address, output.GetScriptType()),
                 output.Value);
 
             var cIn = g.Block.Hash;

@@ -1,4 +1,6 @@
-﻿namespace BC2G.Graph.Db;
+﻿using System.Runtime.CompilerServices;
+
+namespace BC2G.Graph.Db;
 
 
 // TODO: there is a bug: why many redeems per node in a given block? 
@@ -21,10 +23,12 @@ public class GraphDb : IDisposable
     private int _scriptEdgesInCsvCount;
     private int _coinbaseEdgesInCsvCount;
     private int _blocksInCsvCount;
+    private int _txesInCsvCount;
 
     private readonly BlockMapper _blockMapper;
     private readonly ScriptMapper _scriptMapper;
     private readonly CoinbaseMapper _coinbaseMapper;
+    private readonly TxMapper _txMapper;
 
     private readonly string _neo4jImportDir;
 
@@ -65,6 +69,7 @@ public class GraphDb : IDisposable
         _blockMapper = new BlockMapper(_options.WorkingDir, _options.Neo4j.CypherImportPrefix/*, neo4jImportDirectory*/) { Batch = batch };
         _scriptMapper = new ScriptMapper(_options.WorkingDir, _options.Neo4j.CypherImportPrefix/*, neo4jImportDirectory*/) { Batch = batch };
         _coinbaseMapper = new CoinbaseMapper(_options.WorkingDir, _options.Neo4j.CypherImportPrefix/*, neo4jImportDirectory*/) { Batch = batch };
+        _txMapper = new TxMapper(_options.WorkingDir, _options.Neo4j.CypherImportPrefix) { Batch = batch };
 
         /*
         var script = new NodeMapping();
@@ -130,6 +135,12 @@ public class GraphDb : IDisposable
             cWriter.WriteLine(_coinbaseMapper.GetCsvHeader());
         }
 
+        if (_txesInCsvCount == 0)
+        {
+            using var txWriter = new StreamWriter(_txMapper.AbsFilename);
+            txWriter.WriteLine(_txMapper.GetCsvHeader());
+        }
+
         using var blocksWriter = new StreamWriter(_blockMapper.AbsFilename, append: true);
         blocksWriter.WriteLine(_blockMapper.ToCsv(graph));
         _blocksInCsvCount++;
@@ -147,6 +158,12 @@ public class GraphDb : IDisposable
                 _scriptEdgesInCsvCount++;
                 edgesWriter.WriteLine(_scriptMapper.ToCsv(edge));
             }
+
+        using var txesWriter = new StreamWriter(_txMapper.AbsFilename, append: true);
+        foreach (var txEdge in graph.T2TEdges)
+        {
+            txesWriter.WriteLine(_txMapper.ToCsv(txEdge));
+        }
     }
 
     public void BulkImport(string directory)
@@ -472,7 +489,7 @@ public class GraphDb : IDisposable
         }
     }
 
-    private async Task<bool> TrySampleNeighborsAsync(Node rootNode, string baseOutputDir)
+    private async Task<bool> TrySampleNeighborsAsync(ScriptNode rootNode, string baseOutputDir)
     {
         var graph = await GetNeighbors(rootNode.Address, _options.GraphSample.Hops);
 
@@ -527,7 +544,7 @@ public class GraphDb : IDisposable
         return true;
     }
 
-    private async Task<List<Node>> GetRandomNodes(
+    private async Task<List<ScriptNode>> GetRandomNodes(
         int nodesCount, double rootNodesSelectProb = 0.1)
     {
         using var session = _driver.AsyncSession(
@@ -544,9 +561,9 @@ public class GraphDb : IDisposable
         });
         await rndNodesResult;
 
-        var rndNodes = new List<Node>();
+        var rndNodes = new List<ScriptNode>();
         foreach (var n in rndNodesResult.Result)
-            rndNodes.Add(new Node(n.Values["rndScript"].As<INode>()));
+            rndNodes.Add(new ScriptNode(n.Values["rndScript"].As<Neo4j.Driver.INode>()));
 
         return rndNodes;
     }
@@ -573,8 +590,8 @@ public class GraphDb : IDisposable
 
         foreach (var n in rndNodesResult.Result)
         {
-            g.AddNode(n.Values["source"].As<INode>());
-            g.AddNode(n.Values["target"].As<INode>());
+            g.AddNode(n.Values["source"].As<Neo4j.Driver.INode>());
+            g.AddNode(n.Values["target"].As<Neo4j.Driver.INode>());
             g.AddEdge(n.Values["edge"].As<IRelationship>());
         }
 
@@ -615,12 +632,12 @@ public class GraphDb : IDisposable
 
         foreach (var hop in samplingResult.Result)
         {
-            var root = hop.Values["root"].As<List<INode>>()[0];
+            var root = hop.Values["root"].As<List<Neo4j.Driver.INode>>()[0];
             if (root is null)
                 continue;
 
             g.AddNode(root);
-            g.AddNodes(hop.Values["nodes"].As<List<INode>>());
+            g.AddNodes(hop.Values["nodes"].As<List<Neo4j.Driver.INode>>());
             g.AddEdges(hop.Values["relationships"].As<List<IRelationship>>());
         }
 

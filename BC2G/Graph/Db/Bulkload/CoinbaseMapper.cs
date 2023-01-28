@@ -27,7 +27,7 @@ internal class CoinbaseMapper : ScriptMapper
             from x in _properties select x.CsvHeader);
     }
 
-    public override string ToCsv(Edge edge)
+    public override string ToCsv(S2SEdge edge)
     {
         /// Note that the ordre of the items in this array should 
         /// match those in the `_properties`. 

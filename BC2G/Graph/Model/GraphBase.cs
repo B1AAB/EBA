@@ -5,51 +5,57 @@ public class GraphBase : IEquatable<GraphBase>
     public int NodeCount { get { return _nodes.Count; } }
     public int EdgeCount { get { return _edges.Count; } }
 
-    public ReadOnlyCollection<Node> Nodes
+    public ReadOnlyCollection<ScriptNode> Nodes
     {
-        get { return new ReadOnlyCollection<Node>(_nodes.Values.ToList()); }
+        get { return new ReadOnlyCollection<ScriptNode>(_nodes.Values.ToList()); }
     }
-    public ReadOnlyCollection<Edge> Edges
+    public ReadOnlyCollection<S2SEdge> Edges
     {
-        get { return new ReadOnlyCollection<Edge>(_edges.Values.ToList()); }
+        get { return new ReadOnlyCollection<S2SEdge>(_edges.Values.ToList()); }
     }
     public ReadOnlyCollection<double> Labels
     {
         get { return new ReadOnlyCollection<double>(_labels); }
     }
 
-    private readonly ConcurrentDictionary<string, Node> _nodes = new();
-    private readonly ConcurrentDictionary<string, Edge> _edges = new();
+    private readonly ConcurrentDictionary<string, ScriptNode> _nodes = new();
+    private readonly ConcurrentDictionary<string, S2SEdge> _edges = new();
     private readonly List<double> _labels = new();
 
-    public void AddNode(Node node)
+    public ReadOnlyCollection<T2TEdge> T2TEdges
+    {
+        get { return new ReadOnlyCollection<T2TEdge>(_t2tEdges.Values.ToList()); }
+    }
+    private readonly ConcurrentDictionary<string, T2TEdge> _t2tEdges = new();
+
+    public void AddNode(ScriptNode node)
     {
         _nodes.AddOrUpdate(node.Id, node, (key, oldValue) => node);
         // TODO: any better update logic?!
     }
 
-    public void AddNode(INode node)
+    public void AddNode(Neo4j.Driver.INode node)
     {
-        AddNode(new Node(node));
+        AddNode(new ScriptNode(node));
     }
 
-    public void AddNodes(IEnumerable<INode> nodes)
+    public void AddNodes(IEnumerable<Neo4j.Driver.INode> nodes)
     {
         foreach (var node in nodes)
-            AddNode(new Node(node));
+            AddNode(new ScriptNode(node));
     }
 
     public void AddEdge(IRelationship relationship)
     {
         var source = _nodes.GetOrAdd(
             relationship.StartNodeElementId,
-            new Node(relationship.StartNodeElementId));
+            new ScriptNode(relationship.StartNodeElementId));
 
         var target = _nodes.GetOrAdd(
             relationship.EndNodeElementId,
-            new Node(relationship.EndNodeElementId));
+            new ScriptNode(relationship.EndNodeElementId));
 
-        var cEdge = new Edge(source, target, relationship);
+        var cEdge = new S2SEdge(source, target, relationship);
         var edge = _edges.GetOrAdd(cEdge.Id, cEdge);
 
         source.AddOutgoingEdges(edge);
@@ -60,6 +66,14 @@ public class GraphBase : IEquatable<GraphBase>
     {
         foreach (var edge in edges)
             AddEdge(edge);
+    }
+
+    public void AddEdge(T2TEdge edge)
+    {
+        // TODO: ID may not be correct
+        // TODO: tryadd is not the correct call
+
+        _t2tEdges.TryAdd(edge.Id, edge);
     }
 
     public void AddLabel(double label)

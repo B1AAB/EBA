@@ -28,3 +28,10 @@ public class S2SEdge : Edge<ScriptNode, ScriptNode>
             blockHeight: int.Parse(fields[5]));
     }
 }
+
+public class T2TEdge : Edge<TxNode, TxNode>
+{
+    public T2TEdge(TxNode source, TxNode target) :
+        base(source, target, null)
+    { }
+}

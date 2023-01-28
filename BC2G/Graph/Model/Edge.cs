@@ -1,10 +1,12 @@
 ﻿namespace BC2G.Graph.Model;
 
-public class Edge
+public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
+    where TSource : INode
+    where TTarget : INode
 {
     public string Id { get; }
-    public Node Source { get; }
-    public Node Target { get; }
+    public TSource Source { get; }
+    public TTarget Target { get; }
     public double Value { get; }
     public EdgeType Type { get; }
     public uint Timestamp { get; }
@@ -28,9 +30,8 @@ public class Edge
 
     private const string _delimiter = "\t";
 
-
     public Edge(
-        Node source, Node target,
+        TSource source, TTarget target,
         double value, EdgeType type,
         uint timestamp, long blockHeight)
     {
@@ -43,7 +44,7 @@ public class Edge
     }
 
     public Edge(
-        Node source, Node target,
+        TSource source, TTarget target,
         IRelationship relationship)
     {
         Source = source;
@@ -83,18 +84,6 @@ public class Edge
             (Timestamp - BitcoinAgent.GenesisTimestamp).ToString(),
             BlockHeight.ToString()
         });
-    }
-
-    public static Edge FromString(string[] fields, string sourceAddress, string targetAddress)
-    {
-        // TODO: fix creating node correctly.
-        return new Edge(
-            source: new Node(fields[0], sourceAddress, ScriptType.Unknown),
-            target: new Node(fields[1], targetAddress, ScriptType.Unknown),
-            value: double.Parse(fields[2]),
-            type: Enum.Parse<EdgeType>(fields[3]),
-            timestamp: BitcoinAgent.GenesisTimestamp + uint.Parse(fields[4]),
-            blockHeight: int.Parse(fields[5]));
     }
 
     public int GetHashCode(bool ignoreValue)

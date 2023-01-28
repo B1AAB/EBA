@@ -1,80 +1,49 @@
 ﻿namespace BC2G.Graph.Model;
 
-public class Node : IComparable<Node>, IEquatable<Node>
+public class Node : INode
 {
-    public string Id { get; } = "0";
-    public string Address { get; } = BitcoinAgent.Coinbase;
-    public ScriptType ScriptType { get; } = ScriptType.Coinbase;
+    public string Id { get; }
 
     public int InDegree { get { return IncomingEdges.Count; } }
     public int OutDegree { get { return OutgoingEdges.Count; } }
 
-    public List<Edge> IncomingEdges { private set; get; } = new();
-    public List<Edge> OutgoingEdges { private set; get; } = new();
+    public List<IEdge<INode, INode>> IncomingEdges { get; } = new();
+    public List<IEdge<INode, INode>> OutgoingEdges { get; } = new();
 
     public static string Header
     {
         get
         {
-            return string.Join(_delimiter, new string[]
+            return string.Join(Delimiter, new string[]
             {
                 "Id",
-                "ScriptType"
             });
         }
     }
 
-    private const string _delimiter = "\t";
-
-    /// <summary>
-    /// This constructor creates the Coinbase node.
-    /// </summary>
-    public Node() { }
+    public const char Delimiter = '\t';
 
     public Node(string id)
     {
         Id = id;
     }
 
-    public Node(string address, ScriptType scriptType)
-    {
-        Address = address;
-        ScriptType = scriptType;
-    }
-
-    // TODO: This constructor should be removed, we should NOT set specifically.
-    public Node(string id, string address, ScriptType scriptType)
-    {
-        Id = id;
-        Address = address;
-        ScriptType = scriptType;
-    }
-
-    public Node(INode node) :
-        this(node.ElementId, 
-            (string)node.Properties[
-                Props.ScriptAddress.Name],
-            
-            Enum.Parse<ScriptType>((string)node.Properties[
-                Props.ScriptType.Name]))
-    { }
-
-    public void AddIncomingEdges(Edge incomingEdge)
+    public void AddIncomingEdges(IEdge<INode, INode> incomingEdge)
     {
         IncomingEdges.Add(incomingEdge);
     }
 
-    public void AddIncomingEdges(List<Edge> incomingEdges)
+    public void AddIncomingEdges(List<IEdge<INode, INode>> incomingEdges)
     {
         IncomingEdges.AddRange(incomingEdges);
     }
 
-    public void AddOutgoingEdges(List<Edge> outgoingEdges)
+    public void AddOutgoingEdges(List<IEdge<INode, INode>> outgoingEdges)
     {
         OutgoingEdges.AddRange(outgoingEdges);
     }
 
-    public void AddOutgoingEdges(Edge outgoingEdge)
+    public void AddOutgoingEdges(IEdge<INode, INode> outgoingEdge)
     {
         OutgoingEdges.Add(outgoingEdge);
     }
@@ -86,39 +55,13 @@ public class Node : IComparable<Node>, IEquatable<Node>
 
     public double[] GetFeatures()
     {
-        return new double[] { (double)ScriptType, InDegree, OutDegree };
+        return new double[] { InDegree, OutDegree };
     }
 
     public override string ToString()
     {
         return string.Join(
-            _delimiter, 
-            new string[] { Id, ScriptType.ToString("d") });
-    }
-
-    public override int GetHashCode()
-    {
-        // Do not add ID here, because ID is generated at
-        // runtime in a multi-threaded process, hence cannot
-        // guarantee a node's ID is reproducible..
-        return HashCode.Combine(Address, ScriptType);
-    }
-
-    public int CompareTo(Node? other)
-    {
-        if (other == null) return -1;
-        var r = Address.CompareTo(other.Address);
-        if (r != 0) return r;
-        return ScriptType.CompareTo(other.ScriptType);
-    }
-    
-    public bool Equals(Node? other)
-    {
-        if (other == null) 
-            return false;
-
-        return 
-            Address == other.Address && 
-            ScriptType == other.ScriptType;
+            Delimiter,
+            new string[] { Id });
     }
 }

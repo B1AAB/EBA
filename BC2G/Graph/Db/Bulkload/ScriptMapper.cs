@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Bulkload;
 
-internal class ScriptMapper : ModelMapper<Edge>
+internal class ScriptMapper : ModelMapper<S2SEdge>
 {
     public const string labels = "Script";
 
@@ -31,7 +31,7 @@ internal class ScriptMapper : ModelMapper<Edge>
             from x in _properties select x.CsvHeader);
     }
 
-    public override string ToCsv(Edge edge)
+    public override string ToCsv(S2SEdge edge)
     {
         /// Note that the ordre of the items in this array should 
         /// match those in the `_properties`. 
