@@ -22,7 +22,7 @@ public class JsonSerializer<T>
         return obj;
     }
 
-    public static async Task SerializeAsync(T obj, string path, CancellationToken cT)
+    public static async Task SerializeAsync(T obj, string path, CancellationToken cT = default)
     {
         using var stream = File.Open(path, FileMode.Create);
         await JsonSerializer.SerializeAsync(stream, obj, _options, cT);
