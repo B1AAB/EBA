@@ -2,6 +2,6 @@
 
 public interface IGraphDb<T> : IDisposable where T : GraphBase
 {
-    public void Serialize(T graph);
-    public void Import();
+    public Task SerializeAsync(T graph, CancellationToken ct);
+    public void ImportAsync();
 }
