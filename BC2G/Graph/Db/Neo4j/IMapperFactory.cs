@@ -2,5 +2,5 @@
 
 public interface IMapperFactory
 {
-    public IMapper Get(Type type);
+    public IMapper Get(string type);
 }

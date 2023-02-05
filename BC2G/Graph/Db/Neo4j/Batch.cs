@@ -16,6 +16,8 @@ public class BatchInfo
         }
     }
 
+    public string Name { set; get; } = string.Empty;
+
     public ImmutableDictionary<string, TypeInfo> TypesInfo
     {
         set { _typesInfo = new Dictionary<string, TypeInfo>(value); }
@@ -25,26 +27,24 @@ public class BatchInfo
 
     public BatchInfo() { }
 
-    public void AddType(Type type, int count, string directory)
+    public void AddOrUpdate(string type, int count, string directory)
     {
-        var key = GetKey(type);
-        if (!_typesInfo.ContainsKey(key))
+        if (!_typesInfo.ContainsKey(type))
         {
-            _typesInfo.Add(key, new TypeInfo(
-                Path.Join(directory, $"{type.GUID:N}_{DateTime.Now:yyyyMMddHHmmssffff}.csv"),
+            _typesInfo.Add(type, new TypeInfo(
+                Path.Join(directory, $"{type}_{DateTime.Now:yyyyMMddHHmmssffff}.csv"),
                 0));
         }
 
-        _typesInfo[key].Count += count;
+        _typesInfo[type].Count += count;
     }
 
-    public string GetFilename(Type type)
+    public string GetFilename(string type)
     {
-        var key = GetKey(type);
-        if (!_typesInfo.ContainsKey(key))
+        if (!_typesInfo.ContainsKey(type))
             return string.Empty;
         else
-            return _typesInfo[key].Filename;
+            return _typesInfo[type].Filename;
     }
 
     public int GetTotalCount()
