@@ -1,8 +1,5 @@
 ﻿namespace BC2G.Graph.Model;
 
-public interface IEdge : IEdge<INode, INode>
-{ }
-
 public interface IEdge<out TSource, out TTarget>
     where TSource : INode
     where TTarget : INode
@@ -12,4 +9,7 @@ public interface IEdge<out TSource, out TTarget>
     public TTarget Target { get; }
     public EdgeType Type { get; }
     public double Value { get; }
+
+    public double[] GetFeatures();
+    public string GetHashCode(bool ignoreValue);
 }
