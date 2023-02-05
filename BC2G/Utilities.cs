@@ -108,4 +108,13 @@ internal class Utilities
         foreach (var item in data)
             writter.WriteLine(string.Join(delimiter, item));
     }
+
+    public static string TypeToString(Type type)
+    {
+        return type.FullName ?? $"{type.Namespace ?? string.Empty}.{type.Name}";
+    }
+    public static string TypeToString<T>()
+    {
+        return TypeToString(typeof(T));
+    }
 }
