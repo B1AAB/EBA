@@ -17,13 +17,10 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         }
     }
 
-    /// <summary>
-    /// The coinbase node is created when the default value of id is used.
-    /// </summary>
-    /// <param name="id"></param>
-    public ScriptNode(string id = "0") : base(id) { }
+    public ScriptNode(string id) : base(id) { }
 
-    public ScriptNode(string address, ScriptType scriptType) : this()
+    // VERY IMPORTANT TODO: REMOVE THIS CONSTRUCTOR, SHOULD NOT ALLOW CREATING NODE WITHOUT SPECIFYING NODE ID.
+    public ScriptNode(string address, ScriptType scriptType) : this("0")
     {
         Address = address;
         ScriptType = scriptType;
@@ -44,6 +41,11 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
             Enum.Parse<ScriptType>((string)node.Properties[
                 Props.ScriptType.Name]))
     { }
+
+    public static ScriptNode GetCoinbaseNode()
+    {
+        return new ScriptNode("0");
+    }
 
     public new double[] GetFeatures()
     {
