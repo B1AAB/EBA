@@ -113,6 +113,15 @@ internal class Utilities
     {
         return type.FullName ?? $"{type.Namespace ?? string.Empty}.{type.Name}";
     }
+    public static string TypeToString<T>(T instance) where T : notnull
+    {
+        return TypeToString(instance.GetType());
+    }
+    /// <summary>
+    /// Use this overload if the type is known at compile time.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
     public static string TypeToString<T>()
     {
         return TypeToString(typeof(T));
