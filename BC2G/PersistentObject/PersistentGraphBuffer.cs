@@ -1,61 +1,38 @@
 ﻿namespace BC2G.PersistentObject;
 
-public class PersistentGraphBuffer : PersistentObject<BlockGraph>, IDisposable
+public class PersistentGraphBuffer : PersistentObjectBase<BitcoinBlockGraph>, IDisposable
 {
-    //private readonly AddressToIdMapper _mapper;
-    private readonly PersistentGraphStatistics _pGraphStats;
+    private readonly IGraphDb<BitcoinBlockGraph> _graphDb;
     private readonly ILogger<PersistentGraphBuffer> _logger;
-
-    private readonly GraphDb _graphDB;
+    private readonly PersistentGraphStatistics _pGraphStats;
 
     private bool _disposed = false;
 
     public PersistentGraphBuffer(
-        GraphDb graphdb,
+        IGraphDb<BitcoinBlockGraph> graphDb,
         ILogger<PersistentGraphBuffer> logger,
-        //string nodesFilename,
-        //string edgesFilename,
-        //AddressToIdMapper mapper,
         PersistentGraphStatistics pGraphStats,
-        //Logger logger,
-        CancellationToken cancellationToken) : base(
-            //logger,
-            //nodesFilename,
-            //edgesFilename,
-            cancellationToken/*,
-            Node.Header,
-            Edge.Header*/)
+        CancellationToken ct) : 
+        base(ct)
     {
-        _graphDB = graphdb;
-        //_mapper = mapper;
+        _graphDb = graphDb;
         _pGraphStats = pGraphStats;
         _logger = logger;
     }
 
-    public override string Serialize(
-        BlockGraph obj,
-        //StreamWriter nodesStream,
-        //StreamWriter edgesStream,
+    public override async Task SerializeAsync(
+        BitcoinBlockGraph obj,
         CancellationToken cT)
     {
-        try
-        {
-            obj.MergeQueuedTxGraphs(cT);
-            _graphDB.BulkImport(obj, cT);
+        obj.MergeQueuedTxGraphs(cT);
+        await _graphDb.SerializeAsync(obj, cT);
 
-            obj.Stats.StopStopwatch();
-            _pGraphStats.Enqueue(obj.Stats.ToString());
-            return string.Empty;
-        }
-        catch (OperationCanceledException) { return string.Empty; }
-    }
+        obj.Stats.StopStopwatch();
+        _pGraphStats.Enqueue(obj.Stats.ToString());
 
-    public override void PostPersistence(BlockGraph obj)
-    {
-        _logger.LogInformation("Finished processing block {height} in {runtime}.", obj.Height, obj.Stats.Runtime);
-        /*_logger.LogFinishProcessingBlock(
-            obj.Height,
-            obj.Stats.Runtime.TotalSeconds);*/
+        _logger.LogInformation(
+            "Finished processing block {height} in {runtime}.",
+            obj.Height, obj.Stats.Runtime);
     }
 
     protected override void Dispose(bool disposing)
@@ -64,7 +41,7 @@ public class PersistentGraphBuffer : PersistentObject<BlockGraph>, IDisposable
         {
             if (disposing)
             {
-                _graphDB?.FinishBulkImport();
+                //_graphDB?.FinishBulkImport();
             }
 
             _disposed = true;
