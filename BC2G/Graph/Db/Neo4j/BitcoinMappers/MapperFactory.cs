@@ -2,12 +2,17 @@
 
 public class MapperFactory : IMapperFactory
 {
-    public IMapper<T> Get<T>(T entity)
+    public IMapper Get(string type)
     {
-        return typeof(T) switch
+        if (type == null)
+            throw new ArgumentNullException(nameof(type));
+
+        return type switch
         {
-            Type t when t == typeof(S2SEdge) => (IMapper<T>)new S2SEdgeMapper(),
-            _ => throw new NotImplementedException(),
+            string x when x == Utilities.TypeToString<S2SEdge>() => new S2SEdgeMapper(),
+            string x when x == Utilities.TypeToString<T2TEdge>() => new T2TEdgeMapper(),
+            _ => throw new NotImplementedException(
+                $"A mapper for type {type} is not implemented."),
         };
     }
 }
