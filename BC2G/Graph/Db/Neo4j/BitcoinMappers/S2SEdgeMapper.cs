@@ -1,11 +1,13 @@
-﻿namespace BC2G.Graph.Db.Neo4j.BitcoinMappers;
+﻿using INode = BC2G.Graph.Model.INode;
 
-public class S2SEdgeMapper : BitcoinMapperBase<S2SEdge>
+namespace BC2G.Graph.Db.Neo4j.BitcoinMappers;
+
+public class S2SEdgeMapper : BitcoinMapperBase
 {
     public const string labels = "Script";
 
     /// Note that the ordre of the items in this array should 
-    /// match those in the `ToCSV` method.
+    /// match those in the `GetCSV` method.
     private readonly Property[] _properties = new Property[]
     {
         Props.EdgeSourceAddress,
@@ -17,10 +19,23 @@ public class S2SEdgeMapper : BitcoinMapperBase<S2SEdge>
         Props.Height
     };
 
-    public override string GetCsv(S2SEdge edge)
+    public override string GetCsvHeader()
+    {
+        return string.Join(
+            csvDelimiter,
+            from x in _properties select x.CsvHeader);
+    }
+
+    public override string GetCsv(IEdge<INode, INode> edge)
+    {
+        return GetCsv((S2SEdge)edge);
+    }
+
+    public static string GetCsv(S2SEdge edge)
     {
         /// Note that the ordre of the items in this array should 
         /// match those in the `_properties`. 
+
         return string.Join(csvDelimiter, new string[]
         {
             edge.Source.Address,
@@ -31,13 +46,6 @@ public class S2SEdgeMapper : BitcoinMapperBase<S2SEdge>
             edge.Value.ToString(),
             edge.BlockHeight.ToString()
         });
-    }
-
-    public override string GetCsvHeader()
-    {
-        return string.Join(
-            csvDelimiter,
-            from x in _properties select x.CsvHeader);
     }
 
     public override string GetQuery(string csvFilename)
