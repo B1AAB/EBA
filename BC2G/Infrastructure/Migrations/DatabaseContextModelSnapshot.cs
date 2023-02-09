@@ -44,6 +44,9 @@ namespace BC2G.Infrastructure.Migrations
                     b.Property<int>("ReferencedInCount")
                         .HasColumnType("integer");
 
+                    b.Property<int>("ScriptType")
+                        .HasColumnType("integer");
+
                     b.Property<double>("Value")
                         .HasColumnType("double precision");
 

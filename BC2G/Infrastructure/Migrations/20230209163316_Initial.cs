@@ -18,6 +18,7 @@ namespace BC2G.Infrastructure.Migrations
                     xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
                     Address = table.Column<string>(type: "text", nullable: false),
                     Value = table.Column<double>(type: "double precision", nullable: false),
+                    ScriptType = table.Column<int>(type: "integer", nullable: false),
                     CreatedIn = table.Column<string>(type: "text", nullable: false),
                     CreatedInCount = table.Column<int>(type: "integer", nullable: false),
                     ReferencedIn = table.Column<string>(type: "text", nullable: false),

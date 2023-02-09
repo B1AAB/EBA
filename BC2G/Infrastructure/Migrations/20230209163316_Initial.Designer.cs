@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BC2G.Infrastructure.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20230207063625_Initial")]
+    [Migration("20230209163316_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -45,6 +45,9 @@ namespace BC2G.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<int>("ReferencedInCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ScriptType")
                         .HasColumnType("integer");
 
                     b.Property<double>("Value")
