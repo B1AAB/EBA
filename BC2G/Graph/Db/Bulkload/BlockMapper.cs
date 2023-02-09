@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Bulkload;
 
-internal class BlockMapper : ModelMapper<BlockGraph>
+internal class BlockMapper : ModelMapper<BitcoinBlockGraph>
 {
     public const string label = "Block";
 
@@ -41,7 +41,7 @@ internal class BlockMapper : ModelMapper<BlockGraph>
             from x in _properties select x.CsvHeader);
     }
 
-    public override string ToCsv(BlockGraph bgraph)
+    public override string ToCsv(BitcoinBlockGraph bgraph)
     {
         var counts = bgraph.Stats.EdgeTypeFrequency;
         var sums = bgraph.Stats.EdgeTypeTxSum;

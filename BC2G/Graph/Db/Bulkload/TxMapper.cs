@@ -1,4 +1,6 @@
-﻿namespace BC2G.Graph.Db.Bulkload;
+﻿using BC2G.Blockchains.Bitcoin;
+
+namespace BC2G.Graph.Db.Bulkload;
 
 internal class TxMapper : ModelMapper<T2TEdge>
 {
