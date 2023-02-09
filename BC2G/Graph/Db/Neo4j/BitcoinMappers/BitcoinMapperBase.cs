@@ -1,6 +1,8 @@
-﻿namespace BC2G.Graph.Db.Neo4j.BitcoinMappers;
+﻿using INode = BC2G.Graph.Model.INode;
 
-public abstract class BitcoinMapperBase<T> : IMapper<T>
+namespace BC2G.Graph.Db.Neo4j.BitcoinMappers;
+
+public abstract class BitcoinMapperBase : IMapper
 {
     public const string csvDelimiter = "\t";
     public const string labelsDelimiter = ":";
@@ -14,7 +16,7 @@ public abstract class BitcoinMapperBase<T> : IMapper<T>
         get { return $"MERGE (source)-[:Redeems {{{Props.Height.GetLoadExp(":")}}}]->(block) "; }
     }
 
-    public abstract string GetCsv(T entity);
+    public abstract string GetCsv(IEdge<INode, INode> entity);
     public abstract string GetCsvHeader();
     public abstract string GetQuery(string csvFilename);
 }
