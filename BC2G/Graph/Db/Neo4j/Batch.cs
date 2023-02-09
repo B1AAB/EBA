@@ -16,7 +16,7 @@ public class BatchInfo
         }
     }
 
-    public string Name { set; get; } = string.Empty;
+    public string Name { get; }
 
     public ImmutableDictionary<string, TypeInfo> TypesInfo
     {
@@ -25,7 +25,10 @@ public class BatchInfo
     }
     private Dictionary<string, TypeInfo> _typesInfo = new();
 
-    public BatchInfo() { }
+    public BatchInfo(string name)
+    {
+        Name = name;
+    }
 
     public void AddOrUpdate(string type, int count, string directory)
     {
