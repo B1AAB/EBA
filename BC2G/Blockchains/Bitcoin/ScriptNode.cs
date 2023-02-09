@@ -19,14 +19,6 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
 
     public ScriptNode(string id) : base(id) { }
 
-    // VERY IMPORTANT TODO: REMOVE THIS CONSTRUCTOR, SHOULD NOT ALLOW CREATING NODE WITHOUT SPECIFYING NODE ID.
-    public ScriptNode(string address, ScriptType scriptType) : this("0")
-    {
-        Address = address;
-        ScriptType = scriptType;
-    }
-
-    // TODO: This constructor should be removed, we should NOT set specifically.
     public ScriptNode(string id, string address, ScriptType scriptType) : this(id)
     {
         Address = address;
@@ -35,16 +27,13 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
 
     public ScriptNode(Neo4j.Driver.INode node) :
         this(node.ElementId,
-            (string)node.Properties[
-                Props.ScriptAddress.Name],
-
-            Enum.Parse<ScriptType>((string)node.Properties[
-                Props.ScriptType.Name]))
+            (string)node.Properties[Props.ScriptAddress.Name],
+            Enum.Parse<ScriptType>((string)node.Properties[Props.ScriptType.Name]))
     { }
 
     public static ScriptNode GetCoinbaseNode()
     {
-        return new ScriptNode("0");
+        return new ScriptNode(BitcoinAgent.Coinbase);
     }
 
     public new double[] GetFeatures()

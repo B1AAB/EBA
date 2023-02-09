@@ -1,6 +1,10 @@
 ﻿// BitcoinAgent and all similar agents must implement co-operative cancellation semantics:
 // https://learn.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads?redirectedfrom=MSDN
 
+using BC2G.Model;
+using Microsoft.EntityFrameworkCore;
+using System.Net;
+
 namespace BC2G.Blockchains;
 
 public class BitcoinAgent : IDisposable
@@ -24,12 +28,17 @@ public class BitcoinAgent : IDisposable
         _logger = logger;
     }
 
-    private async Task<Stream> GetResourceAsync(string endpoint, string hash, CancellationToken cT)
+    private async Task<Stream> GetResourceAsync(
+        string endpoint, 
+        string hash, 
+        CancellationToken cT)
     {
         return await GetStreamAsync($"{endpoint}/{hash}.json", cT);
     }
 
-    private async Task<Stream> GetStreamAsync(string endpoint, CancellationToken cT)
+    private async Task<Stream> GetStreamAsync(
+        string endpoint, 
+        CancellationToken cT)
     {
         var response = await _client.GetAsync(endpoint, HttpCompletionOption.ResponseHeadersRead, cT);
         return await response.Content.ReadAsStreamAsync(cT);
@@ -43,7 +52,8 @@ public class BitcoinAgent : IDisposable
     /// for the first time; hence, will not retry if the circuit returns
     /// half-open or is reseted.
     /// </summary>
-    public async Task<(bool, ChainInfo?)> IsConnectedAsync(CancellationToken cT)
+    public async Task<(bool, ChainInfo?)> IsConnectedAsync(
+        CancellationToken cT)
     {
         try
         {
@@ -76,7 +86,8 @@ public class BitcoinAgent : IDisposable
         }
     }
 
-    public async Task<ChainInfo> AssertChainAsync(CancellationToken cT)
+    public async Task<ChainInfo> AssertChainAsync(
+        CancellationToken cT)
     {
         _logger.LogInformation(
             "Checking if can communicate with Bitcoin-qt, " +
@@ -105,7 +116,9 @@ public class BitcoinAgent : IDisposable
         return chainInfo;
     }
 
-    public async Task<string> GetBlockHashAsync(int height, CancellationToken cT)
+    public async Task<string> GetBlockHashAsync(
+        int height,
+        CancellationToken cT)
     {
         try
         {
@@ -121,7 +134,9 @@ public class BitcoinAgent : IDisposable
         }
     }
 
-    public async Task<Block> GetBlockAsync(string hash, CancellationToken cT)
+    public async Task<Block> GetBlockAsync(
+        string hash, 
+        CancellationToken cT)
     {
         await using var stream = await GetResourceAsync("block", hash, cT);
         return
@@ -130,7 +145,9 @@ public class BitcoinAgent : IDisposable
             ?? throw new Exception("Invalid block.");
     }
 
-    public async Task<Transaction> GetTransactionAsync(string hash, CancellationToken cT)
+    public async Task<Transaction> GetTransactionAsync(
+        string hash,
+        CancellationToken cT)
     {
         await using var stream = await GetResourceAsync("tx", hash, cT);
         return
@@ -138,8 +155,8 @@ public class BitcoinAgent : IDisposable
             ?? throw new Exception("Invalid transaction.");
     }
 
-    public async Task<BlockGraph> GetGraph(
-        int height, 
+    public async Task<BitcoinBlockGraph> GetGraph(
+        int height,
         ConcurrentDictionary<string, Utxo> utxos, 
         object dbContextLock, 
         CancellationToken cT)
@@ -157,14 +174,11 @@ public class BitcoinAgent : IDisposable
 
         cT.ThrowIfCancellationRequested();
 
-        var graph = new BlockGraph(block);
-        await ProcessTxesAsync(graph, block, utxos, dbContextLock, cT);
-
+        var graph = await ProcessBlockAsync(block, utxos, dbContextLock, cT);
         return graph;
     }
 
-    private async Task ProcessTxesAsync(
-        BlockGraph g, 
+    private async Task<BitcoinBlockGraph> ProcessBlockAsync(
         Block block, 
         ConcurrentDictionary<string, Utxo> utxos,
         object dbContextLock, 
@@ -177,13 +191,15 @@ public class BitcoinAgent : IDisposable
 
         var generationTxGraph = new TransactionGraph(coinbaseTx);
 
+        var g = new BitcoinBlockGraph(block, generationTxGraph);
+
         var rewardAddresses = new List<ScriptNode>();
         foreach (var output in coinbaseTx.Outputs.Where(x => x.IsValueTransfer))
         {
             output.TryGetAddress(out string address);
             var node = generationTxGraph.AddTarget(
-                new ScriptNode(address, output.GetScriptType()),
-                output.Value);
+                Utxo.GetId(coinbaseTx.Txid, output.Index),
+                address, output.GetScriptType(), output.Value);
 
             rewardAddresses.Add(node);
             g.Stats.AddInputTxCount(1);
@@ -207,7 +223,6 @@ public class BitcoinAgent : IDisposable
         cT.ThrowIfCancellationRequested();
 
         g.RewardsAddresses = rewardAddresses;
-        g.Enqueue(generationTxGraph);
 
         var dbContext = _dbContextFactory.CreateDbContext();
         var options = new ParallelOptions()
@@ -228,14 +243,13 @@ public class BitcoinAgent : IDisposable
 
         
         cT.ThrowIfCancellationRequested();
-        //await DatabaseContext.OptimisticAddOrUpdateAsync(dbContext, _dbContextFactory, cT);
         dbContext.Dispose();
-        cT.ThrowIfCancellationRequested();
-        //await DatabaseContext.OptimisticAddOrUpdate(utxos.Values, _dbContextFactory, cT);
+
+        return g;
     }
 
     private async Task ProcessTx(
-        BlockGraph g,
+        BitcoinBlockGraph g,
         Transaction tx,
         ConcurrentDictionary<string, Utxo> utxos,
         DatabaseContext dbContext,
@@ -249,7 +263,7 @@ public class BitcoinAgent : IDisposable
             cT.ThrowIfCancellationRequested();
 
             double value = 0;
-            string address = string.Empty; ;
+            string address = string.Empty;
 
             var id = Utxo.GetId(input.TxId, input.OutputIndex);
 
@@ -310,10 +324,8 @@ public class BitcoinAgent : IDisposable
                 }
             }
 
-            txGraph.AddSource(
-                input.TxId,
-                new ScriptNode(address, ScriptType.Unknown), // TODO: can this set to a better value?
-                value);
+            txGraph.AddSource(input.TxId, utxo.Id, address, ScriptType.Unknown, value);
+            // TODO: Any better value instead of ScriptType.Unknown?
         }
 
         foreach (var output in tx.Outputs.Where(x => x.IsValueTransfer))
@@ -321,9 +333,7 @@ public class BitcoinAgent : IDisposable
             cT.ThrowIfCancellationRequested();
 
             output.TryGetAddress(out string address);
-            txGraph.AddTarget(
-                new ScriptNode(address, output.GetScriptType()),
-                output.Value);
+            txGraph.AddTarget(Utxo.GetId(tx.Txid, output.Index), address, output.GetScriptType(), output.Value);
 
             var cIn = g.Block.Hash;
             var utxo = new Utxo(tx.Txid, output.Index, address, output.Value, cIn);
@@ -345,7 +355,8 @@ public class BitcoinAgent : IDisposable
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
     }
-    protected virtual void Dispose(bool disposing)
+    protected virtual void Dispose(
+        bool disposing)
     {
         if (!_disposed)
         {
