@@ -1,4 +1,6 @@
-﻿namespace BC2G.Graph.Db.Neo4j;
+﻿using BC2G.Graph.Db.Bulkload;
+
+namespace BC2G.Graph.Db.Neo4j;
 
 public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 {
@@ -12,7 +14,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     /// Ref: https://neo4j.com/blog/bulk-data-import-neo4j-3-0/
     /// </summary>
     private const int _maxEntitiesPerBatch = 80000;
-    private readonly List<BatchInfo> _batches = new();
+    private List<BatchInfo> _batches = new();
 
     private readonly IMapperFactory _mapperFactory;
 
@@ -43,16 +45,16 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         }
     }
 
-    public async void Serialize(T g)
+    public async Task SerializeAsync(T g, CancellationToken ct)
     {
-        var batchInfo = GetBatch();
+        var batchInfo = await GetBatchAsync();
 
         var edgeTypes = g.GetEdges();
         foreach (var type in edgeTypes)
         {
             var mapper = _mapperFactory.Get(type.Key);
 
-            batchInfo.AddType(type.Key, type.Value.Count);
+            batchInfo.AddOrUpdate(type.Key, type.Value.Count, Options.Neo4j.ImportDirectory);
             var filename = batchInfo.GetFilename(type.Key);
 
             using var writer = new StreamWriter(filename, append: true);
@@ -62,8 +64,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             foreach (var edge in type.Value)
                 writer.WriteLine(mapper.GetCsv(edge));
 
-            await JsonSerializer<List<BatchInfo>>.SerializeAsync(
-                _batches, Options.Neo4j.BatchesFilename);
+            SerializeBatchesAsync();
         }
     }
 
@@ -99,12 +100,27 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         }
     }
 
-    private BatchInfo GetBatch()
+    private async Task<BatchInfo> GetBatchAsync()
     {
-        if (_batches.Count == 0 || _batches[^1].GetTotalCount() >= _maxEntitiesPerBatch)
-            _batches.Add(new BatchInfo(Options.Neo4j.ImportDirectory));
+        if (_batches.Count == 0)
+            _batches = await DeserializeBatchesAsync();
+
+        if (_batches.Count == 0)
+            _batches.Add(new BatchInfo("0"));
+        else if (_batches[^1].GetTotalCount() >= _maxEntitiesPerBatch)
+            _batches.Add(new BatchInfo((_batches.Count + 1).ToString()));
 
         return _batches[^1];
+    }
+    private async void SerializeBatchesAsync()
+    {
+        await JsonSerializer<List<BatchInfo>>.SerializeAsync(
+            _batches, Options.Neo4j.BatchesFilename);
+    }
+    private async Task<List<BatchInfo>> DeserializeBatchesAsync()
+    {
+        return await JsonSerializer<List<BatchInfo>>.DeserializeAsync(
+                Options.Neo4j.BatchesFilename);
     }
 
     public void Dispose()
