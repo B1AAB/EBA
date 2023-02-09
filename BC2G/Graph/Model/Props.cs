@@ -2,12 +2,14 @@
 
 public static class Props
 {
+    private const string _txid = "Txid";
     private const string _addressProperty = "Address";
     private const string _scriptTypeProperty = "ScriptType";
 
     public static Property Height { get; } = new("Height", FieldType.Int);
     public static Property ScriptAddress { get; } = new(_addressProperty);
     public static Property ScriptType { get; } = new(_scriptTypeProperty);
+    public static Property Txid { get; } = new(_txid);
     public static Property BlockMedianTime { get; } = new("MedianTime");
     public static Property BlockConfirmations { get; } = new("Confirmations", FieldType.Int);
     public static Property BlockDifficulty { get; } = new("Difficulty", FieldType.Float);
@@ -29,4 +31,6 @@ public static class Props
     public static Property EdgeTargetType { get; } = new(_scriptTypeProperty, csvHeader: "DestType");
     public static Property EdgeType { get; } = new("EdgeType");
     public static Property EdgeValue { get; } = new("Value", FieldType.Float);
+    public static Property T2TEdgeSourceTxid { get; } = new Property(_txid, csvHeader: "SourceTxid");
+    public static Property T2TEdgeTargetTxid { get; } = new Property(_txid, csvHeader: "TargetTxid");
 }
