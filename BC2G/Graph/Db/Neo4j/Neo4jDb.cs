@@ -67,9 +67,36 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         }
     }
 
-    public void Import()
+    public void ImportAsync()
     {
+        ImportAsync(string.Empty);
+    }
+    public async void ImportAsync(string batchName)
+    {
+        if (Driver is null)
+            throw new ArgumentNullException(
+                nameof(Driver), "A connection to Neo4j is not setup.");
 
+        _batches = await DeserializeBatchesAsync();
+        var batch = _batches.Find(x => x.Name == batchName);
+        if (batch == default)
+            throw new InvalidOperationException(
+                $"A batch named {batchName} not found in " +
+                $"{Options.Neo4j.BatchesFilename}");
+
+        using var session = Driver.AsyncSession(
+            x => x.WithDefaultAccessMode(AccessMode.Write));
+
+        foreach(var type in batch.TypesInfo)
+        {
+            var mapper = _mapperFactory.Get(type.Key);
+            var bulkLoadResult = session.ExecuteWriteAsync(async x =>
+            {
+                var result = await x.RunAsync(mapper.GetQuery(type.Value.Filename));
+                return await result.ToListAsync();
+            });
+            bulkLoadResult.Wait();
+        }
     }
 
     private BatchInfo GetBatch()
