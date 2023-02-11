@@ -25,6 +25,11 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         _logger = logger;
         _mapperFactory = mapperFactory;
 
+        if (options.Neo4j.BatchesFilename == Path.GetFileName(options.Neo4j.BatchesFilename))
+        {
+            options.Neo4j.BatchesFilename = Path.Join(options.WorkingDir, options.Neo4j.BatchesFilename);
+        }
+
         if (!Options.Bitcoin.SkipGraphLoad)
         {
             Driver = GraphDatabase.Driver(
@@ -110,7 +115,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             Options.Neo4j.ImportDirectory))
         {
             localFilename = Path.Join(Options.Neo4j.ImportDirectory, Path.GetFileName(filename));
-            File.Copy(filename, localFilename);
+            File.Copy(filename, localFilename, true);
             fileLocalized = true;
         }
 
@@ -137,8 +142,8 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         if (_batches.Count == 0 || _batches[^1].GetTotalCount() >= _maxEntitiesPerBatch)
         {
             _batches.Add(new BatchInfo(
-                _batches.Count == 0 ? "0" : (_batches.Count + 1).ToString(),
-                Options.Neo4j.ImportDirectory, types));
+                (_batches.Count == 0 ? 0 : _batches.Count + 1).ToString(),
+                Options.WorkingDir, types));
         }
 
         return _batches[^1];
