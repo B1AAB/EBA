@@ -1,80 +1,146 @@
-﻿namespace BC2G.Graph.Model;
+﻿using System.Collections.Immutable;
+
+namespace BC2G.Graph.Model;
 
 public class GraphBase : IEquatable<GraphBase>
 {
-    public int NodeCount { get { return _nodes.Count; } }
-    public int EdgeCount { get { return _edges.Count; } }
+    public int NodeCount
+    {
+        get { return (from x in _nodes select x.Value.Count).Sum(); }
+    }
+    public int EdgeCount
+    {
+        get { return (from x in _edges select x.Value.Count).Sum(); }
+    }
 
-    public ReadOnlyCollection<ScriptNode> Nodes
+    public ReadOnlyCollection<INode> Nodes
     {
-        get { return new ReadOnlyCollection<ScriptNode>(_nodes.Values.ToList()); }
+        get
+        {
+            return new ReadOnlyCollection<INode>(
+                _nodes.SelectMany(x => x.Value.Values).ToList());
+        }
     }
-    public ReadOnlyCollection<S2SEdge> Edges
+    public ReadOnlyCollection<IEdge<INode, INode>> Edges
     {
-        get { return new ReadOnlyCollection<S2SEdge>(_edges.Values.ToList()); }
+        get
+        {
+            return new ReadOnlyCollection<IEdge<INode, INode>>(
+                _edges.SelectMany(x => x.Value.Values).ToList());
+        }
     }
+
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, INode>> _nodes = new();
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, IEdge<INode, INode>>> _edges = new();
+
     public ReadOnlyCollection<double> Labels
     {
         get { return new ReadOnlyCollection<double>(_labels); }
     }
-
-    private readonly ConcurrentDictionary<string, ScriptNode> _nodes = new();
-    private readonly ConcurrentDictionary<string, S2SEdge> _edges = new();
     private readonly List<double> _labels = new();
 
-    public ReadOnlyCollection<T2TEdge> T2TEdges
+    /// <summary>
+    /// Use this overload if type is known at compile time.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public int GetNodeCount<T>()
     {
-        get { return new ReadOnlyCollection<T2TEdge>(_t2tEdges.Values.ToList()); }
+        return GetNodeCount(Utilities.TypeToString<T>());
     }
-    private readonly ConcurrentDictionary<string, T2TEdge> _t2tEdges = new();
-
-    public void AddNode(ScriptNode node)
+    public int GetNodeCount<T>(T instance) where T : notnull
     {
-        _nodes.AddOrUpdate(node.Id, node, (key, oldValue) => node);
+        return GetNodeCount(Utilities.TypeToString(instance));
+    }
+    public int GetNodeCount(string type)
+    {
+        if (_nodes.TryGetValue(type, out ConcurrentDictionary<string, INode>? value))
+            return value.Values.Count;
+        return 0;
+    }
+
+    public ImmutableDictionary<string, ICollection<INode>> GetNodes()
+    {
+        return _nodes.ToImmutableDictionary(x => x.Key, x => x.Value.Values);
+    }
+
+    public ImmutableDictionary<string, ICollection<IEdge<INode, INode>>> GetEdges()
+    {
+        return _edges.ToImmutableDictionary(x => x.Key, x => x.Value.Values);
+    }
+
+    public bool TryAddNode<T>(T node) where T : INode
+    {
+        var x = _nodes.GetOrAdd(
+            Utilities.TypeToString(node), 
+            new ConcurrentDictionary<string, INode>());
+
+        return x.TryAdd(node.Id, node);
+    }
+
+    public T GetOrAddNode<T>(T node) where T : INode
+    {
+        var x = _nodes.GetOrAdd(
+            Utilities.TypeToString(node),
+            new ConcurrentDictionary<string, INode>());
+
+        return (T)x.AddOrUpdate(node.Id, node, (key, oldValue) => node);
         // TODO: any better update logic?!
     }
 
-    public void AddNode(Neo4j.Driver.INode node)
-    {
-        AddNode(new ScriptNode(node));
-    }
-
-    public void AddNodes(IEnumerable<Neo4j.Driver.INode> nodes)
+    public void AddNodes<T>(IEnumerable<T> nodes) where T : INode
     {
         foreach (var node in nodes)
-            AddNode(new ScriptNode(node));
+            GetOrAddNode(node);
     }
 
-    public void AddEdge(IRelationship relationship)
+    public T GetOrAddEdge<T>(T edge) where T : IEdge<INode, INode>
     {
-        var source = _nodes.GetOrAdd(
-            relationship.StartNodeElementId,
-            new ScriptNode(relationship.StartNodeElementId));
+        var x = _edges.GetOrAdd(
+            Utilities.TypeToString(edge.GetType()), 
+            new ConcurrentDictionary<string, IEdge<INode, INode>>());
 
-        var target = _nodes.GetOrAdd(
-            relationship.EndNodeElementId,
-            new ScriptNode(relationship.EndNodeElementId));
-
-        var cEdge = new S2SEdge(source, target, relationship);
-        var edge = _edges.GetOrAdd(cEdge.Id, cEdge);
-
-        source.AddOutgoingEdges(edge);
-        target.AddIncomingEdges(edge);
+        return (T)x.GetOrAdd(edge.Id, edge);
     }
 
-    public void AddEdges(IEnumerable<IRelationship> edges)
+    public void AddEdges<T>(IEnumerable<T> edges)
+        where T : IEdge<INode, INode>
     {
         foreach (var edge in edges)
-            AddEdge(edge);
+            GetOrAddEdge(edge);
     }
 
-    public void AddEdge(T2TEdge edge)
+    public void AddOrUpdateEdge<T>(
+        T edge, Func<string, IEdge<INode, INode>, IEdge<INode, INode>> updateValueFactory)
+        where T : IEdge<INode, INode>
     {
-        // TODO: ID may not be correct
-        // TODO: tryadd is not the correct call
+        var x = _edges.GetOrAdd(
+            Utilities.TypeToString(edge.GetType()), 
+            new ConcurrentDictionary<string, IEdge<INode, INode>>());
 
-        _t2tEdges.TryAdd(edge.Id, edge);
+        x.AddOrUpdate(edge.Id, edge, updateValueFactory);
+
+        TryAddNode(edge.Source);
+        TryAddNode(edge.Target);
     }
+
+    /// <summary>
+    /// Use this overload if type T is known at compile time.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public List<T>? GetEdges<T>() where T : IEdge<INode, INode>
+    {
+        return GetEdges<T>(Utilities.TypeToString<T>());
+    }
+    public List<T>? GetEdges<T>(string type) where T : IEdge<INode, INode>
+    {
+        if (!_edges.ContainsKey(type))
+            return null;
+
+        return _edges[type].Cast<T>().ToList();
+    }
+
 
     public void AddLabel(double label)
     {
@@ -132,4 +198,100 @@ public class GraphBase : IEquatable<GraphBase>
     {
         throw new NotImplementedException();
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public int NodeCountV1 { get { return _nodesV1.Count; } }
+    public int EdgeCountV1 { get { return _edgesV1.Count; } }
+
+    /*public ReadOnlyCollection<ScriptNode> NodesV1
+    {
+        get { return new ReadOnlyCollection<ScriptNode>(_nodesV1.Values.ToList()); }
+    }*/
+    /*public ReadOnlyCollection<S2SEdge> EdgesV1
+    {
+        get { return new ReadOnlyCollection<S2SEdge>(_edgesV1.Values.ToList()); }
+    }*/
+
+    private readonly ConcurrentDictionary<string, ScriptNode> _nodesV1 = new();
+    private readonly ConcurrentDictionary<string, S2SEdge> _edgesV1 = new();
+
+
+    public ReadOnlyCollection<T2TEdge> T2TEdges
+    {
+        get { return new ReadOnlyCollection<T2TEdge>(_t2tEdges.Values.ToList()); }
+    }
+    private readonly ConcurrentDictionary<string, T2TEdge> _t2tEdges = new();
+    /*
+    public void AddNodeV1(ScriptNode node)
+    {
+        _nodesV1.AddOrUpdate(node.Id, node, (key, oldValue) => node);
+        // TODO: any better update logic?!
+    }*/
+    /*
+    public void AddNodeV1(Neo4j.Driver.INode node)
+    {
+        AddNodeV1(new ScriptNode(node));
+    }*/
+    /*
+    public void AddNodesV1(IEnumerable<Neo4j.Driver.INode> nodes)
+    {
+        foreach (var node in nodes)
+            AddNodeV1(new ScriptNode(node));
+    }*/
+    /*
+    public void AddEdgeV1(IRelationship relationship)
+    {
+        var source = _nodesV1.GetOrAdd(
+            relationship.StartNodeElementId,
+            new ScriptNode(relationship.StartNodeElementId));
+
+        var target = _nodesV1.GetOrAdd(
+            relationship.EndNodeElementId,
+            new ScriptNode(relationship.EndNodeElementId));
+
+        var cEdge = new S2SEdge(source, target, relationship);
+        var edge = _edgesV1.GetOrAdd(cEdge.Id, cEdge);
+
+        source.AddOutgoingEdges(edge);
+        target.AddIncomingEdges(edge);
+    }*/
+    /*
+    public void AddEdgesV1(IEnumerable<IRelationship> edges)
+    {
+        foreach (var edge in edges)
+            AddEdgeV1(edge);
+    }*/
+    /*
+    public void AddEdgeV1(T2TEdge edge)
+    {
+        // TODO: ID may not be correct
+        // TODO: tryadd is not the correct call
+
+        _t2tEdges.TryAdd(edge.Id, edge);
+    }*/
 }
