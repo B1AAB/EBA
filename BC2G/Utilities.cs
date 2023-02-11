@@ -126,4 +126,19 @@ internal class Utilities
     {
         return TypeToString(typeof(T));
     }
+
+    public static bool AssertPathEqual(string? pathX, string? pathY)
+    {
+        if (pathX == null || pathY == null)
+            return false;
+
+        return ComparePath(pathX, pathY) == 0;
+    }
+    public static int ComparePath(string? pathX, string? pathY)
+    {
+        return string.Compare(
+            pathX?.TrimEnd(Path.DirectorySeparatorChar),
+            pathY?.TrimEnd(Path.DirectorySeparatorChar),
+            StringComparison.InvariantCultureIgnoreCase);
+    }
 }
