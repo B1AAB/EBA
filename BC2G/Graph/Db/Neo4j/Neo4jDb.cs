@@ -1,6 +1,4 @@
-﻿using BC2G.Graph.Db.Bulkload;
-
-namespace BC2G.Graph.Db.Neo4j;
+﻿namespace BC2G.Graph.Db.Neo4j;
 
 public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 {
@@ -45,34 +43,37 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         }
     }
 
+    /// <summary>
+    /// No precedence should be assumed on serializing different types.
+    /// </summary>
     public async Task SerializeAsync(T g, CancellationToken ct)
     {
-        var batchInfo = await GetBatchAsync();
-
         var edgeTypes = g.GetEdges();
+        var graphType = Utilities.TypeToString(g.GetType());
+        var batchInfo = await GetBatchAsync(edgeTypes.Keys.Append(graphType).ToList());
+
+        var gMapper = _mapperFactory.GetGraphMapper(graphType);
+        gMapper.ToCsv(g, batchInfo.GetFilename(graphType));
+
         foreach (var type in edgeTypes)
         {
-            var mapper = _mapperFactory.Get(type.Key);
-
-            batchInfo.AddOrUpdate(type.Key, type.Value.Count, Options.Neo4j.ImportDirectory);
-            var filename = batchInfo.GetFilename(type.Key);
-
-            using var writer = new StreamWriter(filename, append: true);
-            if (new FileInfo(filename).Length == 0)
-                writer.WriteLine(mapper.GetCsvHeader());
-
-            foreach (var edge in type.Value)
-                writer.WriteLine(mapper.GetCsv(edge));
-
-            SerializeBatchesAsync();
+            batchInfo.AddOrUpdate(type.Key, type.Value.Count);
+            var eMapper = _mapperFactory.GetEdgeMapper(type.Key);
+            eMapper.ToCsv(type.Value, batchInfo.GetFilename(type.Key));
         }
+
+        SerializeBatchesAsync();
     }
 
-    public void ImportAsync()
+    /// <summary>
+    /// No precedence should be assumed on serializing different types.
+    /// </summary>
+    public async Task ImportAsync()
     {
-        ImportAsync(string.Empty);
+        // TODO: fixme, correct the batchname.
+        await ImportAsync("0");
     }
-    public async void ImportAsync(string batchName)
+    public async Task ImportAsync(string batchName)
     {
         if (Driver is null)
             throw new ArgumentNullException(
@@ -88,27 +89,56 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         using var session = Driver.AsyncSession(
             x => x.WithDefaultAccessMode(AccessMode.Write));
 
-        foreach(var type in batch.TypesInfo)
+        foreach (var type in batch.TypesInfo)
         {
-            var mapper = _mapperFactory.Get(type.Key);
-            var bulkLoadResult = session.ExecuteWriteAsync(async x =>
-            {
-                var result = await x.RunAsync(mapper.GetQuery(type.Value.Filename));
-                return await result.ToListAsync();
-            });
-            bulkLoadResult.Wait();
+            var mapper = _mapperFactory.GetMapperBase(type.Key);
+            await ExecuteQueryAsync(session, mapper, type.Value.Filename);
         }
     }
 
-    private async Task<BatchInfo> GetBatchAsync()
+    private async Task ExecuteQueryAsync(IAsyncSession session, IMapperBase mapper, string filename)
+    {
+        // Localization, if needed.
+        // Neo4j import needs files to be placed in a particular folder 
+        // before it can import them.
+        var fileLocalized = false;
+        var localFilename = filename;
+
+        if (!Utilities.AssertPathEqual(
+            Path.GetDirectoryName(filename),
+            Options.Neo4j.ImportDirectory))
+        {
+            localFilename = Path.Join(Options.Neo4j.ImportDirectory, Path.GetFileName(filename));
+            File.Copy(filename, localFilename);
+            fileLocalized = true;
+        }
+
+        var filename4Query = Options.Neo4j.CypherImportPrefix + Path.GetFileName(localFilename);
+
+        var queryResult = await session.ExecuteWriteAsync(async x =>
+        {
+            IResultCursor cursor = await x.RunAsync(mapper.GetQuery(filename4Query));
+            return await cursor.ToListAsync();
+        });
+
+        // Delocalization.
+        if (fileLocalized)
+        {
+            File.Delete(localFilename);
+        }
+    }
+
+    private async Task<BatchInfo> GetBatchAsync(List<string> types)
     {
         if (_batches.Count == 0)
             _batches = await DeserializeBatchesAsync();
 
-        if (_batches.Count == 0)
-            _batches.Add(new BatchInfo("0"));
-        else if (_batches[^1].GetTotalCount() >= _maxEntitiesPerBatch)
-            _batches.Add(new BatchInfo((_batches.Count + 1).ToString()));
+        if (_batches.Count == 0 || _batches[^1].GetTotalCount() >= _maxEntitiesPerBatch)
+        {
+            _batches.Add(new BatchInfo(
+                _batches.Count == 0 ? "0" : (_batches.Count + 1).ToString(),
+                Options.Neo4j.ImportDirectory, types));
+        }
 
         return _batches[^1];
     }
@@ -120,7 +150,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     private async Task<List<BatchInfo>> DeserializeBatchesAsync()
     {
         return await JsonSerializer<List<BatchInfo>>.DeserializeAsync(
-                Options.Neo4j.BatchesFilename);
+            Options.Neo4j.BatchesFilename);
     }
 
     public void Dispose()
