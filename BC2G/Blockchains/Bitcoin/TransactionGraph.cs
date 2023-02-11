@@ -1,3 +1,6 @@
+using BC2G.Model;
+using System.Net;
+
 namespace BC2G.Graph.Model;
 
 public class TransactionGraph : GraphBase
@@ -16,17 +19,17 @@ public class TransactionGraph : GraphBase
         TxNode = new TxNode(tx);
     }
 
-    public ScriptNode AddSource(string txid, string utxoId, string address, ScriptType scriptType, double value)
+    public ScriptNode AddSource(string txid, Utxo utxo)
     {
-        SourceTxes.AddOrUpdate(txid, value, (_, oldValue) => oldValue + value);
-        TotalInputValue += value;
-        return AddOrUpdate(SourceScripts, new ScriptNode(utxoId, address, scriptType), value);
+        SourceTxes.AddOrUpdate(txid, utxo.Value, (_, oldValue) => oldValue + utxo.Value);
+        TotalInputValue += utxo.Value;
+        return AddOrUpdate(SourceScripts, new ScriptNode(utxo), utxo.Value);
     }
 
-    public ScriptNode AddTarget(string utxoId, string address, ScriptType scriptType, double value)
+    public ScriptNode AddTarget(Utxo utxo)
     {
-        TotalOutputValue += value;
-        return AddOrUpdate(TargetScripts, new ScriptNode(utxoId, address, scriptType), value);
+        TotalOutputValue += utxo.Value;
+        return AddOrUpdate(TargetScripts, new ScriptNode(utxo), utxo.Value);
     }
 
     private static ScriptNode AddOrUpdate(
