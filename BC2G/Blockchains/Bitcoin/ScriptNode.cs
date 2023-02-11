@@ -19,6 +19,12 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
 
     public ScriptNode(string id) : base(id) { }
 
+    public ScriptNode(Utxo utxo) : base(utxo.Id)
+    {
+        Address = utxo.Address;
+        ScriptType = utxo.ScriptType;
+    }
+
     public ScriptNode(string id, string address, ScriptType scriptType) : this(id)
     {
         Address = address;
