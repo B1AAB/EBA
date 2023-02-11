@@ -27,8 +27,8 @@ public static class Props
     public static Property SumFeeEdges { get; } = new("SumFeeEdgeTypes", FieldType.Float);
     public static Property EdgeSourceAddress { get; } = new(_addressProperty, csvHeader: "SourceAddress");
     public static Property EdgeSourceType { get; } = new(_scriptTypeProperty, csvHeader: "SourceType");
-    public static Property EdgeTargetAddress { get; } = new(_addressProperty, csvHeader: "DestAddress");
-    public static Property EdgeTargetType { get; } = new(_scriptTypeProperty, csvHeader: "DestType");
+    public static Property EdgeTargetAddress { get; } = new(_addressProperty, csvHeader: "TargetAddress");
+    public static Property EdgeTargetType { get; } = new(_scriptTypeProperty, csvHeader: "TargetType");
     public static Property EdgeType { get; } = new("EdgeType");
     public static Property EdgeValue { get; } = new("Value", FieldType.Float);
     public static Property T2TEdgeSourceTxid { get; } = new Property(_txid, csvHeader: "SourceTxid");
