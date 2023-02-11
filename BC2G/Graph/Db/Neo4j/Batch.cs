@@ -28,7 +28,10 @@ public class BatchInfo
 
 
     [JsonConstructor]
-    public BatchInfo(string name, string defaultDirectory, ImmutableDictionary<string, TypeInfo> typesInfo)
+    public BatchInfo(
+        string name, 
+        string defaultDirectory, 
+        ImmutableDictionary<string, TypeInfo> typesInfo)
     {
         Name = name;
         DefaultDirectory = defaultDirectory;

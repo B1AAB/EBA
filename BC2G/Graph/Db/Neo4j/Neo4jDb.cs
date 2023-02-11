@@ -53,6 +53,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         var batchInfo = await GetBatchAsync(edgeTypes.Keys.Append(graphType).ToList());
 
         var gMapper = _mapperFactory.GetGraphMapper(graphType);
+        batchInfo.AddOrUpdate(graphType, 1);
         gMapper.ToCsv(g, batchInfo.GetFilename(graphType));
 
         foreach (var type in edgeTypes)
