@@ -41,6 +41,8 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
         Type = type;
         Timestamp = timestamp;
         BlockHeight = blockHeight;
+
+        Id = GetHashCode(true);
     }
 
     public Edge(
@@ -86,7 +88,15 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
         });
     }
 
-    public int GetHashCode(bool ignoreValue)
+    public string GetHashCode(bool ignoreValue)
+    {
+        if (ignoreValue)
+            return HashCode.Combine(Source, Target, Type, Timestamp).ToString();
+        else
+            return GetHashCode().ToString();
+    }
+
+    public int GetHashCodeInt(bool ignoreValue)
     {
         if (ignoreValue)
             return HashCode.Combine(Source, Target, Type, Timestamp);
