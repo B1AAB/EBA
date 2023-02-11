@@ -2,5 +2,7 @@
 
 public interface IMapperFactory
 {
-    public IMapper Get(string type);
+    public IMapperBase GetMapperBase(string type);
+    public IEdgeMapper GetEdgeMapper(string type);
+    public IGraphMapper GetGraphMapper(string type);
 }
