@@ -2,52 +2,66 @@
 
 namespace BC2G.Graph.Db.Neo4j;
 
+public class TypeInfo
+{
+    public int Count { set; get; }
+    public string Filename { get; }
+
+    [JsonConstructor]
+    public TypeInfo(string filename, int count)
+    {
+        Filename = filename;
+        Count = count;
+    }
+}
+
 public class BatchInfo
 {
-    public class TypeInfo
-    {
-        public int Count { set; get; }
-        public string Filename { get; }
-
-        public TypeInfo(string filename, int count)
-        {
-            Filename = filename;
-            Count = count;
-        }
-    }
-
     public string Name { get; }
-
+    public string DefaultDirectory { get; }    
+    
     public ImmutableDictionary<string, TypeInfo> TypesInfo
     {
-        set { _typesInfo = new Dictionary<string, TypeInfo>(value); }
         get { return _typesInfo.ToImmutableDictionary(); }
     }
-    private Dictionary<string, TypeInfo> _typesInfo = new();
+    private readonly Dictionary<string, TypeInfo> _typesInfo;
 
-    public BatchInfo(string name)
+
+    [JsonConstructor]
+    public BatchInfo(string name, string defaultDirectory, ImmutableDictionary<string, TypeInfo> typesInfo)
     {
         Name = name;
+        DefaultDirectory = defaultDirectory;
+        _typesInfo = new Dictionary<string, TypeInfo>(typesInfo);
+    }
+
+    public BatchInfo(string name, string defaultDirectory, List<string> types)
+    {
+        Name = name;
+        DefaultDirectory = defaultDirectory;
+        var timestamp = GetTimestamp();
+
+        _typesInfo = new();
+        foreach (var type in types)
+            _typesInfo.Add(type, new TypeInfo(
+                CreateFilename(type, timestamp, DefaultDirectory), 0));
+    }
+
+    public void AddOrUpdate(string type, int count)
+    {
+        AddOrUpdate(type, count, DefaultDirectory);
     }
 
     public void AddOrUpdate(string type, int count, string directory)
     {
-        if (!_typesInfo.ContainsKey(type))
-        {
-            _typesInfo.Add(type, new TypeInfo(
-                Path.Join(directory, $"{type}_{DateTime.Now:yyyyMMddHHmmssffff}.csv"),
-                0));
-        }
-
+        EnsureType(type, directory);
         _typesInfo[type].Count += count;
     }
 
     public string GetFilename(string type)
     {
-        if (!_typesInfo.ContainsKey(type))
-            return string.Empty;
-        else
-            return _typesInfo[type].Filename;
+        EnsureType(type, DefaultDirectory);
+        return _typesInfo[type].Filename;
     }
 
     public int GetTotalCount()
@@ -55,8 +69,26 @@ public class BatchInfo
         return (from x in _typesInfo.Values select x.Count).Sum();
     }
 
-    private static string GetKey(Type type)
+    public TypeInfo GetTypeInfo(string type)
     {
-        return type.FullName ?? $"{type.Namespace ?? string.Empty}.{type.Name}";
+        return _typesInfo[type];
+    }
+
+    private void EnsureType(string type, string directory)
+    {
+        if (!_typesInfo.ContainsKey(type))
+        {
+            _typesInfo.Add(type, new TypeInfo(
+                CreateFilename(type, GetTimestamp(), directory), 0));
+        }
+    }
+
+    private static string GetTimestamp()
+    {
+        return $"{DateTime.Now:yyyyMMddHHmmssffff}";
+    }
+    private static string CreateFilename(string type, string timestamp, string directory)
+    {
+        return Path.Join(directory, $"{timestamp}_{type.Replace('.', '_')}.csv");
     }
 }
