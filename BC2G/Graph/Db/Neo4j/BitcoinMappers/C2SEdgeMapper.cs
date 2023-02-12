@@ -40,13 +40,17 @@ public class C2SEdgeMapper : S2SEdgeMapper
 
     public override string GetQuery(string csvFilename)
     {
-        var l = Property.lineVarName;
-        var unknown = nameof(ScriptType.Unknown);
+        string l = Property.lineVarName, s = "coinbase", t = "target", b="block";
+        //var unknown = nameof(ScriptType.Unknown);
 
         return
             $"LOAD CSV WITH HEADERS FROM '{csvFilename}' AS {l} " +
             $"FIELDTERMINATOR '{csvDelimiter}' " +
-            $"MATCH (coinbase:{BitcoinAgent.Coinbase}) " +
+            $"MATCH ({s}:{BitcoinAgent.Coinbase}) " +
+
+            GetNodeQuery(t, labels, Props.EdgeTargetAddress, Props.EdgeTargetType) +
+            " " +
+            /*
             $"MERGE (target:{labels} {{" +
             $"{Props.EdgeTargetAddress.GetLoadExp(":")}}}) " +
             $"ON CREATE SET target.{Props.EdgeTargetAddress.GetLoadExp("=")} " +
@@ -54,20 +58,29 @@ public class C2SEdgeMapper : S2SEdgeMapper
             $"CASE {l}.{Props.EdgeTargetAddress.CsvHeader} " +
             $"WHEN '{unknown}' THEN target.{Props.EdgeTargetAddress.Name} " +
             $"ELSE {l}.{Props.EdgeTargetAddress.CsvHeader} " +
-            $"END " +
+            $"END " +*/
 
 
 
             //$"SET target.{Props.EdgeTargetType.GetLoadExp("=")} " +
 
-            $"WITH coinbase, target, {l} " +
+            $"WITH {s}, {t}, {l} " +
+            GetBlockQuery(b) +
+            " "+
+            /*
             $"MERGE (block:{BlockMapper.label} {{" +
             $"{Props.Height.GetLoadExp(":")}" +
-            $"}}) " +
+            $"}}) " +*/
+
             // Create edge between the script and its corresponding block
             CreatesEdgeQuery +
-            $"WITH coinbase, target, {l} " +
+            " " +
+            $"WITH {s}, {t}, {l} " +
             // Create edge between the coinbase node and the script
+
+            GetEdgeQuery(new List<Property>() { Props.EdgeValue, Props.Height }, s, t) +
+            " " +
+            /*
             $"CALL apoc.merge.relationship(" +
             $"coinbase, " + // source
             $"{l}.{Props.EdgeType.CsvHeader}, " + // relationship type
@@ -80,7 +93,7 @@ public class C2SEdgeMapper : S2SEdgeMapper
             $"{{}}" + // on update
             $") " +
             $"YIELD rel " +
-            $"SET rel.Count = rel.Count + 1 " +
+            $"SET rel.Count = rel.Count + 1 " +*/
             $"RETURN distinct 'DONE'";
     }
 }

@@ -2,10 +2,10 @@
 
 namespace BC2G.Graph.Db.Neo4j.BitcoinMappers;
 
-public abstract class BitcoinMapperBase : IMapper
+public abstract class BitcoinEdgeMapper : IEdgeMapper
 {
-    public const string csvDelimiter = "\t";
-    public const string labelsDelimiter = ":";
+    public const string csvDelimiter = BitcoinBlockGraphMapper.csvDelimiter;
+    public const string labelsDelimiter = BitcoinBlockGraphMapper.labelsDelimiter;
 
     public static string CreatesEdgeQuery
     {
@@ -16,7 +16,217 @@ public abstract class BitcoinMapperBase : IMapper
         get { return $"MERGE (source)-[:Redeems {{{Props.Height.GetLoadExp(":")}}}]->(block) "; }
     }
 
-    public abstract string GetCsv(IEdge<INode, INode> entity);
+    public static string GetNodeQuery(
+        string variable, string labels, 
+        Property idProp, 
+        Property typeProp)
+    {
+        // An example of the populated template.
+        //
+        // MERGE (source:Script
+        // {Address:line.SourceAddress})
+        // ON CREATE SET source.ScriptType=line.SourceType
+        // ON MATCH SET source.ScriptType =
+        // CASE line.SourceType
+        // WHEN 'Unknown' THEN source.ScriptType
+        // ELSE line.SourceType
+        // END
+        //
+
+        return
+            $"MERGE ({variable}:{labels} " +
+            $"{{{idProp.GetLoadExp(":")}}}) " +
+            $"ON CREATE SET {variable}.{typeProp.GetLoadExp("=")} " +
+            $"ON MATCH SET {variable}.{typeProp.Name} = " +
+            $"CASE {Property.lineVarName}.{typeProp.CsvHeader} " +
+            $"WHEN '{nameof(ScriptType.Unknown)}' THEN {variable}.{typeProp.Name} " +
+            $"ELSE {Property.lineVarName}.{typeProp.CsvHeader} " +
+            $"END";
+    }
+
+    public static string GetNodeQuery(
+        string variable, string labels,
+        Property idProp)
+    {
+        return
+            $"MERGE ({variable}:{labels} " +
+            $"{{{idProp.GetLoadExp(":")}}})";
+    }
+
+    public static string GetEdgeQuery(
+        List<Property> props, 
+        string sourceVar="source", 
+        string targetVar="target")
+    {
+        // An example of the populated template
+        // (indentation added for better readibility).
+        //
+        // CALL apoc.merge.relationship(
+        //     source,
+        //     line.EdgeType,
+        //     {
+        //         Value:toFloat(line.Value),
+        //         Height:toInteger(line.Height)
+        //     },
+        //     { Count : 0},
+        //     target,
+        //     {}
+        // )
+        // YIELD rel SET rel.Count = rel.Count + 1
+        // 
+
+        var builder = new StringBuilder(
+            "CALL apoc.merge.relationship(" +
+            $"{sourceVar}, " +
+            $"{Property.lineVarName}.{Props.EdgeType.CsvHeader}, " +
+            $"{{");
+
+        builder.Append(string.Join(", ", from x in props select x.GetLoadExp(":")));
+
+        builder.Append(
+            $"}}, " +
+            $"{{ Count : 0}}, " + // on create
+            $"{targetVar}, " +
+            $"{{}}" +             // on update
+            $") " +
+            $"YIELD rel " +
+            $"SET rel.Count = rel.Count + 1");
+
+        return builder.ToString();
+    }
+
+    public static string GetBlockQuery(string varName)
+    {
+        return
+            $"MERGE ({varName}:{BlockMapper.label} {{" +
+            $"{Props.Height.GetLoadExp(":")}" +
+            "}) ";
+    }
+
     public abstract string GetCsvHeader();
-    public abstract string GetQuery(string csvFilename);
+    public abstract string GetCsv(IEdge<INode, INode> edge);
+    public abstract string GetQuery(string filename);
+
+    public virtual void ToCsv(IEnumerable<IEdge<INode, INode>> edges, string filename)
+    {
+        using var writer = new StreamWriter(filename, append: true);
+        if (new FileInfo(filename).Length == 0)
+            writer.WriteLine(GetCsvHeader());
+
+        foreach (var edge in edges)
+            writer.WriteLine(GetCsv(edge));
+    }
+}
+
+public class BitcoinBlockGraphMapper : IGraphMapper
+{
+    public const string label = "Block";
+
+    public const string csvDelimiter = "\t";
+    public const string labelsDelimiter = ":";
+
+    /// Note that the ordre of the items in this array should 
+    /// match those returned from the `GetCsv()` method.
+    private static readonly Property[] _properties = new Property[]
+    {
+        Props.Height,
+        Props.BlockMedianTime,
+        Props.BlockConfirmations,
+        Props.BlockDifficulty,
+        Props.BlockTxCount,
+        Props.BlockSize,
+        Props.BlockStrippedSize,
+        Props.BlockWeight,
+        Props.NumGenerationEdges,
+        Props.NumTransferEdges,
+        Props.NumChangeEdges,
+        Props.NumFeeEdges,
+        Props.SumGenerationEdges,
+        Props.SumTransferEdges,
+        Props.SumChangeEdges,
+        Props.SumFeeEdges
+    };
+
+    public string GetCsvHeader()
+    {
+        return string.Join(
+            csvDelimiter,
+            from x in _properties select x.CsvHeader);
+    }
+
+    public string GetCsv(GraphBase g)
+    {
+        return GetCsv((BitcoinBlockGraph)g);
+    }
+
+    public static string GetCsv(BitcoinBlockGraph g)
+    {
+        var counts = g.Stats.EdgeTypeFrequency;
+        var sums = g.Stats.EdgeTypeTxSum;
+
+        /// Note that the ordre of the items in this array should 
+        /// match those in the `_properties`. 
+        return string.Join(csvDelimiter, new string[]
+        {
+            g.Block.Height.ToString(),
+            g.Block.MedianTime.ToString(),
+            g.Block.Confirmations.ToString(),
+            g.Block.Difficulty.ToString(),
+            g.Block.TransactionsCount.ToString(),
+            g.Block.Size.ToString(),
+            g.Block.StrippedSize.ToString(),
+            g.Block.Weight.ToString(),
+            counts[EdgeType.Generation].ToString(),
+            counts[EdgeType.Transfer].ToString(),
+            counts[EdgeType.Fee].ToString(),
+            sums[EdgeType.Generation].ToString(),
+            sums[EdgeType.Transfer].ToString(),
+            sums[EdgeType.Fee].ToString()
+        });
+    }
+
+    public virtual void ToCsv(GraphBase graph, string filename)
+    {
+        using var writer = new StreamWriter(filename, append: true);
+        if (new FileInfo(filename).Length == 0)
+            writer.WriteLine(GetCsvHeader());
+
+        writer.WriteLine(GetCsv(graph));
+    }
+
+    public string GetQuery(string filename)
+    {
+        string comma = "";
+        var propsBuilder = new StringBuilder();
+        foreach (var p in _properties.Where(x => x.Name != Props.Height.Name))
+        {
+            propsBuilder.Append($"{comma}b.{p.GetLoadExp()}");
+            comma = ", ";
+        }
+
+        var builder = new StringBuilder();
+        builder.Append(
+            $"LOAD CSV WITH HEADERS FROM '{filename}' AS {Property.lineVarName} " +
+            $"FIELDTERMINATOR '{csvDelimiter}' " +
+            $"MERGE (b: {label} {{" +
+            $"{Props.Height.GetLoadExp(":")}}})");
+
+        // Using same props for both updating and creating seems redundant.
+        // However, this covers a use-case where block was created without 
+        // its properties (e.g., only block height was set), so it needs to 
+        // be updated if exists. We could do something fancier to check 
+        // for the missing fields and update them in case of `Match`, but 
+        // that could make this Cypher query overly complicated. 
+        //
+        // A simplier update query can be a better replacement for this query.
+        builder.Append(" ON CREATE SET ");
+        builder.Append(propsBuilder);
+
+        builder.Append(" ON MATCH SET ");
+        builder.Append(propsBuilder);
+
+        var x = builder.ToString();
+
+        return builder.ToString();
+    }
 }

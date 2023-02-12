@@ -2,12 +2,12 @@
 
 namespace BC2G.Graph.Db.Neo4j.BitcoinMappers;
 
-public class S2SEdgeMapper : BitcoinMapperBase
+public class S2SEdgeMapper : BitcoinEdgeMapper
 {
     public const string labels = "Script";
 
     /// Note that the ordre of the items in this array should 
-    /// match those in the `GetCSV` method.
+    /// match those in the `GetCsv` method.
     private readonly Property[] _properties = new Property[]
     {
         Props.EdgeSourceAddress,
@@ -63,22 +63,32 @@ public class S2SEdgeMapper : BitcoinMapperBase
         /// scripts by replacing 'Unknown' script type, with the 
         /// type of the other script if it is not 'Unknown'.
 
-        var l = Property.lineVarName;
-        var unknown = nameof(ScriptType.Unknown);
+        //var 
+        //var unknown = nameof(ScriptType.Unknown);
+
+        //var x = GetNodeQuery("source", labels, Props.EdgeSourceAddress, Props.EdgeSourceType);
+
+        string l = Property.lineVarName, s = "source", t = "target", b="block";
+
 
         return
             $"LOAD CSV WITH HEADERS FROM '{csvFilename}' AS {l} " +
             $"FIELDTERMINATOR '{csvDelimiter}' " +
             // Load source
-            $"MERGE (source:{labels} {{" +
+            GetNodeQuery(s, labels, Props.EdgeSourceAddress, Props.EdgeSourceType) +
+            " " +
+            /*$"MERGE (source:{labels} {{" +
             $"{Props.EdgeSourceAddress.GetLoadExp(":")}}}) " +
             $"ON CREATE SET source.{Props.EdgeSourceType.GetLoadExp("=")} " +
             $"ON MATCH SET source.{Props.EdgeSourceType.Name} = " +
             $"CASE {l}.{Props.EdgeSourceType.CsvHeader} " +
             $"WHEN '{unknown}' THEN source.{Props.EdgeSourceType.Name} " +
             $"ELSE {l}.{Props.EdgeSourceType.CsvHeader} " +
-            $"END " +
+            $"END " +*/
             // Load target
+            GetNodeQuery(t, labels, Props.EdgeTargetAddress, Props.EdgeTargetType) +
+            " " +
+            /*
             $"MERGE (target:{labels} {{" +
             $"{Props.EdgeTargetAddress.GetLoadExp(":")}}}) " +
             $"ON CREATE SET target.{Props.EdgeTargetType.GetLoadExp("=")} " +
@@ -86,18 +96,27 @@ public class S2SEdgeMapper : BitcoinMapperBase
             $"CASE {l}.{Props.EdgeTargetType.CsvHeader} " +
             $"WHEN '{unknown}' THEN target.{Props.EdgeTargetType.Name} " +
             $"ELSE {l}.{Props.EdgeTargetType.CsvHeader} " +
-            $"END " +
-            $"WITH source, target, {l} " +
+            $"END " +*/
+
+            $"WITH {s}, {t}, {l} " +
             // Find the block
-            $"MATCH (block:{BlockMapper.label} {{" +
+            GetBlockQuery(b) + 
+            " " +
+            /*
+            $"MERGE (block:{BlockMapper.label} {{" +
             $"{Props.Height.GetLoadExp(":")}" +
-            "}) " +
+            "}) " +*/
+
             // Create relationship between the block node and the scripts nodes. 
             RedeemsEdgeQuery +
             CreatesEdgeQuery +
-            $"WITH source, target, {l} " +
+            $"WITH {s}, {t}, {l} " +
             // Create relationship between the source and target scripts,
             // where the type of the relationship is read from the CSV file.
+
+            GetEdgeQuery(new List<Property>() { Props.EdgeValue, Props.Height }, s, t) +
+            " " +
+            /*
             "CALL apoc.merge.relationship(" +
             "source, " + // source
             $"{l}.{Props.EdgeType.CsvHeader}, " + // relationship type
@@ -110,7 +129,7 @@ public class S2SEdgeMapper : BitcoinMapperBase
             $"{{}}" + // on update
             $")" +
             $"YIELD rel " +
-            $"SET rel.Count = rel.Count + 1 " +
+            $"SET rel.Count = rel.Count + 1 " +*/
             $"RETURN distinct 'DONE'";
     }
 }
