@@ -8,11 +8,23 @@ public class Utxo
     [Required]
     public string Id { set; get; } = string.Empty;
 
+    /// <summary>
+    /// This is used for optimistic concurrency. See:
+    /// https://www.npgsql.org/efcore/modeling/concurrency.html
+    /// </summary>
+    [Timestamp]
+    public uint Version { get; set; }
+
+    public string Txid { get { return GetTxid(Id); } }
+
     [Required]
     public string Address { set; get; } = string.Empty;
 
     [Required]
     public double Value { set; get; }
+
+    [Required]
+    public ScriptType ScriptType { set; get; }
 
     /// <summary>
     /// A list of comma-separated block heights where this txo 
@@ -53,11 +65,14 @@ public class Utxo
     private int _refdInCount;
 
     // This constructor is required by EF.
-    public Utxo(string id, string address, double value, string createdIn, string? referencedIn = null)
+    public Utxo(
+        string id, string address, double value, ScriptType scriptType,
+        string createdIn, string? referencedIn = null)
     {
         Id = id;
         Address = address;
         Value = value;
+        ScriptType = scriptType;
 
         if (!string.IsNullOrEmpty(createdIn))
         {
@@ -72,14 +87,18 @@ public class Utxo
     }
 
     public Utxo(
-        string txid, int voutN, string address, double value,
+        string txid, int voutN, string address, double value, ScriptType scriptType,
         string createdIn, string? referencedIn = null) :
-        this(GetId(txid, voutN), address, value, createdIn, referencedIn)
+        this(GetId(txid, voutN), address, value, scriptType, createdIn, referencedIn)
     { }
 
     public static string GetId(string txid, int voutN)
     {
         return $"{voutN}-{txid}";
+    }
+    public static string GetTxid(string id)
+    {
+        return id.Split('-')[1];
     }
 
     public void AddReferencedIn(string address)
