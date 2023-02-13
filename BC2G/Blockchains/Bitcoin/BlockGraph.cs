@@ -22,23 +22,23 @@ public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
     private double _totalFee;
 
     // TODO: can base types used for this purpose?!!
-    public new ReadOnlyCollection<S2SEdge> Edges
+    /*public new ReadOnlyCollection<S2SEdge> Edges
     {
         get
         {
             return new ReadOnlyCollection<S2SEdge>(_edges.Values.ToList());
         }
-    }
-    private readonly ConcurrentDictionary<int, S2SEdge> _edges = new();
-
+    }*/
+    //private readonly ConcurrentDictionary<int, S2SEdge> _edges = new();
+    /*
     public new ReadOnlyCollection<ScriptNode> Nodes
     {
         get
         {
             return new ReadOnlyCollection<ScriptNode>(_nodes.Keys.ToList());
         }
-    }
-    private readonly ConcurrentDictionary<ScriptNode, byte> _nodes = new();
+    }*/
+    //private readonly ConcurrentDictionary<ScriptNode, byte> _nodes = new();
 
     private readonly TransactionGraph _coinbaseTxGraph;
 
@@ -81,11 +81,7 @@ public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
         double totalPaidToMiner = _coinbaseTxGraph.TargetScripts.Sum(x => x.Value);
         double blockReward = totalPaidToMiner - TotalFee;
 
-        AddOrUpdateEdge(
-            TxNode.GetCoinbaseNode(), 
-            _coinbaseTxGraph.TxNode, 
-            blockReward, 
-            EdgeType.Generation);
+        AddOrUpdateEdge(new C2TEdge(_coinbaseTxGraph.TxNode, blockReward, Timestamp, Height));
 
         // First process all non-coinbase transactions;
         // this helps determine all the fee paied to the
@@ -110,11 +106,9 @@ public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
 
         foreach (var item in _coinbaseTxGraph.TargetScripts)
         {
-            AddOrUpdateEdge(new S2SEdge(
-                ScriptNode.GetCoinbaseNode(),
+            AddOrUpdateEdge(new C2SEdge(
                 item.Key,
                 Utilities.Round((item.Value * blockReward) / totalPaidToMiner),
-                EdgeType.Generation,
                 Timestamp,
                 Height));
         }
@@ -142,7 +136,7 @@ public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
                             oldValue * Utilities.Round(
                                 fee / txGraph.TotalInputValue))));
 
-            AddOrUpdateEdge(txGraph.TxNode, coinbaseTxG.TxNode, fee, EdgeType.Fee);
+            AddOrUpdateEdge(new T2TEdge(txGraph.TxNode, coinbaseTxG.TxNode, fee, EdgeType.Fee, Timestamp, Height));
         }
 
         var sumInputWithoutFee = txGraph.TotalInputValue - fee;
@@ -189,24 +183,39 @@ public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
             if (tx.Key == txGraph.TxNode.Id) // TODO: check when/if this can happen.
                 continue;
 
-            AddOrUpdateEdge(new TxNode(tx.Key), txGraph.TxNode, tx.Value, EdgeType.Transfer);
+            AddOrUpdateEdge(new T2TEdge(
+                new TxNode(tx.Key), txGraph.TxNode, tx.Value, EdgeType.Transfer, Timestamp, Height));
         }
     }
 
+    private void AddOrUpdateEdge(C2TEdge edge)
+    {
+        AddOrUpdateEdge(edge, (key, oldValue) => edge.Update(oldValue.Value));
+        Stats.IncrementEdgeType(edge.Type, edge.Value);
+    }
+
+    public void AddOrUpdateEdge(T2TEdge edge)
+    {
+        AddOrUpdateEdge(edge, (_, oldEdge) => { return T2TEdge.Update((T2TEdge)oldEdge, edge); });
+        Stats.IncrementEdgeType(edge.Type, edge.Value);
+    }
+    /*
     private void AddOrUpdateEdge(
         TxNode sourceTx, TxNode targetTx, double value, EdgeType type,
         uint? timestamp = null, long? height = null)
     {
         var e = new T2TEdge(sourceTx, targetTx, value, type, timestamp ?? Timestamp, height ?? Height);
         AddOrUpdateEdge(e, (_, oldEdge) => { return T2TEdge.Update((T2TEdge)oldEdge, e); });
-    }
+
+        Stats.IncrementEdgeType(type, value);
+    }*/
 
     public void AddOrUpdateEdge(S2SEdge edge)
     {
         /// Note that the hashkey is invariant to the edge value.
         /// If this is changed, the `Equals` method needs to be
         /// updated accordingly.
-        _edges.AddOrUpdate(
+        /*_edges.AddOrUpdate(
             edge.GetHashCodeInt(true), edge,
             (key, oldValue) => new S2SEdge(
                 edge.Source,
@@ -214,23 +223,15 @@ public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
                 edge.Value + oldValue.Value,
                 edge.Type,
                 edge.Timestamp,
-                edge.BlockHeight));
+                edge.BlockHeight));*/
 
         // TODO: ^^ this is not needed anymore.
 
-        AddOrUpdateEdge(
-            edge,
-            (key, oldValue) => new S2SEdge(
-                edge.Source,
-                edge.Target,
-                edge.Value + oldValue.Value,
-                edge.Type,
-                edge.Timestamp,
-                edge.BlockHeight));
+        AddOrUpdateEdge(edge, (key, oldValue) => edge.Update(oldValue.Value));
 
         // TODO: are these needed?!!
-        _nodes.TryAdd(edge.Source, 0);
-        _nodes.TryAdd(edge.Target, 0);
+        //_nodes.TryAdd(edge.Source, 0);
+        //_nodes.TryAdd(edge.Target, 0);
 
         Stats.IncrementEdgeType(edge.Type, edge.Value);
     }
@@ -244,11 +245,13 @@ public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
             return true;
 
         var otherNodes = other.Nodes;
-        if (_nodes.Count != otherNodes.Count)
+        if (NodeCount != other.NodeCount)
+        //if (_nodes.Count != otherNodes.Count)
             return false;
 
-        var otherEdges = other.Edges;
-        if (_edges.Count != otherEdges.Count)
+        //var otherEdges = other.Edges;
+        //if (_edges.Count != otherEdges.Count)
+        if (EdgeCount != other.EdgeCount)
             return false;
 
         var equal = Enumerable.SequenceEqual(
@@ -258,7 +261,9 @@ public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
         if (!equal)
             return false;
 
-        var hashes = new HashSet<int>(_edges.Keys);
+        throw new NotImplementedException();
+
+       /* var hashes = new HashSet<int>(_edges.Keys);
         foreach (var edge in otherEdges)
             /// Note that this hash method does not include
             /// edge value in the computation of hash key;
@@ -270,7 +275,7 @@ public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
         if (hashes.Count > 0)
             return false;
 
-        return true;
+        return true;*/
     }
 
     public override bool Equals(object? obj)
