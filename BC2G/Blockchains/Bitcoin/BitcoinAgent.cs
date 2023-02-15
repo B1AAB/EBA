@@ -197,27 +197,21 @@ public class BitcoinAgent : IDisposable
         foreach (var output in coinbaseTx.Outputs.Where(x => x.IsValueTransfer))
         {
             output.TryGetAddress(out string address);
-            var node = generationTxGraph.AddTarget(
-                Utxo.GetId(coinbaseTx.Txid, output.Index),
-                address, output.GetScriptType(), output.Value);
-
-            rewardAddresses.Add(node);
-            g.Stats.AddInputTxCount(1);
 
             var utxo = new Utxo(
-                coinbaseTx.Txid,
-                output.Index,
-                address,
-                output.Value,
-                block.Hash);
+                coinbaseTx.Txid, output.Index, address, output.Value, 
+                output.GetScriptType(), block.Hash);
 
-            utxos.AddOrUpdate(
-                utxo.Id, utxo,
+            utxos.AddOrUpdate(utxo.Id, utxo,
                 (k, oldValue) =>
                 {
                     oldValue.AddCreatedIn(block.Height.ToString());
                     return oldValue;
                 });
+
+            var node = generationTxGraph.AddTarget(utxo);
+            rewardAddresses.Add(node);
+            g.Stats.AddInputTxCount(1);
         }
 
         cT.ThrowIfCancellationRequested();
@@ -262,9 +256,6 @@ public class BitcoinAgent : IDisposable
         {
             cT.ThrowIfCancellationRequested();
 
-            double value = 0;
-            string address = string.Empty;
-
             var id = Utxo.GetId(input.TxId, input.OutputIndex);
 
             // This tries to find the output that the given input references, 
@@ -277,8 +268,6 @@ public class BitcoinAgent : IDisposable
             //   to the utxo dict so it will be persisted in the db. 
             if (utxos.TryGetValue(id, out Utxo? utxo))
             {
-                value = utxo.Value;
-                address = utxo.Address;
                 utxo.AddReferencedIn(g.Block.Hash);
             }
             else
@@ -288,8 +277,6 @@ public class BitcoinAgent : IDisposable
                     utxo = dbContext.Utxos.Find(id);
                     if (utxo != null)
                     {
-                        value = utxo.Value;
-                        address = utxo.Address;
                         utxo.AddReferencedIn(g.Block.Hash);
 
                         // This invalidates the ACID property since if the
@@ -308,12 +295,11 @@ public class BitcoinAgent : IDisposable
                     if (vout == null)
                         throw new NotImplementedException($"{vout} not in {input.TxId}; not expected.");
 
-                    vout.TryGetAddress(out address);
-                    value = vout.Value;
+                    vout.TryGetAddress(out string address);
 
                     var cIn = exTx.BlockHash;
                     var rIn = g.Block.Hash;
-                    utxo = new Utxo(id, address, value, cIn, rIn);
+                    utxo = new Utxo(id, address, vout.Value, vout.GetScriptType(), cIn, rIn);
 
                     utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
                     {
@@ -324,8 +310,7 @@ public class BitcoinAgent : IDisposable
                 }
             }
 
-            txGraph.AddSource(input.TxId, utxo.Id, address, ScriptType.Unknown, value);
-            // TODO: Any better value instead of ScriptType.Unknown?
+            txGraph.AddSource(input.TxId, utxo);
         }
 
         foreach (var output in tx.Outputs.Where(x => x.IsValueTransfer))
@@ -333,10 +318,9 @@ public class BitcoinAgent : IDisposable
             cT.ThrowIfCancellationRequested();
 
             output.TryGetAddress(out string address);
-            txGraph.AddTarget(Utxo.GetId(tx.Txid, output.Index), address, output.GetScriptType(), output.Value);
-
             var cIn = g.Block.Hash;
-            var utxo = new Utxo(tx.Txid, output.Index, address, output.Value, cIn);
+            var utxo = new Utxo(tx.Txid, output.Index, address, output.Value, output.GetScriptType(), cIn);
+            txGraph.AddTarget(utxo);
 
             utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
             {
