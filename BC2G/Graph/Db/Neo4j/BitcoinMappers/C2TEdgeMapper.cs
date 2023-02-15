@@ -7,6 +7,11 @@ public class C2TEdgeMapper : T2TEdgeMapper
     private readonly Property[] _properties = new Property[]
     {
         Props.T2TEdgeTargetTxid,
+        Props.T2TEdgeTargetVersion,
+        Props.T2TEdgeTargetSize,
+        Props.T2TEdgeTargetVSize,
+        Props.T2TEdgeTargetWeight,
+        Props.T2TEdgeTargetLockTime,
         Props.EdgeType,
         Props.EdgeValue,
         Props.Height
@@ -29,7 +34,12 @@ public class C2TEdgeMapper : T2TEdgeMapper
         /// match those in the `_properties`. 
         return string.Join(csvDelimiter, new string[]
         {
-            edge.Target.Tx is not null? edge.Target.Tx.Txid : edge.Target.Id,
+            edge.Target.Txid,
+            edge.Target.Version.ToString(),
+            edge.Target.Size.ToString(),
+            edge.Target.VSize.ToString(),
+            edge.Target.Weight.ToString(),
+            edge.Target.LockTime.ToString(),
             edge.Type.ToString(),
             edge.Value.ToString(),
             edge.BlockHeight.ToString()
@@ -46,7 +56,14 @@ public class C2TEdgeMapper : T2TEdgeMapper
             $"FIELDTERMINATOR '{csvDelimiter}' " +
             $"MATCH ({s}:{BitcoinAgent.Coinbase}) " +
 
-            GetNodeQuery(t, labels, Props.T2TEdgeTargetTxid, Props.EdgeTargetType) +
+            GetNodeQuery(t, labels, Props.T2TEdgeTargetTxid, new List<Property>()
+           {
+               Props.T2TEdgeTargetVersion,
+               Props.T2TEdgeTargetSize,
+               Props.T2TEdgeTargetVSize,
+               Props.T2TEdgeTargetWeight,
+               Props.T2TEdgeTargetLockTime
+           }) +
             " " +
 
 
