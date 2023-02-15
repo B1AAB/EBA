@@ -71,7 +71,7 @@ public class BitcoinOptions
 
     public bool SkipGraphLoad { get; set; }
 
-    public int DbCommitAtUtxoBufferSize { set; get; } = 2000000;
+    public int DbCommitAtUtxoBufferSize { set; get; } = 5000000;
 
     // null default lets runtime decide on max concurrency which is not static and changes w.r.t the load.
     public int? MaxConcurrentBlocks { get; set; } = null;

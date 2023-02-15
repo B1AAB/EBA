@@ -45,7 +45,6 @@ internal class PersistentConcurrentQueue<T> : ConcurrentQueue<T>, IDisposable
         lock (_lockOnMe)
         {
             var bytes = MemoryMarshal.Cast<T, byte>(this.ToArray<T>());
-            //using var stream = File.OpenWrite(_filename);
             using var stream = File.Open(_filename, FileMode.Create);
             stream.Write(bytes);
         }
