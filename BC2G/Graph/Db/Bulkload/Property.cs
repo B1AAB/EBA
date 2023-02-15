@@ -24,4 +24,9 @@ public class Property
             _ => $"{Name}{assignment}{lineVarName}.{CsvHeader}",
         };
     }
+
+    public string GetLoad(string varName)
+    {
+        return $"{varName}.{Name} = COALESCE({lineVarName}.{CsvHeader}, {varName}.{Name})";
+    }
 }
