@@ -12,4 +12,5 @@ public interface IEdge<out TSource, out TTarget>
 
     public double[] GetFeatures();
     public string GetHashCode(bool ignoreValue);
+    public int GetHashCodeInt(bool ignoreValue);
 }
