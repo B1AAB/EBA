@@ -74,28 +74,38 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     /// <summary>
     /// No precedence should be assumed on serializing different types.
     /// </summary>
-    public async Task ImportAsync()
-    {
-        // TODO: fixme, correct the batchname.
-        await ImportAsync("0");
-    }
-    public async Task ImportAsync(string batchName)
+    public async Task ImportAsync(string batchName = "")
     {
         if (Driver is null)
             throw new ArgumentNullException(
                 nameof(Driver), "A connection to Neo4j is not setup.");
 
         _batches = await DeserializeBatchesAsync();
-        var batch = _batches.Find(x => x.Name == batchName);
-        if (batch == default)
-            throw new InvalidOperationException(
-                $"A batch named {batchName} not found in " +
-                $"{Options.Neo4j.BatchesFilename}");
+        IEnumerable<BatchInfo> batches;
 
-        foreach (var type in batch.TypesInfo)
+        if (string.IsNullOrEmpty(batchName))
         {
-            var mapper = _mapperFactory.GetMapperBase(type.Key);
-            await ExecuteQueryAsync(mapper, type.Value.Filename);
+            batches = _batches;
+        }
+        else
+        {
+            var batch = _batches.Find(x => x.Name == batchName);
+            if (batch == default)
+                throw new InvalidOperationException(
+                    $"A batch named {batchName} not found in " +
+                    $"{Options.Neo4j.BatchesFilename}");
+            batches = new List<BatchInfo>() { batch };
+        }
+
+        foreach (var batch in batches)
+        {
+            foreach (var type in batch.TypesInfo)
+            {
+                _logger.LogInformation("Importing type `{t}` of batch `{b}`.", type.Key, batch.Name);
+                var mapper = _mapperFactory.GetMapperBase(type.Key);
+                await ExecuteQueryAsync(mapper, type.Value.Filename);
+                _logger.LogInformation("Importing type `{t}` of batch `{b}` finished.", type.Key, batch.Name);
+            }
         }
     }
 
