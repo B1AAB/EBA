@@ -58,15 +58,16 @@ internal static class ResilienceStrategyFactory
                     onBreak: (result, timeSpan, context) =>
                     {
                         var logger = context.GetLogger();
+                        var exMsg = result.Exception is null ? string.Empty : result.Exception.Message;
                         if (logger != null)
                             logger.LogWarning(
                                 "HttpClientPolicy: Circuit on break; exception message: " +
                                 "{exMsg}; timespan: {timeSpan} seconds.",
-                                result.Exception.Message, timeSpan.TotalSeconds);
+                                exMsg, timeSpan.TotalSeconds);
                         else
                             Console.Error.WriteLine(
                                 $"HttpClientPolicy: Circuit on break; exception message: " +
-                                $"{result.Exception.Message}; timespan: {timeSpan.TotalSeconds} seconds");
+                                $"{exMsg}; timespan: {timeSpan.TotalSeconds} seconds");
                     },
                     onReset: (context) =>
                     {

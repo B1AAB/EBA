@@ -1,4 +1,5 @@
 ﻿global using BC2G.Blockchains;
+global using BC2G.Blockchains.Bitcoin;
 global using BC2G.CommandLineInterface;
 global using BC2G.Graph.Db;
 global using BC2G.Graph.Db.Bulkload;

@@ -1,7 +1,6 @@
 ﻿namespace BC2G.Serializers;
 
-public class JsonSerializer<T>
-    where T : new()
+public class JsonSerializer<T> where T : new()
 {
     private static readonly JsonSerializerOptions _options = new()
     {
@@ -10,7 +9,7 @@ public class JsonSerializer<T>
         IncludeFields = true
     };
 
-    public static async Task<T> DeserializeAsync(string path, CancellationToken cT)
+    public static async Task<T> DeserializeAsync(string path, CancellationToken cT = default)
     {
         T obj = new();
         if (!File.Exists(path))

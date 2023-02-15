@@ -25,6 +25,7 @@ public class MapperFactory : IMapperFactory
             string x when x == Utilities.TypeToString<S2SEdge>() => new S2SEdgeMapper(),
             string x when x == Utilities.TypeToString<T2TEdge>() => new T2TEdgeMapper(),
             string x when x == Utilities.TypeToString<C2SEdge>() => new C2SEdgeMapper(),
+            string x when x == Utilities.TypeToString<C2TEdge>() => new C2TEdgeMapper(),
             _ => throw new MapperNotImplementedException(type)
         };
     }

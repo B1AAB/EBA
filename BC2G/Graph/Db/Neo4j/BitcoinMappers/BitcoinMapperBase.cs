@@ -61,11 +61,11 @@ public abstract class BitcoinEdgeMapper : IEdgeMapper
         //
         // MERGE (source:Tx {Txid:line.SourceId})
         // SET
-        //  source.Version = COALESCE(line.SourceVersion, source.Version),
-        //  source.Size = COALESCE(line.SourceSize, source.Size),
-        //  source.VSize = COALESCE(line.SourceVSize, source.VSize),
-        //  source.Weight = COALESCE(line.SourceWeight, source.Weight),
-        //  source.LockTime = COALESCE(line.SourceLockTime, source.LockTime) 
+        //     source.Version = COALESCE(line.SourceVersion, source.Version),
+        //     source.Size = COALESCE(line.SourceSize, source.Size),
+        //     source.VSize = COALESCE(line.SourceVSize, source.VSize),
+        //     source.Weight = COALESCE(line.SourceWeight, source.Weight),
+        //     source.LockTime = COALESCE(line.SourceLockTime, source.LockTime) 
         //
 
         var builder = new StringBuilder();
@@ -73,7 +73,6 @@ public abstract class BitcoinEdgeMapper : IEdgeMapper
             $"{{{idProp.GetLoadExp(":")}}}) SET ");
 
         builder.Append(string.Join(", ", from x in props select x.GetLoad(variable)));
-        builder.Append(' ');
 
         return builder.ToString();
     }
