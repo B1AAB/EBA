@@ -11,14 +11,6 @@ public class DatabaseContext : DbContext
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<Utxo>().HasKey(x => x.Id);
-
-        // This is used to set a system column as
-        // concurrency token for optimistic concurrency
-        // since Psql does not currently have
-        // auto-incremented columns.
-        // Read the following docs for details:
-        // https://www.npgsql.org/efcore/modeling/concurrency.html
-        builder.Entity<Utxo>().UseXminAsConcurrencyToken();
     }
 
     public static async Task OptimisticAddOrUpdateAsync(
