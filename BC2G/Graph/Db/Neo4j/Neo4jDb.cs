@@ -92,17 +92,14 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 $"A batch named {batchName} not found in " +
                 $"{Options.Neo4j.BatchesFilename}");
 
-        using var session = Driver.AsyncSession(
-            x => x.WithDefaultAccessMode(AccessMode.Write));
-
         foreach (var type in batch.TypesInfo)
         {
             var mapper = _mapperFactory.GetMapperBase(type.Key);
-            await ExecuteQueryAsync(session, mapper, type.Value.Filename);
+            await ExecuteQueryAsync(mapper, type.Value.Filename);
         }
     }
 
-    private async Task ExecuteQueryAsync(IAsyncSession session, IMapperBase mapper, string filename)
+    private async Task ExecuteQueryAsync(IMapperBase mapper, string filename)
     {
         // Localization, if needed.
         // Neo4j import needs files to be placed in a particular folder 
@@ -121,10 +118,19 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         var filename4Query = Options.Neo4j.CypherImportPrefix + Path.GetFileName(localFilename);
 
+        using var session = Driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
         var queryResult = await session.ExecuteWriteAsync(async x =>
         {
-            IResultCursor cursor = await x.RunAsync(mapper.GetQuery(filename4Query));
-            return await cursor.ToListAsync();
+            try
+            {
+                IResultCursor cursor = await x.RunAsync(mapper.GetQuery(filename4Query));
+                return await cursor.ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error running Neo4j query. {msg}", ex.Message);
+                return null;
+            }
         });
 
         // Delocalization.
