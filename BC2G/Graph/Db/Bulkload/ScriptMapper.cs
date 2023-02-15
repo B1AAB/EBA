@@ -107,7 +107,7 @@ internal class ScriptMapper : ModelMapper<S2SEdge>
             $"{{ Count : 0}}, " + // on create
             $"target, " + // target
             $"{{}}" + // on update
-            $")" + 
+            $") " +
             $"YIELD rel " +
             $"SET rel.Count = rel.Count + 1 " +
             $"RETURN distinct 'DONE'";

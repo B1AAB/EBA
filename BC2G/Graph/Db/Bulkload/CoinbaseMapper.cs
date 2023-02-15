@@ -60,7 +60,7 @@ internal class CoinbaseMapper : ScriptMapper
             CreatesEdgeQuery +
             $"WITH coinbase, target, {l} " +
             // Create edge between the coinbase node and the script
-            $"CALL apoc.merge.relationship (" +
+            $"CALL apoc.merge.relationship(" +
             $"coinbase, " + // source
             $"{l}.{Props.EdgeType.CsvHeader}, " + // relationship type
             $"{{" + // properties
@@ -70,7 +70,7 @@ internal class CoinbaseMapper : ScriptMapper
             $"{{ Count : 0 }}, " + // on create
             $"target, " + // target
             $"{{}}" + // on update
-            $")" +
+            $") " +
             $"YIELD rel " +
             $"SET rel.Count = rel.Count + 1 " +
             $"RETURN distinct 'DONE'";
