@@ -1,8 +1,8 @@
 ﻿namespace BC2G.Graph.Model;
 
 public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
-    where TSource : INode
-    where TTarget : INode
+    where TSource : notnull, INode
+    where TTarget : notnull, INode
 {
     public string Id { get; }
     public TSource Source { get; }
