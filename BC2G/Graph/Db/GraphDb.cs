@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace BC2G.Graph.Db;
+﻿namespace BC2G.Graph.Db;
 
 
 // TODO: there is a bug: why many redeems per node in a given block? 
@@ -99,7 +97,8 @@ public class GraphDb : IDisposable
      * ins are not installed it fails at the load time. 
      */
 
-    public void BulkImport(BlockGraph graph, CancellationToken cT)
+
+    public void BulkImport(BitcoinBlockGraph graph, CancellationToken cT)
     {
         // TODO: Neo4j deadlock can happen in the following calls too. 
         // The error message:
@@ -147,7 +146,7 @@ public class GraphDb : IDisposable
 
         using var edgesWriter = new StreamWriter(_scriptMapper.AbsFilename, append: true);
         using var coinbaseWrite = new StreamWriter(_coinbaseMapper.AbsFilename, append: true);
-        foreach (var edge in edges)
+        /*foreach (var edge in edges)
             if (edge.Source.Address == Coinbase)
             {
                 _coinbaseEdgesInCsvCount++;
@@ -157,7 +156,7 @@ public class GraphDb : IDisposable
             {
                 _scriptEdgesInCsvCount++;
                 edgesWriter.WriteLine(_scriptMapper.ToCsv(edge));
-            }
+            }*/
 
         using var txesWriter = new StreamWriter(_txMapper.AbsFilename, append: true);
         foreach (var txEdge in graph.T2TEdges)
@@ -503,14 +502,14 @@ public class GraphDb : IDisposable
 
         if (_options.GraphSample.Mode == GraphSampleMode.A)
         {
-            var rndGraph = await GetRandomEdges(graph.EdgeCount);
+            var rndGraph = await GetRandomEdges(graph.EdgeCountV1);
 
             if (!CanUseGraph(
                 rndGraph,
                 minNodeCount: _options.GraphSample.MinNodeCount,
-                maxNodeCount: graph.NodeCount,
+                maxNodeCount: graph.GetNodeCount<ScriptNode>(),
                 minEdgeCount: _options.GraphSample.MinEdgeCount,
-                maxEdgeCount: graph.EdgeCount))
+                maxEdgeCount: graph.EdgeCountV1))
                 return false;
 
             rndGraph.AddLabel(1);
@@ -537,8 +536,8 @@ public class GraphDb : IDisposable
         // multiply matrixes of very large size 2**32 or even
         // larger. There should be much better workarounds at
         // Tensorflow level, but for now, we limit the size of graphs.
-        if (g.NodeCount <= minNodeCount - (minNodeCount * tolerance) || g.NodeCount >= maxNodeCount + (maxNodeCount * tolerance) ||
-            g.EdgeCount <= minEdgeCount - (minEdgeCount * tolerance) || g.EdgeCount >= maxEdgeCount + (maxEdgeCount * tolerance))
+        if (g.NodeCountV1 <= minNodeCount - (minNodeCount * tolerance) || g.NodeCountV1 >= maxNodeCount + (maxNodeCount * tolerance) ||
+            g.EdgeCountV1 <= minEdgeCount - (minEdgeCount * tolerance) || g.EdgeCountV1 >= maxEdgeCount + (maxEdgeCount * tolerance))
             return false;
 
         return true;
@@ -562,8 +561,8 @@ public class GraphDb : IDisposable
         await rndNodesResult;
 
         var rndNodes = new List<ScriptNode>();
-        foreach (var n in rndNodesResult.Result)
-            rndNodes.Add(new ScriptNode(n.Values["rndScript"].As<Neo4j.Driver.INode>()));
+        /*foreach (var n in rndNodesResult.Result)
+            rndNodes.Add(new ScriptNode(n.Values["rndScript"].As<Neo4j.Driver.INode>()));*/
 
         return rndNodes;
     }
@@ -590,9 +589,9 @@ public class GraphDb : IDisposable
 
         foreach (var n in rndNodesResult.Result)
         {
-            g.AddNode(n.Values["source"].As<Neo4j.Driver.INode>());
-            g.AddNode(n.Values["target"].As<Neo4j.Driver.INode>());
-            g.AddEdge(n.Values["edge"].As<IRelationship>());
+            //g.GetOrAddScriptNode(n.Values["source"].As<Neo4j.Driver.INode>());
+            //g.GetOrAddScriptNode(n.Values["target"].As<Neo4j.Driver.INode>());
+            g.GetOrAddEdge(n.Values["edge"].As<IRelationship>());
         }
 
         return g;
@@ -632,13 +631,17 @@ public class GraphDb : IDisposable
 
         foreach (var hop in samplingResult.Result)
         {
-            var root = hop.Values["root"].As<List<Neo4j.Driver.INode>>()[0];
+            /*var root = hop.Values["root"].As<List<Neo4j.Driver.INode>>()[0];
             if (root is null)
                 continue;
 
-            g.AddNode(root);
-            g.AddNodes(hop.Values["nodes"].As<List<Neo4j.Driver.INode>>());
-            g.AddEdges(hop.Values["relationships"].As<List<IRelationship>>());
+            g.GetOrAddScriptNode(root);
+            //g.AddNodeV1(root);
+
+            foreach (var node in hop.Values["nodes"].As<List<Neo4j.Driver.INode>>())
+                g.GetOrAddScriptNode(node);
+            //g.AddNodesV1(hop.Values["nodes"].As<List<Neo4j.Driver.INode>>());
+            g.AddEdges(hop.Values["relationships"].As<List<IRelationship>>());*/
         }
 
         return g;
@@ -661,5 +664,59 @@ public class GraphDb : IDisposable
         }
 
         _disposed = true;
+    }
+}
+
+
+
+static class GraphBaseExte
+{
+    //public static T GetOrAddNode<T>(
+        //this GraphBase g,
+        //Neo4j.Driver.INode node,
+        //Func<Neo4j.Driver.INode, T> builder) 
+       // where T : INode
+    //{
+        //return g.GetOrAddNode(builder(node));
+    //}
+
+    /*public static ScriptNode GetOrAddScriptNode(this GraphBase g, Neo4j.Driver.INode node)
+    {
+        return g.GetOrAddNode(new ScriptNode(node));
+    }*/
+
+    public static S2SEdge GetOrAddEdge(this GraphBase g, IRelationship e)
+    {
+        var source = g.GetOrAddNode(new ScriptNode(e.StartNodeElementId));
+        var target = g.GetOrAddNode(new ScriptNode(e.EndNodeElementId));
+
+        var edge = g.GetOrAddEdge(new S2SEdge(source, target, e));
+
+        source.AddOutgoingEdges(edge);
+        target.AddIncomingEdges(edge);
+
+        return edge;
+
+        /*
+         * 
+        _nodes.GetOrAdd(
+    relationship.StartNodeElementId,
+    new ScriptNode(relationship.StartNodeElementId));*/
+        /*
+        var target = _nodesV1.GetOrAdd(
+            relationship.EndNodeElementId,
+            new ScriptNode(relationship.EndNodeElementId));*/
+
+        //var cEdge = new S2SEdge(source, target, e);
+        //var edge2 = _edgesV1.GetOrAdd(cEdge.Id, cEdge);
+        /*
+        source.AddOutgoingEdges(edge2);
+        target.AddIncomingEdges(edge2);*/
+    }
+
+    public static void AddEdges(this GraphBase g, IEnumerable<IRelationship> edges)
+    {
+        foreach (var edge in edges)
+            g.GetOrAddEdge(edge);
     }
 }
