@@ -9,7 +9,17 @@ public class T2TEdgeMapper : BitcoinEdgeMapper
     private readonly Property[] _properties = new Property[]
     {
         Props.T2TEdgeSourceTxid,
+        Props.T2TEdgeSourceVersion,
+        Props.T2TEdgeSourceSize,
+        Props.T2TEdgeSourceVSize,
+        Props.T2TEdgeSourceWeight,
+        Props.T2TEdgeSourceLockTime,
         Props.T2TEdgeTargetTxid,
+        Props.T2TEdgeTargetVersion,
+        Props.T2TEdgeTargetSize,
+        Props.T2TEdgeTargetVSize,
+        Props.T2TEdgeTargetWeight,
+        Props.T2TEdgeTargetLockTime,
         Props.EdgeType,
         Props.EdgeValue,
         Props.Height
@@ -31,8 +41,18 @@ public class T2TEdgeMapper : BitcoinEdgeMapper
     {
         return string.Join(csvDelimiter, new string[]
         {
-            edge.Source.Tx is not null? edge.Source.Tx.Txid : edge.Source.Id,
-            edge.Target.Tx is not null? edge.Target.Tx.Txid : edge.Target.Id,
+            edge.Source.Txid.ToString(),// != null ? edge.Source.Txid : double.NaN.ToString(),
+            edge.Source.Version.ToString(),// != null ? edge.Source.Version.ToString(): double.NaN.ToString(),
+            edge.Source.Size.ToString(), //!= null ? edge.Source.Size.ToString() : double.NaN.ToString(),
+            edge.Source.VSize.ToString(), //!= null ? edge.Source.VSize.ToString() : double.NaN.ToString(),
+            edge.Source.Weight.ToString(),// != null ? edge.Source.Weight.ToString() : double.NaN.ToString(),
+            edge.Source.LockTime.ToString(),// != null ? edge.Source.LockTime.ToString() : double.NaN.ToString(),
+            edge.Target.Txid,
+            edge.Target.Version .ToString(),//!= null ? edge.Target.Version.ToString() : double.NaN.ToString(),
+            edge.Target.Size.ToString(),// != null ? edge.Target.Size.ToString() : double.NaN.ToString(),
+            edge.Target.VSize.ToString(),//  != null ? edge.Target.VSize.ToString() : double.NaN.ToString(),
+            edge.Target.Weight.ToString(),// != null ? edge.Target.Weight.ToString() : double.NaN.ToString(),
+            edge.Target.LockTime.ToString(),// != null ? edge.Target.LockTime.ToString() : double.NaN.ToString(),
             edge.Type.ToString(),
             edge.Value.ToString(),
             edge.BlockHeight.ToString()
@@ -42,13 +62,23 @@ public class T2TEdgeMapper : BitcoinEdgeMapper
     public override string GetQuery(string csvFilename)
     {
         string l = Property.lineVarName, s = "source", t = "target", b = "block";
-        var unknown = nameof(ScriptType.Unknown);
+        //var unknown = nameof(ScriptType.Unknown);
 
-        return
+
+
+        var z = 
            $"LOAD CSV WITH HEADERS FROM '{csvFilename}' AS {l} " +
            $"FIELDTERMINATOR '{csvDelimiter}' " +
            // Load source
-           GetNodeQuery(s,labels, Props.T2TEdgeSourceTxid)+
+           //GetNodeQuery(s, labels, Props.T2TEdgeSourceTxid) +
+           GetNodeQuery(s, labels, Props.T2TEdgeSourceTxid, new List<Property>()
+           {
+               Props.T2TEdgeSourceVersion,
+               Props.T2TEdgeSourceSize,
+               Props.T2TEdgeSourceVSize,
+               Props.T2TEdgeSourceWeight,
+               Props.T2TEdgeSourceLockTime
+           }) +
            " " +
            /*
            $"MERGE (source:{labels} {{" +
@@ -62,7 +92,15 @@ public class T2TEdgeMapper : BitcoinEdgeMapper
            $"END " +*/
 
            // Load target
-           GetNodeQuery(t, labels, Props.T2TEdgeTargetTxid) +
+           //GetNodeQuery(t, labels, Props.T2TEdgeTargetTxid) +
+           GetNodeQuery(t, labels, Props.T2TEdgeTargetTxid, new List<Property>()
+           {
+               Props.T2TEdgeTargetVersion,
+               Props.T2TEdgeTargetSize,
+               Props.T2TEdgeTargetVSize,
+               Props.T2TEdgeTargetWeight,
+               Props.T2TEdgeTargetLockTime
+           }) +
            " " +
            /*
            $"MERGE (target:{labels} {{" +
@@ -77,18 +115,18 @@ public class T2TEdgeMapper : BitcoinEdgeMapper
                        // Find the block
                        GetBlockQuery(b) +
             " " +
-            /*
-           $"MERGE (block:{BlockMapper.label} {{" +
-           $"{Props.Height.GetLoadExp(":")}" +
-           "}) " +
-            */
+           /*
+          $"MERGE (block:{BlockMapper.label} {{" +
+          $"{Props.Height.GetLoadExp(":")}" +
+          "}) " +
+           */
 
            // Create relationship between the block node and the Tx nodes. 
            RedeemsEdgeQuery +
            CreatesEdgeQuery +
            $"WITH {s}, {t}, {l} " +
 
-           GetEdgeQuery(new List<Property>() { Props.EdgeValue, Props.Height }, s, t)+
+           GetEdgeQuery(new List<Property>() { Props.EdgeValue, Props.Height }, s, t) +
            " " +
            // Create relationship between the source and target Tx nodes,
            // where the type of the relationship is read from the CSV file.
@@ -106,5 +144,8 @@ public class T2TEdgeMapper : BitcoinEdgeMapper
            $"YIELD rel " +
            $"SET rel.Count = rel.Count + 1 " +*/
            $"RETURN distinct 'DONE'";
+
+
+        return z;
     }
 }
