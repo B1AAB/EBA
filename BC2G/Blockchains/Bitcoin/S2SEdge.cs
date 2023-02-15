@@ -15,6 +15,11 @@ public class S2SEdge : Edge<ScriptNode, ScriptNode>
         base(source, target, relationship)
     { }
 
+    public S2SEdge Update(double value)
+    {
+        return new S2SEdge(Source, Target, Value + value, Type, Timestamp, BlockHeight);
+    }
+
     public static S2SEdge FromString(
         string[] fields, string sourceAddress, string targetAddress)
     {

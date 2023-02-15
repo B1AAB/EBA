@@ -25,4 +25,9 @@ public class T2TEdge : Edge<TxNode, TxNode>
             newEdge.Timestamp,
             newEdge.BlockHeight);
     }
+
+    public T2TEdge Update(double value)
+    {
+        return new T2TEdge(Source, Target, Value + value, Type, Timestamp, BlockHeight);
+    }
 }

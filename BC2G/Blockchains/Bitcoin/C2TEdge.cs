@@ -8,4 +8,9 @@ public class C2TEdge : T2TEdge
             TxNode.GetCoinbaseNode(), target,
             value, EdgeType.Generation, timestamp, blockHeight)
     { }
+
+    public new C2TEdge Update(double value)
+    {
+        return new C2TEdge(Target, Value + value, Timestamp, BlockHeight);
+    }
 }

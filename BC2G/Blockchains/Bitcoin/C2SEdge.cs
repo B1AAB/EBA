@@ -20,4 +20,9 @@ public class C2SEdge : S2SEdge
         IRelationship relationship) :
         base(source, target, relationship)
     { }
+
+    public new C2SEdge Update(double value)
+    {
+        return new C2SEdge(Target, Value + value, Timestamp, BlockHeight);
+    }
 }
