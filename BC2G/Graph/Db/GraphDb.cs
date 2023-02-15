@@ -1,4 +1,7 @@
-﻿namespace BC2G.Graph.Db;
+﻿using BC2G.Blockchains.Bitcoin.Graph;
+using BC2G.Graph.Db.Neo4j.BitcoinMappers;
+
+namespace BC2G.Graph.Db;
 
 
 // TODO: there is a bug: why many redeems per node in a given block? 

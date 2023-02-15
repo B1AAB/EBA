@@ -1,4 +1,6 @@
-﻿namespace BC2G.Blockchains;
+﻿using BC2G.Blockchains.Bitcoin.Graph;
+
+namespace BC2G.Blockchains.Bitcoin;
 
 public class BitcoinOrchestrator : IBlockchainOrchestrator
 {

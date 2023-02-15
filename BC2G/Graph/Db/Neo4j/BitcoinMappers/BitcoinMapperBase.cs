@@ -1,4 +1,5 @@
-﻿using INode = BC2G.Graph.Model.INode;
+﻿using BC2G.Blockchains.Bitcoin.Graph;
+using INode = BC2G.Graph.Model.INode;
 
 namespace BC2G.Graph.Db.Neo4j.BitcoinMappers;
 

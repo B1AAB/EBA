@@ -1,3 +1,4 @@
+using BC2G.Blockchains.Bitcoin.Graph;
 using BC2G.Graph.Db.Neo4j;
 
 using ILogger = Microsoft.Extensions.Logging.ILogger;

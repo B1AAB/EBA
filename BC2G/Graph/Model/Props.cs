@@ -1,4 +1,6 @@
-﻿namespace BC2G.Graph.Model;
+﻿using BC2G.Graph.Db.Neo4j.BitcoinMappers;
+
+namespace BC2G.Graph.Model;
 
 public static class Props
 {

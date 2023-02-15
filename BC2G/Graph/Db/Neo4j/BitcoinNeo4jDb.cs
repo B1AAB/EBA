@@ -1,4 +1,5 @@
-﻿using BC2G.Graph.Db.Neo4j.BitcoinMappers;
+﻿using BC2G.Blockchains.Bitcoin.Graph;
+using BC2G.Graph.Db.Neo4j.BitcoinMappers;
 
 namespace BC2G.Graph.Db.Neo4j;
 

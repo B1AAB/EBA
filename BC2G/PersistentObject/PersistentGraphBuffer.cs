@@ -1,4 +1,6 @@
-﻿namespace BC2G.PersistentObject;
+﻿using BC2G.Blockchains.Bitcoin.Graph;
+
+namespace BC2G.PersistentObject;
 
 public class PersistentGraphBuffer : PersistentObjectBase<BitcoinBlockGraph>, IDisposable
 {
