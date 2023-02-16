@@ -7,52 +7,31 @@ public class Orchestrator : IDisposable
     private readonly CLI _cli;
     private readonly IHost _host;
     private readonly Options _options;
+    private readonly ILogger _logger;
     private readonly CancellationToken _cT;
 
-    private bool disposed = false;
-
-    public ILogger Logger { get; }
+    private bool _disposed = false;    
 
     public Orchestrator(IHost host, Options options, CancellationToken cancelationToken)
     {
         _host = host;
         _cT = cancelationToken;
         _options = options;
-        Logger = _host.Services.GetRequiredService<ILogger<Orchestrator>>();
+        _logger = _host.Services.GetRequiredService<ILogger<Orchestrator>>();
         _cli = new CLI(
             _options,
             TraverseBitcoinAsync,
             SampleGraphAsync,
-            LoadGraphAsync,
+            ImportGraphAsync,
             (e, c) =>
             {
-                Logger?.LogCritical("{error}", e.Message);
+                _logger?.LogCritical("{error}", e.Message);
             });
     }
 
     public async Task<int> InvokeAsync(string[] args)
     {
         return await _cli.InvokeAsync(args);
-    }
-
-    private async Task SampleGraphAsync()
-    {
-        await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
-        var graphDb = _host.Services.GetRequiredService<GraphDb>();
-        var successfull = await graphDb.TrySampleAsync();
-        if (successfull)
-            Logger.LogInformation("Successfully completed sampling graphs.");
-    }
-
-    private async Task LoadGraphAsync()
-    {
-        await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
-
-        var graphDb = _host.Services.GetRequiredService<IGraphDb<BitcoinBlockGraph>>();
-        await graphDb.ImportAsync();
-
-        var graphDbOld = _host.Services.GetRequiredService<GraphDb>();
-        graphDbOld.BulkImport(_options.WorkingDir);
     }
 
     private async Task TraverseBitcoinAsync()
@@ -64,6 +43,26 @@ public class Orchestrator : IDisposable
         await bitcoinOrchestrator.TraverseAsync(_options, _cT);
     }
 
+    private async Task ImportGraphAsync()
+    {
+        await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
+
+        var graphDb = _host.Services.GetRequiredService<IGraphDb<BitcoinBlockGraph>>();
+        await graphDb.ImportAsync();
+
+        var graphDbOld = _host.Services.GetRequiredService<GraphDb>();
+        graphDbOld.BulkImport(_options.WorkingDir);
+    }
+
+    private async Task SampleGraphAsync()
+    {
+        await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
+        var graphDb = _host.Services.GetRequiredService<GraphDb>();
+        var successfull = await graphDb.TrySampleAsync();
+        if (successfull)
+            _logger.LogInformation("Successfully completed sampling graphs.");
+    }
+
     public void Dispose()
     {
         Dispose(true);
@@ -71,12 +70,12 @@ public class Orchestrator : IDisposable
     }
     protected virtual void Dispose(bool disposing)
     {
-        if (!disposed)
+        if (!_disposed)
         {
             if (disposing)
             { }
 
-            disposed = true;
+            _disposed = true;
         }
     }
 }

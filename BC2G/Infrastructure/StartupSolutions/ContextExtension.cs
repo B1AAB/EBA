@@ -14,9 +14,9 @@ internal static class ContextExtension
 
     public static ILogger? GetLogger(this Context context)
     {
-        if(context.TryGetValue(_loggerKey, out var logger))
+        if (context.TryGetValue(_loggerKey, out var logger))
             return logger as ILogger;
-        
+
         return null;
     }
 }
