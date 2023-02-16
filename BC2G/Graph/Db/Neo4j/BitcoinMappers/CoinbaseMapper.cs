@@ -16,7 +16,6 @@ internal class CoinbaseMapper : ScriptMapper
     public CoinbaseMapper(
         string workingDirectory,
         string cypherImportPrefix,
-        //string importDirectory,
         string filename = "tmpBulkImportCoinbase.csv") :
         base(workingDirectory, cypherImportPrefix, /*importDirectory,*/ filename)
     { }

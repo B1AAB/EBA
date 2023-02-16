@@ -1,11 +1,6 @@
-﻿using BC2G.Blockchains.Bitcoin.Graph;
-using BC2G.Graph.Db.Neo4j.BitcoinMappers;
+﻿using BC2G.Graph.Db.Neo4j.BitcoinMappers;
 
 namespace BC2G.Graph.Db;
-
-
-// TODO: there is a bug: why many redeems per node in a given block? 
-// TODO: add time stamp to edge.
 
 public class GraphDb : IDisposable
 {
@@ -67,24 +62,10 @@ public class GraphDb : IDisposable
         }
 
         var batch = CurrentTimeStamp;
-        _blockMapper = new BlockMapper(_options.WorkingDir, _options.Neo4j.CypherImportPrefix/*, neo4jImportDirectory*/) { Batch = batch };
-        _scriptMapper = new ScriptMapper(_options.WorkingDir, _options.Neo4j.CypherImportPrefix/*, neo4jImportDirectory*/) { Batch = batch };
-        _coinbaseMapper = new CoinbaseMapper(_options.WorkingDir, _options.Neo4j.CypherImportPrefix/*, neo4jImportDirectory*/) { Batch = batch };
+        _blockMapper = new BlockMapper(_options.WorkingDir, _options.Neo4j.CypherImportPrefix) { Batch = batch };
+        _scriptMapper = new ScriptMapper(_options.WorkingDir, _options.Neo4j.CypherImportPrefix) { Batch = batch };
+        _coinbaseMapper = new CoinbaseMapper(_options.WorkingDir, _options.Neo4j.CypherImportPrefix) { Batch = batch };
         _txMapper = new TxMapper(_options.WorkingDir, _options.Neo4j.CypherImportPrefix) { Batch = batch };
-
-        /*
-        var script = new NodeMapping();
-        script.Labels.Add("Script");
-        var props = new Node().GetType().GetProperties();
-
-        var x = new Node("abc", "", ScriptType.NullData);
-        
-        string y = nameof(x.Id);
-
-        var v = x.GetType().GetProperty("Id").GetValue(x);*/
-
-        // TEMP
-
     }
 
     /* TODO:
@@ -699,27 +680,5 @@ static class GraphBaseExte
         target.AddIncomingEdges(edge);
 
         return edge;
-
-        /*
-         * 
-        _nodes.GetOrAdd(
-    relationship.StartNodeElementId,
-    new ScriptNode(relationship.StartNodeElementId));*/
-        /*
-        var target = _nodesV1.GetOrAdd(
-            relationship.EndNodeElementId,
-            new ScriptNode(relationship.EndNodeElementId));*/
-
-        //var cEdge = new S2SEdge(source, target, e);
-        //var edge2 = _edgesV1.GetOrAdd(cEdge.Id, cEdge);
-        /*
-        source.AddOutgoingEdges(edge2);
-        target.AddIncomingEdges(edge2);*/
-    }
-
-    public static void AddEdges(this GraphBase g, IEnumerable<IRelationship> edges)
-    {
-        foreach (var edge in edges)
-            g.GetOrAddEdge(edge);
     }
 }

@@ -10,11 +10,6 @@ public class T2TEdge : Edge<TxNode, TxNode>
 
     public static T2TEdge Update(T2TEdge oldEdge, T2TEdge newEdge)
     {
-        /*
-        var sourceTx = newEdge.Source.Tx ?? oldEdge.Source.Tx;
-        var sourceTxid = newEdge.Source.Id ?? oldEdge.Source.Id;
-        var source = sourceTx is not null ? new TxNode(sourceTx) : new TxNode(sourceTxid);*/
-
         var source = new TxNode(
             newEdge.Source.Id,
             newEdge.Source.Txid ?? oldEdge.Source.Txid,
@@ -23,10 +18,6 @@ public class T2TEdge : Edge<TxNode, TxNode>
             newEdge.Source.VSize ?? oldEdge.Source.VSize,
             newEdge.Source.Weight ?? oldEdge.Source.Weight,
             newEdge.Source.LockTime ?? oldEdge.Source.LockTime);
-        /*
-        var targetTx = newEdge.Target.Tx ?? oldEdge.Target.Tx;
-        var targetTxid = newEdge.Target.Id ?? oldEdge.Target.Id;
-        var target = targetTx is not null ? new TxNode(targetTx) : new TxNode(targetTxid);*/
 
         var target = new TxNode(
             newEdge.Target.Id,

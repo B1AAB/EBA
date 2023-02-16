@@ -16,7 +16,10 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         Txid = txid;
     }
 
-    public TxNode(string id, string? txid, int? version, int? size, int? vSize, int? weight, long? lockTime) : base(id)
+    public TxNode(
+        string id, string? txid, int? version,
+        int? size, int? vSize, int? weight,
+        long? lockTime) : base(id)
     {
         Txid = txid;
         Version = version;
@@ -26,7 +29,11 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         LockTime = lockTime;
     }
 
-    public TxNode(string txid, int? version, int? size, int? vSize, int? weight, long? lockTime) : base(txid)
+    public TxNode(
+        string txid, int? version,
+        int? size, int? vSize, int? weight,
+        long? lockTime) :
+        base(txid)
     {
         Txid = txid;
         Version = version;
@@ -36,7 +43,8 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         LockTime = lockTime;
     }
 
-    public TxNode(Transaction tx) : this(tx.Txid, tx.Version, tx.Size, tx.VSize, tx.Weight, tx.LockTime)
+    public TxNode(Transaction tx) :
+        this(tx.Txid, tx.Version, tx.Size, tx.VSize, tx.Weight, tx.LockTime)
     { }
 
     public static TxNode GetCoinbaseNode()

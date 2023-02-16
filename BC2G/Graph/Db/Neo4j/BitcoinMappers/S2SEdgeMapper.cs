@@ -63,11 +63,6 @@ public class S2SEdgeMapper : BitcoinEdgeMapper
         /// scripts by replacing 'Unknown' script type, with the 
         /// type of the other script if it is not 'Unknown'.
 
-        //var 
-        //var unknown = nameof(ScriptType.Unknown);
-
-        //var x = GetNodeQuery("source", labels, Props.EdgeSourceAddress, Props.EdgeSourceType);
-
         string l = Property.lineVarName, s = "source", t = "target", b="block";
 
 
@@ -77,35 +72,15 @@ public class S2SEdgeMapper : BitcoinEdgeMapper
             // Load source
             GetNodeQuery(s, labels, Props.EdgeSourceAddress, Props.EdgeSourceType) +
             " " +
-            /*$"MERGE (source:{labels} {{" +
-            $"{Props.EdgeSourceAddress.GetLoadExp(":")}}}) " +
-            $"ON CREATE SET source.{Props.EdgeSourceType.GetLoadExp("=")} " +
-            $"ON MATCH SET source.{Props.EdgeSourceType.Name} = " +
-            $"CASE {l}.{Props.EdgeSourceType.CsvHeader} " +
-            $"WHEN '{unknown}' THEN source.{Props.EdgeSourceType.Name} " +
-            $"ELSE {l}.{Props.EdgeSourceType.CsvHeader} " +
-            $"END " +*/
+
             // Load target
             GetNodeQuery(t, labels, Props.EdgeTargetAddress, Props.EdgeTargetType) +
             " " +
-            /*
-            $"MERGE (target:{labels} {{" +
-            $"{Props.EdgeTargetAddress.GetLoadExp(":")}}}) " +
-            $"ON CREATE SET target.{Props.EdgeTargetType.GetLoadExp("=")} " +
-            $"ON MATCH SET target.{Props.EdgeTargetType.Name} = " +
-            $"CASE {l}.{Props.EdgeTargetType.CsvHeader} " +
-            $"WHEN '{unknown}' THEN target.{Props.EdgeTargetType.Name} " +
-            $"ELSE {l}.{Props.EdgeTargetType.CsvHeader} " +
-            $"END " +*/
 
             $"WITH {s}, {t}, {l} " +
             // Find the block
             GetBlockQuery(b) + 
             " " +
-            /*
-            $"MERGE (block:{BlockMapper.label} {{" +
-            $"{Props.Height.GetLoadExp(":")}" +
-            "}) " +*/
 
             // Create relationship between the block node and the scripts nodes. 
             RedeemsEdgeQuery +
@@ -116,20 +91,6 @@ public class S2SEdgeMapper : BitcoinEdgeMapper
 
             GetEdgeQuery(new List<Property>() { Props.EdgeValue, Props.Height }, s, t) +
             " " +
-            /*
-            "CALL apoc.merge.relationship(" +
-            "source, " + // source
-            $"{l}.{Props.EdgeType.CsvHeader}, " + // relationship type
-            $"{{" + // properties
-            $"{Props.EdgeValue.GetLoadExp(":")}, " +
-            $"{Props.Height.GetLoadExp(":")}" +
-            $"}}, " +
-            $"{{ Count : 0}}, " + // on create
-            $"target, " + // target
-            $"{{}}" + // on update
-            $")" +
-            $"YIELD rel " +
-            $"SET rel.Count = rel.Count + 1 " +*/
             $"RETURN distinct 'DONE'";
     }
 }

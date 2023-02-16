@@ -52,25 +52,6 @@ public class DatabaseContext : DbContext
         }
     }
 
-    /*
-    public static async Task OptimisticAddOrUpdateAsync(
-        ICollection<Utxo> utxos,
-        IDbContextFactory<DatabaseContext> contextFactory,
-        CancellationToken ct)
-    {
-        await OptimisticTxAsync(
-            async () =>
-            {
-                using var c = contextFactory.CreateDbContext();
-                await c.Utxos.AddRangeAsync(utxos, ct);
-                await c.SaveChangesAsync(ct);
-            },
-            async () =>
-            {
-                await ResilientAddOrUpdateAsync(utxos, contextFactory, ct);
-            });
-    }*/
-
     private static async Task OptimisticTxAsync(Func<Task> txAsync, Func<Task> onFailureAsync)
     {
         try { await txAsync(); }

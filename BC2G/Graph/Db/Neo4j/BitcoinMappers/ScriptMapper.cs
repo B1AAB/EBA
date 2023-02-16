@@ -20,9 +20,8 @@ internal class ScriptMapper : ModelMapper<S2SEdge>
     public ScriptMapper(
         string workingDirectory,
         string cypherImportPrefix,
-        //string importDirectory,
         string filename = "tmpBulkImportEdges.csv") :
-        base(workingDirectory, cypherImportPrefix, /*importDirectory,*/ filename)
+        base(workingDirectory, cypherImportPrefix, filename)
     { }
 
     public override string GetCsvHeader()
@@ -101,7 +100,7 @@ internal class ScriptMapper : ModelMapper<S2SEdge>
             "source, " + // source
             $"{l}.{Props.EdgeType.CsvHeader}, " + // relationship type
             $"{{" + // properties
-            $"{Props.EdgeValue.GetLoadExp(":")}, " + 
+            $"{Props.EdgeValue.GetLoadExp(":")}, " +
             $"{Props.Height.GetLoadExp(":")}" +
             $"}}, " +
             $"{{ Count : 0}}, " + // on create

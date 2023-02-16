@@ -79,7 +79,6 @@ internal class Cli
         };
         _rootCmd.AddGlobalOption(_workingDirOption);
         _rootCmd.AddGlobalOption(_statusFilenameOption);
-        //_rootCmd.AddGlobalOption(_httpRequestTimeoutOption);
         // This is required to allow using options without specifying any of the subcommands. 
         _rootCmd.SetHandler(x => { });
 

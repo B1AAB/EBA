@@ -41,7 +41,6 @@ public class C2SEdgeMapper : S2SEdgeMapper
     public override string GetQuery(string csvFilename)
     {
         string l = Property.lineVarName, s = "coinbase", t = "target", b="block";
-        //var unknown = nameof(ScriptType.Unknown);
 
         return
             $"LOAD CSV WITH HEADERS FROM '{csvFilename}' AS {l} " +
@@ -50,27 +49,9 @@ public class C2SEdgeMapper : S2SEdgeMapper
 
             GetNodeQuery(t, labels, Props.EdgeTargetAddress, Props.EdgeTargetType) +
             " " +
-            /*
-            $"MERGE (target:{labels} {{" +
-            $"{Props.EdgeTargetAddress.GetLoadExp(":")}}}) " +
-            $"ON CREATE SET target.{Props.EdgeTargetAddress.GetLoadExp("=")} " +
-            $"ON MATCH SET target.{Props.EdgeTargetAddress.Name} = " +
-            $"CASE {l}.{Props.EdgeTargetAddress.CsvHeader} " +
-            $"WHEN '{unknown}' THEN target.{Props.EdgeTargetAddress.Name} " +
-            $"ELSE {l}.{Props.EdgeTargetAddress.CsvHeader} " +
-            $"END " +*/
-
-
-
-            //$"SET target.{Props.EdgeTargetType.GetLoadExp("=")} " +
-
             $"WITH {s}, {t}, {l} " +
             GetBlockQuery(b) +
             " "+
-            /*
-            $"MERGE (block:{BlockMapper.label} {{" +
-            $"{Props.Height.GetLoadExp(":")}" +
-            $"}}) " +*/
 
             // Create edge between the script and its corresponding block
             CreatesEdgeQuery +
@@ -80,20 +61,6 @@ public class C2SEdgeMapper : S2SEdgeMapper
 
             GetEdgeQuery(new List<Property>() { Props.EdgeValue, Props.Height }, s, t) +
             " " +
-            /*
-            $"CALL apoc.merge.relationship(" +
-            $"coinbase, " + // source
-            $"{l}.{Props.EdgeType.CsvHeader}, " + // relationship type
-            $"{{" + // properties
-            $"{Props.EdgeValue.GetLoadExp(":")}, " +
-            $"{Props.Height.GetLoadExp(":")}" +
-            $"}}, " +
-            $"{{ Count : 0 }}, " + // on create
-            $"target, " + // target
-            $"{{}}" + // on update
-            $") " +
-            $"YIELD rel " +
-            $"SET rel.Count = rel.Count + 1 " +*/
             $"RETURN distinct 'DONE'";
     }
 }

@@ -85,13 +85,14 @@ public class CSVSerializer : SerializerBase, IDisposable
         reader.ReadLine(); // skip the header.
         while ((line = reader.ReadLine()) != null)
         {
+            /*
             var cols = line.Trim().Split(_delimiter);
             var edge = S2SEdge.FromString(cols, mappings[cols[0]], mappings[cols[1]]);
 
             if (!blockGraphs.ContainsKey(edge.BlockHeight))
                 blockGraphs.Add(edge.BlockHeight, new BitcoinBlockGraph(edge.BlockHeight));
 
-            blockGraphs[edge.BlockHeight].AddOrUpdateEdge(edge);
+            blockGraphs[edge.BlockHeight].AddOrUpdateEdge(edge);*/
         }
 
         return blockGraphs;

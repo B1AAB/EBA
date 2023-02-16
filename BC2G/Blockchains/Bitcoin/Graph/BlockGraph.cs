@@ -15,24 +15,6 @@ public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
     public double TotalFee { get { return _totalFee; } }
     private double _totalFee;
 
-    // TODO: can base types used for this purpose?!!
-    /*public new ReadOnlyCollection<S2SEdge> Edges
-    {
-        get
-        {
-            return new ReadOnlyCollection<S2SEdge>(_edges.Values.ToList());
-        }
-    }*/
-    //private readonly ConcurrentDictionary<int, S2SEdge> _edges = new();
-    /*
-    public new ReadOnlyCollection<ScriptNode> Nodes
-    {
-        get
-        {
-            return new ReadOnlyCollection<ScriptNode>(_nodes.Keys.ToList());
-        }
-    }*/
-    //private readonly ConcurrentDictionary<ScriptNode, byte> _nodes = new();
 
     private readonly TransactionGraph _coinbaseTxGraph;
 
@@ -193,39 +175,14 @@ public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
         AddOrUpdateEdge(edge, (_, oldEdge) => { return T2TEdge.Update((T2TEdge)oldEdge, edge); });
         Stats.IncrementEdgeType(edge.Type, edge.Value);
     }
-    /*
-    private void AddOrUpdateEdge(
-        TxNode sourceTx, TxNode targetTx, double value, EdgeType type,
-        uint? timestamp = null, long? height = null)
-    {
-        var e = new T2TEdge(sourceTx, targetTx, value, type, timestamp ?? Timestamp, height ?? Height);
-        AddOrUpdateEdge(e, (_, oldEdge) => { return T2TEdge.Update((T2TEdge)oldEdge, e); });
-
-        Stats.IncrementEdgeType(type, value);
-    }*/
 
     public void AddOrUpdateEdge(S2SEdge edge)
     {
         /// Note that the hashkey is invariant to the edge value.
         /// If this is changed, the `Equals` method needs to be
         /// updated accordingly.
-        /*_edges.AddOrUpdate(
-            edge.GetHashCodeInt(true), edge,
-            (key, oldValue) => new S2SEdge(
-                edge.Source,
-                edge.Target,
-                edge.Value + oldValue.Value,
-                edge.Type,
-                edge.Timestamp,
-                edge.BlockHeight));*/
-
-        // TODO: ^^ this is not needed anymore.
 
         AddOrUpdateEdge(edge, (key, oldValue) => edge.Update(oldValue.Value));
-
-        // TODO: are these needed?!!
-        //_nodes.TryAdd(edge.Source, 0);
-        //_nodes.TryAdd(edge.Target, 0);
 
         Stats.IncrementEdgeType(edge.Type, edge.Value);
     }

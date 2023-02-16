@@ -1,6 +1,4 @@
-﻿using BC2G.Blockchains.Bitcoin.Graph;
-
-namespace BC2G.Graph.Db.Neo4j.BitcoinMappers;
+﻿namespace BC2G.Graph.Db.Neo4j.BitcoinMappers;
 
 internal class BlockMapper : ModelMapper<BitcoinBlockGraph>
 {

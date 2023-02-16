@@ -75,19 +75,6 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
             BlockHeight };
     }
 
-    public string ToString(string sourceId, string targetId)
-    {
-        return string.Join(_delimiter, new string[]
-        {
-            sourceId,
-            targetId,
-            Value.ToString(),
-            ((int)Type).ToString(),
-            (Timestamp - BitcoinAgent.GenesisTimestamp).ToString(),
-            BlockHeight.ToString()
-        });
-    }
-
     public string GetHashCode(bool ignoreValue)
     {
         if (ignoreValue)

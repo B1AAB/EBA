@@ -22,21 +22,16 @@ internal abstract class ModelMapper<T>
     public string CypherQuery { get { return ComposeCypherQuery(CypherImportPrefix + Filename); } }
 
     public string CypherImportPrefix { get; }
-    //public string ImportDir { get; }
     public string WorkingDirectory { get; }
 
     public ModelMapper(
         string workingDirectory,
         string cypherImportPrefix,
-        //string importDirectory,
         string filename)
     {
         _filename = filename;
-        //Filename = Path.Combine(importDirectory, filename);
-        //ImportDir = importDirectory;
         WorkingDirectory = workingDirectory;
         CypherImportPrefix = cypherImportPrefix;
-        //CypherQuery = ComposeCypherQuery(cypherImportPrefix + filename);
     }
 
     public abstract string GetCsvHeader();

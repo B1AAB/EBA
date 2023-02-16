@@ -1,6 +1,4 @@
-﻿using BC2G.Blockchains.Bitcoin.Graph;
-
-namespace BC2G.PersistentObject;
+﻿namespace BC2G.PersistentObject;
 
 public class PersistentGraphBuffer : PersistentObjectBase<BitcoinBlockGraph>, IDisposable
 {
@@ -33,7 +31,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BitcoinBlockGraph>, ID
         _pGraphStats.Enqueue(obj.Stats.ToString());
 
         _logger.LogInformation(
-            "Finished processing block {height} in {runtime}.",
+            "Finished processing block {height:n0} in {runtime}.",
             obj.Height, obj.Stats.Runtime);
     }
 

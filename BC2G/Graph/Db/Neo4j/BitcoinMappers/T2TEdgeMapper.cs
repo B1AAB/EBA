@@ -62,15 +62,12 @@ public class T2TEdgeMapper : BitcoinEdgeMapper
     public override string GetQuery(string csvFilename)
     {
         string l = Property.lineVarName, s = "source", t = "target", b = "block";
-        //var unknown = nameof(ScriptType.Unknown);
 
-
-
-        var z = 
+        return
            $"LOAD CSV WITH HEADERS FROM '{csvFilename}' AS {l} " +
            $"FIELDTERMINATOR '{csvDelimiter}' " +
+
            // Load source
-           //GetNodeQuery(s, labels, Props.T2TEdgeSourceTxid) +
            GetNodeQuery(s, labels, Props.T2TEdgeSourceTxid, new List<Property>()
            {
                Props.T2TEdgeSourceVersion,
@@ -80,19 +77,8 @@ public class T2TEdgeMapper : BitcoinEdgeMapper
                Props.T2TEdgeSourceLockTime
            }) +
            " " +
-           /*
-           $"MERGE (source:{labels} {{" +
-           $"{Props.T2TEdgeSourceTxid.GetLoadExp(":")}}}) " +
-           $"ON CREATE SET source.{Props.T2TEdgeSourceTxid.GetLoadExp("=")} " +
-           $"ON MATCH SET source.{Props.T2TEdgeSourceTxid.Name} = " +
-           // IMPORTANT TODO: I am not sure if this is correct. TxNode does not have type, it cannot be unknown.
-           $"CASE {l}.{Props.T2TEdgeSourceTxid.CsvHeader} " +
-           $"WHEN '{unknown}' THEN source.{Props.T2TEdgeSourceTxid.Name} " +
-           $"ELSE {l}.{Props.T2TEdgeSourceTxid.CsvHeader} " +
-           $"END " +*/
 
            // Load target
-           //GetNodeQuery(t, labels, Props.T2TEdgeTargetTxid) +
            GetNodeQuery(t, labels, Props.T2TEdgeTargetTxid, new List<Property>()
            {
                Props.T2TEdgeTargetVersion,
@@ -102,24 +88,12 @@ public class T2TEdgeMapper : BitcoinEdgeMapper
                Props.T2TEdgeTargetLockTime
            }) +
            " " +
-           /*
-           $"MERGE (target:{labels} {{" +
-           $"{Props.T2TEdgeTargetTxid.GetLoadExp(":")}}}) " +
-           $"ON CREATE SET target.{Props.T2TEdgeTargetTxid.GetLoadExp("=")} " +
-           $"ON MATCH SET target.{Props.T2TEdgeTargetTxid.Name} = " +
-           $"CASE {l}.{Props.T2TEdgeTargetTxid.CsvHeader} " +
-           $"WHEN '{unknown}' THEN target.{Props.T2TEdgeTargetTxid.Name} " +
-           $"ELSE {l}.{Props.T2TEdgeTargetTxid.CsvHeader} " +
-           $"END " +*/
+
            $"WITH {s}, {t}, {l} " +
-                       // Find the block
-                       GetBlockQuery(b) +
-            " " +
-           /*
-          $"MERGE (block:{BlockMapper.label} {{" +
-          $"{Props.Height.GetLoadExp(":")}" +
-          "}) " +
-           */
+
+           // Find the block
+           GetBlockQuery(b) +
+           " " +
 
            // Create relationship between the block node and the Tx nodes. 
            RedeemsEdgeQuery +
@@ -130,22 +104,7 @@ public class T2TEdgeMapper : BitcoinEdgeMapper
            " " +
            // Create relationship between the source and target Tx nodes,
            // where the type of the relationship is read from the CSV file.
-           /*"CALL apoc.merge.relationship(" +
-           "source, " + // source
-           $"{l}.{Props.EdgeType.CsvHeader}, " + // relationship type
-           $"{{" + // properties
-           $"{Props.EdgeValue.GetLoadExp(":")}, " +
-           $"{Props.Height.GetLoadExp(":")}" +
-           $"}}, " +
-           $"{{ Count : 0}}, " + // on create
-           $"target, " + // target
-           $"{{}}" + // on update
-           $")" +
-           $"YIELD rel " +
-           $"SET rel.Count = rel.Count + 1 " +*/
+
            $"RETURN distinct 'DONE'";
-
-
-        return z;
     }
 }
