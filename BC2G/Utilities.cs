@@ -141,4 +141,12 @@ internal class Utilities
             pathY?.TrimEnd(Path.DirectorySeparatorChar),
             StringComparison.InvariantCultureIgnoreCase);
     }
+
+    public static string ToAbsPath(string filename, string workingDir)
+    {
+        if (filename == Path.GetFileName(filename))
+            return Path.Join(workingDir, filename);
+        else
+            return filename;
+    }
 }

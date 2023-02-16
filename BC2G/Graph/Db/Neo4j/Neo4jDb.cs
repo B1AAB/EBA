@@ -25,10 +25,8 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         _logger = logger;
         _mapperFactory = mapperFactory;
 
-        if (options.Neo4j.BatchesFilename == Path.GetFileName(options.Neo4j.BatchesFilename))
-        {
-            options.Neo4j.BatchesFilename = Path.Join(options.WorkingDir, options.Neo4j.BatchesFilename);
-        }
+        options.Neo4j.BatchesFilename = Utilities.ToAbsPath(
+            options.Neo4j.BatchesFilename, options.WorkingDir);
 
         if (!Options.Bitcoin.SkipGraphLoad)
         {

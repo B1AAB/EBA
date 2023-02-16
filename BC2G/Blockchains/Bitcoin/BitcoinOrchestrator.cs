@@ -102,6 +102,9 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         PersistentConcurrentQueue blocksQueue,
         CancellationToken cT)
     {
+        options.Bitcoin.StatsFilename = Utilities.ToAbsPath(
+            options.Bitcoin.StatsFilename, options.WorkingDir);
+
         using var pGraphStat = new PersistentGraphStatistics(
             Path.Combine(options.WorkingDir, "blocks_stats.tsv"), cT);
 
