@@ -44,13 +44,16 @@ internal class Program
 
             var logger = Log.Logger;
             var orchestrator = new Orchestrator(host, options, cancellationToken);
-            Console.CancelKeyPress += new ConsoleCancelEventHandler(
-                (sender, e) =>
-                {
-                    _tokenSource.Cancel();
-                    e.Cancel = true;
-                    logger.Information("Cancelling");
-                });
+            Console.CancelKeyPress += (sender, e) =>
+            {
+                // Flag the cancel token so all listening can exit ASAP.
+                _tokenSource.Cancel();
+
+                // Prevents the console from exiting immediately.
+                e.Cancel = true; 
+
+                logger.Information("Cancelling...");
+            };
 
             exitCode = await orchestrator.InvokeAsync(args);
 
@@ -80,7 +83,7 @@ internal class Program
         // OR IT WILL BE FORCE-TERMINATED BY THE HOST. HENCE,
         // AFTER THE CANCEL FLAG, ALL THE RUNNING PROCESSES
         // NEED TO SAFELY RETURN QUICKEST POSSIBLE. 
-        // THEREFORE, LIMIT THE SCOPE TO CLOSE THE MOST
+        // THEREFORE, LIMIT THE SCOPE TO CLOSING THE MOST
         // CRITICAL HANDLES.
         // ***************************************************
 
