@@ -1,4 +1,9 @@
-﻿using SecurityException = System.Security.SecurityException;
+﻿using Spectre.Console;
+
+using System.CommandLine.Help;
+
+using Color = Spectre.Console.Color;
+using SecurityException = System.Security.SecurityException;
 
 namespace BC2G.CommandLineInterface;
 
@@ -14,10 +19,10 @@ internal class CLI
         Options options,
         Func<Task> bitcoinTraverseCmdHandler,
         Func<Task> sampleCmdHandler,
-        Func<Task> loadGraphCmdHandler,
+        Func<Task> bitcoinImportCmdHandler,
         Action<Exception, InvocationContext> exceptionHandler)
     {
-        _workingDirOption  = new(
+        _workingDirOption = new(
             name: "--working-dir",
             description: "The directory where all the data related " +
             "to this execution will be stored.",
@@ -78,10 +83,11 @@ internal class CLI
         // This is required to allow using options without specifying any of the subcommands. 
         _rootCmd.SetHandler(x => { });
 
-        var sampleCmd = GetSampleCmd(options, sampleCmdHandler);
-        _rootCmd.AddCommand(sampleCmd);
-        _rootCmd.AddCommand(GetTraverseCmd(options, bitcoinTraverseCmdHandler));
-        _rootCmd.AddCommand(GetLoadGraphCmd(options, loadGraphCmdHandler));
+        _rootCmd.AddCommand(GetBitcoinCmd
+            (options,
+            bitcoinTraverseCmdHandler,
+            bitcoinImportCmdHandler,
+            sampleCmdHandler));
 
         _parser = new CommandLineBuilder(_rootCmd)
             //.UseDefaults() // Do NOT add this since it will cause issues with handling exceptions.
@@ -96,7 +102,19 @@ internal class CLI
             {
                 exceptionHandler(e, context);
             }, 1)
-            .UseHelp()
+            .UseHelp(context =>
+            {
+                context.HelpBuilder.CustomizeLayout(
+                    x =>
+                    {
+                        if (x.ParseResult.Errors.Any())
+                            return new List<HelpSectionDelegate>();
+
+                        return HelpBuilder.Default.GetLayout().Prepend(
+                       _ => AnsiConsole.Write(
+                           new FigletText("BC2G").Color(Color.Purple_1)));
+                    });
+            })
             .UseEnvironmentVariableDirective()
             .UseParseDirective()
             .UseSuggestDirective()
@@ -111,6 +129,106 @@ internal class CLI
     {
         return await _parser.InvokeAsync(args);
         //return await _rootCmd.InvokeAsync(args);
+    }
+
+    private Command GetBitcoinCmd(
+        Options options,
+        Func<Task> traverseHandler,
+        Func<Task> importHandler,
+        Func<Task> sampleHandler)
+    {
+        var cmd = new Command(
+            name: "bitcoin",
+            description: "TODO: add some description");
+        cmd.AddCommand(GetTraverseCmd(options, traverseHandler));
+        cmd.AddCommand(GetImportCmd(options, importHandler));
+        cmd.AddCommand(GetSampleCmd(options, sampleHandler));
+        return cmd;
+    }
+
+    private Command GetTraverseCmd(Options options, Func<Task> handler)
+    {
+        var fromOption = new Option<int>(
+            name: "--from",
+            description: "The inclusive height of the block where the " +
+            "traverse should start. If not provided, starts from the " +
+            "genesis block (i.e., the first block on the blockchain).");
+
+        var toOption = new Option<int?>(
+            name: "--to",
+            description: "The exclusive height of the block where the " +
+            "traverse should end (exclusive). If not provided, proceeds " +
+            "until the last of block on the chain when the process starts.");
+
+        var granularityOption = new Option<int>(
+            name: "--granularity",
+            description: "Set the blockchain traversal granularity." +
+            "For instance, if set to `10`, it implies processing every 10 blocks in the blockchain.",
+            getDefaultValue: () => options.Bitcoin.Granularity);
+
+        var skipGraphLoadOption = new Option<bool>(
+            name: "--skip-graph-load",
+            description: "Running BC2G, Bitcoin-qt, and Neo4j at the same time could put " +
+            "a decent amount of compute resource requirement on the system. To alleviate " +
+            "it a bit, setting this option would only store the data to be bulk-loaded into " +
+            "Neo4j in batches and would not try loading them to Neo4j. After the traverse on " +
+            "the chain, these files can be used to load the data into Neo4j.",
+            getDefaultValue: () => options.Bitcoin.SkipGraphLoad);
+
+        var clientUriOption = new Option<Uri>(
+            name: "--client-uri",
+            description: "The URI where the Bitcoin client can be reached. The client should " +
+            "be started with REST endpoint enabled.",
+            getDefaultValue: () => options.Bitcoin.ClientUri);
+
+        var cmd = new Command(
+            name: "traverse",
+            description: "TODO ...")
+        {
+            fromOption,
+            toOption,
+            granularityOption,
+            skipGraphLoadOption,
+            clientUriOption
+        };
+
+        cmd.SetHandler(async (_) =>
+        {
+            await handler();
+        },
+        new OptionsBinder(
+            options,
+            fromInclusiveOption: fromOption,
+            toExclusiveOption: toOption,
+            granularityOption: granularityOption,
+            skipGraphLoadOption: skipGraphLoadOption,
+            bitcoinClientUri: clientUriOption,
+            workingDirOption: _workingDirOption,
+            statusFilenameOption: _statusFilenameOption));
+
+        return cmd;
+    }
+
+    private Command GetImportCmd(Options options, Func<Task> handler)
+    {
+        var cmd = new Command(
+            name: "import",
+            description: "loads the graph from the CSV files " +
+            "created while traversing the blockchain. " +
+            "This command should be used when " +
+            "--skip-graph-load flag was used.")
+        { };
+
+        cmd.SetHandler(async (_) =>
+        {
+            await handler();
+        },
+        new OptionsBinder(
+            options,
+            workingDirOption: _workingDirOption,
+            statusFilenameOption: _statusFilenameOption));
+
+        return cmd;
     }
 
     private Command GetSampleCmd(Options options, Func<Task> handler)
@@ -196,101 +314,6 @@ internal class CLI
             graphSampleMaxEdgeCount: maxEdgeCountOption,
             graphSampleModeOption: modeOption,
             graphSampleRootNodeSelectProb: rootNodeSelectProbOption,
-            workingDirOption: _workingDirOption,
-            statusFilenameOption: _statusFilenameOption));
-
-        return cmd;
-    }
-
-    private Command GetTraverseCmd(Options options, Func<Task> handler)
-    {
-        var cmd = new Command(
-            name: "traverse",
-            description: "TODO: add some description");
-        cmd.AddCommand(GetBitcoinCmd(options, handler));
-
-        return cmd;
-    }
-
-    private Command GetBitcoinCmd(Options options, Func<Task> handler)
-    {
-        var fromOption = new Option<int>(
-            name: "--from",
-            description: "The inclusive height of the block where the " +
-            "traverse should start. If not provided, starts from the " +
-            "genesis block (i.e., the first block on the blockchain).");
-
-        var toOption = new Option<int?>(
-            name: "--to",
-            description: "The exclusive height of the block where the " +
-            "traverse should end (exclusive). If not provided, proceeds " +
-            "until the last of block on the chain when the process starts.");
-
-        var granularityOption = new Option<int>(
-            name: "--granularity",
-            description: "Set the blockchain traversal granularity." +
-            "For instance, if set to `10`, it implies processing every 10 blocks in the blockchain.",
-            getDefaultValue: () => options.Bitcoin.Granularity);
-
-        var skipGraphLoadOption = new Option<bool>(
-            name: "--skip-graph-load",
-            description: "Running BC2G, Bitcoin-qt, and Neo4j at the same time could put " +
-            "a decent amount of compute resource requirement on the system. To alleviate " +
-            "it a bit, setting this option would only store the data to be bulk-loaded into " +
-            "Neo4j in batches and would not try loading them to Neo4j. After the traverse on " +
-            "the chain, these files can be used to load the data into Neo4j.",
-            getDefaultValue: () => options.Bitcoin.SkipGraphLoad);
-
-        var clientUriOption = new Option<Uri>(
-            name: "--client-uri",
-            description: "The URI where the Bitcoin client can be reached. The client should " +
-            "be started with REST endpoint enabled.",
-            getDefaultValue: () => options.Bitcoin.ClientUri);
-
-        var cmd = new Command(
-            name: "bitcoin",
-            description: "TODO ...")
-        {
-            fromOption,
-            toOption,
-            granularityOption,
-            skipGraphLoadOption,
-            clientUriOption
-        };
-
-        cmd.SetHandler(async (_) =>
-        {
-            await handler();
-        },
-        new OptionsBinder(
-            options,
-            fromInclusiveOption: fromOption,
-            toExclusiveOption: toOption,
-            granularityOption: granularityOption,
-            skipGraphLoadOption: skipGraphLoadOption,
-            bitcoinClientUri: clientUriOption,
-            workingDirOption: _workingDirOption,
-            statusFilenameOption: _statusFilenameOption));
-
-        return cmd;
-    }
-
-    private Command GetLoadGraphCmd(Options options, Func<Task> handler)
-    {
-        var cmd = new Command(
-            name: "load-graph",
-            description: "loads the graph from the CSV files " +
-            "created while traversing the blockchain. " +
-            "This command should be used when " +
-            "--skip-graph-load flag was used.")
-        { };
-
-        cmd.SetHandler(async (_) =>
-        {
-            await handler();
-        },
-        new OptionsBinder(
-            options,
             workingDirOption: _workingDirOption,
             statusFilenameOption: _statusFilenameOption));
 

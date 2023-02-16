@@ -1,6 +1,4 @@
-﻿using BC2G.Blockchains.Bitcoin.Graph;
-
-namespace BC2G.Blockchains.Bitcoin;
+﻿namespace BC2G.Blockchains.Bitcoin;
 
 public class BitcoinOrchestrator : IBlockchainOrchestrator
 {
@@ -43,7 +41,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
                 if (cT.IsCancellationRequested)
                     _logger.LogInformation("Cancelled successfully.");
                 else
-                    _logger.LogInformation("All process finished successfully in {et}", stopwatch.Elapsed);
+                    _logger.LogInformation("Successfully finished traverse in {et}.", stopwatch.Elapsed);
                 break;
             }
             catch (Polly.CircuitBreaker.BrokenCircuitException e)

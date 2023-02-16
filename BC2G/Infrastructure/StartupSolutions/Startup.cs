@@ -1,5 +1,4 @@
-﻿using BC2G.Blockchains.Bitcoin.Graph;
-using BC2G.Graph.Db.Neo4j;
+﻿using BC2G.Graph.Db.Neo4j;
 
 namespace BC2G.Infrastructure.StartupSolutions;
 
@@ -93,13 +92,14 @@ public class Startup
         // it will be wired up within the factory such that
         // every new instance of BitcoinAgent is created
         // with the appropriately configured HttpClient injected in.
-        services.AddHttpClient<BitcoinAgent>(client =>
-        {
-            client.BaseAddress = options.Bitcoin.ClientUri;
-            client.DefaultRequestHeaders.UserAgent.Clear();
-            client.DefaultRequestHeaders.Add("User-Agent", "BC2G");
-            client.Timeout = options.Bitcoin.HttpClientTimeout;
-        })
+        services
+            .AddHttpClient<BitcoinAgent>(client =>
+            {
+                client.BaseAddress = options.Bitcoin.ClientUri;
+                client.DefaultRequestHeaders.UserAgent.Clear();
+                client.DefaultRequestHeaders.Add("User-Agent", "BC2G");
+                client.Timeout = options.Bitcoin.HttpClientTimeout;
+            })
             .AddPolicyHandler((provider, _) =>
             {
                 return ResilienceStrategyFactory.Bitcoin.GetClientStrategy(
