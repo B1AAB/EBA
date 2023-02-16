@@ -1,12 +1,11 @@
 ﻿global using BC2G.Blockchains.Bitcoin;
 global using BC2G.Blockchains.Bitcoin.Graph;
 global using BC2G.Blockchains.Bitcoin.Model;
-global using BC2G.CommandLineInterface;
+global using BC2G.CLI.Config;
 global using BC2G.Graph.Db;
 global using BC2G.Graph.Model;
 global using BC2G.Infrastructure;
 global using BC2G.Infrastructure.StartupSolutions;
-global using BC2G.Model.Config;
 global using BC2G.PersistentObject;
 global using BC2G.Serializers;
 

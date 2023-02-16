@@ -1,4 +1,4 @@
-﻿namespace BC2G.Model.Config;
+﻿namespace BC2G.CLI.Config;
 
 public class PsqlOptions
 {

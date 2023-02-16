@@ -1,4 +1,4 @@
-﻿namespace BC2G.CommandLineInterface;
+﻿namespace BC2G.CLI;
 
 internal class OptionsBinder : BinderBase<Options>
 {

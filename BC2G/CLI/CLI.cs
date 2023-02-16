@@ -5,9 +5,9 @@ using System.CommandLine.Help;
 using Color = Spectre.Console.Color;
 using SecurityException = System.Security.SecurityException;
 
-namespace BC2G.CommandLineInterface;
+namespace BC2G.CLI;
 
-internal class CLI
+internal class Cli
 {
     private readonly Parser _parser;
     private readonly RootCommand _rootCmd;
@@ -15,7 +15,7 @@ internal class CLI
     private readonly Option<string> _resumeOption;
     private readonly Option<string> _statusFilenameOption;
 
-    public CLI(
+    public Cli(
         Options options,
         Func<Task> bitcoinTraverseCmdHandler,
         Func<Task> sampleCmdHandler,
