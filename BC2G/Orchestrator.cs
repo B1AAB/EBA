@@ -1,10 +1,12 @@
+using BC2G.CLI;
+
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace BC2G;
 
 public class Orchestrator : IDisposable
 {
-    private readonly CLI _cli;
+    private readonly Cli _cli;
     private readonly IHost _host;
     private readonly Options _options;
     private readonly ILogger _logger;
@@ -18,7 +20,7 @@ public class Orchestrator : IDisposable
         _cT = cancelationToken;
         _options = options;
         _logger = _host.Services.GetRequiredService<ILogger<Orchestrator>>();
-        _cli = new CLI(
+        _cli = new Cli(
             _options,
             TraverseBitcoinAsync,
             SampleGraphAsync,

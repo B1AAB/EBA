@@ -58,7 +58,7 @@ internal class Program
             exitCode = await orchestrator.InvokeAsync(args);
 
             if (exitCode == 0)
-                logger.Information("All process finished successfully!");
+                logger.Information("All process finished!");
         }
         catch (Exception e)
         {

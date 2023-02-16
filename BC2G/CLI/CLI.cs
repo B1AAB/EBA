@@ -128,7 +128,6 @@ internal class Cli
     public async Task<int> InvokeAsync(string[] args)
     {
         return await _parser.InvokeAsync(args);
-        //return await _rootCmd.InvokeAsync(args);
     }
 
     private Command GetBitcoinCmd(

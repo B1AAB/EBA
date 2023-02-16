@@ -21,6 +21,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
     public async Task TraverseAsync(Options options, CancellationToken cT)
     {
         var chainInfo = await _agent.AssertChainAsync(cT);
+        _logger.LogInformation("Head of the chain is at block {block:n0}.", chainInfo.Blocks);
         options.Bitcoin.ToExclusive ??= chainInfo.Blocks;
 
         var blockHeightQueue = SetupBlocksQueue(options);
@@ -29,8 +30,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         cT.ThrowIfCancellationRequested();
         var stopwatch = new Stopwatch();
 
-        var canRun = true;
-        while (canRun)
+        while (true)
         {
             try
             {
@@ -47,32 +47,15 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             catch (Polly.CircuitBreaker.BrokenCircuitException e)
             {
                 stopwatch.Stop();
-                _logger.LogError(e.Message);
-                var validChoice = true;
-                do
+                _logger.LogError("Circuit is broken! {e}.", e.Message);
+
+                if (!CLI.Utilities.Prompt(cT))
                 {
-                    Console.Write("Do you want to retry? [Y/N] ");
-                    var keyInfo = Console.ReadKey();
-                    Console.WriteLine();
-                    switch (keyInfo.Key.ToString().ToUpper())
-                    {
-                        case "Y":
-                            validChoice = true;
-                            canRun = true;
-                            break;
-                        case "N":
-                            _logger.LogCritical(
-                                "Aborting execution due to circuit break " +
-                                "and user's decision to avoid a re-attempt");
-                            validChoice = true;
-                            canRun = false;
-                            break;
-                        default:
-                            Console.WriteLine("Invalid choice.");
-                            break;
-                    }
+                    _logger.LogCritical(
+                        "Aborting execution due to circuit break " +
+                        "and user's decision to avoid a re-attempt.");
+                    throw;
                 }
-                while (!validChoice);
             }
             catch
             {
