@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Blockchains.Bitcoin.Graph;
 
-public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
+public class BlockGraph : GraphBase, IEquatable<BlockGraph>
 {
     public long Height { get; }
     public uint Timestamp { get; }
@@ -20,7 +20,7 @@ public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
 
     private readonly ConcurrentQueue<TransactionGraph> _txGraphsQueue = new();
 
-    public BitcoinBlockGraph(Block block, TransactionGraph coinbaseTxGraph) : base()
+    public BlockGraph(Block block, TransactionGraph coinbaseTxGraph) : base()
     {
         Block = block;
         _coinbaseTxGraph = coinbaseTxGraph;
@@ -39,7 +39,7 @@ public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
     // TODO: this constructor is required by the deserializer
     // mostly for testing purposes, should improve avoid
     // needing constructor.
-    public BitcoinBlockGraph(long height)
+    public BlockGraph(long height)
     {
         Height = height;
         Stats = new BlockStatistics(height);
@@ -187,7 +187,7 @@ public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
         Stats.IncrementEdgeType(edge.Type, edge.Value);
     }
 
-    public bool Equals(BitcoinBlockGraph? other)
+    public bool Equals(BlockGraph? other)
     {
         if (other == null)
             return false;
@@ -231,7 +231,7 @@ public class BitcoinBlockGraph : GraphBase, IEquatable<BitcoinBlockGraph>
 
     public override bool Equals(object? obj)
     {
-        return Equals(obj as BitcoinBlockGraph);
+        return Equals(obj as BlockGraph);
     }
 
     public override int GetHashCode()

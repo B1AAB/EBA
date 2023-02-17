@@ -1,6 +1,6 @@
-﻿namespace BC2G.Graph.Db.Neo4j.BitcoinMappers;
+﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-public class BitcoinBlockGraphMapper : IGraphMapper
+public class BlockGraphMapper : IGraphMapper
 {
     public const string label = "Block";
 
@@ -38,10 +38,10 @@ public class BitcoinBlockGraphMapper : IGraphMapper
 
     public string GetCsv(GraphBase g)
     {
-        return GetCsv((BitcoinBlockGraph)g);
+        return GetCsv((BlockGraph)g);
     }
 
-    public static string GetCsv(BitcoinBlockGraph g)
+    public static string GetCsv(BlockGraph g)
     {
         var counts = g.Stats.EdgeTypeFrequency;
         var sums = g.Stats.EdgeTypeTxSum;

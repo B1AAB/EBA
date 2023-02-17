@@ -1,8 +1,8 @@
-﻿using BC2G.Graph.Db.Neo4j.BitcoinMappers;
+﻿using BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-namespace BC2G.Graph.Db.Neo4j;
+namespace BC2G.Graph.Db.Neo4jDb;
 
-public class BitcoinNeo4jDb : Neo4jDb<BitcoinBlockGraph>
+public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
 {
     public static string Coinbase { get { return "Coinbase"; } }
 

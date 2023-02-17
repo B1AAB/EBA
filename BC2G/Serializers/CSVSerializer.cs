@@ -16,7 +16,7 @@ public class CSVSerializer : SerializerBase, IDisposable
         //_mapper = mapper;
     }
 
-    public override void Serialize(BitcoinBlockGraph g, string baseFilename)
+    public override void Serialize(BlockGraph g, string baseFilename)
     {
         var nodesFilename = baseFilename + "_nodes.tsv" + _tmpFilenamePostfix;
         var edgeFilename = baseFilename + "_edges.tsv" + _tmpFilenamePostfix;
@@ -28,7 +28,7 @@ public class CSVSerializer : SerializerBase, IDisposable
         _createdFiles.Add(edgeFilename);
     }
 
-    public void Serialize(ConcurrentQueue<BitcoinBlockGraph> graphsBuffer, string edgesFilename)
+    public void Serialize(ConcurrentQueue<BlockGraph> graphsBuffer, string edgesFilename)
     {
         // TODO: Note that this approach is not using a staging 
         // file to first write to that, and then replace the 
@@ -63,13 +63,13 @@ public class CSVSerializer : SerializerBase, IDisposable
         File.AppendAllText(edgesFilename, csvBuilder.ToString());
     }
 
-    public override BitcoinBlockGraph Deserialize(string path, int blockHeight)
+    public override BlockGraph Deserialize(string path, int blockHeight)
     {
         var nodeIds = ReadNodes(Path.Combine(path, $"{blockHeight}_nodes.tsv"));
         return ReadEdges(Path.Combine(path, $"{blockHeight}_edges.tsv"), blockHeight, nodeIds);
     }
 
-    public static Dictionary<long, BitcoinBlockGraph> Deserialize(string edges, string addressIdMapping)
+    public static Dictionary<long, BlockGraph> Deserialize(string edges, string addressIdMapping)
     {
         var mappings = new Dictionary<string, string>();
         foreach (var l in File.ReadAllLines(addressIdMapping))
@@ -78,7 +78,7 @@ public class CSVSerializer : SerializerBase, IDisposable
             mappings.Add(cols[0], cols[1]);
         }
 
-        var blockGraphs = new Dictionary<long, BitcoinBlockGraph>();
+        var blockGraphs = new Dictionary<long, BlockGraph>();
 
         string? line;
         using var reader = new StreamReader(edges);
@@ -98,7 +98,7 @@ public class CSVSerializer : SerializerBase, IDisposable
         return blockGraphs;
     }
 
-    private void WriteNodes(BitcoinBlockGraph g, string filename)
+    private void WriteNodes(BlockGraph g, string filename)
     {
         var csvBuilder = new StringBuilder();
         csvBuilder.AppendLine(
@@ -129,7 +129,7 @@ public class CSVSerializer : SerializerBase, IDisposable
         return nodeIds;
     }
 
-    private void WriteEdges(BitcoinBlockGraph g, string filename)
+    private void WriteEdges(BlockGraph g, string filename)
     {
         var csvBuilder = new StringBuilder();
         csvBuilder.AppendLine(S2SEdge.Header);
@@ -141,9 +141,9 @@ public class CSVSerializer : SerializerBase, IDisposable
         File.WriteAllText(filename, csvBuilder.ToString());
     }
 
-    private static BitcoinBlockGraph ReadEdges(string filename, int height, Dictionary<string, string> nodeIds)
+    private static BlockGraph ReadEdges(string filename, int height, Dictionary<string, string> nodeIds)
     {
-        var g = new BitcoinBlockGraph(height);
+        var g = new BlockGraph(height);
         string? line;
         using var reader = new StreamReader(filename);
         reader.ReadLine(); // skip the header.

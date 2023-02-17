@@ -1,6 +1,6 @@
-﻿namespace BC2G.Graph.Db.Neo4j.BitcoinMappers;
+﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-internal class BlockMapper : ModelMapper<BitcoinBlockGraph>
+internal class BlockMapper : ModelMapper<BlockGraph>
 {
     public const string label = "Block";
 
@@ -41,7 +41,7 @@ internal class BlockMapper : ModelMapper<BitcoinBlockGraph>
             from x in _properties select x.CsvHeader);
     }
 
-    public override string ToCsv(BitcoinBlockGraph bgraph)
+    public override string ToCsv(BlockGraph bgraph)
     {
         var counts = bgraph.Stats.EdgeTypeFrequency;
         var sums = bgraph.Stats.EdgeTypeTxSum;

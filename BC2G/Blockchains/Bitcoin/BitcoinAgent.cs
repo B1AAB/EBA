@@ -153,7 +153,7 @@ public class BitcoinAgent : IDisposable
             ?? throw new Exception("Invalid transaction.");
     }
 
-    public async Task<BitcoinBlockGraph> GetGraph(
+    public async Task<BlockGraph> GetGraph(
         int height,
         ConcurrentDictionary<string, Utxo> utxos, 
         object dbContextLock, 
@@ -176,7 +176,7 @@ public class BitcoinAgent : IDisposable
         return graph;
     }
 
-    private async Task<BitcoinBlockGraph> ProcessBlockAsync(
+    private async Task<BlockGraph> ProcessBlockAsync(
         Block block, 
         ConcurrentDictionary<string, Utxo> utxos,
         object dbContextLock, 
@@ -189,7 +189,7 @@ public class BitcoinAgent : IDisposable
 
         var generationTxGraph = new TransactionGraph(coinbaseTx);
 
-        var g = new BitcoinBlockGraph(block, generationTxGraph);
+        var g = new BlockGraph(block, generationTxGraph);
 
         var rewardAddresses = new List<ScriptNode>();
         foreach (var output in coinbaseTx.Outputs.Where(x => x.IsValueTransfer))
@@ -241,7 +241,7 @@ public class BitcoinAgent : IDisposable
     }
 
     private async Task ProcessTx(
-        BitcoinBlockGraph g,
+        BlockGraph g,
         Transaction tx,
         ConcurrentDictionary<string, Utxo> utxos,
         DatabaseContext dbContext,

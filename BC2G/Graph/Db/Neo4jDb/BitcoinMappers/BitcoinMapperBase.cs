@@ -1,11 +1,11 @@
 ﻿using INode = BC2G.Graph.Model.INode;
 
-namespace BC2G.Graph.Db.Neo4j.BitcoinMappers;
+namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
 public abstract class BitcoinEdgeMapper : IEdgeMapper
 {
-    public const string csvDelimiter = BitcoinBlockGraphMapper.csvDelimiter;
-    public const string labelsDelimiter = BitcoinBlockGraphMapper.labelsDelimiter;
+    public const string csvDelimiter = BlockGraphMapper.csvDelimiter;
+    public const string labelsDelimiter = BlockGraphMapper.labelsDelimiter;
 
     public static string CreatesEdgeQuery
     {

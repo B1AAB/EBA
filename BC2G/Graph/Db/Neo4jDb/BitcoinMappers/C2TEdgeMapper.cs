@@ -1,4 +1,4 @@
-﻿namespace BC2G.Graph.Db.Neo4j.BitcoinMappers;
+﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
 public class C2TEdgeMapper : T2TEdgeMapper
 {

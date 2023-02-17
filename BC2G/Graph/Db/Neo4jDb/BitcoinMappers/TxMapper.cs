@@ -1,4 +1,4 @@
-﻿namespace BC2G.Graph.Db.Neo4j.BitcoinMappers;
+﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
 internal class TxMapper : ModelMapper<T2TEdge>
 {

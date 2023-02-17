@@ -1,6 +1,6 @@
 ﻿using BC2G.Exceptions;
 
-namespace BC2G.Graph.Db.Neo4j.BitcoinMappers;
+namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
 public class MapperFactory : IMapperFactory
 {
@@ -37,7 +37,7 @@ public class MapperFactory : IMapperFactory
 
         return type switch
         {
-            string x when x == Utilities.TypeToString<BitcoinBlockGraph>() => new BitcoinBlockGraphMapper(),
+            string x when x == Utilities.TypeToString<BlockGraph>() => new BlockGraphMapper(),
             _ => throw new MapperNotImplementedException(type)
         };
     }

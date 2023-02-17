@@ -1,6 +1,6 @@
 ﻿using INode = BC2G.Graph.Model.INode;
 
-namespace BC2G.Graph.Db.Neo4j;
+namespace BC2G.Graph.Db.Neo4jDb;
 
 public interface IEdgeMapper : IMapperBase
 {

@@ -109,7 +109,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             Path.Combine(options.WorkingDir, "blocks_stats.tsv"), cT);
 
         using var gBuffer = new PersistentGraphBuffer(
-            _host.Services.GetRequiredService<IGraphDb<BitcoinBlockGraph>>(),
+            _host.Services.GetRequiredService<IGraphDb<BlockGraph>>(),
             _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),
             pGraphStat,
             cT);

@@ -1,4 +1,4 @@
-﻿using BC2G.Graph.Db.Neo4j.BitcoinMappers;
+﻿using BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
 namespace BC2G.Graph.Db;
 
@@ -82,7 +82,7 @@ public class GraphDb : IDisposable
      */
 
 
-    public void BulkImport(BitcoinBlockGraph graph, CancellationToken cT)
+    public void BulkImport(BlockGraph graph, CancellationToken cT)
     {
         // TODO: Neo4j deadlock can happen in the following calls too. 
         // The error message:

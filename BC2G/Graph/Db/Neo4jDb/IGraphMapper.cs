@@ -1,4 +1,4 @@
-﻿namespace BC2G.Graph.Db.Neo4j;
+﻿namespace BC2G.Graph.Db.Neo4jDb;
 
 public interface IGraphMapper : IMapperBase
 {

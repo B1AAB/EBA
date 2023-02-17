@@ -1,15 +1,15 @@
 ﻿namespace BC2G.PersistentObject;
 
-public class PersistentGraphBuffer : PersistentObjectBase<BitcoinBlockGraph>, IDisposable
+public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposable
 {
-    private readonly IGraphDb<BitcoinBlockGraph> _graphDb;
+    private readonly IGraphDb<BlockGraph> _graphDb;
     private readonly ILogger<PersistentGraphBuffer> _logger;
     private readonly PersistentGraphStatistics _pGraphStats;
 
     private bool _disposed = false;
 
     public PersistentGraphBuffer(
-        IGraphDb<BitcoinBlockGraph> graphDb,
+        IGraphDb<BlockGraph> graphDb,
         ILogger<PersistentGraphBuffer> logger,
         PersistentGraphStatistics pGraphStats,
         CancellationToken ct) : 
@@ -21,7 +21,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BitcoinBlockGraph>, ID
     }
 
     public override async Task SerializeAsync(
-        BitcoinBlockGraph obj,
+        BlockGraph obj,
         CancellationToken cT)
     {
         obj.MergeQueuedTxGraphs(cT);
