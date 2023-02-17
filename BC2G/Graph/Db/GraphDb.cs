@@ -484,7 +484,7 @@ public class GraphDb : IDisposable
             maxEdgeCount: _options.GraphSample.MaxEdgeCount))
             return false;
 
-        if (_options.GraphSample.Mode == GraphSampleMode.A)
+        if (_options.GraphSample.Mode == GraphSampleMode.GraphRndEdgePair)
         {
             var rndGraph = await GetRandomEdges(graph.EdgeCountV1);
 

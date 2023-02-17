@@ -2,18 +2,19 @@
 
 public enum GraphSampleMode
 {
-    A, B, C
+    GraphRndEdgePair, B, C
 }
 
 public class GraphSampleOptions
 {
     public int Count { set; get; }
     public int Hops { set; get; }
-    public GraphSampleMode Mode { set; get; } = GraphSampleMode.A;
+    public GraphSampleMode Mode { set; get; } = GraphSampleMode.GraphRndEdgePair;
     public int MinNodeCount { set; get; } = 3;
     public int MaxNodeCount { set; get; } = 200;
     public int MinEdgeCount { set; get; } = 3;
     public int MaxEdgeCount { set; get; } = 200;
+    public int MaxAttempts { set; get; } = 3;
     public double RootNodeSelectProb
     {
         set
