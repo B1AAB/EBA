@@ -5,8 +5,8 @@ namespace BC2G.Graph.Db.Neo4jDb;
 public class BatchInfo
 {
     public string Name { get; }
-    public string DefaultDirectory { get; }    
-    
+    public string DefaultDirectory { get; }
+
     public ImmutableDictionary<string, TypeInfo> TypesInfo
     {
         get { return _typesInfo.ToImmutableDictionary(); }
@@ -16,8 +16,8 @@ public class BatchInfo
 
     [JsonConstructor]
     public BatchInfo(
-        string name, 
-        string defaultDirectory, 
+        string name,
+        string defaultDirectory,
         ImmutableDictionary<string, TypeInfo> typesInfo)
     {
         Name = name;
@@ -29,7 +29,7 @@ public class BatchInfo
     {
         Name = name;
         DefaultDirectory = defaultDirectory;
-        var timestamp = GetTimestamp();
+        var timestamp = Utilities.GetTimestamp();
 
         _typesInfo = new();
         foreach (var type in types)
@@ -69,14 +69,10 @@ public class BatchInfo
         if (!_typesInfo.ContainsKey(type))
         {
             _typesInfo.Add(type, new TypeInfo(
-                CreateFilename(type, GetTimestamp(), directory), 0));
+                CreateFilename(type, Utilities.GetTimestamp(), directory), 0));
         }
     }
 
-    private static string GetTimestamp()
-    {
-        return $"{DateTime.Now:yyyyMMddHHmmssffff}";
-    }
     private static string CreateFilename(string type, string timestamp, string directory)
     {
         return Path.Join(directory, $"{timestamp}_{type.Replace('.', '_')}.csv");

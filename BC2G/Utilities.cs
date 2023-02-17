@@ -149,4 +149,9 @@ internal class Utilities
         else
             return filename;
     }
+
+    public static string GetTimestamp()
+    {
+        return $"{DateTime.Now:yyyyMMddHHmmssffff}";
+    }
 }

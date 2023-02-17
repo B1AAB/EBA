@@ -16,7 +16,6 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
         }
     }
 
-
     private async Task EnsureCoinbaseNodeAsync()
     {
         int count = 0;
