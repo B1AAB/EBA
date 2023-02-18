@@ -27,14 +27,14 @@ public abstract class PersistentObjectBase<T> : IDisposable
 
         var listner = Task.Factory
             .StartNew(
-                () => ListnerAction(cT),
+                async () => await ListnerActionAsync(cT),
                 creationOptions: TaskCreationOptions.LongRunning)
             .ContinueWith(
                 task => { },
                 continuationOptions: TaskContinuationOptions.OnlyOnFaulted);
     }
 
-    private async void ListnerAction(CancellationToken cT)
+    private async Task ListnerActionAsync(CancellationToken cT)
     {
         while (true)
         {

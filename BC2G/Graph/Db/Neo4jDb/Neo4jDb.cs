@@ -68,7 +68,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             eMapper.ToCsv(type.Value, batchInfo.GetFilename(type.Key));
         }
 
-        SerializeBatchesAsync();
+        await SerializeBatchesAsync();
     }
 
     /// <summary>
@@ -215,7 +215,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         return _batches[^1];
     }
-    private async void SerializeBatchesAsync()
+    private async Task SerializeBatchesAsync()
     {
         await JsonSerializer<List<BatchInfo>>.SerializeAsync(
             _batches, Options.Neo4j.BatchesFilename);
