@@ -75,6 +75,7 @@ internal class OptionsBinder : BinderBase<Options>
             Granularity = GetValue(defs.Bitcoin.Granularity, _granularityOption, c),
             SkipGraphLoad = GetValue(defs.Bitcoin.SkipGraphLoad, _skipGraphLoadOption, c),
             BlocksToProcessListFilename = Path.Join(wd, defs.Bitcoin.BlocksToProcessListFilename),
+            BlocksFailedToProcessListFilename = Path.Join(wd, defs.Bitcoin.BlocksFailedToProcessListFilename),
             StatsFilename = Path.Join(wd, defs.Bitcoin.StatsFilename)
         };
 
