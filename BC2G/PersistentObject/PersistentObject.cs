@@ -27,12 +27,12 @@ public class PersistentObject<T> : PersistentObjectBase<T>
         _stream.AutoFlush = true;
     }
 
-    public override Task SerializeAsync(T obj, CancellationToken cT)
+    public override async Task SerializeAsync(T obj, CancellationToken cT)
     {
         if (obj is null)
             throw new ArgumentNullException(nameof(obj));
 
-        return _stream.WriteAsync(obj.ToString());
+        await _stream.WriteAsync(obj.ToString());
     }
 
     public new void Dispose()
