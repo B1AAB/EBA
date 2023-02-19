@@ -65,11 +65,11 @@ public class BitcoinOptions
     }
     private int _granularity = 1;
 
-    public string BlocksToProcessListFilename { set; get; } = "bitcoin_block_to_process.bc2g";
+    public string BlocksToProcessListFilename { init; get; } = "bitcoin_block_to_process.bc2g";
 
     public bool SkipGraphLoad { init; get; }
 
-    public string StatsFilename { set; get; } = "bitcoin_blocks_stats.tsv";
+    public string StatsFilename { init; get; } = "bitcoin_blocks_stats.tsv";
 
     public int DbCommitAtUtxoBufferSize { init; get; } = 5000000;
 

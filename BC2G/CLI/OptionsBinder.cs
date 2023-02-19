@@ -1,4 +1,6 @@
-﻿namespace BC2G.CLI;
+﻿using BC2G.CLI.Config;
+
+namespace BC2G.CLI;
 
 internal class OptionsBinder : BinderBase<Options>
 {
@@ -65,13 +67,17 @@ internal class OptionsBinder : BinderBase<Options>
 
         var defs = new Options();
 
+        var wd = GetValue(defs.WorkingDir, _workingDirOption, c);
+
         var bitcoinOps = new BitcoinOptions()
         {
             ClientUri = GetValue(defs.Bitcoin.ClientUri, _bitcoinClientUri, c),
             FromInclusive = GetValue(defs.Bitcoin.FromInclusive, _fromInclusiveOption, c),
             ToExclusive = GetValue(defs.Bitcoin.ToExclusive, _toExclusiveOption, c),
             Granularity = GetValue(defs.Bitcoin.Granularity, _granularityOption, c),
-            SkipGraphLoad = GetValue(defs.Bitcoin.SkipGraphLoad, _skipGraphLoadOption, c)
+            SkipGraphLoad = GetValue(defs.Bitcoin.SkipGraphLoad, _skipGraphLoadOption, c),
+            BlocksToProcessListFilename = Path.Join(wd, defs.Bitcoin.BlocksToProcessListFilename),
+            StatsFilename = Path.Join(wd, defs.Bitcoin.StatsFilename)
         };
 
         var gsample = new GraphSampleOptions()
@@ -86,12 +92,18 @@ internal class OptionsBinder : BinderBase<Options>
             RootNodeSelectProb = GetValue(defs.GraphSample.RootNodeSelectProb, _graphSampleRootNodeSelectProb, c)
         };
 
+        var neo4jOps = new Neo4jOptions()
+        {
+            BatchesFilename = Path.Join(wd, defs.Neo4j.BatchesFilename)
+        };
+
         var options = new Options()
         {
-            WorkingDir = GetValue(defs.WorkingDir, _workingDirOption, c),
+            WorkingDir = wd,
             StatusFile = GetValue(defs.StatusFile, _statusFilenameOption, c),
             Bitcoin = bitcoinOps,
-            GraphSample = gsample
+            GraphSample = gsample,
+            Neo4j = neo4jOps
         };
 
         return options;

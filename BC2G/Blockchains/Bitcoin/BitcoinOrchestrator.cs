@@ -67,15 +67,6 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
     private static PersistentConcurrentQueue SetupBlocksQueue(Options options)
     {
-        if (string.IsNullOrEmpty(options.Bitcoin.BlocksToProcessListFilename))
-            options.Bitcoin.BlocksToProcessListFilename =
-                Path.Combine(
-                    options.WorkingDir,
-                    $"bitcoin_blocks_to_process_in_range_" +
-                    $"{options.Bitcoin.FromInclusive}" +
-                    $"_to_" +
-                    $"{options.Bitcoin.ToExclusive}.bc2g");
-
         PersistentConcurrentQueue blockHeightQueue;
         if (!File.Exists(options.Bitcoin.BlocksToProcessListFilename))
         {
@@ -102,11 +93,8 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         PersistentConcurrentQueue blocksQueue,
         CancellationToken cT)
     {
-        options.Bitcoin.StatsFilename = Utilities.ToAbsPath(
-            options.Bitcoin.StatsFilename, options.WorkingDir);
-
         using var pGraphStat = new PersistentGraphStatistics(
-            Path.Combine(options.WorkingDir, "blocks_stats.tsv"), cT);
+            options.Bitcoin.StatsFilename, cT);
 
         using var gBuffer = new PersistentGraphBuffer(
             _host.Services.GetRequiredService<IGraphDb<BlockGraph>>(),

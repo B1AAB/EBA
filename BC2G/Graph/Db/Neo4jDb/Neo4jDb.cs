@@ -27,9 +27,6 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         _logger = logger;
         _mapperFactory = mapperFactory;
 
-        options.Neo4j.BatchesFilename = Utilities.ToAbsPath(
-            options.Neo4j.BatchesFilename, options.WorkingDir);
-
         if (!Options.Bitcoin.SkipGraphLoad)
         {
             Driver = GraphDatabase.Driver(
