@@ -20,4 +20,23 @@ public static class Utilities
         }
         while (true);
     }
+
+    public static bool ContinueTerminatePrompt(string message, CancellationToken cT)
+    {
+        do
+        {
+            Console.Write($"{message} [Continue [C] or Terminate [T]] ");
+            var keyInfo = Console.ReadKey();
+
+            cT.ThrowIfCancellationRequested();
+
+            switch (keyInfo.Key.ToString().ToUpper())
+            {
+                case "C": Console.WriteLine(); return true;
+                case "T": Console.WriteLine(); return false;
+                default: Console.WriteLine($"\tInvalid choice; please retry."); break;
+            }
+        }
+        while (true);
+    }
 }
