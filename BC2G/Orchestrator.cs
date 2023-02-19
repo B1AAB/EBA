@@ -7,21 +7,16 @@ namespace BC2G;
 public class Orchestrator : IDisposable
 {
     private readonly Cli _cli;
-    private readonly IHost _host;
-    private readonly Options _options;
-    private readonly ILogger _logger;
+    private ILogger? _logger;
     private readonly CancellationToken _cT;
 
     private bool _disposed = false;
 
-    public Orchestrator(IHost host, Options options, CancellationToken cancelationToken)
+    public Orchestrator(CancellationToken cancelationToken)
     {
-        _host = host;
         _cT = cancelationToken;
-        _options = options;
-        _logger = _host.Services.GetRequiredService<ILogger<Orchestrator>>();
+
         _cli = new Cli(
-            _options,
             TraverseBitcoinAsync,
             SampleGraphAsync,
             ImportGraphAsync,
@@ -36,32 +31,44 @@ public class Orchestrator : IDisposable
         return await _cli.InvokeAsync(args);
     }
 
-    private async Task TraverseBitcoinAsync()
+    private async Task<IHost> GetHostAsync(Options options)
     {
-        using (var dbContext = _host.Services.GetRequiredService<DatabaseContext>())
-            await dbContext.Database.EnsureCreatedAsync(_cT);
-
-        var bitcoinOrchestrator = _host.Services.GetRequiredService<BitcoinOrchestrator>();
-        await bitcoinOrchestrator.TraverseAsync(_options, _cT);
+        var hostBuilder = Startup.GetHostBuilder(options);
+        var host = hostBuilder.Build();
+        await host.StartAsync();
+        _logger = host.Services.GetRequiredService<ILogger<Orchestrator>>();
+        return host;
     }
 
-    private async Task ImportGraphAsync()
+    private async Task TraverseBitcoinAsync(Options options)
     {
-        await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
+        var host = await GetHostAsync(options);
+        using (var dbContext = host.Services.GetRequiredService<DatabaseContext>())
+            await dbContext.Database.EnsureCreatedAsync(_cT);
 
-        var graphDb = _host.Services.GetRequiredService<IGraphDb<BlockGraph>>();
+        var bitcoinOrchestrator = host.Services.GetRequiredService<BitcoinOrchestrator>();
+        await bitcoinOrchestrator.TraverseAsync(options, _cT);
+    }
+
+    private async Task ImportGraphAsync(Options options)
+    {
+        var host = await GetHostAsync(options);
+        await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
+
+        var graphDb = host.Services.GetRequiredService<IGraphDb<BlockGraph>>();
         await graphDb.ImportAsync();
     }
 
-    private async Task SampleGraphAsync()
+    private async Task SampleGraphAsync(Options options)
     {
-        await JsonSerializer<Options>.SerializeAsync(_options, _options.StatusFile, _cT);
-        var graphDb = _host.Services.GetRequiredService<IGraphDb<BlockGraph>>();
+        var host = await GetHostAsync(options);
+        await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
+        var graphDb = host.Services.GetRequiredService<IGraphDb<BlockGraph>>();
         var successfull = await graphDb.TrySampleAsync();
         if (successfull)
-            _logger.LogInformation("Successfully completed sampling graphs.");
+            _logger?.LogInformation("Successfully completed sampling graphs.");
         else
-            _logger.LogError("Faild sampling graphs with the given parameters.");
+            _logger?.LogError("Faild sampling graphs with the given parameters.");
     }
 
     public void Dispose()

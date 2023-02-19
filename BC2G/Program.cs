@@ -37,13 +37,8 @@ internal class Program
 
         try
         {
-            var options = new Options();
-            var hostBuilder = Startup.GetHostBuilder(options);
-            var host = hostBuilder.Build();
-            await host.StartAsync();
-
             var logger = Log.Logger;
-            var orchestrator = new Orchestrator(host, options, cancellationToken);
+            var orchestrator = new Orchestrator(cancellationToken);
             Console.CancelKeyPress += (sender, e) =>
             {
                 // Flag the cancel token so all listening can exit ASAP.
