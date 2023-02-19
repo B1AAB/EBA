@@ -12,21 +12,21 @@ internal class Cli
     private readonly Parser _parser;
     private readonly RootCommand _rootCmd;
     private readonly Option<string> _workingDirOption;
-    private readonly Option<string> _resumeOption;
     private readonly Option<string> _statusFilenameOption;
 
     public Cli(
-        Options options,
-        Func<Task> bitcoinTraverseCmdHandler,
-        Func<Task> sampleCmdHandler,
-        Func<Task> bitcoinImportCmdHandler,
+        Func<Options, Task> bitcoinTraverseCmdHandlerAsync,
+        Func<Options, Task> sampleCmdHandlerAsync,
+        Func<Options, Task> bitcoinImportCmdHandlerAsync,
         Action<Exception, InvocationContext> exceptionHandler)
     {
+        var defOps = new Options();
+
         _workingDirOption = new(
             name: "--working-dir",
             description: "The directory where all the data related " +
             "to this execution will be stored.",
-            getDefaultValue: () => options.WorkingDir);
+            getDefaultValue: () => defOps.WorkingDir);
         _workingDirOption.AddValidator(x =>
         {
             var result = x.FindResultFor(_workingDirOption);
@@ -63,30 +63,22 @@ internal class Cli
             }
         });
 
-        _resumeOption = new(
-            name: "--resume",
-            description: "The absoloute path to the `status` file " +
-            "that can be used to resume a canceled task.");
-
         _statusFilenameOption = new(
             name: "--status-filename",
             description: "The JSON file to store the execution status.",
-            getDefaultValue: () => options.StatusFile);
+            getDefaultValue: () => defOps.StatusFile);
 
-        _rootCmd = new RootCommand(description: "TODO: some description ...")
-        {
-            _resumeOption
-        };
+        _rootCmd = new RootCommand(description: "TODO: some description ...");
         _rootCmd.AddGlobalOption(_workingDirOption);
         _rootCmd.AddGlobalOption(_statusFilenameOption);
         // This is required to allow using options without specifying any of the subcommands. 
         _rootCmd.SetHandler(x => { });
 
-        _rootCmd.AddCommand(GetBitcoinCmd
-            (options,
-            bitcoinTraverseCmdHandler,
-            bitcoinImportCmdHandler,
-            sampleCmdHandler));
+        _rootCmd.AddCommand(GetBitcoinCmd(
+            defOps,
+            bitcoinTraverseCmdHandlerAsync,
+            bitcoinImportCmdHandlerAsync,
+            sampleCmdHandlerAsync));
 
         _parser = new CommandLineBuilder(_rootCmd)
             //.UseDefaults() // Do NOT add this since it will cause issues with handling exceptions.
@@ -130,21 +122,21 @@ internal class Cli
     }
 
     private Command GetBitcoinCmd(
-        Options options,
-        Func<Task> traverseHandler,
-        Func<Task> importHandler,
-        Func<Task> sampleHandler)
+        Options defOps,
+        Func<Options, Task> traverseHandlerAsync,
+        Func<Options, Task> importHandlerAsync,
+        Func<Options, Task> sampleHandlerAsync)
     {
         var cmd = new Command(
             name: "bitcoin",
             description: "TODO: add some description");
-        cmd.AddCommand(GetTraverseCmd(options, traverseHandler));
-        cmd.AddCommand(GetImportCmd(options, importHandler));
-        cmd.AddCommand(GetSampleCmd(options, sampleHandler));
+        cmd.AddCommand(GetTraverseCmd(defOps, traverseHandlerAsync));
+        cmd.AddCommand(GetImportCmd(defOps, importHandlerAsync));
+        cmd.AddCommand(GetSampleCmd(defOps, sampleHandlerAsync));
         return cmd;
     }
 
-    private Command GetTraverseCmd(Options options, Func<Task> handler)
+    private Command GetTraverseCmd(Options defOps, Func<Options, Task> handlerAsync)
     {
         var fromOption = new Option<int>(
             name: "--from",
@@ -162,7 +154,7 @@ internal class Cli
             name: "--granularity",
             description: "Set the blockchain traversal granularity." +
             "For instance, if set to `10`, it implies processing every 10 blocks in the blockchain.",
-            getDefaultValue: () => options.Bitcoin.Granularity);
+            getDefaultValue: () => defOps.Bitcoin.Granularity);
 
         var skipGraphLoadOption = new Option<bool>(
             name: "--skip-graph-load",
@@ -171,13 +163,13 @@ internal class Cli
             "it a bit, setting this option would only store the data to be bulk-loaded into " +
             "Neo4j in batches and would not try loading them to Neo4j. After the traverse on " +
             "the chain, these files can be used to load the data into Neo4j.",
-            getDefaultValue: () => options.Bitcoin.SkipGraphLoad);
+            getDefaultValue: () => defOps.Bitcoin.SkipGraphLoad);
 
         var clientUriOption = new Option<Uri>(
             name: "--client-uri",
             description: "The URI where the Bitcoin client can be reached. The client should " +
             "be started with REST endpoint enabled.",
-            getDefaultValue: () => options.Bitcoin.ClientUri);
+            getDefaultValue: () => defOps.Bitcoin.ClientUri);
 
         var cmd = new Command(
             name: "traverse",
@@ -190,12 +182,11 @@ internal class Cli
             clientUriOption
         };
 
-        cmd.SetHandler(async (_) =>
+        cmd.SetHandler(async (options) =>
         {
-            await handler();
+            await handlerAsync(options);
         },
         new OptionsBinder(
-            options,
             fromInclusiveOption: fromOption,
             toExclusiveOption: toOption,
             granularityOption: granularityOption,
@@ -207,7 +198,7 @@ internal class Cli
         return cmd;
     }
 
-    private Command GetImportCmd(Options options, Func<Task> handler)
+    private Command GetImportCmd(Options defOps, Func<Options, Task> handlerAsync)
     {
         var cmd = new Command(
             name: "import",
@@ -217,19 +208,18 @@ internal class Cli
             "--skip-graph-load flag was used.")
         { };
 
-        cmd.SetHandler(async (_) =>
+        cmd.SetHandler(async (options) =>
         {
-            await handler();
+            await handlerAsync(options);
         },
         new OptionsBinder(
-            options,
             workingDirOption: _workingDirOption,
             statusFilenameOption: _statusFilenameOption));
 
         return cmd;
     }
 
-    private Command GetSampleCmd(Options options, Func<Task> handler)
+    private Command GetSampleCmd(Options defOps, Func<Options, Task> handlerAsync)
     {
         var countOption = new Option<int>(
             name: "--count",
@@ -263,26 +253,26 @@ internal class Cli
 
         var minNodeCountOption = new Option<int>(
             "--min-node-count",
-            getDefaultValue: () => options.GraphSample.MinNodeCount);
+            getDefaultValue: () => defOps.GraphSample.MinNodeCount);
 
         var maxNodeCountOption = new Option<int>(
             "--max-node-count",
-            getDefaultValue: () => options.GraphSample.MaxNodeCount);
+            getDefaultValue: () => defOps.GraphSample.MaxNodeCount);
 
         var minEdgeCountOption = new Option<int>(
             "--min-edge-count",
-            getDefaultValue: () => options.GraphSample.MinEdgeCount);
+            getDefaultValue: () => defOps.GraphSample.MinEdgeCount);
 
         var maxEdgeCountOption = new Option<int>(
             "--max-edge-count",
-            getDefaultValue: () => options.GraphSample.MaxEdgeCount);
+            getDefaultValue: () => defOps.GraphSample.MaxEdgeCount);
 
         var rootNodeSelectProbOption = new Option<double>(
             "--root-node-select-prob",
             description: "The value should be between 0 and 1 (inclusive), " +
             "if the given value is not in this range, it will be replaced " +
             "by the default value.",
-            getDefaultValue: () => options.GraphSample.RootNodeSelectProb);
+            getDefaultValue: () => defOps.GraphSample.RootNodeSelectProb);
 
         var cmd = new Command(
             name: "sample",
@@ -298,12 +288,11 @@ internal class Cli
             modeOption
         };
 
-        cmd.SetHandler(async (_) =>
+        cmd.SetHandler(async (options) =>
         {
-            await handler();
+            await handlerAsync(options);
         },
         new OptionsBinder(
-            options,
             graphSampleCountOption: countOption,
             graphSampleHopOption: hopsOption,
             graphSampleMinNodeCount: minNodeCountOption,

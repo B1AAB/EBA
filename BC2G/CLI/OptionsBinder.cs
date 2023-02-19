@@ -2,7 +2,6 @@
 
 internal class OptionsBinder : BinderBase<Options>
 {
-    private readonly Options _options;
     private readonly Option<int>? _fromInclusiveOption;
     private readonly Option<int?>? _toExclusiveOption;
     private readonly Option<int>? _granularityOption;
@@ -20,7 +19,6 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<string>? _statusFilenameOption;
 
     public OptionsBinder(
-        Options options,
         Option<int>? fromInclusiveOption = null,
         Option<int?>? toExclusiveOption = null,
         Option<int>? granularityOption = null,
@@ -37,7 +35,6 @@ internal class OptionsBinder : BinderBase<Options>
         Option<string>? workingDirOption = null,
         Option<string>? statusFilenameOption = null)
     {
-        _options = options;
         _fromInclusiveOption = fromInclusiveOption;
         _toExclusiveOption = toExclusiveOption;
         _granularityOption = granularityOption;
@@ -57,26 +54,47 @@ internal class OptionsBinder : BinderBase<Options>
 
     protected override Options GetBoundValue(BindingContext c)
     {
-        var o = _options;
-        o.WorkingDir = GetValue(o.WorkingDir, _workingDirOption, c);
-        o.StatusFile = GetValue(o.StatusFile, _statusFilenameOption, c);
+        if (_statusFilenameOption != null && c.ParseResult.HasOption(_statusFilenameOption))
+        {
+            var statsFilename = c.ParseResult.GetValueForOption(_statusFilenameOption);
+            if (statsFilename != null)
+            {
+                return JsonSerializer<Options>.DeserializeAsync(statsFilename).Result;
+            }
+        }
 
-        o.Bitcoin.FromInclusive = GetValue(o.Bitcoin.FromInclusive, _fromInclusiveOption, c);
-        o.Bitcoin.ToExclusive = GetValue(o.Bitcoin.ToExclusive, _toExclusiveOption, c);
-        o.Bitcoin.Granularity = GetValue(o.Bitcoin.Granularity, _granularityOption, c);
-        o.Bitcoin.SkipGraphLoad = GetValue(o.Bitcoin.SkipGraphLoad, _skipGraphLoadOption, c);
-        o.Bitcoin.ClientUri = GetValue(o.Bitcoin.ClientUri, _bitcoinClientUri, c);
+        var defs = new Options();
 
-        o.GraphSample.Count = GetValue(o.GraphSample.Count, _graphSampleCountOption, c);
-        o.GraphSample.Hops = GetValue(o.GraphSample.Hops, _graphSampleHopsOption, c);
-        o.GraphSample.MinNodeCount = GetValue(o.GraphSample.MinNodeCount, _graphSampleMinNodeCount, c);
-        o.GraphSample.MaxNodeCount = GetValue(o.GraphSample.MaxNodeCount, _graphSampleMaxNodeCount, c);
-        o.GraphSample.MinEdgeCount = GetValue(o.GraphSample.MinEdgeCount, _graphSampleMinEdgeCount, c);
-        o.GraphSample.MaxEdgeCount = GetValue(o.GraphSample.MaxEdgeCount, _graphSampleMaxEdgeCount, c);
-        o.GraphSample.Mode = GetValue(o.GraphSample.Mode, _graphSampleModeOption, c);
-        o.GraphSample.RootNodeSelectProb = GetValue(o.GraphSample.RootNodeSelectProb, _graphSampleRootNodeSelectProb, c);
-        
-        return o;
+        var bitcoinOps = new BitcoinOptions()
+        {
+            ClientUri = GetValue(defs.Bitcoin.ClientUri, _bitcoinClientUri, c),
+            FromInclusive = GetValue(defs.Bitcoin.FromInclusive, _fromInclusiveOption, c),
+            ToExclusive = GetValue(defs.Bitcoin.ToExclusive, _toExclusiveOption, c),
+            Granularity = GetValue(defs.Bitcoin.Granularity, _granularityOption, c),
+            SkipGraphLoad = GetValue(defs.Bitcoin.SkipGraphLoad, _skipGraphLoadOption, c)
+        };
+
+        var gsample = new GraphSampleOptions()
+        {
+            Count = GetValue(defs.GraphSample.Count, _graphSampleCountOption, c),
+            Hops = GetValue(defs.GraphSample.Hops, _graphSampleHopsOption, c),
+            Mode = GetValue(defs.GraphSample.Mode, _graphSampleModeOption, c),
+            MinNodeCount = GetValue(defs.GraphSample.MinNodeCount, _graphSampleMinNodeCount, c),
+            MaxNodeCount = GetValue(defs.GraphSample.MaxNodeCount, _graphSampleMaxNodeCount, c),
+            MinEdgeCount = GetValue(defs.GraphSample.MinEdgeCount, _graphSampleMinEdgeCount, c),
+            MaxEdgeCount = GetValue(defs.GraphSample.MaxEdgeCount, _graphSampleMaxEdgeCount, c),
+            RootNodeSelectProb = GetValue(defs.GraphSample.RootNodeSelectProb, _graphSampleRootNodeSelectProb, c)
+        };
+
+        var options = new Options()
+        {
+            WorkingDir = GetValue(defs.WorkingDir, _workingDirOption, c),
+            StatusFile = GetValue(defs.StatusFile, _statusFilenameOption, c),
+            Bitcoin = bitcoinOps,
+            GraphSample = gsample
+        };
+
+        return options;
     }
 
     private static T GetValue<T>(T defaultValue, Option<T>? option, BindingContext context)

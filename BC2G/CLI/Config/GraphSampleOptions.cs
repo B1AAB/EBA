@@ -7,17 +7,17 @@ public enum GraphSampleMode
 
 public class GraphSampleOptions
 {
-    public int Count { set; get; }
-    public int Hops { set; get; }
-    public GraphSampleMode Mode { set; get; } = GraphSampleMode.GraphRndEdgePair;
-    public int MinNodeCount { set; get; } = 3;
-    public int MaxNodeCount { set; get; } = 200;
-    public int MinEdgeCount { set; get; } = 3;
-    public int MaxEdgeCount { set; get; } = 200;
-    public int MaxAttempts { set; get; } = 3;
+    public int Count { init; get; }
+    public int Hops { init; get; }
+    public GraphSampleMode Mode { init; get; } = GraphSampleMode.GraphRndEdgePair;
+    public int MinNodeCount { init; get; } = 3;
+    public int MaxNodeCount { init; get; } = 200;
+    public int MinEdgeCount { init; get; } = 3;
+    public int MaxEdgeCount { init; get; } = 200;
+    public int MaxAttempts { init; get; } = 3;
     public double RootNodeSelectProb
     {
-        set
+        init
         {
             if (value < 0 || value > 1)
                 _rootNodeSelectProb = 1;

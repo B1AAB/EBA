@@ -4,7 +4,7 @@ public class BitcoinOptions
 {
     public Uri ClientUri
     {
-        set
+        init
         {
             if (value.AbsoluteUri.EndsWith("/"))
                 _clientUri = value;
@@ -17,13 +17,12 @@ public class BitcoinOptions
 
     public int FromInclusive
     {
-        set
+        init
         {
             if (value < 0)
                 throw new ArgumentOutOfRangeException(
                     nameof(FromInclusive),
                     "Value cannot be negative.");
-
             _fromInclusive = value;
         }
         get { return _fromInclusive; }
@@ -54,36 +53,35 @@ public class BitcoinOptions
 
     public int Granularity
     {
-        set
+        init
         {
             if (value <= 0)
                 throw new ArgumentOutOfRangeException(
                     nameof(Granularity),
                     "Value should be greater than 0.");
-
             _granularity = value;
         }
         get { return _granularity; }
     }
     private int _granularity = 1;
 
-    public string BlocksToProcessListFilename { set; get; } = string.Empty;
+    public string BlocksToProcessListFilename { set; get; } = "bitcoin_block_to_process.bc2g";
 
-    public bool SkipGraphLoad { get; set; }
+    public bool SkipGraphLoad { init; get; }
 
     public string StatsFilename { set; get; } = "bitcoin_blocks_stats.tsv";
 
-    public int DbCommitAtUtxoBufferSize { set; get; } = 5000000;
+    public int DbCommitAtUtxoBufferSize { init; get; } = 5000000;
 
     // null default lets runtime decide on max concurrency which is not static and changes w.r.t the load.
-    public int? MaxConcurrentBlocks { get; set; } = null;
+    public int? MaxConcurrentBlocks { init; get; } = null;
 
     // When setting this, make sure it is more than the timeout of related Resilience strategies.
-    public TimeSpan HttpClientTimeout { set; get; } = TimeSpan.FromMinutes(10);
+    public TimeSpan HttpClientTimeout { init; get; } = TimeSpan.FromMinutes(10);
 
-    public ResilienceStrategyOptions HttpClientResilienceStrategy { set; get; } = new();
+    public ResilienceStrategyOptions HttpClientResilienceStrategy { init; get; } = new();
 
-    public ResilienceStrategyOptions BitcoinAgentResilienceStrategy { set; get; } = new()
+    public ResilienceStrategyOptions BitcoinAgentResilienceStrategy { init; get; } = new()
     {
         Timeout = TimeSpan.FromMinutes(3),
         RetryCount = 3,

@@ -2,25 +2,25 @@
 
 public class Neo4jOptions
 {
-    public string Uri { get; set; } =
+    public string Uri { init; get; } =
         Environment.GetEnvironmentVariable("NEO4J_URI") ??
         "bolt://localhost:7687";
 
-    public string User { get; set; } =
+    public string User { init; get; } =
         Environment.GetEnvironmentVariable("NEO4J_USER") ??
         "neo4j";
 
-    public string Password { set; get; } =
+    public string Password { init; get; } =
         Environment.GetEnvironmentVariable("NEO4J_PASSWORD") ??
         "password";
 
-    public string ImportDirectory { set; get; } =
+    public string ImportDirectory { init; get; } =
         Environment.GetEnvironmentVariable("NEO4J_IMPORTDIRECTORY") ??
         @"E:\neo4j\relate-data\dbmss\dbms-00f85841-f023-4f1b-9b3c-8e241b64a965\import";
 
     public string BatchesFilename { set; get; } = "batches.json";
 
-    public string CypherImportPrefix { set; get; } =
+    public string CypherImportPrefix { init; get; } =
         Environment.GetEnvironmentVariable("NEO4J_CYPHERIMPORTPREFIX") ??
         "file:///";
 }
