@@ -1,6 +1,4 @@
-﻿using BC2G.CLI.Config;
-
-namespace BC2G.CLI;
+﻿namespace BC2G.CLI;
 
 internal class OptionsBinder : BinderBase<Options>
 {
@@ -59,7 +57,7 @@ internal class OptionsBinder : BinderBase<Options>
         if (_statusFilenameOption != null && c.ParseResult.HasOption(_statusFilenameOption))
         {
             var statsFilename = c.ParseResult.GetValueForOption(_statusFilenameOption);
-            if (statsFilename != null)
+            if (statsFilename != null && File.Exists(statsFilename))
             {
                 return JsonSerializer<Options>.DeserializeAsync(statsFilename).Result;
             }

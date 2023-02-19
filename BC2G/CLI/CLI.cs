@@ -65,7 +65,10 @@ internal class Cli
 
         _statusFilenameOption = new(
             name: "--status-filename",
-            description: "The JSON file to store the execution status.",
+            description: "A JSON file to store the options used to run BC2G. " +
+            "If the file exists, all the options are read from the JSON file " +
+            "and the default values used for any missing options, override all " +
+            "the options set in the command line.",
             getDefaultValue: () => defOps.StatusFile);
 
         _rootCmd = new RootCommand(description: "TODO: some description ...");
