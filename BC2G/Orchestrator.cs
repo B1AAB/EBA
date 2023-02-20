@@ -22,7 +22,10 @@ public class Orchestrator : IDisposable
             ImportGraphAsync,
             (e, c) =>
             {
-                _logger?.LogCritical("{error}", e.Message);
+                if (_logger != null)
+                    _logger.LogCritical("{error}", e.Message);
+                else
+                    Console.Error.WriteLine($"Error: {e.Message}");
             });
     }
 
