@@ -25,72 +25,63 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         options.Bitcoin.ToExclusive ??= chainInfo.Blocks;
 
         var blockHeightQueue = SetupBlocksQueue(options);
+        var failedBlocksQueue = GetPersistentBlocksQueue(options.Bitcoin.BlocksFailedToProcessListFilename);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, cT);
 
         cT.ThrowIfCancellationRequested();
         var stopwatch = new Stopwatch();
 
-        while (true)
+        try
         {
-            try
-            {
-                stopwatch.Start();
-                await TraverseBlocksAsync(options, blockHeightQueue, cT);
-                stopwatch.Stop();
+            stopwatch.Start();
+            await TraverseBlocksAsync(options, blockHeightQueue, failedBlocksQueue, cT);
+            stopwatch.Stop();
 
-                if (cT.IsCancellationRequested)
-                    _logger.LogInformation("Cancelled successfully.");
-                else
-                    _logger.LogInformation("Successfully finished traverse in {et}.", stopwatch.Elapsed);
-                break;
-            }
-            catch (Polly.CircuitBreaker.BrokenCircuitException e)
-            {
-                stopwatch.Stop();
-                _logger.LogError("Circuit is broken! {e}.", e.Message);
-
-                if (!CLI.Utilities.Prompt(cT))
-                {
-                    _logger.LogCritical(
-                        "Aborting execution due to circuit break " +
-                        "and user's decision to avoid a re-attempt.");
-                    throw;
-                }
-            }
-            catch
-            {
-                stopwatch.Stop();
-                throw;
-            }
+            if (cT.IsCancellationRequested)
+                _logger.LogInformation("Cancelled successfully.");
+            else
+                _logger.LogInformation("Successfully finished traverse in {et}.", stopwatch.Elapsed);
+        }
+        catch
+        {
+            stopwatch.Stop();
+            throw;
         }
     }
 
     private static PersistentConcurrentQueue SetupBlocksQueue(Options options)
     {
+        var heights = new List<int>();
+        for (int h = options.Bitcoin.FromInclusive;
+            h < options.Bitcoin.ToExclusive;
+            h += options.Bitcoin.Granularity)
+            heights.Add(h);
+
+        return GetPersistentBlocksQueue(options.Bitcoin.BlocksToProcessListFilename, heights);
+    }
+
+    private static PersistentConcurrentQueue GetPersistentBlocksQueue(string filename, List<int>? init = null)
+    {
         PersistentConcurrentQueue blockHeightQueue;
-        if (!File.Exists(options.Bitcoin.BlocksToProcessListFilename))
+        if (!File.Exists(filename))
         {
-            var heights = new List<int>();
-            for (int h = options.Bitcoin.FromInclusive;
-                h < options.Bitcoin.ToExclusive;
-                h += options.Bitcoin.Granularity)
-                heights.Add(h);
-            blockHeightQueue = new PersistentConcurrentQueue(
-                options.Bitcoin.BlocksToProcessListFilename, heights);
+            init ??= new List<int>();
+            blockHeightQueue = new PersistentConcurrentQueue(filename, init);
             blockHeightQueue.Serialize();
         }
         else
         {
-            blockHeightQueue = PersistentConcurrentQueue.Deserialize(
-                options.Bitcoin.BlocksToProcessListFilename);
+            blockHeightQueue = PersistentConcurrentQueue.Deserialize(filename);
         }
 
         return blockHeightQueue;
     }
 
+
     private async Task TraverseBlocksAsync(
         Options options,
         PersistentConcurrentQueue blocksQueue,
+        PersistentConcurrentQueue failedBlocksQueue,
         CancellationToken cT)
     {
         using var pGraphStat = new PersistentGraphStatistics(
@@ -146,8 +137,13 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
                 barrier.AddParticipant();
                 blocksQueue.TryDequeue(out var h);
-                await ProcessBlock(options, gBuffer, h, utxos, dbContextLock, cT);
-                blocksQueue.Serialize();
+
+                if (!await ProcessBlock(options, gBuffer, h, utxos, dbContextLock, cT))
+                {
+                    failedBlocksQueue.Enqueue(h);
+                    failedBlocksQueue.Serialize();
+                    _logger.LogInformation("Added failed block height {h} to the list of failed blocks.", h);
+                }
 
                 if (utxos.Count >= options.Bitcoin.DbCommitAtUtxoBufferSize)
                 {
@@ -182,7 +178,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         }
     }
 
-    private async Task ProcessBlock(
+    private async Task<bool> ProcessBlock(
         Options options,
         PersistentGraphBuffer gBuffer,
         int height,
@@ -194,22 +190,32 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
         _logger.LogInformation("Started processing block {height:n0}.", height);
 
-        var strategy = ResilienceStrategyFactory.Bitcoin.GetGraphStrategy(
-            options.Bitcoin.BitcoinAgentResilienceStrategy);
-
-        await strategy.ExecuteAsync(async (context, _ct) =>
+        try
         {
-            // Note that _ct is a linked cancellation token, linking
-            // user's token and the timeout policy's cancellation token.
+            var strategy = ResilienceStrategyFactory.Bitcoin.GetGraphStrategy(
+                options.Bitcoin.BitcoinAgentResilienceStrategy);
 
-            _logger.LogInformation("Trying processing block {height:n0}.", height);
-            var agent = _host.Services.GetRequiredService<BitcoinAgent>();
-            var blockGraph = await agent.GetGraph(height, utxos, dbContextLock, _ct);
+            await strategy.ExecuteAsync(async (context, cT) =>
+            {
+                // Note that _ct is a linked cancellation token, linking
+                // user's token and the timeout policy's cancellation token.
 
-            _logger.LogInformation(
-                "Obtained block graph for height {height:n0}, enqueued " +
-                "for graph building and serialization.", height);
-            gBuffer.Enqueue(blockGraph);
-        }, new Context().SetLogger<Orchestrator>(_logger), cT);
+                _logger.LogInformation("Trying processing block {height:n0}.", height);
+                var agent = _host.Services.GetRequiredService<BitcoinAgent>();
+                var blockGraph = await agent.GetGraph(height, utxos, dbContextLock, cT);
+
+                _logger.LogInformation(
+                    "Obtained block graph for height {height:n0}, enqueued " +
+                    "for graph building and serialization.", height);
+                gBuffer.Enqueue(blockGraph);
+            }, new Context().SetLogger<Orchestrator>(_logger), cT);
+
+            return true;
+        }
+        catch (Polly.CircuitBreaker.BrokenCircuitException e)
+        {
+            _logger.LogError("Circuit is broken processing block {h}! {e}.", height, e.Message);
+            return false;
+        }
     }
 }
