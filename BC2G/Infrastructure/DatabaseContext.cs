@@ -5,8 +5,11 @@ public class DatabaseContext : DbContext
     public DbSet<Utxo> Utxos => Set<Utxo>();
 
     // Needed by the migration scripts
-    public DatabaseContext(DbContextOptions<DatabaseContext> options) : base(options)
+    public DatabaseContext(
+        DbContextOptions<DatabaseContext> options) :
+        base(options)
     { }
+
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -34,20 +37,36 @@ public class DatabaseContext : DbContext
     public static void OptimisticAddOrUpdate(
         object dbLock,
         ICollection<Utxo> utxos,
-        IDbContextFactory<DatabaseContext> contextFactory)
+        IDbContextFactory<DatabaseContext> contextFactory,
+        ILogger<DatabaseContext> logger)
     {
         lock (dbLock)
         {
             OptimisticTx(
                 () =>
                 {
+                    logger.LogInformation(
+                        "Trying to optimistically add UTXOs to the database. " +
+                        "UTXOs count: {c}", utxos.Count);
+
                     using var c = contextFactory.CreateDbContext();
                     c.Utxos.AddRange(utxos);
                     c.SaveChanges();
+
+                    logger.LogInformation("Finished optimistically adding UTXO's to the database.");
                 },
                 () =>
                 {
+                    logger.LogInformation(
+                        "Failed optimistically adding UTXOs. " +
+                        "This could happen if the database already contained the UTXOs. " +
+                        "Are you repeating a traverse? " +
+                        "Trying to resiliently add UTXOs to the database; " +
+                        "this could take a while.");
+
                     ResilientAddOrUpdate(utxos, contextFactory);
+
+                    logger.LogInformation("Finished resiliently adding UTXOs to the database.");
                 });
         }
     }

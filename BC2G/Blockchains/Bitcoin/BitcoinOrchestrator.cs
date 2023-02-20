@@ -120,7 +120,8 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             DatabaseContext.OptimisticAddOrUpdate(
                 dbLock,
                 utxos.Values,
-                _host.Services.GetRequiredService<IDbContextFactory<DatabaseContext>>());
+                _host.Services.GetRequiredService<IDbContextFactory<DatabaseContext>>(),
+                _host.Services.GetRequiredService<ILogger<DatabaseContext>>());
             utxos.Clear();
             _logger.LogInformation("In-memory UTXO cleared.");
         });
