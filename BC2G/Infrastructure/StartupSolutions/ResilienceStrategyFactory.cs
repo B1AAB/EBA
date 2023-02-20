@@ -114,14 +114,14 @@ internal static class ResilienceStrategyFactory
                         if (logger != null)
                             logger.LogWarning(
                                 "Retry: {message} Waiting for {timespan} " +
-                                "seconds before {retryAttempt} retry. Block height: {h}",
+                                "seconds before {retryAttempt} retry. Block height: {h:n0}",
                                 exception.Message, timeSpan.TotalSeconds, retryAttempt,
                                 context.GetBlockHeight());
                         else
                             Console.Error.WriteLine(
                                 $"Retry: {exception.Message} Waiting for " +
                                 $"{timeSpan.TotalSeconds} second before {retryAttempt} retry." +
-                                $"Block height: {context.GetBlockHeight()}");
+                                $"Block height: {context.GetBlockHeight():n0}");
                     });
 
             var circuitBreaker = Policy
@@ -137,13 +137,13 @@ internal static class ResilienceStrategyFactory
 
                         if (logger != null)
                             logger.LogWarning(
-                                "CircuitBreaker: Circuit on break; height {h}; " +
+                                "CircuitBreaker: Circuit on break; height {h:n0}; " +
                                 "exception message: {exMsg}; timespan: {timeSpan}.",
                                 context.GetBlockHeight(), exception.Message, timeSpan);
                         else
                             Console.Error.WriteLine(
                                 $"CircuitBreaker: Circuit on break; height " +
-                                $"{context.GetBlockHeight()}; " +
+                                $"{context.GetBlockHeight():n0}; " +
                                 $"exception message: {exception.Message}; " +
                                 $"timespan: {timeSpan}.");
                     },
@@ -152,10 +152,10 @@ internal static class ResilienceStrategyFactory
                         var logger = context.GetLogger();
                         if (logger != null)
                             logger.LogWarning(
-                                "CircuitBreaker: Reset. Height: {h}", context.GetBlockHeight());
+                                "CircuitBreaker: Reset. Height: {h:n0}", context.GetBlockHeight());
                         else
                             Console.Error.WriteLine(
-                                $"CircuitBreaker: Reset. Height: {context.GetBlockHeight()}");
+                                $"CircuitBreaker: Reset. Height: {context.GetBlockHeight():n0}");
                     },
                     onHalfOpen: () =>
                     {
@@ -169,11 +169,11 @@ internal static class ResilienceStrategyFactory
                     var logger = context.GetLogger();
                     if (logger != null)
                         logger.LogError(
-                            "Timeout getting graph block height {h} after {timespan} seconds. {context}",
+                            "Timeout getting graph block height {h:n0} after {timespan} seconds. {context}",
                             context.GetBlockHeight(), timespan.TotalSeconds, context);
                     else
                         Console.Error.WriteLine(
-                            $"Timeout getting graph block height {context.GetBlockHeight()} " +
+                            $"Timeout getting graph block height {context.GetBlockHeight():n0} " +
                             $"after {timespan.TotalSeconds} seconds. {context}");
                 });
 
