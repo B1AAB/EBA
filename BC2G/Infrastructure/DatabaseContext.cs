@@ -17,20 +17,40 @@ public class DatabaseContext : DbContext
     }
 
     public static async Task OptimisticAddOrUpdateAsync(
-        DatabaseContext context,
+        ICollection<Utxo> utxos,
         IDbContextFactory<DatabaseContext> contextFactory,
+        ILogger<DatabaseContext> logger,
         CancellationToken ct)
     {
         await OptimisticTxAsync(
             async () =>
             {
-                await context.SaveChangesAsync(ct);
+                ct.ThrowIfCancellationRequested();
+
+                logger.LogInformation(
+                    "Trying to optimistically add UTXOs to the database. " +
+                    "UTXOs count: {c:n0}", utxos.Count);
+
+                using var c = contextFactory.CreateDbContext();
+                await c.Utxos.AddRangeAsync(utxos, ct);
+                await c.SaveChangesAsync(ct);
+
+                logger.LogInformation("Finished optimistically adding UTXO's to the database.");
             },
             async () =>
             {
-                var enties = context.ChangeTracker.Entries<Utxo>();
-                var utxos = enties.Select(x => (Utxo)x.CurrentValues.ToObject());
+                ct.ThrowIfCancellationRequested();
+
+                logger.LogInformation(
+                    "Failed optimistically adding UTXOs. " +
+                    "This could happen if the database already contained the UTXOs. " +
+                    "Are you repeating a traverse? " +
+                    "Trying to resiliently add UTXOs to the database; " +
+                    "this could take a while.");
+
                 await ResilientAddOrUpdateAsync(utxos, contextFactory, ct);
+
+                logger.LogInformation("Finished resiliently adding UTXOs to the database.");
             });
     }
 
@@ -162,8 +182,10 @@ public class DatabaseContext : DbContext
 
             await policy.ExecuteAsync(async () =>
             {
+                ct.ThrowIfCancellationRequested();
                 using var c = contextFactory.CreateDbContext();
-                var inDbUtxo = await c.Utxos.FindAsync(utxo.Id);
+
+                var inDbUtxo = await c.Utxos.FindAsync(utxo.Id, ct);
                 if (inDbUtxo == null)
                 {
                     await c.Utxos.AddAsync(utxo, ct);
