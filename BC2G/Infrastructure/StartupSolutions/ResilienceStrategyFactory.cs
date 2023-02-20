@@ -114,12 +114,14 @@ internal static class ResilienceStrategyFactory
                         if (logger != null)
                             logger.LogWarning(
                                 "Retry: {message} Waiting for {timespan} " +
-                                "seconds before {retryAttempt} retry.}",
-                                exception.Message, timeSpan.TotalSeconds, retryAttempt);
+                                "seconds before {retryAttempt} retry. Block height: {h}",
+                                exception.Message, timeSpan.TotalSeconds, retryAttempt,
+                                context.GetBlockHeight());
                         else
                             Console.Error.WriteLine(
                                 $"Retry: {exception.Message} Waiting for " +
-                                $"{timeSpan.TotalSeconds} second before {retryAttempt} retry.");
+                                $"{timeSpan.TotalSeconds} second before {retryAttempt} retry." +
+                                $"Block height: {context.GetBlockHeight()}");
                     });
 
             var circuitBreaker = Policy
@@ -132,24 +134,28 @@ internal static class ResilienceStrategyFactory
                     onBreak: (exception, timeSpan, context) =>
                     {
                         var logger = context.GetLogger();
+
                         if (logger != null)
                             logger.LogWarning(
-                                "CircuitBreaker: Circuit on break; exception message: " +
-                                "{exMsg}; timespan: {timeSpan}.",
-                                exception.Message, timeSpan);
+                                "CircuitBreaker: Circuit on break; height {h}; " +
+                                "exception message: {exMsg}; timespan: {timeSpan}.",
+                                context.GetBlockHeight(), exception.Message, timeSpan);
                         else
                             Console.Error.WriteLine(
-                                $"CircuitBreaker: Circuit on break; last exception: " +
-                                $"{exception.Message}; waiting for " +
-                                $"{timeSpan.TotalSeconds} seconds");
+                                $"CircuitBreaker: Circuit on break; height " +
+                                $"{context.GetBlockHeight()}; " +
+                                $"exception message: {exception.Message}; " +
+                                $"timespan: {timeSpan}.");
                     },
                     onReset: (context) =>
                     {
                         var logger = context.GetLogger();
                         if (logger != null)
-                            logger.LogWarning("CircuitBreaker: Reset.");
+                            logger.LogWarning(
+                                "CircuitBreaker: Reset. Height: {h}", context.GetBlockHeight());
                         else
-                            Console.Error.WriteLine("CircuitBreaker: Reset.");
+                            Console.Error.WriteLine(
+                                $"CircuitBreaker: Reset. Height: {context.GetBlockHeight()}");
                     },
                     onHalfOpen: () =>
                     {
@@ -163,12 +169,12 @@ internal static class ResilienceStrategyFactory
                     var logger = context.GetLogger();
                     if (logger != null)
                         logger.LogError(
-                            "Timeout getting graph after {timespan} seconds. {context}",
-                            timespan.TotalSeconds, context);
+                            "Timeout getting graph block height {h} after {timespan} seconds. {context}",
+                            context.GetBlockHeight(), timespan.TotalSeconds, context);
                     else
                         Console.Error.WriteLine(
-                            $"Timeout getting graph after {timespan.TotalSeconds} seconds." +
-                            $"{context}");
+                            $"Timeout getting graph block height {context.GetBlockHeight()} " +
+                            $"after {timespan.TotalSeconds} seconds. {context}");
                 });
 
             var strategy = Policy.WrapAsync(retry, circuitBreaker, timeout);

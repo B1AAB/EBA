@@ -208,7 +208,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
                     "Obtained block graph for height {height:n0}, enqueued " +
                     "for graph building and serialization.", height);
                 gBuffer.Enqueue(blockGraph);
-            }, new Context().SetLogger<Orchestrator>(_logger), cT);
+            }, new Context().SetLogger<Orchestrator>(_logger).SetBlockHeight(height), cT);
 
             return true;
         }
