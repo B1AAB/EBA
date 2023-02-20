@@ -9,11 +9,7 @@ public class Startup
         var hostBuilder = new HostBuilder();
 
         // Setup logging using Serilog.
-        var logFilename = Path.Join(
-            options.WorkingDir,
-            options.Logger.RepoName +
-            DateTimeOffset.Now.ToUnixTimeSeconds().ToString() +
-            ".log");
+        var logFilename = options.Logger.LogFilename;
 
         Log.Logger =
             new LoggerConfiguration()
@@ -33,8 +29,10 @@ public class Startup
             .Enrich.FromLogContext()
             .WriteTo.File(
                 path: logFilename,
-                rollingInterval: RollingInterval.Hour,
-                outputTemplate: options.Logger.MessageTemplate)
+                rollingInterval: RollingInterval.Day,
+                outputTemplate: options.Logger.MessageTemplate,
+                shared: true,
+                retainedFileCountLimit: null)
             .WriteTo.Console(
                 theme: AnsiConsoleTheme.Code)
             .CreateLogger();

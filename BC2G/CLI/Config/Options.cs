@@ -6,7 +6,14 @@ public class Options
     public string WorkingDir { init; get; } = _wd;
     public string StatusFile { init; get; } = Path.Join(_wd, $"status_{_timestamp}.json");
     public int DefaultConnectionLimit { init; get; } = 50;
-    public LoggerOptions Logger { init; get; } = new();
+    public LoggerOptions Logger { init; get; } =
+        new()
+        {
+            // The `_` before `.log` is added to separate RepoName from a 
+            // timestamp serilog adds for each rolling file.
+            LogFilename = Path.Join(_wd, $"{new LoggerOptions().RepoName}_.log")
+        };
+
     public BitcoinOptions Bitcoin { init; get; } = new();
     public GraphSampleOptions GraphSample { init; get; } = new();
     public Neo4jOptions Neo4j { init; get; } = new();
