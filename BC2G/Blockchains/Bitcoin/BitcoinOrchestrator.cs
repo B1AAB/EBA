@@ -222,33 +222,21 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
         _logger.LogInformation("Started processing block {height:n0}.", height);
 
-        try
-        {
-            var strategy = ResilienceStrategyFactory.Bitcoin.GetGraphStrategy(
-                options.Bitcoin.BitcoinAgentResilienceStrategy);
+        var strategy = ResilienceStrategyFactory.Bitcoin.GetGraphStrategy(
+            options.Bitcoin.BitcoinAgentResilienceStrategy);
 
-            await strategy.ExecuteAsync(
-                async (context, cT) =>
-                {
-                    _logger.LogInformation("Trying processing block {height:n0}.", height);
-                    var agent = _host.Services.GetRequiredService<BitcoinAgent>();
-                    var blockGraph = await agent.GetGraph(height, utxos, dbContextLock, cT);
+        _logger.LogInformation("Trying processing block {height:n0}.", height);
+        var agent = _host.Services.GetRequiredService<BitcoinAgent>();
+        var blockGraph = await agent.GetGraph(height, utxos, dbContextLock, cT, strategy);
 
-                    _logger.LogInformation(
-                        "Obtained block graph for height {height:n0}, enqueued " +
-                        "for graph building and serialization.", height);
-                    gBuffer.Enqueue(blockGraph);
-                },
-                new Context().SetLogger<Orchestrator>(_logger).SetBlockHeight(height), cT);
-
-            return true;
-        }
-        catch (Polly.CircuitBreaker.BrokenCircuitException e)
-        {
-            _logger.LogError(
-                "Circuit is broken processing block {h:n0}! {e}.",
-                height, e.Message);
+        if (blockGraph == null)
             return false;
-        }
+
+        _logger.LogInformation(
+            "Obtained block graph for height {height:n0}, " +
+            "enqueued for graph serialization.", height);
+        gBuffer.Enqueue(blockGraph);
+
+        return true;
     }
 }
