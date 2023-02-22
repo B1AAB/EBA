@@ -35,16 +35,18 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         {
             stopwatch.Start();
             await TraverseBlocksAsync(options, blockHeightQueue, failedBlocksQueue, cT);
-            stopwatch.Stop();
 
-            if (cT.IsCancellationRequested)
-                _logger.LogInformation("Cancelled successfully.");
-            else
-                _logger.LogInformation("Successfully finished traverse in {et}.", stopwatch.Elapsed);
+            stopwatch.Stop();
+            _logger.LogInformation("Successfully finished traverse in {et}.", stopwatch.Elapsed);
         }
-        catch
+        catch (Exception e)
         {
             stopwatch.Stop();
+            if (e is TaskCanceledException || e is OperationCanceledException)
+                _logger.LogInformation(
+                    "Cancelled successfully. Elapsed time since the " +
+                    "beginning of the process: {t}", stopwatch.Elapsed);
+
             throw;
         }
     }
