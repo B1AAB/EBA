@@ -190,9 +190,6 @@ public class BitcoinAgent : IDisposable
         object dbContextLock, 
         CancellationToken cT)
     {
-        // All the logging in this section are removed because 
-        // CPU profiling shows ~%24 of the process time is spent on them.
-
         cT.ThrowIfCancellationRequested();
 
         var blockHash = await GetBlockHashAsync(height, cT);
@@ -204,6 +201,9 @@ public class BitcoinAgent : IDisposable
         cT.ThrowIfCancellationRequested();
 
         var graph = await ProcessBlockAsync(block, utxos, dbContextLock, cT);
+
+        graph.MergeQueuedTxGraphs(cT);
+
         return graph;
     }
 
