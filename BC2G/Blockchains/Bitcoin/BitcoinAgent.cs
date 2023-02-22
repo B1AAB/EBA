@@ -153,6 +153,37 @@ public class BitcoinAgent : IDisposable
             ?? throw new Exception("Invalid transaction.");
     }
 
+    public async Task<BlockGraph?> GetGraph(
+        int height,
+        ConcurrentDictionary<string, Utxo> utxos,
+        object dbContextLock,
+        CancellationToken cT,
+        IAsyncPolicy strategy)
+    {
+        BlockGraph? graph = null;
+
+        try
+        {
+            await strategy.ExecuteAsync(
+                async (context, cT) =>
+                {
+                    graph = await GetGraph(height, utxos, dbContextLock, cT);
+                },
+                new Context()
+                    .SetLogger<Orchestrator>(_logger)
+                    .SetBlockHeight(height),
+                cT);
+        }
+        catch (Polly.CircuitBreaker.BrokenCircuitException e)
+        {
+            _logger.LogError(
+                "Circuit is broken processing block {h:n0}! {e}.",
+                height, e.Message);
+        }
+
+        return graph;
+    }
+
     public async Task<BlockGraph> GetGraph(
         int height,
         ConcurrentDictionary<string, Utxo> utxos, 
