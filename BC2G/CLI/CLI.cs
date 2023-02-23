@@ -57,8 +57,6 @@ internal class Cli
                         x.ErrorMessage = $"Invalid path `{value}`";
                         return;
                     }
-
-                    Directory.CreateDirectory(wd);
                 }
             }
         });

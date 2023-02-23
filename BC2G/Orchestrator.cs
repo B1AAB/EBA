@@ -34,8 +34,9 @@ public class Orchestrator : IDisposable
         return await _cli.InvokeAsync(args);
     }
 
-    private async Task<IHost> GetHostAsync(Options options)
+    private async Task<IHost> SetupAndGetHostAsync(Options options)
     {
+        Directory.CreateDirectory(options.WorkingDir);
         var hostBuilder = Startup.GetHostBuilder(options);
         var host = hostBuilder.Build();
         await host.StartAsync();
@@ -45,7 +46,7 @@ public class Orchestrator : IDisposable
 
     private async Task TraverseBitcoinAsync(Options options)
     {
-        var host = await GetHostAsync(options);
+        var host = await SetupAndGetHostAsync(options);
         using (var dbContext = host.Services.GetRequiredService<DatabaseContext>())
             await dbContext.Database.EnsureCreatedAsync(_cT);
 
@@ -55,7 +56,7 @@ public class Orchestrator : IDisposable
 
     private async Task ImportGraphAsync(Options options)
     {
-        var host = await GetHostAsync(options);
+        var host = await SetupAndGetHostAsync(options);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
 
         var graphDb = host.Services.GetRequiredService<IGraphDb<BlockGraph>>();
@@ -64,7 +65,7 @@ public class Orchestrator : IDisposable
 
     private async Task SampleGraphAsync(Options options)
     {
-        var host = await GetHostAsync(options);
+        var host = await SetupAndGetHostAsync(options);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
         var graphDb = host.Services.GetRequiredService<IGraphDb<BlockGraph>>();
         var successfull = await graphDb.TrySampleAsync();
