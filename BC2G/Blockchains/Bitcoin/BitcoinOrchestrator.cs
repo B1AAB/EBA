@@ -224,7 +224,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
         _logger.LogInformation("Trying processing block {height:n0}.", height);
         var agent = _host.Services.GetRequiredService<BitcoinAgent>();
-        var blockGraph = await agent.GetGraph(height, utxos, dbContextLock, cT, strategy);
+        var blockGraph = await agent.GetGraph(height, utxos, dbContextLock, strategy, cT);
 
         if (blockGraph == null)
             return false;

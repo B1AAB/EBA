@@ -154,8 +154,8 @@ public class BitcoinAgent : IDisposable
         long height,
         ConcurrentDictionary<string, Utxo> utxos,
         object dbContextLock,
-        CancellationToken cT,
-        IAsyncPolicy strategy)
+        IAsyncPolicy strategy,
+        CancellationToken cT)
     {
         BlockGraph? graph = null;
 
