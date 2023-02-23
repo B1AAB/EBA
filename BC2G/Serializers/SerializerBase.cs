@@ -1,6 +1,4 @@
-﻿using BC2G.Blockchains.Bitcoin.Graph;
-
-namespace BC2G.Serializers;
+﻿namespace BC2G.Serializers;
 
 public abstract class SerializerBase
 {

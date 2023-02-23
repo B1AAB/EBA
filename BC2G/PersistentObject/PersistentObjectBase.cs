@@ -10,11 +10,6 @@
 public abstract class PersistentObjectBase<T> : IDisposable
     where T : notnull
 {
-    public bool CanDispose
-    {
-        get { return _isFree && (_buffer.Count == 0 || _cancelled); }
-    }
-
     private bool _isFree = true;
     private bool _cancelled = false;
     private bool _disposed = false;
@@ -79,7 +74,7 @@ public abstract class PersistentObjectBase<T> : IDisposable
                 int graceCount = 3;
                 while (graceCount-- >= 0)
                 {
-                    if (_isFree)
+                    if (_isFree && (_buffer.Count == 0 || _cancelled))
                         break;
                     Thread.Sleep(500);
                 }

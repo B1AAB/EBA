@@ -44,25 +44,13 @@ internal class PersistentConcurrentQueue<T> : ConcurrentQueue<T>, IDisposable
     {
         lock (_lockOnMe)
         {
-            var bytes = MemoryMarshal.Cast<T, byte>(this.ToArray<T>());
-            using var stream = File.Open(_filename, FileMode.Create);
-            stream.Write(bytes);
+            ArraySerializer.Serialize(this.ToArray<T>(), _filename);
         }
     }
 
     public static PersistentConcurrentQueue<T> Deserialize(string filename)
     {
-        var items = Array.Empty<T>();
-
-        using (var stream = File.OpenRead(filename))
-        {
-            int len = checked((int)(stream.Length / Unsafe.SizeOf<T>())), read;
-            items = new T[len];
-            var bytes = MemoryMarshal.Cast<T, byte>(items);
-            while (!bytes.IsEmpty && (read = stream.Read(bytes)) > 0)
-                bytes = bytes[read..];
-        }
-
+        var items = ArraySerializer.Deserialize<T>(filename);
         return new PersistentConcurrentQueue<T>(filename, items);
     }
 
