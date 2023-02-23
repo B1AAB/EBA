@@ -1,15 +1,12 @@
-﻿using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+﻿namespace BC2G.Blockchains.Bitcoin;
 
-namespace BC2G.Blockchains.Bitcoin;
-
-internal class PersistentConcurrentQueue : PersistentConcurrentQueue<int>
+internal class PersistentConcurrentQueue : PersistentConcurrentQueue<long>
 {
     public PersistentConcurrentQueue(string filename)
         : base(filename)
     { }
 
-    public PersistentConcurrentQueue(string filename, ICollection<int> collection)
+    public PersistentConcurrentQueue(string filename, ICollection<long> collection)
         : base(filename, collection)
     { }
 
@@ -17,7 +14,7 @@ internal class PersistentConcurrentQueue : PersistentConcurrentQueue<int>
     {
         return new PersistentConcurrentQueue(
             filename,
-            PersistentConcurrentQueue<int>.Deserialize(filename).ToArray());
+            PersistentConcurrentQueue<long>.Deserialize(filename).ToArray());
     }
 }
 

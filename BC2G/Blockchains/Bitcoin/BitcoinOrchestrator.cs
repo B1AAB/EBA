@@ -53,7 +53,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
     private static PersistentConcurrentQueue SetupBlocksQueue(Options options)
     {
-        var heights = new List<int>();
+        var heights = new List<long>();
         for (int h = options.Bitcoin.FromInclusive;
             h < options.Bitcoin.ToExclusive;
             h += options.Bitcoin.Granularity)
@@ -62,12 +62,12 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         return GetPersistentBlocksQueue(options.Bitcoin.BlocksToProcessListFilename, heights);
     }
 
-    private static PersistentConcurrentQueue GetPersistentBlocksQueue(string filename, List<int>? init = null)
+    private static PersistentConcurrentQueue GetPersistentBlocksQueue(string filename, List<long>? init = null)
     {
         PersistentConcurrentQueue blockHeightQueue;
         if (!File.Exists(filename))
         {
-            init ??= new List<int>();
+            init ??= new List<long>();
             blockHeightQueue = new PersistentConcurrentQueue(filename, init);
             blockHeightQueue.Serialize();
         }
@@ -86,7 +86,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         PersistentConcurrentQueue failedBlocksQueue,
         CancellationToken cT)
     {
-        void RegisterFailed(int h)
+        void RegisterFailed(long h)
         {
             failedBlocksQueue.Enqueue(h);
             failedBlocksQueue.Serialize();
@@ -200,7 +200,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
     private async Task<bool> TryProcessBlock(
         Options options,
         PersistentGraphBuffer gBuffer,
-        int height,
+        long height,
         ConcurrentDictionary<string, Utxo> utxos,
         object dbContextLock,
         CancellationToken cT)
@@ -222,6 +222,9 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         _logger.LogInformation(
             "Obtained block graph for height {height:n0}, " +
             "enqueued for graph serialization.", height);
+
+        // This should be the last step of this process,
+        // do not check for cancellation after this.
         gBuffer.Enqueue(blockGraph);
 
         return true;

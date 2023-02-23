@@ -115,7 +115,7 @@ public class BitcoinAgent : IDisposable
     }
 
     public async Task<string> GetBlockHashAsync(
-        int height,
+        long height,
         CancellationToken cT)
     {
         try
@@ -154,7 +154,7 @@ public class BitcoinAgent : IDisposable
     }
 
     public async Task<BlockGraph?> GetGraph(
-        int height,
+        long height,
         ConcurrentDictionary<string, Utxo> utxos,
         object dbContextLock,
         CancellationToken cT,
@@ -185,7 +185,7 @@ public class BitcoinAgent : IDisposable
     }
 
     public async Task<BlockGraph> GetGraph(
-        int height,
+        long height,
         ConcurrentDictionary<string, Utxo> utxos, 
         object dbContextLock, 
         CancellationToken cT)

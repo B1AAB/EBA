@@ -7,16 +7,16 @@ internal static class ContextExtension
     private static readonly string _loggerKey = "ILogger";
     private static readonly string _blockHeightKey = "BlockHeight";
 
-    public static Context SetBlockHeight(this Context context, int height)
+    public static Context SetBlockHeight(this Context context, long height)
     {
         context[_blockHeightKey] = height;
         return context;
     }
 
-    public static int? GetBlockHeight(this Context context)
+    public static long? GetBlockHeight(this Context context)
     {
         if (context.TryGetValue(_blockHeightKey, out var h))
-            return (int)h;
+            return (long)h;
 
         return null;
     }
