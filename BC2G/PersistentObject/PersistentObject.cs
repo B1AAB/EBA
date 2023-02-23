@@ -44,6 +44,8 @@ public class PersistentObject<T> : PersistentObjectBase<T>, IDisposable
     {
         if (!_disposed)
         {
+            base.Dispose(disposing);
+
             if (disposing)
             {
                 _stream.Flush();
@@ -51,7 +53,6 @@ public class PersistentObject<T> : PersistentObjectBase<T>, IDisposable
             }
 
             _disposed = true;
-            base.Dispose(disposing);
         }
     }
 }

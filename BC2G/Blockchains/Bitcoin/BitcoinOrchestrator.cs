@@ -156,7 +156,9 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
                         e is TaskCanceledException ||
                         e is OperationCanceledException)
                     {
-                        _logger.LogWarning("Cancelled processing block {b:n0}.", h);
+                        _logger.LogWarning(
+                            "Cancelled processing block {b:n0}; " +
+                            "added block height to the list of blocks to process", h);
                         blocksQueue.Enqueue(h);
                         throw;
                     }
@@ -186,11 +188,22 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             // Do not pass the cancellation token to the following call, 
             // because we want the status file to be persisted even if the 
             // cancellation was requested.
+            #pragma warning disable CA2016 // Forward the 'CancellationToken' parameter to methods
             await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile);
+            #pragma warning restore CA2016 // Forward the 'CancellationToken' parameter to methods
+
+            var canceledBlocks = gBuffer.BlocksHeightInBuffer;
+            if (canceledBlocks.Count > 0)
+            {
+                foreach (var item in canceledBlocks)
+                    blocksQueue.Enqueue(item);
+                _logger.LogInformation(
+                    "Added {n} cancelled blocks to the list of blocks to process.",
+                    canceledBlocks.Count);
+            }
 
             blocksQueue.Serialize();
             _logger.LogInformation("Serialized the updated list of blocks-to-process.");
-        }
         }
     }
 
