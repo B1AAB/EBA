@@ -29,7 +29,7 @@ public class Startup
             .Enrich.FromLogContext()
             .WriteTo.File(
                 path: logFilename,
-                rollingInterval: RollingInterval.Day,
+                rollingInterval: RollingInterval.Hour,
                 outputTemplate: options.Logger.MessageTemplate,
                 shared: true,
                 retainedFileCountLimit: null)
