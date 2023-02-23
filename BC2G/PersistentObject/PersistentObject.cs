@@ -1,6 +1,6 @@
 ﻿namespace BC2G.PersistentObject;
 
-public class PersistentObject<T> : PersistentObjectBase<T>
+public class PersistentObject<T> : PersistentObjectBase<T>, IDisposable
     where T : notnull
 {
     private readonly StreamWriter _stream;
@@ -38,7 +38,7 @@ public class PersistentObject<T> : PersistentObjectBase<T>
     public new void Dispose()
     {
         Dispose(true);
-        base.Dispose();
+        GC.SuppressFinalize(this);
     }
     protected virtual new void Dispose(bool disposing)
     {
@@ -51,6 +51,7 @@ public class PersistentObject<T> : PersistentObjectBase<T>
             }
 
             _disposed = true;
+            base.Dispose(disposing);
         }
     }
 }
