@@ -22,7 +22,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
     {
         var chainInfo = await _agent.AssertChainAsync(cT);
         _logger.LogInformation("Head of the chain is at block {block:n0}.", chainInfo.Blocks);
-        options.Bitcoin.ToExclusive ??= chainInfo.Blocks;
+        options.Bitcoin.To ??= chainInfo.Blocks;
 
         var blockHeightQueue = SetupBlocksQueue(options);
         var failedBlocksQueue = GetPersistentBlocksQueue(options.Bitcoin.BlocksFailedToProcessListFilename);
@@ -54,8 +54,8 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
     private static PersistentConcurrentQueue SetupBlocksQueue(Options options)
     {
         var heights = new List<long>();
-        for (int h = options.Bitcoin.FromInclusive;
-            h < options.Bitcoin.ToExclusive;
+        for (int h = options.Bitcoin.From;
+            h <= options.Bitcoin.To;
             h += options.Bitcoin.Granularity)
             heights.Add(h);
 
@@ -101,13 +101,13 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
         _logger.LogInformation(
             "Traversing blocks [{from:n0}, {to:n0}).",
-            options.Bitcoin.FromInclusive,
-            options.Bitcoin.ToExclusive);
+            options.Bitcoin.From,
+            options.Bitcoin.To);
 
         _logger.LogInformation(
             "{count:n0} blocks to process; {processed:n0} blocks are previously processed.",
             blocksQueue.Count,
-            options.Bitcoin.ToExclusive - options.Bitcoin.FromInclusive - blocksQueue.Count);
+            options.Bitcoin.To - options.Bitcoin.From - blocksQueue.Count);
 
         var parallelOptions = new ParallelOptions() { CancellationToken = cT };
         if (options.Bitcoin.MaxConcurrentBlocks != null)

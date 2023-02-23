@@ -2,8 +2,8 @@
 
 internal class OptionsBinder : BinderBase<Options>
 {
-    private readonly Option<int>? _fromInclusiveOption;
-    private readonly Option<int?>? _toExclusiveOption;
+    private readonly Option<int>? _fromOption;
+    private readonly Option<int?>? _toOption;
     private readonly Option<int>? _granularityOption;
     private readonly Option<bool>? _skipGraphLoadOption;
     private readonly Option<Uri>? _bitcoinClientUri;
@@ -19,8 +19,8 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<string>? _statusFilenameOption;
 
     public OptionsBinder(
-        Option<int>? fromInclusiveOption = null,
-        Option<int?>? toExclusiveOption = null,
+        Option<int>? fromOption = null,
+        Option<int?>? toOption = null,
         Option<int>? granularityOption = null,
         Option<bool>? skipGraphLoadOption = null,
         Option<Uri>? bitcoinClientUri = null,
@@ -35,8 +35,8 @@ internal class OptionsBinder : BinderBase<Options>
         Option<string>? workingDirOption = null,
         Option<string>? statusFilenameOption = null)
     {
-        _fromInclusiveOption = fromInclusiveOption;
-        _toExclusiveOption = toExclusiveOption;
+        _fromOption = fromOption;
+        _toOption = toOption;
         _granularityOption = granularityOption;
         _skipGraphLoadOption = skipGraphLoadOption;
         _bitcoinClientUri = bitcoinClientUri;
@@ -70,8 +70,8 @@ internal class OptionsBinder : BinderBase<Options>
         var bitcoinOps = new BitcoinOptions()
         {
             ClientUri = GetValue(defs.Bitcoin.ClientUri, _bitcoinClientUri, c),
-            FromInclusive = GetValue(defs.Bitcoin.FromInclusive, _fromInclusiveOption, c),
-            ToExclusive = GetValue(defs.Bitcoin.ToExclusive, _toExclusiveOption, c),
+            From = GetValue(defs.Bitcoin.From, _fromOption, c),
+            To = GetValue(defs.Bitcoin.To, _toOption, c),
             Granularity = GetValue(defs.Bitcoin.Granularity, _granularityOption, c),
             SkipGraphLoad = GetValue(defs.Bitcoin.SkipGraphLoad, _skipGraphLoadOption, c),
             BlocksToProcessListFilename = Path.Join(wd, defs.Bitcoin.BlocksToProcessListFilename),

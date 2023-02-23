@@ -15,41 +15,40 @@ public class BitcoinOptions
     }
     private Uri _clientUri = new("http://localhost:8332/rest/");
 
-    public int FromInclusive
+    public int From
     {
         init
         {
             if (value < 0)
                 throw new ArgumentOutOfRangeException(
-                    nameof(FromInclusive),
+                    nameof(From),
                     "Value cannot be negative.");
-            _fromInclusive = value;
+            _from = value;
         }
-        get { return _fromInclusive; }
+        get { return _from; }
     }
-    private int _fromInclusive = 0;
+    private int _from = 0;
 
-    public int? ToExclusive
+    public int? To
     {
         set
         {
             if (value < 0)
                 throw new ArgumentOutOfRangeException(
-                    nameof(ToExclusive),
+                    nameof(To),
                     "Value cannot be negative.");
 
-            if (value <= FromInclusive)
+            if (value < From)
                 throw new ArgumentOutOfRangeException(
-                    nameof(ToExclusive),
-                    $"Value cannot be smaller than or equal to " +
-                    $"{nameof(FromInclusive)} " +
-                    $"({value} is <= {FromInclusive}).");
+                    nameof(To),
+                    $"Value cannot be smaller than {nameof(From)} " +
+                    $"({value} is < {From}).");
 
-            _toExclusive = value;
+            _to = value;
         }
-        get { return _toExclusive; }
+        get { return _to; }
     }
-    private int? _toExclusive = null;
+    private int? _to = null;
 
     public int Granularity
     {

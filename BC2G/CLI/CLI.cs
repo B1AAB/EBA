@@ -143,14 +143,14 @@ internal class Cli
     {
         var fromOption = new Option<int>(
             name: "--from",
-            description: "The inclusive height of the block where the " +
+            description: "The height of the block where the " +
             "traverse should start. If not provided, starts from the " +
             "genesis block (i.e., the first block on the blockchain).");
 
         var toOption = new Option<int?>(
             name: "--to",
-            description: "The exclusive height of the block where the " +
-            "traverse should end (exclusive). If not provided, proceeds " +
+            description: "The height of the block where the " +
+            "traverse should end. If not provided, proceeds " +
             "until the last of block on the chain when the process starts.");
 
         var granularityOption = new Option<int>(
@@ -190,8 +190,8 @@ internal class Cli
             await handlerAsync(options);
         },
         new OptionsBinder(
-            fromInclusiveOption: fromOption,
-            toExclusiveOption: toOption,
+            fromOption: fromOption,
+            toOption: toOption,
             granularityOption: granularityOption,
             skipGraphLoadOption: skipGraphLoadOption,
             bitcoinClientUri: clientUriOption,
