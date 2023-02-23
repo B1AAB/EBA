@@ -1,9 +1,4 @@
-﻿// BitcoinAgent and all similar agents must implement co-operative cancellation semantics:
-// https://learn.microsoft.com/en-us/dotnet/standard/threading/cancellation-in-managed-threads?redirectedfrom=MSDN
-
-using BC2G.Blockchains.Bitcoin.Graph;
-
-namespace BC2G.Blockchains.Bitcoin;
+﻿namespace BC2G.Blockchains.Bitcoin;
 
 public class BitcoinAgent : IDisposable
 {
@@ -126,9 +121,11 @@ public class BitcoinAgent : IDisposable
         }
         catch (Exception e)
         {
+            _logger.LogError(
+                "Failed getting block hash for block {h:n0}; " +
+                "this exception can happen when the given block height is invalid. {e}", 
+                height, e.Message);
             throw;
-            // The exception can happen when the given block height 
-            // is invalid throw new Exception($"Invalid height {height}");
         }
     }
 
