@@ -11,13 +11,13 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     public PersistentGraphBuffer(
         IGraphDb<BlockGraph> graphDb,
         ILogger<PersistentGraphBuffer> logger,
-        PersistentGraphStatistics pGraphStats,
+        string graphStatsFilename,
         CancellationToken ct) : 
         base(ct)
     {
         _graphDb = graphDb;
-        _pGraphStats = pGraphStats;
         _logger = logger;
+        _pGraphStats = new(graphStatsFilename, ct);
     }
 
     public override async Task SerializeAsync(

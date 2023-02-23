@@ -93,13 +93,10 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             _logger.LogWarning("Added block {h:n0} to the list of failed blocks.", h);
         }
 
-        using var pGraphStat = new PersistentGraphStatistics(
-            options.Bitcoin.StatsFilename, cT);
-
         using var gBuffer = new PersistentGraphBuffer(
             _host.Services.GetRequiredService<IGraphDb<BlockGraph>>(),
             _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),
-            pGraphStat,
+            options.Bitcoin.StatsFilename,
             cT);
 
         _logger.LogInformation(
