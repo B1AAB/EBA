@@ -1,10 +1,12 @@
 ﻿using BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
+using Neo4j.Driver;
+
 namespace BC2G.Graph.Db.Neo4jDb;
 
 public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 {
-    protected IDriver? Driver { get; }
+    protected IDriver? Driver { private set; get; }
     protected Options Options { get; }
 
     /// <summary>
@@ -26,23 +28,6 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         Options = options;
         _logger = logger;
         _mapperFactory = mapperFactory;
-
-        if (!Options.Bitcoin.SkipGraphLoad)
-        {
-            Driver = GraphDatabase.Driver(
-                Options.Neo4j.Uri,
-                AuthTokens.Basic(Options.Neo4j.User, Options.Neo4j.Password));
-
-            try
-            {
-                Driver.VerifyConnectivityAsync().Wait();
-            }
-            catch (AggregateException)
-            {
-                Dispose(true);
-                throw;
-            }
-        }
     }
 
     /// <summary>
@@ -74,8 +59,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     public async Task ImportAsync(string batchName = "")
     {
         if (Driver is null)
-            throw new ArgumentNullException(
-                nameof(Driver), "A connection to Neo4j is not setup.");
+            await SetupDriver(Options.Neo4j);
 
         _batches = await DeserializeBatchesAsync();
         IEnumerable<BatchInfo> batches;
@@ -164,6 +148,26 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             return true;
         }
     }
+
+    private async Task SetupDriver(Neo4jOptions options)
+    {
+        Driver = GraphDatabase.Driver(
+            options.Uri,
+            AuthTokens.Basic(options.User, options.Password));
+
+        try
+        {
+            await Driver.VerifyConnectivityAsync();
+        }
+        catch (AggregateException)
+        {
+            throw;
+        }
+
+        await SetupAsync(Driver);
+    }
+
+    public virtual async Task SetupAsync(IDriver driver) { }
 
     private async Task ExecuteQueryAsync(IMapperBase mapper, string filename)
     {

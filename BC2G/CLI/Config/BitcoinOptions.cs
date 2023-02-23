@@ -67,8 +67,6 @@ public class BitcoinOptions
     public string BlocksToProcessListFilename { init; get; } = "bitcoin_blocks_to_process.bc2g";
     public string BlocksFailedToProcessListFilename { init; get; } = "bitcoin_blocks_failed_to_process.bc2g";
 
-    public bool SkipGraphLoad { init; get; }
-
     public string StatsFilename { init; get; } = "bitcoin_blocks_stats.tsv";
 
     public int DbCommitAtUtxoBufferSize { init; get; } = 5000000;

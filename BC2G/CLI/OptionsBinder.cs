@@ -5,7 +5,6 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<int>? _fromOption;
     private readonly Option<int?>? _toOption;
     private readonly Option<int>? _granularityOption;
-    private readonly Option<bool>? _skipGraphLoadOption;
     private readonly Option<Uri>? _bitcoinClientUri;
     private readonly Option<int>? _graphSampleCountOption;
     private readonly Option<int>? _graphSampleHopsOption;
@@ -38,7 +37,6 @@ internal class OptionsBinder : BinderBase<Options>
         _fromOption = fromOption;
         _toOption = toOption;
         _granularityOption = granularityOption;
-        _skipGraphLoadOption = skipGraphLoadOption;
         _bitcoinClientUri = bitcoinClientUri;
         _graphSampleCountOption = graphSampleCountOption;
         _graphSampleHopsOption = graphSampleHopOption;
@@ -73,7 +71,6 @@ internal class OptionsBinder : BinderBase<Options>
             From = GetValue(defs.Bitcoin.From, _fromOption, c),
             To = GetValue(defs.Bitcoin.To, _toOption, c),
             Granularity = GetValue(defs.Bitcoin.Granularity, _granularityOption, c),
-            SkipGraphLoad = GetValue(defs.Bitcoin.SkipGraphLoad, _skipGraphLoadOption, c),
             BlocksToProcessListFilename = Path.Join(wd, defs.Bitcoin.BlocksToProcessListFilename),
             BlocksFailedToProcessListFilename = Path.Join(wd, defs.Bitcoin.BlocksFailedToProcessListFilename),
             StatsFilename = Path.Join(wd, defs.Bitcoin.StatsFilename)

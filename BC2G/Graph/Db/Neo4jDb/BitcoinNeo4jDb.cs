@@ -8,18 +8,17 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
 
     public BitcoinNeo4jDb(Options options, ILogger<BitcoinNeo4jDb> logger) :
         base(options, logger, new MapperFactory())
-    {
-        if (!Options.Bitcoin.SkipGraphLoad)
-        {
-            EnsureCoinbaseNodeAsync().Wait();
-            EnsureConstraintsAsync().Wait();
-        }
-    }
+    { }
 
-    private async Task EnsureCoinbaseNodeAsync()
+    public override async Task SetupAsync(IDriver driver)
+    {
+        await EnsureCoinbaseNodeAsync(driver);
+        await EnsureConstraintsAsync(driver);
+    }
+    private static async Task EnsureCoinbaseNodeAsync(IDriver driver)
     {
         int count = 0;
-        using (var session = Driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read)))
+        using (var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read)))
         {
             count = await session.ExecuteReadAsync(async tx =>
             {
@@ -32,7 +31,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
         {
             case 1: return;
             case 0:
-                using (var session = Driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write)))
+                using (var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write)))
                 {
                     await session.ExecuteWriteAsync(async tx =>
                     {
@@ -45,14 +44,12 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
                 break;
             default:
                 // TODO: replace with a more suitable exception type. 
-                throw new Exception($"Found {count} {Coinbase} nodes; expected zero or one.");
+                throw new Exception($"Found {count} {BitcoinAgent.Coinbase} nodes; expected zero or one.");
         }
     }
-
-    private async Task EnsureConstraintsAsync()
+    private static async Task EnsureConstraintsAsync(IDriver driver)
     {
-        using var session = Driver.AsyncSession(
-            x => x.WithDefaultAccessMode(AccessMode.Write));
+        using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
 
         // TODO: do not create contraints if they already exist,
         // otherwise you'll get the following error: 
