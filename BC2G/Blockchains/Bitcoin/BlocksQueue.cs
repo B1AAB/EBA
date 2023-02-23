@@ -48,6 +48,7 @@ internal class PersistentConcurrentQueue<T> : ConcurrentQueue<T>, IDisposable
     public static PersistentConcurrentQueue<T> Deserialize(string filename)
     {
         var items = ArraySerializer.Deserialize<T>(filename);
+        Array.Sort(items);
         return new PersistentConcurrentQueue<T>(filename, items);
     }
 
