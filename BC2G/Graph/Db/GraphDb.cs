@@ -40,7 +40,7 @@ public class GraphDb : IDisposable
         _options = options;
         _logger = logger;
         _neo4jImportDir = _options.Neo4j.ImportDirectory;
-
+        /*
         if (!_options.Bitcoin.SkipGraphLoad)
         {
             _driver = GraphDatabase.Driver(
@@ -59,7 +59,7 @@ public class GraphDb : IDisposable
 
             EnsureCoinbaseNodeAsync().Wait();
             EnsureConstraintsAsync().Wait();
-        }
+        }*/
 
         var batch = CurrentTimeStamp;
         _blockMapper = new BlockMapper(_options.WorkingDir, _options.Neo4j.CypherImportPrefix) { Batch = batch };
@@ -189,6 +189,7 @@ public class GraphDb : IDisposable
 
     private void BulkImportStagedAndReset(string? batch = null)
     {
+        /*
         if (!_options.Bitcoin.SkipGraphLoad)
         {
             var blocksFilename = Path.Combine(_neo4jImportDir, _blockMapper.Filename);
@@ -202,7 +203,7 @@ public class GraphDb : IDisposable
             File.Delete(blocksFilename);
             File.Delete(scriptsFilename);
             File.Delete(coinbaseFilename);
-        }
+        }*/
 
         batch ??= CurrentTimeStamp;
         _blockMapper.Batch = batch;
