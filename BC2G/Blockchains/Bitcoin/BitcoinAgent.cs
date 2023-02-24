@@ -158,13 +158,16 @@ public class BitcoinAgent : IDisposable
         CancellationToken cT)
     {
         BlockGraph? graph = null;
+        int retryAttempts = 0;
 
         try
         {
             await strategy.ExecuteAsync(
                 async (context, cT) =>
                 {
+                    retryAttempts++;
                     graph = await GetGraph(height, utxos, dbContextLock, cT);
+                    graph.Stats.Retries = retryAttempts;
                 },
                 new Context()
                     .SetLogger<Orchestrator>(_logger)

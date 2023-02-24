@@ -11,6 +11,11 @@ public class BlockStatistics
     public int Weight { get; }
     public int TransactionsCount { get; }
 
+    /// <summary>
+    /// Sets and gets retry attempts to contruct the block graph.
+    /// </summary>
+    public int Retries { set; get; } = 0;
+
     public TimeSpan Runtime { get { return _runtime; } }
     private TimeSpan _runtime;
     private readonly Stopwatch _stopwatch = new();
@@ -113,6 +118,7 @@ public class BlockStatistics
             "Size",
             "StrippedSize",
             "Weight",
+            "Retries",
             "BlockTxCount",
             "BlockTxInputsCount",
             "BlockTxOutputsCount",
@@ -139,6 +145,7 @@ public class BlockStatistics
             Size.ToString(),
             StrippedSize.ToString(),
             Weight.ToString(),
+            Retries.ToString(),
             TransactionsCount.ToString(),
             InputTxCount.ToString(),
             OutputTxCount.ToString(),
