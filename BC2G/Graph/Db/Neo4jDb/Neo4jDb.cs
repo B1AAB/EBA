@@ -1,5 +1,7 @@
 ﻿using BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
+using Microsoft.Extensions.Logging;
+
 using Neo4j.Driver;
 
 namespace BC2G.Graph.Db.Neo4jDb;
@@ -77,6 +79,18 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                     $"{Options.Neo4j.BatchesFilename}");
             batches = new List<BatchInfo>() { batch };
         }
+
+        if (!batches.Any())
+        {
+            _logger.LogInformation("No batch found in {f}.", Options.Neo4j.BatchesFilename);
+            return;
+        }
+
+        _logger.LogInformation(
+            "{batchName} Starting to process {n} batches found in the batch file {f}.",
+            string.IsNullOrEmpty(batchName) ? $"Given batch name is {batchName}" : "No batch name is given.",
+            batches.Count(),
+            Options.Neo4j.BatchesFilename);
 
         foreach (var batch in batches)
         {
