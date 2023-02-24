@@ -1,4 +1,6 @@
-﻿namespace BC2G.Blockchains.Bitcoin;
+﻿using BC2G.Blockchains.Bitcoin.Model;
+
+namespace BC2G.Blockchains.Bitcoin;
 
 public class BitcoinOrchestrator : IBlockchainOrchestrator
 {
@@ -117,19 +119,13 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, cT);
 
         cT.ThrowIfCancellationRequested();
+        var exceptionThrown = false;
         var dbContextLock = new object();
         var dbLock = new object();
         var utxos = new ConcurrentDictionary<string, Utxo>();
         var barrier = new Barrier(0, (barrier) =>
         {
-            _logger.LogInformation("Committing in-memory UTXO to database.");
-            DatabaseContext.OptimisticAddOrUpdate(
-                dbLock,
-                utxos.Values,
-                _host.Services.GetRequiredService<IDbContextFactory<DatabaseContext>>(),
-                _host.Services.GetRequiredService<ILogger<DatabaseContext>>());
-            utxos.Clear();
-            _logger.LogInformation("In-memory UTXO cleared.");
+            CommitInMemUtxo(utxos, dbLock);
         });
 
         try
@@ -183,6 +179,11 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
                     _loopCancellationToken.ThrowIfCancellationRequested();
                 });
         }
+        catch (Exception)
+        {
+            exceptionThrown = true;
+            throw;
+        }
         finally
         {
             // Do not pass the cancellation token to the following call, 
@@ -204,7 +205,22 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
             blocksQueue.Serialize();
             _logger.LogInformation("Serialized the updated list of blocks-to-process.");
+
+            if (!exceptionThrown)
+                CommitInMemUtxo(utxos, dbLock);
         }
+    }
+
+    private void CommitInMemUtxo(ConcurrentDictionary<string, Utxo> utxos, object dbLock)
+    {
+        _logger.LogInformation("Committing in-memory UTXO to database.");
+        DatabaseContext.OptimisticAddOrUpdate(
+            dbLock,
+            utxos.Values,
+            _host.Services.GetRequiredService<IDbContextFactory<DatabaseContext>>(),
+            _host.Services.GetRequiredService<ILogger<DatabaseContext>>());
+        utxos.Clear();
+        _logger.LogInformation("In-memory UTXO cleared.");
     }
 
     private async Task<bool> TryProcessBlock(
