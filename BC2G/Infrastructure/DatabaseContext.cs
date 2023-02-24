@@ -77,7 +77,7 @@ public class DatabaseContext : DbContext
                 },
                 () =>
                 {
-                    logger.LogInformation(
+                    logger.LogWarning(
                         "Failed optimistically adding UTXOs. " +
                         "This could happen if the database already contained the UTXOs. " +
                         "Are you repeating a traverse? " +
