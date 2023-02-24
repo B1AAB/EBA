@@ -208,11 +208,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             _batches = await DeserializeBatchesAsync();
 
         if (_batches.Count == 0 || _batches[^1].GetTotalCount() >= _maxEntitiesPerBatch)
-        {
-            _batches.Add(new BatchInfo(
-                (_batches.Count == 0 ? 0 : _batches.Count + 1).ToString(),
-                Options.WorkingDir, types));
-        }
+            _batches.Add(new BatchInfo(_batches.Count.ToString(), Options.WorkingDir, types));
 
         return _batches[^1];
     }
