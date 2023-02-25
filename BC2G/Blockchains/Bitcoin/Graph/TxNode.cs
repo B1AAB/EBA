@@ -52,6 +52,16 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         return new TxNode(BitcoinAgent.Coinbase);
     }
 
+    public static new string[] GetFeaturesName()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override double[] GetFeatures()
+    {
+        throw new NotImplementedException();
+    }
+
     public int CompareTo(TxNode? other)
     {
         throw new NotImplementedException();
