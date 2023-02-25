@@ -16,12 +16,12 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<double>? _graphSampleRootNodeSelectProb;
     private readonly Option<string>? _workingDirOption;
     private readonly Option<string>? _statusFilenameOption;
+    private readonly Option<string>? _batchFilenameOption;
 
     public OptionsBinder(
         Option<int>? fromOption = null,
         Option<int?>? toOption = null,
         Option<int>? granularityOption = null,
-        Option<bool>? skipGraphLoadOption = null,
         Option<Uri>? bitcoinClientUri = null,
         Option<int>? graphSampleCountOption = null,
         Option<int>? graphSampleHopOption = null,
@@ -32,7 +32,8 @@ internal class OptionsBinder : BinderBase<Options>
         Option<GraphSampleMode>? graphSampleModeOption = null,
         Option<double>? graphSampleRootNodeSelectProb = null,
         Option<string>? workingDirOption = null,
-        Option<string>? statusFilenameOption = null)
+        Option<string>? statusFilenameOption = null,
+        Option<string>? batchFilenameOption = null)
     {
         _fromOption = fromOption;
         _toOption = toOption;
@@ -48,6 +49,7 @@ internal class OptionsBinder : BinderBase<Options>
         _graphSampleRootNodeSelectProb = graphSampleRootNodeSelectProb;
         _workingDirOption = workingDirOption;
         _statusFilenameOption = statusFilenameOption;
+        _batchFilenameOption = batchFilenameOption;
     }
 
     protected override Options GetBoundValue(BindingContext c)
@@ -90,7 +92,7 @@ internal class OptionsBinder : BinderBase<Options>
 
         var neo4jOps = new Neo4jOptions()
         {
-            BatchesFilename = Path.Join(wd, defs.Neo4j.BatchesFilename)
+            BatchesFilename = GetValue(Path.Join(wd, defs.Neo4j.BatchesFilename), _batchFilenameOption, c),
         };
 
         var options = new Options()

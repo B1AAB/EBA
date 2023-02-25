@@ -69,6 +69,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         if (string.IsNullOrEmpty(batchName))
         {
             batches = _batches;
+            _logger.LogInformation("No batch name is given, processing all the batches in the given batch file.");
         }
         else
         {
@@ -78,6 +79,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                     $"A batch named {batchName} not found in " +
                     $"{Options.Neo4j.BatchesFilename}");
             batches = new List<BatchInfo>() { batch };
+            _logger.LogInformation("Given batch name is {batchName}.", batchName);
         }
 
         if (!batches.Any())
@@ -87,10 +89,8 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         }
 
         _logger.LogInformation(
-            "{batchName} Starting to process {n} batches found in the batch file {f}.",
-            string.IsNullOrEmpty(batchName) ? $"Given batch name is {batchName}" : "No batch name is given.",
-            batches.Count(),
-            Options.Neo4j.BatchesFilename);
+            "Processing {n:n0} batch(es) found in {f}.", 
+            batches.Count(), Options.Neo4j.BatchesFilename);
 
         foreach (var batch in batches)
         {

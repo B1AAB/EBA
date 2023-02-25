@@ -190,13 +190,22 @@ internal class Cli
 
     private Command GetImportCmd(Options defOps, Func<Options, Task> handlerAsync)
     {
+        var batchFilenameOption = new Option<string>(
+            name: "--batch-filename",
+            description: "...")
+        {
+            IsRequired = true
+        };
+
         var cmd = new Command(
             name: "import",
             description: "loads the graph from the CSV files " +
             "created while traversing the blockchain. " +
             "This command should be used when " +
             "--skip-graph-load flag was used.")
-        { };
+        {
+            batchFilenameOption
+        };
 
         cmd.SetHandler(async (options) =>
         {
@@ -204,7 +213,8 @@ internal class Cli
         },
         new OptionsBinder(
             workingDirOption: _workingDirOption,
-            statusFilenameOption: _statusFilenameOption));
+            statusFilenameOption: _statusFilenameOption,
+            batchFilenameOption: batchFilenameOption));
 
         return cmd;
     }
