@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Blockchains.Bitcoin.Graph;
 
-public class BlockGraph : GraphBase, IEquatable<BlockGraph>
+public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 {
     public long Height { get; }
     public uint Timestamp { get; }
@@ -14,7 +14,6 @@ public class BlockGraph : GraphBase, IEquatable<BlockGraph>
     /// </summary>
     public double TotalFee { get { return _totalFee; } }
     private double _totalFee;
-
 
     private readonly TransactionGraph _coinbaseTxGraph;
 
@@ -164,69 +163,32 @@ public class BlockGraph : GraphBase, IEquatable<BlockGraph>
         }
     }
 
-    private void AddOrUpdateEdge(C2TEdge edge)
+    public new void AddOrUpdateEdge(C2TEdge edge)
     {
-        AddOrUpdateEdge(edge, (key, oldValue) => edge.Update(oldValue.Value));
+        base.AddOrUpdateEdge(edge);
         Stats.IncrementEdgeType(edge.Type, edge.Value);
     }
 
-    public void AddOrUpdateEdge(T2TEdge edge)
+    public new void AddOrUpdateEdge(T2TEdge edge)
     {
-        AddOrUpdateEdge(edge, (_, oldEdge) => { return T2TEdge.Update((T2TEdge)oldEdge, edge); });
+        base.AddOrUpdateEdge(edge);
         Stats.IncrementEdgeType(edge.Type, edge.Value);
     }
 
-    public void AddOrUpdateEdge(S2SEdge edge)
+    public new void AddOrUpdateEdge(S2SEdge edge)
     {
-        /// Note that the hashkey is invariant to the edge value.
-        /// If this is changed, the `Equals` method needs to be
-        /// updated accordingly.
-
-        AddOrUpdateEdge(edge, (key, oldValue) => edge.Update(oldValue.Value));
-
+        base.AddOrUpdateEdge(edge);
         Stats.IncrementEdgeType(edge.Type, edge.Value);
     }
 
     public bool Equals(BlockGraph? other)
     {
-        if (other == null)
-            return false;
-
-        if (ReferenceEquals(this, other))
-            return true;
-
-        var otherNodes = other.Nodes;
-        if (NodeCount != other.NodeCount)
-        //if (_nodes.Count != otherNodes.Count)
-            return false;
-
-        //var otherEdges = other.Edges;
-        //if (_edges.Count != otherEdges.Count)
-        if (EdgeCount != other.EdgeCount)
-            return false;
-
-        var equal = Enumerable.SequenceEqual(
-            Nodes.OrderBy(x => x),
-            otherNodes.OrderBy(x => x));
+        var equal = base.Equals(other);
 
         if (!equal)
             return false;
 
         throw new NotImplementedException();
-
-       /* var hashes = new HashSet<int>(_edges.Keys);
-        foreach (var edge in otherEdges)
-            /// Note that this hash method does not include
-            /// edge value in the computation of hash key;
-            /// this is in accordance with home with _edges.Keys
-            /// are generated in the AddEdge method.
-            if (!hashes.Remove(edge.GetHashCodeInt(true)))
-                return false;
-
-        if (hashes.Count > 0)
-            return false;
-
-        return true;*/
     }
 
     public override bool Equals(object? obj)
