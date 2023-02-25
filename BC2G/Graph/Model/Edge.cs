@@ -66,7 +66,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
             nameof(BlockHeight) };
     }
 
-    public double[] GetFeatures()
+    public virtual double[] GetFeatures()
     {
         return new double[] {
             Value,

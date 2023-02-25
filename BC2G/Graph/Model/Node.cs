@@ -53,7 +53,7 @@ public class Node : INode
         return new string[] { nameof(ScriptType), nameof(InDegree), nameof(OutDegree) };
     }
 
-    public double[] GetFeatures()
+    public virtual double[] GetFeatures()
     {
         return new double[] { InDegree, OutDegree };
     }

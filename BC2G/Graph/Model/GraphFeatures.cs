@@ -16,6 +16,11 @@ public class GraphFeatures
 
     public GraphFeatures(GraphBase graph)
     {
+        // Note that this method only returns features for a 
+        // graph that consists of script nodes only, and 
+        // S2S relationships. It cannot return features for
+        // heterogenous graphs.
+
         var nodeFeatures = new List<double[]>();
         var nodeIdToIdx = new Dictionary<string, int>();
         foreach (var node in graph.Nodes)

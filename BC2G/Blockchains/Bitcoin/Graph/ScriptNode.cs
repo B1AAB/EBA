@@ -42,7 +42,14 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         return new ScriptNode(BitcoinAgent.Coinbase);
     }
 
-    public new double[] GetFeatures()
+    public static new string[] GetFeaturesName()
+    {
+        return
+            new string[] { nameof(ScriptType) }
+            .Concat(Node.GetFeaturesName()).ToArray();
+    }
+
+    public override double[] GetFeatures()
     {
         return
             new double[] { (double)ScriptType }
