@@ -104,7 +104,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
             return await result.ToListAsync();
         });
 
-        var g = new GraphBase();
+        var g = new BitcoinGraph();
 
         foreach (var hop in samplingResult)
         {
@@ -133,7 +133,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
         using var session = driver.AsyncSession(
             x => x.WithDefaultAccessMode(AccessMode.Read));
 
-        var rndNodesResult = await session.ExecuteReadAsync(async x =>
+        var randomNodes = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
                 $"Match (source:{ScriptMapper.labels})-[edge:{EdgeType.Transfer}]->(target:{ScriptMapper.labels}) " +
@@ -143,8 +143,9 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
             return await result.ToListAsync();
         });
 
-        var g = new GraphBase();
-        foreach (var n in rndNodesResult)
+        var g = new BitcoinGraph();
+
+        foreach (var n in randomNodes)
         {
             g.GetOrAddNode(new ScriptNode(n.Values["source"].As<Neo4j.Driver.INode>()));
             g.GetOrAddNode(new ScriptNode(n.Values["target"].As<Neo4j.Driver.INode>()));
