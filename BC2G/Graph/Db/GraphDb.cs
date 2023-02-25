@@ -498,11 +498,11 @@ public class GraphDb : IDisposable
                 return false;
 
             rndGraph.AddLabel(1);
-            rndGraph.GetFeatures(Path.Join(baseOutputDir, "random_edges"));
+            rndGraph.WriteFeatures(Path.Join(baseOutputDir, "random_edges"));
         }
 
         graph.AddLabel(0);
-        graph.GetFeatures(Path.Join(baseOutputDir, "graph"));
+        graph.WriteFeatures(Path.Join(baseOutputDir, "graph"));
 
         return true;
     }
@@ -669,7 +669,7 @@ static class GraphBaseExte
     {
         return g.GetOrAddNode(new ScriptNode(node));
     }*/
-
+    
     public static S2SEdge GetOrAddEdge(this GraphBase g, IRelationship e)
     {
         var source = g.GetOrAddNode(new ScriptNode(e.StartNodeElementId));

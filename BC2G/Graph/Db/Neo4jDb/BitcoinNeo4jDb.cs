@@ -4,8 +4,6 @@ namespace BC2G.Graph.Db.Neo4jDb;
 
 public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
 {
-    public static string Coinbase { get { return "Coinbase"; } }
-
     public BitcoinNeo4jDb(Options options, ILogger<BitcoinNeo4jDb> logger) :
         base(options, logger, new MapperFactory())
     { }
@@ -68,11 +66,11 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
                 return false;
 
             rndGraph.AddLabel(1);
-            rndGraph.GetFeatures(Path.Join(baseOutputDir, "random_edges"));
+            rndGraph.WriteFeatures(Path.Join(baseOutputDir, "random_edges"));
         }
 
         graph.AddLabel(0);
-        graph.GetFeatures(Path.Join(baseOutputDir, "graph"));
+        graph.WriteFeatures(Path.Join(baseOutputDir, "graph"));
 
         return true;
     }

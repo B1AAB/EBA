@@ -152,7 +152,7 @@ public class GraphBase : IEquatable<GraphBase>
         return new GraphFeatures(this);
     }
 
-    public void GetFeatures(
+    public void WriteFeatures(
         string outputDir,
         string nodeFeaturesFilename = "node_features.tsv",
         string edgeFeaturesFilename = "edge_features.tsv",
