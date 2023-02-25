@@ -79,7 +79,6 @@ public class Startup
     private static void ConfigureServices(IServiceCollection services, Options options)
     {
         services.AddSingleton(options);
-        services.AddSingleton<GraphDb>();
         services.AddSingleton<IGraphDb<BlockGraph>, BitcoinNeo4jDb>();
         services.AddSingleton<BitcoinOrchestrator>();
 

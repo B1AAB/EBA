@@ -188,6 +188,19 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
     {
         using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
 
+        /* TODO:
+         * - create constraints on address and script type so lookup could be much faster. 
+         * -- check if constraints already exist or not, and add if missing. 
+         * 
+         * - When using MERGE or MATCH with LOAD CSV, make sure you have an index or a 
+         * unique constraint on the property that you are merging on. This will 
+         * ensure that the query executes in a performant way.
+         * 
+         * - make sure apoc and all the necessary plug-ins are installed on the given
+         * Neo4j database at the time of initialization. Currently if any of the plug 
+         * ins are not installed it fails at the load time. 
+         */
+
         // TODO: do not create contraints if they already exist,
         // otherwise you'll get the following error: 
         //
