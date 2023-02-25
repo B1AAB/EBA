@@ -37,7 +37,7 @@ internal class Program
 
         try
         {
-            var logger = Log.Logger;
+            var logger = Log.Logger;            
             var orchestrator = new Orchestrator(cancellationToken);
             Console.CancelKeyPress += (sender, e) =>
             {

@@ -1,9 +1,5 @@
 ﻿using BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-using Microsoft.Extensions.Logging;
-
-using Neo4j.Driver;
-
 namespace BC2G.Graph.Db.Neo4jDb;
 
 public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
@@ -61,7 +57,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     public async Task ImportAsync(string batchName = "")
     {
         if (Driver is null)
-            await SetupDriver(Options.Neo4j);
+            await Setup(Options.Neo4j);
 
         _batches = await DeserializeBatchesAsync();
         IEnumerable<BatchInfo> batches;
@@ -92,20 +88,33 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             "Processing {n:n0} batch(es) found in {f}.", 
             batches.Count(), Options.Neo4j.BatchesFilename);
 
+        var c = 0;
+        var counter = string.Empty;
+
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+
         foreach (var batch in batches)
         {
+            _logger.LogInformation("Processing batch {b} {c}.", batch.Name, $"({++c:n0}/{batches.Count():n0})");
             foreach (var type in batch.TypesInfo)
             {
-                _logger.LogInformation("Importing type `{t}` of batch `{b}`.", type.Key, batch.Name);
+                _logger.LogInformation("Importing type {t}.", type.Key);
                 var mapper = _mapperFactory.GetMapperBase(type.Key);
                 await ExecuteQueryAsync(mapper, type.Value.Filename);
-                _logger.LogInformation("Importing type `{t}` of batch `{b}` finished.", type.Key, batch.Name);
+                _logger.LogInformation("Importing type {t} finished.", type.Key);
             }
         }
+
+        stopwatch.Stop();
+        _logger.LogInformation("Successfully finished import in {et}.", stopwatch.Elapsed);
     }
 
     public async Task<bool> TrySampleAsync()
     {
+        if (Driver is null)
+            await Setup(Options.Neo4j);
+
         var sampledGraphsCounter = 0;
         var attempts = 0;
         var baseOutputDir = Path.Join(Options.WorkingDir, $"sampled_graphs_{Utilities.GetTimestamp()}");
@@ -163,7 +172,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         }
     }
 
-    private async Task SetupDriver(Neo4jOptions options)
+    public virtual async Task Setup(Neo4jOptions options)
     {
         Driver = GraphDatabase.Driver(
             options.Uri,
@@ -177,11 +186,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         {
             throw;
         }
-
-        await SetupAsync(Driver);
     }
-
-    public virtual async Task SetupAsync(IDriver driver) { }
 
     private async Task ExecuteQueryAsync(IMapperBase mapper, string filename)
     {
@@ -240,6 +245,9 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     private async Task<List<ScriptNode>> GetRandomNodes(
         int nodesCount, double rootNodesSelectProb = 0.1)
     {
+        if(Driver is null)
+            throw new ArgumentNullException(nameof(Driver));
+
         using var session = Driver.AsyncSession(
             x => x.WithDefaultAccessMode(AccessMode.Read));
 
