@@ -1,8 +1,6 @@
-﻿using BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
+﻿namespace BC2G.Graph.Db.Neo4jDb;
 
-namespace BC2G.Graph.Db.Neo4jDb;
-
-public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
+public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 {
     protected Options Options { get; }
 
@@ -83,7 +81,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         }
 
         _logger.LogInformation(
-            "Processing {n:n0} batch(es) found in {f}.", 
+            "Processing {n:n0} batch(es) found in {f}.",
             batches.Count(), Options.Neo4j.BatchesFilename);
 
         var c = 0;
@@ -99,7 +97,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             {
                 _logger.LogInformation("Importing type {t}.", type.Key);
                 var mapper = _mapperFactory.GetMapperBase(type.Key);
-                await ExecuteQueryAsync(driver, mapper, type.Value.Filename);
+                await ExecuteLoadQueryAsync(driver, mapper, type.Value.Filename);
                 _logger.LogInformation("Importing type {t} finished.", type.Key);
             }
         }
@@ -126,7 +124,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 Options.GraphSample.Count - sampledGraphsCounter,
                 attempts, Options.GraphSample.MaxAttempts);
 
-            var rndRootNodes = await Neo4jDb<T>.GetRandomNodes(
+            var rndRootNodes = await GetRandomNodes(
                 driver,
                 Options.GraphSample.Count - sampledGraphsCounter,
                 Options.GraphSample.RootNodeSelectProb);
@@ -188,7 +186,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         return driver;
     }
 
-    private async Task ExecuteQueryAsync(IDriver driver, IMapperBase mapper, string filename)
+    private async Task ExecuteLoadQueryAsync(IDriver driver, IMapperBase mapper, string filename)
     {
         // Localization, if needed.
         // Neo4j import needs files to be placed in a particular folder 
@@ -242,66 +240,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             Options.Neo4j.BatchesFilename);
     }
 
-    private static async Task<List<ScriptNode>> GetRandomNodes(
-        IDriver driver, int nodesCount, double rootNodesSelectProb = 0.1)
-    {
-        using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
-
-        var rndNodeVar = "rndScript";
-        var rndRecords = await session.ExecuteReadAsync(async x =>
-        {
-            var result = await x.RunAsync(
-                $"MATCH ({rndNodeVar}:{ScriptMapper.labels})-[:{EdgeType.Transfer}]->() " +
-                $"WHERE rand() < {rootNodesSelectProb} " +
-                $"RETURN {rndNodeVar} LIMIT {nodesCount}");
-
-            return await result.ToListAsync();
-        });
-
-        var rndNodes = new List<ScriptNode>();
-        foreach (var n in rndRecords)
-            rndNodes.Add(new ScriptNode(n.Values[rndNodeVar].As<Neo4j.Driver.INode>()));
-
-        return rndNodes;
-    }
-
-    private async Task<bool> TrySampleNeighborsAsync(IDriver driver, ScriptNode rootNode, string baseOutputDir)
-    {
-        var graph = await GetNeighborsAsync(driver, rootNode.Address, Options.GraphSample.Hops);
-
-        if (!CanUseGraph(
-            graph, tolerance: 0,
-            minNodeCount: Options.GraphSample.MinNodeCount,
-            maxNodeCount: Options.GraphSample.MaxNodeCount,
-            minEdgeCount: Options.GraphSample.MinEdgeCount,
-            maxEdgeCount: Options.GraphSample.MaxEdgeCount))
-            return false;
-
-
-        if (Options.GraphSample.Mode == GraphSampleMode.GraphRndEdgePair)
-        {
-            var rndGraph = await GetRandomEdges(driver, graph.EdgeCount);
-
-            if (!CanUseGraph(
-                rndGraph,
-                minNodeCount: Options.GraphSample.MinNodeCount,
-                maxNodeCount: graph.GetNodeCount<ScriptNode>(),
-                minEdgeCount: Options.GraphSample.MinEdgeCount,
-                maxEdgeCount: graph.EdgeCount))
-                return false;
-
-            rndGraph.AddLabel(1);
-            rndGraph.GetFeatures(Path.Join(baseOutputDir, "random_edges"));
-        }
-
-        graph.AddLabel(0);
-        graph.GetFeatures(Path.Join(baseOutputDir, "graph"));
-
-
-        return true;
-    }
-
-    private static bool CanUseGraph(
+    public static bool CanUseGraph(
         GraphBase g,
         int minNodeCount = 3, int maxNodeCount = 200,
         int minEdgeCount = 3, int maxEdgeCount = 200,
@@ -324,81 +263,16 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         return true;
     }
 
-    private static async Task<GraphBase> GetNeighborsAsync(
-        IDriver driver, string rootScriptAddress, int maxHops)
-    {
-        using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
 
-        var samplingResult = await session.ExecuteReadAsync(async x =>
-        {
-            var result = await x.RunAsync(
-                $"MATCH path = (p: {ScriptMapper.labels} {{ Address: \"{rootScriptAddress}\"}}) -[:{EdgeType.Transfer} * 1..{maxHops}]->(p2: {ScriptMapper.labels}) " +
-                "WITH p, [n in nodes(path) where n <> p | n] as nodes, relationships(path) as relationships " +
-                "WITH collect(distinct p) as root, size(nodes) as cnt, collect(nodes[-1]) as nodes, collect(distinct relationships[-1]) as relationships " +
-                "RETURN root, nodes, relationships");
-
-            // Note:
-            // Neo4j has apoc.neighbors.byhop method that returns
-            // neighbors at n-hop distance. However, this method
-            // does not return relationships, therefore, the above
-            // cypher query is used instead.
-            //
-            // TODO:
-            // Modify the above cypher query to return only one root,
-            // it currently returns one root per hop where root nodes
-            // of all the hops are equal.
-
-            return await result.ToListAsync();
-        });
-
-        var g = new GraphBase();
-
-        foreach (var hop in samplingResult)
-        {
-            var root = new ScriptNode(hop.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
-            if (root is null)
-                continue;
-
-            g.GetOrAddNode(root);
-
-            // It is better to add nodes like this, and not just as part of 
-            // adding edge, because `nodes` has all the node properties for each 
-            // node, but `relationships` only contain their IDs.
-            foreach (var node in hop.Values["nodes"].As<List<Neo4j.Driver.INode>>())
-                g.GetOrAddNode(new ScriptNode(node));
-
-            foreach (var relationship in hop.Values["relationships"].As<List<IRelationship>>())
-                g.GetOrAddEdge(relationship);
-        }
-
-        return g;
-    }
-
-    private static async Task<GraphBase> GetRandomEdges(
-        IDriver driver, int edgeCount, double edgeSelectProb = 0.2)
-    {
-        using var session = driver.AsyncSession(
-            x => x.WithDefaultAccessMode(AccessMode.Read));
-
-        var rndNodesResult = await session.ExecuteReadAsync(async x =>
-        {
-            var result = await x.RunAsync(
-                $"Match (source:{ScriptMapper.labels})-[edge:{EdgeType.Transfer}]->(target:{ScriptMapper.labels}) " +
-                $"where rand() < {edgeSelectProb} " +
-                $"return source, edge, target limit {edgeCount}");
-
-            return await result.ToListAsync();
-        });
-
-        var g = new GraphBase();
-        foreach (var n in rndNodesResult)
-        {
-            g.GetOrAddNode(new ScriptNode(n.Values["source"].As<Neo4j.Driver.INode>()));
-            g.GetOrAddNode(new ScriptNode(n.Values["target"].As<Neo4j.Driver.INode>()));
-            g.GetOrAddEdge(n.Values["edge"].As<IRelationship>());
-        }
-        return g;
-    }
+    // TODO: Make the following methods more generic, e.g., replace ScriptNode with INode
+    public abstract Task<List<ScriptNode>> GetRandomNodes(
+        IDriver driver, int nodesCount, double rootNodesSelectProb = 0.1);
+    public abstract Task<GraphBase> GetNeighborsAsync(
+        IDriver driver, string rootScriptAddress, int maxHops);
+    public abstract Task<GraphBase> GetRandomEdges(
+        IDriver driver, int edgeCount, double edgeSelectProb = 0.2);
+    public abstract Task<bool> TrySampleNeighborsAsync(
+        IDriver driver, ScriptNode rootNode, string baseOutputDir);
 
     public void Dispose()
     {
