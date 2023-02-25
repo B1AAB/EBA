@@ -10,15 +10,13 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
         base(options, logger, new MapperFactory())
     { }
 
-    public override async Task Setup(Neo4jOptions options)
+    public override async Task<IDriver> GetDriver(Neo4jOptions options)
     {
-        await base.Setup(options);
+        var driver = await base.GetDriver(options);
+        await EnsureCoinbaseNodeAsync(driver);
+        await EnsureConstraintsAsync(driver);
 
-        if (Driver is not null)
-        {
-            await EnsureCoinbaseNodeAsync(Driver);
-            await EnsureConstraintsAsync(Driver);
-        }
+        return driver;
     }
 
     private static async Task EnsureCoinbaseNodeAsync(IDriver driver)

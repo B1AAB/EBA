@@ -4,7 +4,6 @@ namespace BC2G.Graph.Db.Neo4jDb;
 
 public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 {
-    protected IDriver? Driver { private set; get; }
     protected Options Options { get; }
 
     /// <summary>
@@ -56,8 +55,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     /// </summary>
     public async Task ImportAsync(string batchName = "")
     {
-        if (Driver is null)
-            await Setup(Options.Neo4j);
+        var driver = await GetDriver(Options.Neo4j);
 
         _batches = await DeserializeBatchesAsync();
         IEnumerable<BatchInfo> batches;
@@ -101,7 +99,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             {
                 _logger.LogInformation("Importing type {t}.", type.Key);
                 var mapper = _mapperFactory.GetMapperBase(type.Key);
-                await ExecuteQueryAsync(mapper, type.Value.Filename);
+                await ExecuteQueryAsync(driver, mapper, type.Value.Filename);
                 _logger.LogInformation("Importing type {t} finished.", type.Key);
             }
         }
@@ -112,8 +110,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
     public async Task<bool> TrySampleAsync()
     {
-        if (Driver is null)
-            await Setup(Options.Neo4j);
+        var driver = await GetDriver(Options.Neo4j);
 
         var sampledGraphsCounter = 0;
         var attempts = 0;
@@ -129,14 +126,15 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 Options.GraphSample.Count - sampledGraphsCounter,
                 attempts, Options.GraphSample.MaxAttempts);
 
-            var rndRootNodes = await GetRandomNodes(
+            var rndRootNodes = await Neo4jDb<T>.GetRandomNodes(
+                driver,
                 Options.GraphSample.Count - sampledGraphsCounter,
                 Options.GraphSample.RootNodeSelectProb);
 
             foreach (var rootNode in rndRootNodes)
             {
                 var baseDir = Path.Join(baseOutputDir, sampledGraphsCounter.ToString());
-                if (await TrySampleNeighborsAsync(rootNode, baseDir))
+                if (await TrySampleNeighborsAsync(driver, rootNode, baseDir))
                 {
                     sampledGraphsCounter++;
                     _logger.LogInformation(
@@ -172,23 +170,25 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         }
     }
 
-    public virtual async Task Setup(Neo4jOptions options)
+    public virtual async Task<IDriver> GetDriver(Neo4jOptions options)
     {
-        Driver = GraphDatabase.Driver(
+        var driver = GraphDatabase.Driver(
             options.Uri,
             AuthTokens.Basic(options.User, options.Password));
 
         try
         {
-            await Driver.VerifyConnectivityAsync();
+            await driver.VerifyConnectivityAsync();
         }
         catch (AggregateException)
         {
             throw;
         }
+
+        return driver;
     }
 
-    private async Task ExecuteQueryAsync(IMapperBase mapper, string filename)
+    private async Task ExecuteQueryAsync(IDriver driver, IMapperBase mapper, string filename)
     {
         // Localization, if needed.
         // Neo4j import needs files to be placed in a particular folder 
@@ -207,7 +207,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         var filename4Query = Options.Neo4j.CypherImportPrefix + Path.GetFileName(localFilename);
 
-        using var session = Driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
+        using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
         var queryResult = await session.ExecuteWriteAsync(async x =>
         {
             IResultCursor cursor = await x.RunAsync(mapper.GetQuery(filename4Query));
@@ -242,14 +242,10 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             Options.Neo4j.BatchesFilename);
     }
 
-    private async Task<List<ScriptNode>> GetRandomNodes(
-        int nodesCount, double rootNodesSelectProb = 0.1)
+    private static async Task<List<ScriptNode>> GetRandomNodes(
+        IDriver driver, int nodesCount, double rootNodesSelectProb = 0.1)
     {
-        if(Driver is null)
-            throw new ArgumentNullException(nameof(Driver));
-
-        using var session = Driver.AsyncSession(
-            x => x.WithDefaultAccessMode(AccessMode.Read));
+        using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
 
         var rndNodeVar = "rndScript";
         var rndRecords = await session.ExecuteReadAsync(async x =>
@@ -269,9 +265,9 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         return rndNodes;
     }
 
-    private async Task<bool> TrySampleNeighborsAsync(ScriptNode rootNode, string baseOutputDir)
+    private async Task<bool> TrySampleNeighborsAsync(IDriver driver, ScriptNode rootNode, string baseOutputDir)
     {
-        var graph = await GetNeighborsAsync(rootNode.Address, Options.GraphSample.Hops);
+        var graph = await GetNeighborsAsync(driver, rootNode.Address, Options.GraphSample.Hops);
 
         if (!CanUseGraph(
             graph, tolerance: 0,
@@ -284,7 +280,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         if (Options.GraphSample.Mode == GraphSampleMode.GraphRndEdgePair)
         {
-            var rndGraph = await GetRandomEdges(graph.EdgeCount);
+            var rndGraph = await GetRandomEdges(driver, graph.EdgeCount);
 
             if (!CanUseGraph(
                 rndGraph,
@@ -328,11 +324,10 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         return true;
     }
 
-    private async Task<GraphBase> GetNeighborsAsync(
-        string rootScriptAddress, int maxHops)
+    private static async Task<GraphBase> GetNeighborsAsync(
+        IDriver driver, string rootScriptAddress, int maxHops)
     {
-        using var session = Driver.AsyncSession(
-            x => x.WithDefaultAccessMode(AccessMode.Read));
+        using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
 
         var samplingResult = await session.ExecuteReadAsync(async x =>
         {
@@ -379,10 +374,10 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         return g;
     }
 
-    private async Task<GraphBase> GetRandomEdges(
-        int edgeCount, double edgeSelectProb = 0.2)
+    private static async Task<GraphBase> GetRandomEdges(
+        IDriver driver, int edgeCount, double edgeSelectProb = 0.2)
     {
-        using var session = Driver.AsyncSession(
+        using var session = driver.AsyncSession(
             x => x.WithDefaultAccessMode(AccessMode.Read));
 
         var rndNodesResult = await session.ExecuteReadAsync(async x =>
