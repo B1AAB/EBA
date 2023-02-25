@@ -53,7 +53,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     /// </summary>
     public async Task ImportAsync(string batchName = "")
     {
-        var driver = await GetDriver(Options.Neo4j);
+        using var driver = await GetDriver(Options.Neo4j);
 
         _batches = await DeserializeBatchesAsync();
         IEnumerable<BatchInfo> batches;
