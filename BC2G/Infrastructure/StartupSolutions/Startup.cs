@@ -79,7 +79,7 @@ public class Startup
     private static void ConfigureServices(IServiceCollection services, Options options)
     {
         services.AddSingleton(options);
-        services.AddSingleton<IGraphDb<BlockGraph>, BitcoinNeo4jDb>();
+        services.AddSingleton<IGraphDb<BitcoinGraph>, BitcoinNeo4jDb>();
         services.AddSingleton<BitcoinOrchestrator>();
 
         // Passing BitcoinAgent type as the generic argument

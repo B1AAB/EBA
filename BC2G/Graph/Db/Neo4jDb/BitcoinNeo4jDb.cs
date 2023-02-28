@@ -2,7 +2,7 @@
 
 namespace BC2G.Graph.Db.Neo4jDb;
 
-public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
+public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 {
     public BitcoinNeo4jDb(Options options, ILogger<BitcoinNeo4jDb> logger) :
         base(options, logger, new BitcoinStrategyFactory())
