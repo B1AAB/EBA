@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-internal class TxMapper : ModelMapper<T2TEdge>
+internal class TxStrategy : ModelStrategy<T2TEdge>
 {
     public const string labels = "Tx";
 
@@ -17,7 +17,7 @@ internal class TxMapper : ModelMapper<T2TEdge>
         Props.Height
     };
 
-    public TxMapper(
+    public TxStrategy(
         string workingDirectory,
         string cypherImportPrefix,
         string filename = "tmpTxImportEdges.csv") :

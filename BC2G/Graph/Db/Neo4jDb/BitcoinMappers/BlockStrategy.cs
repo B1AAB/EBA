@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-internal class BlockMapper : ModelMapper<BlockGraph>
+internal class BlockStrategy : ModelStrategy<BlockGraph>
 {
     public const string label = "Block";
 
@@ -26,7 +26,7 @@ internal class BlockMapper : ModelMapper<BlockGraph>
         Props.SumFeeEdges
     };
 
-    public BlockMapper(
+    public BlockStrategy(
         string workingDirectory,
         string importPrefix,
         //string importDirectory,

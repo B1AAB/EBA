@@ -2,10 +2,10 @@
 
 namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-public abstract class BitcoinEdgeMapper : IEdgeMapper
+public abstract class BitcoinEdgeStrategy : IEdgeMapper
 {
-    public const string csvDelimiter = BlockGraphMapper.csvDelimiter;
-    public const string labelsDelimiter = BlockGraphMapper.labelsDelimiter;
+    public const string csvDelimiter = BlockGraphStrategy.csvDelimiter;
+    public const string labelsDelimiter = BlockGraphStrategy.labelsDelimiter;
 
     public static string CreatesEdgeQuery
     {
@@ -122,7 +122,7 @@ public abstract class BitcoinEdgeMapper : IEdgeMapper
     public static string GetBlockQuery(string varName)
     {
         return
-            $"MERGE ({varName}:{BlockMapper.label} {{" +
+            $"MERGE ({varName}:{BlockStrategy.label} {{" +
             $"{Props.Height.GetLoadExp(":")}" +
             "}) ";
     }

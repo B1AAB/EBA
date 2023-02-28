@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-internal class CoinbaseMapper : ScriptMapper
+internal class CoinbaseStrategy : ScriptStrategy
 {
     /// Note that the ordre of the items in this array should 
     /// match those in the `ToCSV` method.
@@ -13,7 +13,7 @@ internal class CoinbaseMapper : ScriptMapper
         Props.Height
     };
 
-    public CoinbaseMapper(
+    public CoinbaseStrategy(
         string workingDirectory,
         string cypherImportPrefix,
         string filename = "tmpBulkImportCoinbase.csv") :
@@ -52,7 +52,7 @@ internal class CoinbaseMapper : ScriptMapper
             $"{Props.EdgeTargetAddress.GetLoadExp(":")}}}) " +
             $"SET target.{Props.EdgeTargetType.GetLoadExp("=")} " +
             $"WITH coinbase, target, {l} " +
-            $"MATCH (block:{BlockMapper.label} {{" +
+            $"MATCH (block:{BlockStrategy.label} {{" +
             $"{Props.Height.GetLoadExp(":")}" +
             $"}}) " +
             // Create edge between the script and its corresponding block

@@ -5,7 +5,7 @@ namespace BC2G.Graph.Db.Neo4jDb;
 public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
 {
     public BitcoinNeo4jDb(Options options, ILogger<BitcoinNeo4jDb> logger) :
-        base(options, logger, new MapperFactory())
+        base(options, logger, new BitcoinStrategyFactory())
     { }
 
     public override async Task<IDriver> GetDriver(Neo4jOptions options)
@@ -26,7 +26,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
         var rndRecords = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"MATCH ({rndNodeVar}:{ScriptMapper.labels})-[:{EdgeType.Transfer}]->() " +
+                $"MATCH ({rndNodeVar}:{ScriptStrategy.labels})-[:{EdgeType.Transfer}]->() " +
                 $"WHERE rand() < {rootNodesSelectProb} " +
                 $"RETURN {rndNodeVar} LIMIT {nodesCount}");
 
@@ -83,7 +83,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
         var samplingResult = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"MATCH path = (p: {ScriptMapper.labels} {{ Address: \"{rootScriptAddress}\"}}) -[:{EdgeType.Transfer} * 1..{maxHops}]->(p2: {ScriptMapper.labels}) " +
+                $"MATCH path = (p: {ScriptStrategy.labels} {{ Address: \"{rootScriptAddress}\"}}) -[:{EdgeType.Transfer} * 1..{maxHops}]->(p2: {ScriptStrategy.labels}) " +
                 "WITH p, [n in nodes(path) where n <> p | n] as nodes, relationships(path) as relationships " +
                 "WITH collect(distinct p) as root, size(nodes) as cnt, collect(nodes[-1]) as nodes, collect(distinct relationships[-1]) as relationships " +
                 "RETURN root, nodes, relationships");
@@ -134,7 +134,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
         var randomNodes = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"Match (source:{ScriptMapper.labels})-[edge:{EdgeType.Transfer}]->(target:{ScriptMapper.labels}) " +
+                $"Match (source:{ScriptStrategy.labels})-[edge:{EdgeType.Transfer}]->(target:{ScriptStrategy.labels}) " +
                 $"where rand() < {edgeSelectProb} " +
                 $"return source, edge, target limit {edgeCount}");
 
@@ -232,7 +232,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
             {
                 var result = await x.RunAsync(
                     "CREATE CONSTRAINT UniqueAddressContraint " +
-                    $"FOR (script:{ScriptMapper.labels}) " +
+                    $"FOR (script:{ScriptStrategy.labels}) " +
                     $"REQUIRE script.{Props.ScriptAddress.Name} IS UNIQUE");
             });
         }
@@ -246,7 +246,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
             await session.ExecuteWriteAsync(async x =>
             {
                 var result = await x.RunAsync(
-                    $"CREATE INDEX FOR (script:{ScriptMapper.labels}) " +
+                    $"CREATE INDEX FOR (script:{ScriptStrategy.labels}) " +
                     $"ON (script.{Props.ScriptAddress.Name})");
             });
         }
@@ -260,7 +260,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BlockGraph>
             await session.ExecuteWriteAsync(async x =>
             {
                 var result = await x.RunAsync(
-                    $"CREATE INDEX FOR (block:{BlockMapper.label})" +
+                    $"CREATE INDEX FOR (block:{BlockStrategy.label})" +
                     $" on (block.{Props.Height.Name})");
             });
         }

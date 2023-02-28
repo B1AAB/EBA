@@ -2,7 +2,7 @@
 
 namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-public class S2SEdgeMapper : BitcoinEdgeMapper
+public class S2SEdgeStrategy : BitcoinEdgeStrategy
 {
     public const string labels = "Script";
 

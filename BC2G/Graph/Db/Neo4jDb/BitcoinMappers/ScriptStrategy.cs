@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-internal class ScriptMapper : ModelMapper<S2SEdge>
+internal class ScriptStrategy : ModelStrategy<S2SEdge>
 {
     public const string labels = "Script";
 
@@ -17,7 +17,7 @@ internal class ScriptMapper : ModelMapper<S2SEdge>
         Props.Height
     };
 
-    public ScriptMapper(
+    public ScriptStrategy(
         string workingDirectory,
         string cypherImportPrefix,
         string filename = "tmpBulkImportEdges.csv") :
@@ -87,7 +87,7 @@ internal class ScriptMapper : ModelMapper<S2SEdge>
             $"END " +
             $"WITH source, target, {l} " +
             // Find the block
-            $"MATCH (block:{BlockMapper.label} {{" +
+            $"MATCH (block:{BlockStrategy.label} {{" +
             $"{Props.Height.GetLoadExp(":")}" +
             "}) " +
             // Create relationship between the block node and the scripts nodes. 

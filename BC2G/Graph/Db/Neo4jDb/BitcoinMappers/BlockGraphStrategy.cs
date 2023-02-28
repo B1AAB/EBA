@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-public class BlockGraphMapper : IGraphMapper
+public class BlockGraphStrategy : IGraphMapper
 {
     public const string label = "Block";
 

@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-public class T2TEdgeMapper : BitcoinEdgeMapper
+public class T2TEdgeStrategy : BitcoinEdgeStrategy
 {
     public const string labels = "Tx";
 

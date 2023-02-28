@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-internal abstract class ModelMapper<T>
+internal abstract class ModelStrategy<T>
 {
     public const string csvDelimiter = "\t";
     public const string labelsDelimiter = ":";
@@ -24,7 +24,7 @@ internal abstract class ModelMapper<T>
     public string CypherImportPrefix { get; }
     public string WorkingDirectory { get; }
 
-    public ModelMapper(
+    public ModelStrategy(
         string workingDirectory,
         string cypherImportPrefix,
         string filename)

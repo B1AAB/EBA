@@ -2,7 +2,7 @@
 
 namespace BC2G.Graph.Db.Neo4jDb;
 
-public class BatchInfo
+public class Batch
 {
     public string Name { get; }
     public string DefaultDirectory { get; }
@@ -15,7 +15,7 @@ public class BatchInfo
 
 
     [JsonConstructor]
-    public BatchInfo(
+    public Batch(
         string name,
         string defaultDirectory,
         ImmutableDictionary<string, TypeInfo> typesInfo)
@@ -25,7 +25,7 @@ public class BatchInfo
         _typesInfo = new Dictionary<string, TypeInfo>(typesInfo);
     }
 
-    public BatchInfo(string name, string defaultDirectory, List<string> types)
+    public Batch(string name, string defaultDirectory, List<string> types)
     {
         Name = name;
         DefaultDirectory = defaultDirectory;

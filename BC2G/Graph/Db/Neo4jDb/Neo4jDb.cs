@@ -11,18 +11,18 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     /// Ref: https://neo4j.com/blog/bulk-data-import-neo4j-3-0/
     /// </summary>
     private const int _maxEntitiesPerBatch = 80000;
-    private List<BatchInfo> _batches = new();
+    private List<Batch> _batches = new();
 
-    private readonly IMapperFactory _mapperFactory;
+    private readonly IStrategyFactory _strategyFactory;
 
     private readonly ILogger<Neo4jDb<T>> _logger;
     private bool _disposed = false;
 
-    public Neo4jDb(Options options, ILogger<Neo4jDb<T>> logger, IMapperFactory mapperFactory)
+    public Neo4jDb(Options options, ILogger<Neo4jDb<T>> logger, IStrategyFactory strategyFactory)
     {
         Options = options;
         _logger = logger;
-        _mapperFactory = mapperFactory;
+        _strategyFactory = strategyFactory;
     }
 
     /// <summary>
@@ -34,15 +34,15 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         var graphType = Utilities.TypeToString(g.GetType());
         var batchInfo = await GetBatchAsync(edgeTypes.Keys.Append(graphType).ToList());
 
-        var gMapper = _mapperFactory.GetGraphMapper(graphType);
+        var gMapper = _strategyFactory.GetGraphStrategy(graphType);
         batchInfo.AddOrUpdate(graphType, 1);
         gMapper.ToCsv(g, batchInfo.GetFilename(graphType));
 
         foreach (var type in edgeTypes)
         {
             batchInfo.AddOrUpdate(type.Key, type.Value.Count);
-            var eMapper = _mapperFactory.GetEdgeMapper(type.Key);
-            eMapper.ToCsv(type.Value, batchInfo.GetFilename(type.Key));
+            var _strategy = _strategyFactory.GetEdgeStrategy(type.Key);
+            _strategy.ToCsv(type.Value, batchInfo.GetFilename(type.Key));
         }
 
         await SerializeBatchesAsync();
@@ -56,7 +56,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         using var driver = await GetDriver(Options.Neo4j);
 
         _batches = await DeserializeBatchesAsync();
-        IEnumerable<BatchInfo> batches;
+        IEnumerable<Batch> batches;
 
         if (string.IsNullOrEmpty(batchName))
         {
@@ -70,7 +70,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 throw new InvalidOperationException(
                     $"A batch named {batchName} not found in " +
                     $"{Options.Neo4j.BatchesFilename}");
-            batches = new List<BatchInfo>() { batch };
+            batches = new List<Batch>() { batch };
             _logger.LogInformation("Given batch name is {batchName}.", batchName);
         }
 
@@ -96,7 +96,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             foreach (var type in batch.TypesInfo)
             {
                 _logger.LogInformation("Importing type {t}.", type.Key);
-                var mapper = _mapperFactory.GetMapperBase(type.Key);
+                var mapper = _strategyFactory.GetStrategyBase(type.Key);
                 await ExecuteLoadQueryAsync(driver, mapper, type.Value.Filename);
                 _logger.LogInformation("Importing type {t} finished.", type.Key);
             }
@@ -219,24 +219,24 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         }
     }
 
-    private async Task<BatchInfo> GetBatchAsync(List<string> types)
+    private async Task<Batch> GetBatchAsync(List<string> types)
     {
         if (_batches.Count == 0)
             _batches = await DeserializeBatchesAsync();
 
         if (_batches.Count == 0 || _batches[^1].GetTotalCount() >= _maxEntitiesPerBatch)
-            _batches.Add(new BatchInfo(_batches.Count.ToString(), Options.WorkingDir, types));
+            _batches.Add(new Batch(_batches.Count.ToString(), Options.WorkingDir, types));
 
         return _batches[^1];
     }
     private async Task SerializeBatchesAsync()
     {
-        await JsonSerializer<List<BatchInfo>>.SerializeAsync(
+        await JsonSerializer<List<Batch>>.SerializeAsync(
             _batches, Options.Neo4j.BatchesFilename);
     }
-    private async Task<List<BatchInfo>> DeserializeBatchesAsync()
+    private async Task<List<Batch>> DeserializeBatchesAsync()
     {
-        return await JsonSerializer<List<BatchInfo>>.DeserializeAsync(
+        return await JsonSerializer<List<Batch>>.DeserializeAsync(
             Options.Neo4j.BatchesFilename);
     }
 
