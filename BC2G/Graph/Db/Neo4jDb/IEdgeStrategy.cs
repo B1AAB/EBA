@@ -2,7 +2,7 @@
 
 namespace BC2G.Graph.Db.Neo4jDb;
 
-public interface IEdgeMapper : IMapperBase
+public interface IEdgeStrategy : IStrategyBase
 {
     public string GetCsv(IEdge<INode, INode> edge);
 

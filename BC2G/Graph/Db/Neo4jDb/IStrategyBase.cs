@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb;
 
-public interface IMapperBase
+public interface IStrategyBase
 {
     public string GetCsvHeader();
 
