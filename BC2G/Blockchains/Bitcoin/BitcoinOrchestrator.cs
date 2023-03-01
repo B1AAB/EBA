@@ -1,6 +1,4 @@
-﻿using BC2G.Blockchains.Bitcoin.Model;
-
-namespace BC2G.Blockchains.Bitcoin;
+﻿namespace BC2G.Blockchains.Bitcoin;
 
 public class BitcoinOrchestrator : IBlockchainOrchestrator
 {
@@ -96,7 +94,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         }
 
         using var gBuffer = new PersistentGraphBuffer(
-            _host.Services.GetRequiredService<IGraphDb<BlockGraph>>(),
+            _host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>(),
             _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),
             options.Bitcoin.StatsFilename,
             cT);

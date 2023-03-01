@@ -2,7 +2,7 @@
 
 public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposable
 {
-    private readonly IGraphDb<BlockGraph> _graphDb;
+    private readonly IGraphDb<BitcoinGraph> _graphDb;
     private readonly ILogger<PersistentGraphBuffer> _logger;
     private readonly PersistentGraphStatistics _pGraphStats;
     private bool _disposed = false;
@@ -17,7 +17,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     private readonly ConcurrentDictionary<long, byte> _blocksHeightsInBuffer = new();
 
     public PersistentGraphBuffer(
-        IGraphDb<BlockGraph> graphDb,
+        IGraphDb<BitcoinGraph> graphDb,
         ILogger<PersistentGraphBuffer> logger,
         string graphStatsFilename,
         CancellationToken ct) :
