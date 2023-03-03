@@ -59,7 +59,7 @@ public class Orchestrator : IDisposable
         var host = await SetupAndGetHostAsync(options);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
 
-        var graphDb = host.Services.GetRequiredService<IGraphDb<BlockGraph>>();
+        var graphDb = host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>();
         await graphDb.ImportAsync();
     }
 
@@ -67,7 +67,7 @@ public class Orchestrator : IDisposable
     {
         var host = await SetupAndGetHostAsync(options);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
-        var graphDb = host.Services.GetRequiredService<IGraphDb<BlockGraph>>();
+        var graphDb = host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>();
         var successfull = await graphDb.TrySampleAsync();
         if (successfull)
             _logger?.LogInformation("Successfully completed sampling graphs.");
