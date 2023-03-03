@@ -50,6 +50,21 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         await SerializeBatchesAsync();
     }
 
+    public override Task ImportAsync(string batchName = "", List<string>? importOrder = null)
+    {
+        importOrder ??= new List<string>()
+        {
+            Utilities.TypeToString<BlockGraph>(),
+            Utilities.TypeToString<ScriptNode>(),
+            Utilities.TypeToString<TxNode>(),
+            Utilities.TypeToString<C2SEdge>(),
+            Utilities.TypeToString<C2TEdge>(),
+            Utilities.TypeToString<S2SEdge>(),
+            Utilities.TypeToString<T2TEdge>(),
+        };
+        return base.ImportAsync(batchName, importOrder);
+    }
+
     public override async Task<List<ScriptNode>> GetRandomNodes(
         IDriver driver, int nodesCount, double rootNodesSelectProb = 0.1)
     {

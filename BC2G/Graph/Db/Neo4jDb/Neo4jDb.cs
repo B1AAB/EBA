@@ -25,15 +25,12 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         _strategyFactory = strategyFactory;
     }
 
-    /// <summary>
-    /// No precedence should be assumed on serializing different types.
-    /// </summary>
     public abstract Task SerializeAsync(T g, CancellationToken ct);
 
     /// <summary>
     /// No precedence should be assumed on serializing different types.
     /// </summary>
-    public async Task ImportAsync(string batchName = "")
+    public virtual async Task ImportAsync(string batchName = "", List<string>? importOrder = null)
     {
         using var driver = await GetDriver(Options.Neo4j);
 
@@ -67,20 +64,21 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             batches.Count(), Options.Neo4j.BatchesFilename);
 
         var c = 0;
-        var counter = string.Empty;
-
         var stopwatch = new Stopwatch();
         stopwatch.Start();
 
         foreach (var batch in batches)
         {
             _logger.LogInformation("Processing batch {b} {c}.", batch.Name, $"({++c:n0}/{batches.Count():n0})");
-            foreach (var type in batch.TypesInfo)
+
+            var typesInfo = batch.TypesInfo;
+            var typesKeys = importOrder ?? typesInfo.Keys;
+            foreach (var typeKey in typesKeys)
             {
-                _logger.LogInformation("Importing type {t}.", type.Key);
-                var mapper = _strategyFactory.GetStrategyBase(type.Key);
-                await ExecuteLoadQueryAsync(driver, mapper, type.Value.Filename);
-                _logger.LogInformation("Importing type {t} finished.", type.Key);
+                _logger.LogInformation("Importing type {t}.", typeKey);
+                var mapper = _strategyFactory.GetStrategyBase(typeKey);
+                await ExecuteLoadQueryAsync(driver, mapper, typesInfo[typeKey].Filename);
+                _logger.LogInformation("Importing type {t} finished.", typeKey);
             }
         }
 
