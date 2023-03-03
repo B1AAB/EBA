@@ -17,6 +17,39 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         return driver;
     }
 
+    public override async Task SerializeAsync(BitcoinGraph g, CancellationToken ct)
+    {
+        var nodeTypes = g.GetNodes();
+        var edgeTypes = g.GetEdges();
+        var graphType = Utilities.TypeToString(g.GetType());
+        var batchInfo = await GetBatchAsync(
+            nodeTypes.Keys.Concat(edgeTypes.Keys).Append(graphType).ToList());
+
+        var factory = new BitcoinStrategyFactory();
+        var graphStrategy = factory.GetGraphStrategy(graphType);
+        batchInfo.AddOrUpdate(graphType, 1);
+        graphStrategy.ToCsv(g, batchInfo.GetFilename(graphType));
+
+        foreach (var type in nodeTypes)
+        {
+            batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != BitcoinAgent.Coinbase));
+
+            var _strategy = factory.GetNodeStrategy(type.Key);
+            _strategy.ToCsv(
+                type.Value.Where(x => x.Id != BitcoinAgent.Coinbase), 
+                batchInfo.GetFilename(type.Key));
+        }
+
+        foreach (var type in edgeTypes)
+        {
+            batchInfo.AddOrUpdate(type.Key, type.Value.Count);
+            var _strategy = factory.GetEdgeStrategy(type.Key);
+            _strategy.ToCsv(type.Value, batchInfo.GetFilename(type.Key));
+        }
+
+        await SerializeBatchesAsync();
+    }
+
     public override async Task<List<ScriptNode>> GetRandomNodes(
         IDriver driver, int nodesCount, double rootNodesSelectProb = 0.1)
     {

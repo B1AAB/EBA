@@ -28,25 +28,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     /// <summary>
     /// No precedence should be assumed on serializing different types.
     /// </summary>
-    public async Task SerializeAsync(T g, CancellationToken ct)
-    {
-        var edgeTypes = g.GetEdges();
-        var graphType = Utilities.TypeToString(g.GetType());
-        var batchInfo = await GetBatchAsync(edgeTypes.Keys.Append(graphType).ToList());
-
-        var gMapper = _strategyFactory.GetGraphStrategy(graphType);
-        batchInfo.AddOrUpdate(graphType, 1);
-        gMapper.ToCsv(g, batchInfo.GetFilename(graphType));
-
-        foreach (var type in edgeTypes)
-        {
-            batchInfo.AddOrUpdate(type.Key, type.Value.Count);
-            var _strategy = _strategyFactory.GetEdgeStrategy(type.Key);
-            _strategy.ToCsv(type.Value, batchInfo.GetFilename(type.Key));
-        }
-
-        await SerializeBatchesAsync();
-    }
+    public abstract Task SerializeAsync(T g, CancellationToken ct);
 
     /// <summary>
     /// No precedence should be assumed on serializing different types.
