@@ -11,22 +11,22 @@ public class BlockGraphStrategy : IGraphMapper
     /// match those returned from the `GetCsv()` method.
     private static readonly Property[] _properties = new Property[]
     {
-    Props.Height,
-    Props.BlockMedianTime,
-    Props.BlockConfirmations,
-    Props.BlockDifficulty,
-    Props.BlockTxCount,
-    Props.BlockSize,
-    Props.BlockStrippedSize,
-    Props.BlockWeight,
-    Props.NumGenerationEdges,
-    Props.NumTransferEdges,
-    Props.NumChangeEdges,
-    Props.NumFeeEdges,
-    Props.SumGenerationEdges,
-    Props.SumTransferEdges,
-    Props.SumChangeEdges,
-    Props.SumFeeEdges
+        Props.Height,
+        Props.BlockMedianTime,
+        Props.BlockConfirmations,
+        Props.BlockDifficulty,
+        Props.BlockTxCount,
+        Props.BlockSize,
+        Props.BlockStrippedSize,
+        Props.BlockWeight,
+        Props.NumGenerationEdges,
+        Props.NumTransferEdges,
+        Props.NumChangeEdges,
+        Props.NumFeeEdges,
+        Props.SumGenerationEdges,
+        Props.SumTransferEdges,
+        Props.SumChangeEdges,
+        Props.SumFeeEdges
     };
 
     public string GetCsvHeader()
@@ -78,36 +78,42 @@ public class BlockGraphStrategy : IGraphMapper
 
     public string GetQuery(string filename)
     {
-        string comma = "";
-        var propsBuilder = new StringBuilder();
-        foreach (var p in _properties.Where(x => x.Name != Props.Height.Name))
-        {
-            propsBuilder.Append($"{comma}b.{p.GetLoadExp()}");
-            comma = ", ";
-        }
+        // The following is an example of the generated query.
+        //
+        // LOAD CSV WITH HEADERS FROM 'file:///filename.csv'
+        // AS line FIELDTERMINATOR '	'
+        // MERGE (block:Block {Height:toInteger(line.Height)})
+        // SET
+        //  block.MedianTime=line.MedianTime,
+        //  block.Confirmations=toInteger(line.Confirmations),
+        //  block.Difficulty=toFloat(line.Difficulty),
+        //  block.TransactionsCount=toInteger(line.TransactionsCount),
+        //  block.Size=toInteger(line.Size),
+        //  block.StrippedSize=line.StrippedSize,
+        //  block.Weight=toInteger(line.Weight),
+        //  block.NumGenerationEdgeTypes=toInteger(line.NumGenerationEdgeTypes),
+        //  block.NumTransferEdgeTypes=toInteger(line.NumTransferEdgeTypes),
+        //  block.NumChangeEdgeTypes=toInteger(line.NumChangeEdgeTypes),
+        //  block.NumFeeEdgeTypes=toInteger(line.NumFeeEdgeTypes),
+        //  block.SumGenerationEdgeTypes=toFloat(line.SumGenerationEdgeTypes),
+        //  block.SumTransferEdgeTypes=toFloat(line.SumTransferEdgeTypes),
+        //  block.SumChangeEdgeTypes=toFloat(line.SumChangeEdgeTypes),
+        //  block.SumFeeEdgeTypes=toFloat(line.SumFeeEdgeTypes)
+        //
+
+        string l = Property.lineVarName, block = "block";
 
         var builder = new StringBuilder();
         builder.Append(
-            $"LOAD CSV WITH HEADERS FROM '{filename}' AS {Property.lineVarName} " +
+            $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
             $"FIELDTERMINATOR '{csvDelimiter}' " +
-            $"MERGE (b: {label} {{" +
-            $"{Props.Height.GetLoadExp(":")}}})");
+            $"MERGE ({block}:{label} " +
+            $"{{{Props.Height.GetSetter()}}}) ");
 
-        // Using same props for both updating and creating seems redundant.
-        // However, this covers a use-case where block was created without 
-        // its properties (e.g., only block height was set), so it needs to 
-        // be updated if exists. We could do something fancier to check 
-        // for the missing fields and update them in case of `Match`, but 
-        // that could make this Cypher query overly complicated. 
-        //
-        // A simplier update query can be a better replacement for this query.
-        builder.Append(" ON CREATE SET ");
-        builder.Append(propsBuilder);
-
-        builder.Append(" ON MATCH SET ");
-        builder.Append(propsBuilder);
-
-        var x = builder.ToString();
+        builder.Append("SET ");
+        builder.Append(string.Join(
+            ", ",
+            from x in _properties where x != Props.Height select x.GetSetter(block)));
 
         return builder.ToString();
     }
