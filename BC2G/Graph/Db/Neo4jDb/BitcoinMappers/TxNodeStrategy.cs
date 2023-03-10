@@ -40,6 +40,32 @@ public class TxNodeStrategy : NodeStrategyBase
 
     public override string GetQuery(string filename)
     {
-        throw new NotImplementedException();
+        // The following is an example of the generated query.
+        //
+        // LOAD CSV WITH HEADERS FROM 'file:///filename.csv'
+        // AS line FIELDTERMINATOR '	'
+        // MERGE (node:Tx {Txid:line.Txid})
+        // SET
+        //  node.Version = CASE line.SourceVersion WHEN "" THEN null ELSE toInteger(line.SourceVersion) END,
+        //  node.Size = CASE line.SourceSize WHEN "" THEN null ELSE toInteger(line.SourceSize) END,
+        //  node.VSize = CASE line.SourceVSize WHEN "" THEN null ELSE toInteger(line.SourceVSize) END,
+        //  node.Weight = CASE line.SourceWeight WHEN "" THEN null ELSE toInteger(line.SourceWeight) END,
+        //  node.LockTime = CASE line.SourceLockTime WHEN "" THEN null ELSE toInteger(line.SourceLockTime) END 
+        //
+
+        string l = Property.lineVarName, node = "node";
+
+        var builder = new StringBuilder();
+        builder.Append(
+            $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
+            $"FIELDTERMINATOR '{csvDelimiter}' " +
+            $"MERGE ({node}:{labels} {{{Props.Txid.GetSetter()}}}) ");
+
+        builder.Append("SET ");
+        builder.Append(string.Join(
+            ", ",
+            from x in _properties where x != Props.Txid select $"{x.GetSetterWithNullCheck(node)}"));
+
+        return builder.ToString();
     }
 }
