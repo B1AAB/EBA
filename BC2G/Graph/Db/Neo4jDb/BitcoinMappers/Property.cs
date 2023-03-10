@@ -15,7 +15,7 @@ public class Property
         _type = type;
     }
 
-    public string GetLoadExp(string assignment = "=")
+    public string GetLoadExpOld(string assignment = "=")
     {
         return _type switch
         {
@@ -25,8 +25,28 @@ public class Property
         };
     }
 
-    public string GetLoad(string varName)
+    public string GetSetter()
     {
-        return $"{varName}.{Name} = COALESCE({lineVarName}.{CsvHeader}, {varName}.{Name})";
+        return $"{Name}:{GetReader()}";
+    }
+
+    public string GetSetter(string varName, string assignment = "=")
+    {
+        return $"{varName}.{Name}{assignment}{GetReader()}";
+    }
+
+    public string GetSetterWithNullCheck(string varName)
+    {
+        return $"{varName}.{Name} = CASE {lineVarName}.{CsvHeader} WHEN \"\" THEN null ELSE {GetReader()} END";
+    }
+
+    private string GetReader()
+    {
+        return _type switch
+        {
+            FieldType.Int => $"toInteger({lineVarName}.{CsvHeader})",
+            FieldType.Float => $"toFloat({lineVarName}.{CsvHeader})",
+            _ => $"{lineVarName}.{CsvHeader}"
+        };
     }
 }
