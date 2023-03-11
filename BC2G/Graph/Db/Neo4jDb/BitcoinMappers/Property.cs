@@ -15,16 +15,6 @@ public class Property
         _type = type;
     }
 
-    public string GetLoadExpOld(string assignment = "=")
-    {
-        return _type switch
-        {
-            FieldType.Int => $"{Name}{assignment}toInteger({lineVarName}.{CsvHeader})",
-            FieldType.Float => $"{Name}{assignment}toFloat({lineVarName}.{CsvHeader})",
-            _ => $"{Name}{assignment}{lineVarName}.{CsvHeader}",
-        };
-    }
-
     public string GetSetter()
     {
         return $"{Name}:{GetReader()}";
