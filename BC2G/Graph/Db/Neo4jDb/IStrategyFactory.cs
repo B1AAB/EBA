@@ -2,7 +2,8 @@
 
 public interface IStrategyFactory
 {
-    public IMapperBase GetStrategyBase(string type);
-    public IEdgeMapper GetEdgeStrategy(string type);
-    public IGraphMapper GetGraphStrategy(string type);
+    public IStrategyBase GetStrategyBase(string type);
+    public INodeStrategy GetNodeStrategy(string type);
+    public IEdgeStrategy GetEdgeStrategy(string type);
+    public IGraphStrategy GetGraphStrategy(string type);
 }
