@@ -74,7 +74,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         var rndRecords = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"MATCH ({rndNodeVar}:{ScriptStrategy.labels})-[:{EdgeType.Transfer}]->() " +
+                $"MATCH ({rndNodeVar}:{ScriptNodeStrategy.labels})-[:{EdgeType.Transfer}]->() " +
                 $"WHERE rand() < {rootNodesSelectProb} " +
                 $"RETURN {rndNodeVar} LIMIT {nodesCount}");
 
@@ -131,7 +131,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         var samplingResult = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"MATCH path = (p: {ScriptStrategy.labels} {{ Address: \"{rootScriptAddress}\"}}) -[:{EdgeType.Transfer} * 1..{maxHops}]->(p2: {ScriptStrategy.labels}) " +
+                $"MATCH path = (p: {ScriptNodeStrategy.labels} {{ Address: \"{rootScriptAddress}\"}}) -[:{EdgeType.Transfer} * 1..{maxHops}]->(p2: {ScriptStrategyOld.labels}) " +
                 "WITH p, [n in nodes(path) where n <> p | n] as nodes, relationships(path) as relationships " +
                 "WITH collect(distinct p) as root, size(nodes) as cnt, collect(nodes[-1]) as nodes, collect(distinct relationships[-1]) as relationships " +
                 "RETURN root, nodes, relationships");
@@ -182,7 +182,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         var randomNodes = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"Match (source:{ScriptStrategy.labels})-[edge:{EdgeType.Transfer}]->(target:{ScriptStrategy.labels}) " +
+                $"Match (source:{ScriptNodeStrategy.labels})-[edge:{EdgeType.Transfer}]->(target:{ScriptNodeStrategy.labels}) " +
                 $"where rand() < {edgeSelectProb} " +
                 $"return source, edge, target limit {edgeCount}");
 
@@ -279,8 +279,8 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             await session.ExecuteWriteAsync(async x =>
             {
                 var result = await x.RunAsync(
-                    "CREATE CONSTRAINT UniqueAddressContraint " +
-                    $"FOR (script:{ScriptStrategy.labels}) " +
+                    "CREATE CONSTRAINT UniqueScriptAddressContraint " +
+                    $"FOR (script:{ScriptNodeStrategy.labels}) " +
                     $"REQUIRE script.{Props.ScriptAddress.Name} IS UNIQUE");
             });
         }
