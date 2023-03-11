@@ -7,11 +7,6 @@ public class C2TEdgeStrategy : T2TEdgeStrategy
     private readonly Property[] _properties = new Property[]
     {
         Props.T2TEdgeTargetTxid,
-        Props.T2TEdgeTargetVersion,
-        Props.T2TEdgeTargetSize,
-        Props.T2TEdgeTargetVSize,
-        Props.T2TEdgeTargetWeight,
-        Props.T2TEdgeTargetLockTime,
         Props.EdgeType,
         Props.EdgeValue,
         Props.Height
@@ -35,11 +30,6 @@ public class C2TEdgeStrategy : T2TEdgeStrategy
         return string.Join(csvDelimiter, new string[]
         {
             edge.Target.Txid,
-            edge.Target.Version.ToString(),
-            edge.Target.Size.ToString(),
-            edge.Target.VSize.ToString(),
-            edge.Target.Weight.ToString(),
-            edge.Target.LockTime.ToString(),
             edge.Type.ToString(),
             edge.Value.ToString(),
             edge.BlockHeight.ToString()
@@ -48,37 +38,52 @@ public class C2TEdgeStrategy : T2TEdgeStrategy
 
     public override string GetQuery(string csvFilename)
     {
+        // The following is an example of the query this method generates. 
+        //
+        // LOAD CSV WITH HEADERS FROM 'file:///filename.csv' AS line
+        // FIELDTERMINATOR '	'
+        //
+        // MATCH (coinbase:Coinbase)
+        // MATCH (target:Tx {Txid:line.TargetId})
+        // MATCH (block:Block {Height:toInteger(line.Height)})
+        //
+        // MERGE (block)-[:Creates {Height:toInteger(line.Height)}]->(target)
+        //
+        // WITH line, block, coinbase, target
+        //
+        // CALL apoc.merge.relationship(
+        //   coinbase,
+        //   line.EdgeType,
+        //   {
+        //     Value:toFloat(line.Value),
+        //     Height:toInteger(line.Height)
+        //   },
+        //   {
+        //     Count : 0
+        //   },
+        //   target,
+        //   {})
+        // YIELD rel SET rel.Count = rel.Count + 1
+        // RETURN distinct 'DONE'
+        //
+
         string l = Property.lineVarName, s = "coinbase", t = "target", b = "block";
-        //var unknown = nameof(ScriptType.Unknown);
-
-        return
+        
+        var builder = new StringBuilder(
             $"LOAD CSV WITH HEADERS FROM '{csvFilename}' AS {l} " +
-            $"FIELDTERMINATOR '{csvDelimiter}' " +
+            $"FIELDTERMINATOR '{csvDelimiter}' ");
+
+        builder.Append(
             $"MATCH ({s}:{BitcoinAgent.Coinbase}) " +
+            $"MATCH ({t}:{TxNodeStrategy.labels} {{{Props.T2TEdgeTargetTxid.GetSetter()}}}) " +
+            $"MATCH ({b}:{BlockGraphStrategy.labels} {{{Props.Height.GetSetter()}}}) ");
 
-            GetNodeQuery(t, labels, Props.T2TEdgeTargetTxid, new List<Property>()
-            {
-                Props.T2TEdgeTargetVersion,
-                Props.T2TEdgeTargetSize,
-                Props.T2TEdgeTargetVSize,
-                Props.T2TEdgeTargetWeight,
-                Props.T2TEdgeTargetLockTime
-            }) +
-            " " +
+        builder.Append(GetCreatesEdgeQuery(b, t) + " ");
+        builder.Append($"WITH {l}, {b}, {s}, {t} ");
 
-            $"WITH {s}, {t}, {l} " +
-            // Find the block
-            GetBlockQuery(b) +
-            " " +
+        builder.Append(GetEdgeQuery(new List<Property>() { Props.EdgeValue, Props.Height }, s, t));
+        builder.Append(" RETURN distinct 'DONE'");
 
-            // Create edge between the script and its corresponding block
-            CreatesEdgeQuery +
-
-            $"WITH {s}, {t}, {l} " +
-            // Create edge between the coinbase node and the script
-
-            GetEdgeQuery(new List<Property>() { Props.EdgeValue, Props.Height }, s, t) +
-            " " +
-            $"RETURN distinct 'DONE'";
+        return builder.ToString();
     }
 }
