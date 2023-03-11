@@ -18,9 +18,9 @@ public abstract class BitcoinEdgeStrategy : IEdgeStrategy
     }
 
     public static string GetEdgeQuery(
-        List<Property> props, 
-        string sourceVar="source", 
-        string targetVar="target")
+        List<Property> props,
+        string sourceVar = "source",
+        string targetVar = "target")
     {
         // An example of the populated template
         // (indentation added for better readibility).
@@ -64,7 +64,7 @@ public abstract class BitcoinEdgeStrategy : IEdgeStrategy
     public abstract string GetQuery(string filename);
 
     public virtual void ToCsv(
-        IEnumerable<IEdge<INode, INode>> edges, 
+        IEnumerable<IEdge<INode, INode>> edges,
         string filename)
     {
         using var writer = new StreamWriter(filename, append: true);

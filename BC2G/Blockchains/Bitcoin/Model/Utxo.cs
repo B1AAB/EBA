@@ -116,7 +116,7 @@ public class Utxo
         if (string.IsNullOrWhiteSpace(newRef))
             return;
 
-        var existingRefs = refs.Split(_delimiter);
+        var existingRefs = refs.Split(_delimiter, StringSplitOptions.RemoveEmptyEntries);
         if (existingRefs.Contains(newRef))
             return;
 

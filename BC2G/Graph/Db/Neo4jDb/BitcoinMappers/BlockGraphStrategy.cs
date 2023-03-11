@@ -1,8 +1,8 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-public class BlockGraphStrategy : IGraphMapper
+public class BlockGraphStrategy : IGraphStrategy
 {
-    public const string label = "Block";
+    public const string labels = "Block";
 
     public const string csvDelimiter = "\t";
     public const string labelsDelimiter = ":";
@@ -107,7 +107,7 @@ public class BlockGraphStrategy : IGraphMapper
         builder.Append(
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
             $"FIELDTERMINATOR '{csvDelimiter}' " +
-            $"MERGE ({block}:{label} " +
+            $"MERGE ({block}:{labels} " +
             $"{{{Props.Height.GetSetter()}}}) ");
 
         builder.Append("SET ");
