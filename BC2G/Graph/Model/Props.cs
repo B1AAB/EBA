@@ -18,6 +18,11 @@ public static class Props
     public static Property ScriptAddress { get; } = new(_addressProperty);
     public static Property ScriptType { get; } = new(_scriptTypeProperty);
     public static Property Txid { get; } = new(_txNodeTxid);
+    public static Property TxVersion { get; } = new Property(_txNodeVersion, FieldType.Int, "SourceVersion");
+    public static Property TxSize { get; } = new Property(_txNodeSize, FieldType.Int, "SourceSize");
+    public static Property TxVSize { get; } = new Property(_txNodeVSize, FieldType.Int, "SourceVSize");
+    public static Property TxWeight { get; } = new Property(_txNodeWeight, FieldType.Int, "SourceWeight");
+    public static Property TxLockTime { get; } = new Property(_txNodeLockTime, FieldType.Int, "SourceLockTime");
     public static Property BlockMedianTime { get; } = new("MedianTime");
     public static Property BlockConfirmations { get; } = new("Confirmations", FieldType.Int);
     public static Property BlockDifficulty { get; } = new("Difficulty", FieldType.Float);
