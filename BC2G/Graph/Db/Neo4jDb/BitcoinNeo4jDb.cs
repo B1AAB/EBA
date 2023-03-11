@@ -284,18 +284,31 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                     $"REQUIRE script.{Props.ScriptAddress.Name} IS UNIQUE");
             });
         }
-        catch (Exception e)
-        {
-
-        }
+        catch (Exception) { }
 
         try
         {
             await session.ExecuteWriteAsync(async x =>
             {
                 var result = await x.RunAsync(
-                    $"CREATE INDEX FOR (script:{ScriptStrategy.labels}) " +
+                    $"CREATE INDEX FOR (script:{ScriptNodeStrategy.labels}) " +
                     $"ON (script.{Props.ScriptAddress.Name})");
+            });
+        }
+        catch (Exception)
+        {
+
+        }
+
+
+        try
+        {
+            await session.ExecuteWriteAsync(async x =>
+            {
+                var result = await x.RunAsync(
+                    "CREATE CONSTRAINT UniqueTxidContraint " +
+                    $"FOR (n:{TxNodeStrategy.labels}) " +
+                    $"REQUIRE n.{Props.Txid.Name} IS UNIQUE");
             });
         }
         catch (Exception e)
@@ -308,7 +321,36 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             await session.ExecuteWriteAsync(async x =>
             {
                 var result = await x.RunAsync(
-                    $"CREATE INDEX FOR (block:{BlockStrategy.label})" +
+                    $"CREATE INDEX FOR (n:{TxNodeStrategy.labels})" +
+                    $" on (n.{Props.Txid.Name})");
+            });
+        }
+        catch (Exception e)
+        {
+
+        }
+
+        try
+        {
+            await session.ExecuteWriteAsync(async x =>
+            {
+                var result = await x.RunAsync(
+                    "CREATE CONSTRAINT UniqueBlockHeightContraint " +
+                    $"FOR (n:{BlockStrategy.labels}) " +
+                    $"REQUIRE n.{Props.Height.Name} IS UNIQUE");
+            });
+        }
+        catch (Exception e)
+        {
+
+        }
+
+        try
+        {
+            await session.ExecuteWriteAsync(async x =>
+            {
+                var result = await x.RunAsync(
+                    $"CREATE INDEX FOR (block:{BlockStrategy.labels})" +
                     $" on (block.{Props.Height.Name})");
             });
         }
