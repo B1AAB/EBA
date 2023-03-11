@@ -75,6 +75,14 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             var typesKeys = importOrder ?? typesInfo.Keys;
             foreach (var typeKey in typesKeys)
             {
+                if(!typesInfo.ContainsKey(typeKey))
+                {
+                    _logger.LogInformation(
+                        "Skipping type {t} since the batch {b} does not contain it.", 
+                        typeKey, batch.Name);
+                    continue;
+                }
+
                 _logger.LogInformation("Importing type {t}.", typeKey);
                 var mapper = _strategyFactory.GetStrategyBase(typeKey);
                 await ExecuteLoadQueryAsync(driver, mapper, typesInfo[typeKey].Filename);
@@ -166,7 +174,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         return driver;
     }
 
-    private async Task ExecuteLoadQueryAsync(IDriver driver, IMapperBase mapper, string filename)
+    private async Task ExecuteLoadQueryAsync(IDriver driver, IStrategyBase mapper, string filename)
     {
         // Localization, if needed.
         // Neo4j import needs files to be placed in a particular folder 
@@ -199,7 +207,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         }
     }
 
-    private async Task<Batch> GetBatchAsync(List<string> types)
+    protected async Task<Batch> GetBatchAsync(List<string> types)
     {
         if (_batches.Count == 0)
             _batches = await DeserializeBatchesAsync();
@@ -209,7 +217,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         return _batches[^1];
     }
-    private async Task SerializeBatchesAsync()
+    protected async Task SerializeBatchesAsync()
     {
         await JsonSerializer<List<Batch>>.SerializeAsync(
             _batches, Options.Neo4j.BatchesFilename);
