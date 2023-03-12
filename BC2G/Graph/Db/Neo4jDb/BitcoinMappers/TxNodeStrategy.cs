@@ -17,7 +17,7 @@ public class TxNodeStrategy : NodeStrategyBase
     public override string GetCsvHeader()
     {
         return string.Join(
-            csvDelimiter,
+            Neo4jDb.csvDelimiter,
             from x in _properties select x.CsvHeader);
     }
 
@@ -29,7 +29,7 @@ public class TxNodeStrategy : NodeStrategyBase
     public static string GetCsv(TxNode node)
     {
         return string.Join(
-            csvDelimiter,
+            Neo4jDb.csvDelimiter,
             node.Txid,
             node.Version,
             node.Size,
@@ -58,7 +58,7 @@ public class TxNodeStrategy : NodeStrategyBase
         var builder = new StringBuilder();
         builder.Append(
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
-            $"FIELDTERMINATOR '{csvDelimiter}' " +
+            $"FIELDTERMINATOR '{Neo4jDb.csvDelimiter}' " +
             $"MERGE ({node}:{labels} {{{Props.Txid.GetSetter()}}}) ");
 
         builder.Append("SET ");

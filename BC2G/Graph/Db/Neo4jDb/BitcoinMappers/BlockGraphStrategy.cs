@@ -4,9 +4,6 @@ public class BlockGraphStrategy : IGraphStrategy
 {
     public const string labels = "Block";
 
-    public const string csvDelimiter = "\t";
-    public const string labelsDelimiter = ":";
-
     /// Note that the ordre of the items in this array should 
     /// match those returned from the `GetCsv()` method.
     private static readonly Property[] _properties = new Property[]
@@ -32,7 +29,7 @@ public class BlockGraphStrategy : IGraphStrategy
     public string GetCsvHeader()
     {
         return string.Join(
-            csvDelimiter,
+            Neo4jDb.csvDelimiter,
             from x in _properties select x.CsvHeader);
     }
 
@@ -48,22 +45,22 @@ public class BlockGraphStrategy : IGraphStrategy
 
         /// Note that the ordre of the items in this array should 
         /// match those in the `_properties`. 
-        return string.Join(csvDelimiter, new string[]
+        return string.Join(Neo4jDb.csvDelimiter, new string[]
         {
-        g.Block.Height.ToString(),
-        g.Block.MedianTime.ToString(),
-        g.Block.Confirmations.ToString(),
-        g.Block.Difficulty.ToString(),
-        g.Block.TransactionsCount.ToString(),
-        g.Block.Size.ToString(),
-        g.Block.StrippedSize.ToString(),
-        g.Block.Weight.ToString(),
-        counts[EdgeType.Generation].ToString(),
-        counts[EdgeType.Transfer].ToString(),
-        counts[EdgeType.Fee].ToString(),
-        sums[EdgeType.Generation].ToString(),
-        sums[EdgeType.Transfer].ToString(),
-        sums[EdgeType.Fee].ToString()
+            g.Block.Height.ToString(),
+            g.Block.MedianTime.ToString(),
+            g.Block.Confirmations.ToString(),
+            g.Block.Difficulty.ToString(),
+            g.Block.TransactionsCount.ToString(),
+            g.Block.Size.ToString(),
+            g.Block.StrippedSize.ToString(),
+            g.Block.Weight.ToString(),
+            counts[EdgeType.Generation].ToString(),
+            counts[EdgeType.Transfer].ToString(),
+            counts[EdgeType.Fee].ToString(),
+            sums[EdgeType.Generation].ToString(),
+            sums[EdgeType.Transfer].ToString(),
+            sums[EdgeType.Fee].ToString()
         });
     }
 
@@ -106,7 +103,7 @@ public class BlockGraphStrategy : IGraphStrategy
         var builder = new StringBuilder();
         builder.Append(
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
-            $"FIELDTERMINATOR '{csvDelimiter}' " +
+            $"FIELDTERMINATOR '{Neo4jDb.csvDelimiter}' " +
             $"MERGE ({block}:{labels} " +
             $"{{{Props.Height.GetSetter()}}}) ");
 

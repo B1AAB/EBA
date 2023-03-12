@@ -20,7 +20,7 @@ public class S2SEdgeStrategy : BitcoinEdgeStrategy
     public override string GetCsvHeader()
     {
         return string.Join(
-            csvDelimiter,
+            Neo4jDb.csvDelimiter,
             from x in _properties select x.CsvHeader);
     }
 
@@ -34,7 +34,7 @@ public class S2SEdgeStrategy : BitcoinEdgeStrategy
         /// Note that the ordre of the items in this array should 
         /// match those in the `_properties`. 
 
-        return string.Join(csvDelimiter, new string[]
+        return string.Join(Neo4jDb.csvDelimiter, new string[]
         {
             edge.Source.Address,
             edge.Target.Address,
@@ -82,7 +82,7 @@ public class S2SEdgeStrategy : BitcoinEdgeStrategy
 
         var builder = new StringBuilder(
             $"LOAD CSV WITH HEADERS FROM '{csvFilename}' AS {l} " +
-            $"FIELDTERMINATOR '{csvDelimiter}' ");
+            $"FIELDTERMINATOR '{Neo4jDb.csvDelimiter}' ");
 
         builder.Append(
             $"MATCH ({s}:{ScriptNodeStrategy.labels} {{{Props.EdgeSourceAddress.GetSetter()}}}) " +

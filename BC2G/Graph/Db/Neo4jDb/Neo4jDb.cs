@@ -1,5 +1,11 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb;
 
+public static class Neo4jDb
+{
+    public const string csvDelimiter = "\t";
+    public const string labelsDelimiter = ":";
+}
+
 public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 {
     protected Options Options { get; }

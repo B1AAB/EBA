@@ -14,7 +14,7 @@ public class C2TEdgeStrategy : T2TEdgeStrategy
 
     public override string GetCsvHeader()
     {
-        return string.Join(csvDelimiter,
+        return string.Join(Neo4jDb.csvDelimiter,
             from x in _properties select x.CsvHeader);
     }
 
@@ -27,7 +27,7 @@ public class C2TEdgeStrategy : T2TEdgeStrategy
     {
         /// Note that the ordre of the items in this array should 
         /// match those in the `_properties`. 
-        return string.Join(csvDelimiter, new string[]
+        return string.Join(Neo4jDb.csvDelimiter, new string[]
         {
             edge.Target.Txid,
             edge.Type.ToString(),
@@ -71,7 +71,7 @@ public class C2TEdgeStrategy : T2TEdgeStrategy
         
         var builder = new StringBuilder(
             $"LOAD CSV WITH HEADERS FROM '{csvFilename}' AS {l} " +
-            $"FIELDTERMINATOR '{csvDelimiter}' ");
+            $"FIELDTERMINATOR '{Neo4jDb.csvDelimiter}' ");
 
         builder.Append(
             $"MATCH ({s}:{BitcoinAgent.Coinbase}) " +

@@ -4,9 +4,6 @@ namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
 public abstract class BitcoinEdgeStrategy : IEdgeStrategy
 {
-    public const string csvDelimiter = BlockGraphStrategy.csvDelimiter;
-    public const string labelsDelimiter = BlockGraphStrategy.labelsDelimiter;
-
     public static string GetCreatesEdgeQuery(string blockVar = "block", string targetVar = "target")
     {
         return $"MERGE ({blockVar})-[:Creates {{{Props.Height.GetSetter()}}}]->({targetVar})";

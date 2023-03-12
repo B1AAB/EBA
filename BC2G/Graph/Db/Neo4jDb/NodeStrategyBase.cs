@@ -1,12 +1,7 @@
-﻿using BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
-
-namespace BC2G.Graph.Db.Neo4jDb;
+﻿namespace BC2G.Graph.Db.Neo4jDb;
 
 public abstract class NodeStrategyBase : INodeStrategy
 {
-    public const string csvDelimiter = BlockGraphStrategy.csvDelimiter;
-    public const string labelsDelimiter = BlockGraphStrategy.labelsDelimiter;
-
     public abstract string GetCsvHeader();
     public abstract string GetCsv(Model.INode node);
     public abstract string GetQuery(string filename);
