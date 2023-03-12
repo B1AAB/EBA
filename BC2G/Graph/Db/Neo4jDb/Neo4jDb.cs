@@ -3,7 +3,6 @@
 public static class Neo4jDb
 {
     public const string csvDelimiter = "\t";
-    public const string labelsDelimiter = ":";
 }
 
 public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase

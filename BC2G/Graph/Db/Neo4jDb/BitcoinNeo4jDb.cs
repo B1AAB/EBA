@@ -131,7 +131,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         var samplingResult = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"MATCH path = (p: {ScriptNodeStrategy.labels} {{ Address: \"{rootScriptAddress}\"}}) -[:{EdgeType.Transfer} * 1..{maxHops}]->(p2: {ScriptStrategyOld.labels}) " +
+                $"MATCH path = (p: {ScriptNodeStrategy.labels} {{ Address: \"{rootScriptAddress}\"}}) -[:{EdgeType.Transfer} * 1..{maxHops}]->(p2: {ScriptNodeStrategy.labels}) " +
                 "WITH p, [n in nodes(path) where n <> p | n] as nodes, relationships(path) as relationships " +
                 "WITH collect(distinct p) as root, size(nodes) as cnt, collect(nodes[-1]) as nodes, collect(distinct relationships[-1]) as relationships " +
                 "RETURN root, nodes, relationships");
@@ -336,7 +336,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             {
                 var result = await x.RunAsync(
                     "CREATE CONSTRAINT UniqueBlockHeightContraint " +
-                    $"FOR (n:{BlockStrategy.labels}) " +
+                    $"FOR (n:{BlockGraphStrategy.labels}) " +
                     $"REQUIRE n.{Props.Height.Name} IS UNIQUE");
             });
         }
@@ -350,7 +350,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             await session.ExecuteWriteAsync(async x =>
             {
                 var result = await x.RunAsync(
-                    $"CREATE INDEX FOR (block:{BlockStrategy.labels})" +
+                    $"CREATE INDEX FOR (block:{BlockGraphStrategy.labels})" +
                     $" on (block.{Props.Height.Name})");
             });
         }

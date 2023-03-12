@@ -39,21 +39,9 @@ public static class Props
     public static Property SumChangeEdges { get; } = new("SumChangeEdgeTypes", FieldType.Float);
     public static Property SumFeeEdges { get; } = new("SumFeeEdgeTypes", FieldType.Float);
     public static Property EdgeSourceAddress { get; } = new(_addressProperty, csvHeader: "SourceAddress");
-    public static Property EdgeSourceType { get; } = new(_scriptTypeProperty, csvHeader: "SourceType");
     public static Property EdgeTargetAddress { get; } = new(_addressProperty, csvHeader: "TargetAddress");
-    public static Property EdgeTargetType { get; } = new(_scriptTypeProperty, csvHeader: "TargetType");
     public static Property EdgeType { get; } = new("EdgeType");
     public static Property EdgeValue { get; } = new("Value", FieldType.Float);
     public static Property T2TEdgeSourceTxid { get; } = new Property(_txNodeTxid, csvHeader: "SourceId");
-    public static Property T2TEdgeSourceVersion { get; } = new Property(_txNodeVersion, FieldType.Int, "SourceVersion");
-    public static Property T2TEdgeSourceSize { get; } = new Property(_txNodeSize, FieldType.Int, "SourceSize");
-    public static Property T2TEdgeSourceVSize { get; } = new Property(_txNodeVSize, FieldType.Int, "SourceVSize");
-    public static Property T2TEdgeSourceWeight { get; } = new Property(_txNodeWeight, FieldType.Int, "SourceWeight");
-    public static Property T2TEdgeSourceLockTime { get; } = new Property(_txNodeLockTime, FieldType.Int, "SourceLockTime");
     public static Property T2TEdgeTargetTxid { get; } = new Property(_txNodeTxid, csvHeader: "TargetId");
-    public static Property T2TEdgeTargetVersion { get; } = new Property(_txNodeVersion, FieldType.Int, "TargetVersion");
-    public static Property T2TEdgeTargetSize { get; } = new Property(_txNodeSize, FieldType.Int, "TargetSize");
-    public static Property T2TEdgeTargetVSize { get; } = new Property(_txNodeVSize, FieldType.Int, "TargetVSize");
-    public static Property T2TEdgeTargetWeight { get; } = new Property(_txNodeWeight, FieldType.Int, "TargetWeight");
-    public static Property T2TEdgeTargetLockTime { get; } = new Property(_txNodeLockTime, FieldType.Int, "TargetLockTime");
 }
