@@ -17,7 +17,7 @@ public class T2TEdge : Edge<TxNode, TxNode>
     {
         var source = new TxNode(
             newEdge.Source.Id,
-            newEdge.Source.Txid ?? oldEdge.Source.Txid,
+            newEdge.Source.Txid,
             newEdge.Source.Version ?? oldEdge.Source.Version,
             newEdge.Source.Size ?? oldEdge.Source.Size,
             newEdge.Source.VSize ?? oldEdge.Source.VSize,
@@ -26,7 +26,7 @@ public class T2TEdge : Edge<TxNode, TxNode>
 
         var target = new TxNode(
             newEdge.Target.Id,
-            newEdge.Target.Txid ?? oldEdge.Target.Txid,
+            newEdge.Target.Txid,
             newEdge.Target.Version ?? oldEdge.Target.Version,
             newEdge.Target.Size ?? oldEdge.Target.Size,
             newEdge.Target.VSize ?? oldEdge.Target.VSize,

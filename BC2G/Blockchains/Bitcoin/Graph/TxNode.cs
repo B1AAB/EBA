@@ -22,7 +22,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
     }
 
     public TxNode(
-        string id, string? txid, int? version,
+        string id, string txid, int? version,
         int? size, int? vSize, int? weight,
         long? lockTime) : base(id)
     {
