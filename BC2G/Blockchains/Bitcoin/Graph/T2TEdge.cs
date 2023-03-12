@@ -2,6 +2,11 @@
 
 public class T2TEdge : Edge<TxNode, TxNode>
 {
+    public static new GraphComponentType ComponentType
+    {
+        get { return GraphComponentType.BitcoinT2T; }
+    }
+
     public T2TEdge(
         TxNode source, TxNode target,
         double value, EdgeType type, uint timestamp, long blockHeight) :

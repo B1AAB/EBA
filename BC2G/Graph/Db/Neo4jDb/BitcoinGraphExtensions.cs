@@ -4,10 +4,10 @@ internal static class BitcoinGraphExtensions
 {
     public static S2SEdge GetOrAddEdge(this GraphBase g, IRelationship e)
     {
-        var source = g.GetOrAddNode(new ScriptNode(e.StartNodeElementId));
-        var target = g.GetOrAddNode(new ScriptNode(e.EndNodeElementId));
+        var source = g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(e.StartNodeElementId));
+        var target = g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(e.EndNodeElementId));
 
-        var edge = g.GetOrAddEdge(new S2SEdge(source, target, e));
+        var edge = g.GetOrAddEdge(GraphComponentType.BitcoinS2S, new S2SEdge(source, target, e));
 
         source.AddOutgoingEdges(edge);
         target.AddIncomingEdges(edge);

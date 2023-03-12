@@ -169,12 +169,18 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         Stats.IncrementEdgeType(edge.Type, edge.Value);
     }
 
-    public new void AddOrUpdateEdge(T2TEdge edge)
+    public new void AddOrUpdateEdge(C2SEdge edge)
     {
         base.AddOrUpdateEdge(edge);
         Stats.IncrementEdgeType(edge.Type, edge.Value);
     }
 
+    public new void AddOrUpdateEdge(T2TEdge edge)
+    {
+        base.AddOrUpdateEdge(edge);
+        Stats.IncrementEdgeType(edge.Type, edge.Value);
+    }
+    
     public new void AddOrUpdateEdge(S2SEdge edge)
     {
         base.AddOrUpdateEdge(edge);

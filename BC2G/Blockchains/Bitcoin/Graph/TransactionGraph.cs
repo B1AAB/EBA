@@ -2,6 +2,11 @@ namespace BC2G.Blockchains.Bitcoin.Graph;
 
 public class TransactionGraph : GraphBase
 {
+    public new GraphComponentType ComponentType
+    {
+        get { return GraphComponentType.BitcoinTxGraph; }
+    }
+
     public TxNode TxNode { get; }
     public double TotalInputValue { set; get; }
     public double TotalOutputValue { set; get; }

@@ -2,7 +2,12 @@
 
 public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 {
-    public string? Txid { get; }
+    public static new GraphComponentType ComponentType
+    {
+        get { return GraphComponentType.BitcoinTxNode; }
+    }
+
+    public string Txid { get; }
     public int? Version { get; }
     public int? Size { get; }
     public int? VSize { get; }

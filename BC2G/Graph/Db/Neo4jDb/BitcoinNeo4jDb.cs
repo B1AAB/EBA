@@ -19,18 +19,18 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 
     public override async Task SerializeAsync(BitcoinGraph g, CancellationToken ct)
     {
-        var nodeTypes = g.GetNodes();
-        var edgeTypes = g.GetEdges();
-        var graphType = Utilities.TypeToString(g.GetType());
+        var nodes = g.GetNodes();
+        var edges = g.GetEdges();
+        var graphType = BitcoinGraph.ComponentType;
         var batchInfo = await GetBatchAsync(
-            nodeTypes.Keys.Concat(edgeTypes.Keys).Append(graphType).ToList());
+            nodes.Keys.Concat(edges.Keys).Append(graphType).ToList());
 
         var factory = new BitcoinStrategyFactory();
         var graphStrategy = factory.GetGraphStrategy(graphType);
         batchInfo.AddOrUpdate(graphType, 1);
         graphStrategy.ToCsv(g, batchInfo.GetFilename(graphType));
 
-        foreach (var type in nodeTypes)
+        foreach (var type in nodes)
         {
             batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != BitcoinAgent.Coinbase));
 
@@ -40,7 +40,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 batchInfo.GetFilename(type.Key));
         }
 
-        foreach (var type in edgeTypes)
+        foreach (var type in edges)
         {
             batchInfo.AddOrUpdate(type.Key, type.Value.Count);
             var _strategy = factory.GetEdgeStrategy(type.Key);
@@ -50,17 +50,17 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         await SerializeBatchesAsync();
     }
 
-    public override Task ImportAsync(string batchName = "", List<string>? importOrder = null)
+    public override Task ImportAsync(string batchName = "", List<GraphComponentType>? importOrder = null)
     {
-        importOrder ??= new List<string>()
+        importOrder ??= new List<GraphComponentType>()
         {
-            Utilities.TypeToString<BlockGraph>(),
-            Utilities.TypeToString<ScriptNode>(),
-            Utilities.TypeToString<TxNode>(),
-            Utilities.TypeToString<C2SEdge>(),
-            Utilities.TypeToString<C2TEdge>(),
-            Utilities.TypeToString<S2SEdge>(),
-            Utilities.TypeToString<T2TEdge>(),
+            GraphComponentType.BitcoinGraph,
+            GraphComponentType.BitcoinScriptNode,
+            GraphComponentType.BitcoinTxNode,
+            GraphComponentType.BitcoinC2S,
+            GraphComponentType.BitcoinC2T,
+            GraphComponentType.BitcoinS2S,
+            GraphComponentType.BitcoinT2T
         };
         return base.ImportAsync(batchName, importOrder);
     }
@@ -108,7 +108,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             if (!CanUseGraph(
                 rndGraph,
                 minNodeCount: Options.GraphSample.MinNodeCount,
-                maxNodeCount: graph.GetNodeCount<ScriptNode>(),
+                maxNodeCount: graph.GetNodeCount(GraphComponentType.BitcoinScriptNode),
                 minEdgeCount: Options.GraphSample.MinEdgeCount,
                 maxEdgeCount: graph.EdgeCount))
                 return false;
@@ -158,13 +158,13 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             if (root is null)
                 continue;
 
-            g.GetOrAddNode(root);
+            g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, root);
 
             // It is better to add nodes like this, and not just as part of 
             // adding edge, because `nodes` has all the node properties for each 
             // node, but `relationships` only contain their IDs.
             foreach (var node in hop.Values["nodes"].As<List<Neo4j.Driver.INode>>())
-                g.GetOrAddNode(new ScriptNode(node));
+                g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(node));
 
             foreach (var relationship in hop.Values["relationships"].As<List<IRelationship>>())
                 g.GetOrAddEdge(relationship);
@@ -193,8 +193,8 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 
         foreach (var n in randomNodes)
         {
-            g.GetOrAddNode(new ScriptNode(n.Values["source"].As<Neo4j.Driver.INode>()));
-            g.GetOrAddNode(new ScriptNode(n.Values["target"].As<Neo4j.Driver.INode>()));
+            g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(n.Values["source"].As<Neo4j.Driver.INode>()));
+            g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(n.Values["target"].As<Neo4j.Driver.INode>()));
             g.GetOrAddEdge(n.Values["edge"].As<IRelationship>());
         }
         return g;

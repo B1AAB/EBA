@@ -8,6 +8,11 @@
 /// </summary>
 public class C2SEdge : S2SEdge
 {
+    public new static GraphComponentType ComponentType
+    {
+        get { return GraphComponentType.BitcoinC2S; }
+    }
+
     public C2SEdge(
         ScriptNode target, double value, uint timestamp, long blockHeight) :
         base(

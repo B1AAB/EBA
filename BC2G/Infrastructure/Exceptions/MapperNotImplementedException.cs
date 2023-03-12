@@ -2,7 +2,7 @@
 
 internal class MapperNotImplementedException : NotImplementedException
 {
-    public MapperNotImplementedException(string type) :
+    public MapperNotImplementedException(GraphComponentType type) :
         base($"A mapper for type {type} is not implemented.")
     { }
 }

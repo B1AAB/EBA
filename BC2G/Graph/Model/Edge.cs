@@ -4,6 +4,8 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
     where TSource : notnull, INode
     where TTarget : notnull, INode
 {
+    public GraphComponentType ComponentType { get { return GraphComponentType.Edge; } }
+
     public string Id { get; }
     public TSource Source { get; }
     public TTarget Target { get; }

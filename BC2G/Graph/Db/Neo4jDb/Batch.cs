@@ -7,25 +7,25 @@ public class Batch
     public string Name { get; }
     public string DefaultDirectory { get; }
 
-    public ImmutableDictionary<string, TypeInfo> TypesInfo
+    public ImmutableDictionary<GraphComponentType, TypeInfo> TypesInfo
     {
         get { return _typesInfo.ToImmutableDictionary(); }
     }
-    private readonly Dictionary<string, TypeInfo> _typesInfo;
+    private readonly Dictionary<GraphComponentType, TypeInfo> _typesInfo;
 
 
     [JsonConstructor]
     public Batch(
         string name,
         string defaultDirectory,
-        ImmutableDictionary<string, TypeInfo> typesInfo)
+        ImmutableDictionary<GraphComponentType, TypeInfo> typesInfo)
     {
         Name = name;
         DefaultDirectory = defaultDirectory;
-        _typesInfo = new Dictionary<string, TypeInfo>(typesInfo);
+        _typesInfo = new Dictionary<GraphComponentType, TypeInfo>(typesInfo);
     }
 
-    public Batch(string name, string defaultDirectory, List<string> types)
+    public Batch(string name, string defaultDirectory, List<GraphComponentType> types)
     {
         Name = name;
         DefaultDirectory = defaultDirectory;
@@ -37,18 +37,18 @@ public class Batch
                 CreateFilename(type, timestamp, DefaultDirectory), 0));
     }
 
-    public void AddOrUpdate(string type, int count)
+    public void AddOrUpdate(GraphComponentType type, int count)
     {
         AddOrUpdate(type, count, DefaultDirectory);
     }
 
-    public void AddOrUpdate(string type, int count, string directory)
+    public void AddOrUpdate(GraphComponentType type, int count, string directory)
     {
         EnsureType(type, directory);
         _typesInfo[type].Count += count;
     }
 
-    public string GetFilename(string type)
+    public string GetFilename(GraphComponentType type)
     {
         EnsureType(type, DefaultDirectory);
         return _typesInfo[type].Filename;
@@ -59,12 +59,12 @@ public class Batch
         return (from x in _typesInfo.Values select x.Count).Sum();
     }
 
-    public TypeInfo GetTypeInfo(string type)
+    public TypeInfo GetTypeInfo(GraphComponentType type)
     {
         return _typesInfo[type];
     }
 
-    private void EnsureType(string type, string directory)
+    private void EnsureType(GraphComponentType type, string directory)
     {
         if (!_typesInfo.ContainsKey(type))
         {
@@ -73,8 +73,8 @@ public class Batch
         }
     }
 
-    private static string CreateFilename(string type, string timestamp, string directory)
+    private static string CreateFilename(GraphComponentType type, string timestamp, string directory)
     {
-        return Path.Join(directory, $"{timestamp}_{type.Replace('.', '_')}.csv");
+        return Path.Join(directory, $"{timestamp}_{type}.csv");
     }
 }

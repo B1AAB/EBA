@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Model;
 
-public interface INode
+public interface INode : IGraphComponent
 {
     public string Id { get; }
     public int InDegree { get; }

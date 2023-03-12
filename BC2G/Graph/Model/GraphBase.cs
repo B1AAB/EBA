@@ -2,8 +2,10 @@
 
 namespace BC2G.Graph.Model;
 
-public class GraphBase : IEquatable<GraphBase>
+public class GraphBase : IEquatable<GraphBase>, IGraphComponent
 {
+    public GraphComponentType ComponentType { get { return GraphComponentType.Graph; } }
+
     public int NodeCount
     {
         get { return (from x in _nodes select x.Value.Count).Sum(); }
@@ -30,8 +32,8 @@ public class GraphBase : IEquatable<GraphBase>
         }
     }
 
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, INode>> _nodes = new();
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, IEdge<INode, INode>>> _edges = new();
+    private readonly ConcurrentDictionary<GraphComponentType, ConcurrentDictionary<string, INode>> _nodes = new();
+    private readonly ConcurrentDictionary<GraphComponentType, ConcurrentDictionary<string, IEdge<INode, INode>>> _edges = new();
 
     public ReadOnlyCollection<double> Labels
     {
@@ -39,89 +41,81 @@ public class GraphBase : IEquatable<GraphBase>
     }
     private readonly List<double> _labels = new();
 
-    /// <summary>
-    /// Use this overload if type is known at compile time.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <returns></returns>
-    public int GetNodeCount<T>()
-    {
-        return GetNodeCount(Utilities.TypeToString<T>());
-    }
-    public int GetNodeCount<T>(T instance) where T : notnull
-    {
-        return GetNodeCount(Utilities.TypeToString(instance));
-    }
-    public int GetNodeCount(string type)
+    public int GetNodeCount(GraphComponentType type)
     {
         if (_nodes.TryGetValue(type, out ConcurrentDictionary<string, INode>? value))
             return value.Values.Count;
         return 0;
     }
 
-    public ImmutableDictionary<string, ICollection<INode>> GetNodes()
+    public ImmutableDictionary<GraphComponentType, ICollection<INode>> GetNodes()
     {
         return _nodes.ToImmutableDictionary(x => x.Key, x => x.Value.Values);
     }
 
-    public ImmutableDictionary<string, ICollection<IEdge<INode, INode>>> GetEdges()
+    public ImmutableDictionary<GraphComponentType, ICollection<IEdge<INode, INode>>> GetEdges()
     {
         return _edges.ToImmutableDictionary(x => x.Key, x => x.Value.Values);
     }
 
-    public bool TryAddNode<T>(T node) where T : INode
+    public bool TryAddNode<T>(GraphComponentType type, T node) where T : INode
     {
         var x = _nodes.GetOrAdd(
-            Utilities.TypeToString(node), 
+            type,//Utilities.TypeToString(node), 
             new ConcurrentDictionary<string, INode>());
 
         return x.TryAdd(node.Id, node);
     }
 
-    public T GetOrAddNode<T>(T node) where T : INode
+    public T GetOrAddNode<T>(GraphComponentType type, T node) where T : INode
     {
         var x = _nodes.GetOrAdd(
-            Utilities.TypeToString(node),
+            type,//Utilities.TypeToString(node),
             new ConcurrentDictionary<string, INode>());
 
         return (T)x.AddOrUpdate(node.Id, node, (key, oldValue) => node);
         // TODO: any better update logic?!
     }
 
-    public void AddNodes<T>(IEnumerable<T> nodes) where T : INode
+    public void AddNodes<T>(GraphComponentType type, IEnumerable<T> nodes) where T : INode
     {
         foreach (var node in nodes)
-            GetOrAddNode(node);
+            GetOrAddNode(type, node);
     }
 
-    public T GetOrAddEdge<T>(T edge) where T : IEdge<INode, INode>
+    public T GetOrAddEdge<T>(GraphComponentType type, T edge) where T : IEdge<INode, INode>
     {
         var x = _edges.GetOrAdd(
-            Utilities.TypeToString(edge.GetType()), 
+            //Utilities.TypeToString(edge.GetType()), 
+            type,
             new ConcurrentDictionary<string, IEdge<INode, INode>>());
 
         return (T)x.GetOrAdd(edge.Id, edge);
     }
 
-    public void AddEdges<T>(IEnumerable<T> edges)
+    public void AddEdges<T>(GraphComponentType type, IEnumerable<T> edges)
         where T : IEdge<INode, INode>
     {
         foreach (var edge in edges)
-            GetOrAddEdge(edge);
+            GetOrAddEdge(type, edge);
     }
 
     public void AddOrUpdateEdge<T>(
-        T edge, Func<string, IEdge<INode, INode>, IEdge<INode, INode>> updateValueFactory)
+        T edge, Func<string, IEdge<INode, INode>, IEdge<INode, INode>> updateValueFactory,
+        GraphComponentType sourceType,
+        GraphComponentType targetType,
+        GraphComponentType edgeType)
         where T : IEdge<INode, INode>
     {
         var x = _edges.GetOrAdd(
-            Utilities.TypeToString(edge.GetType()), 
+            //Utilities.TypeToString(edge.GetType()),
+            edgeType,
             new ConcurrentDictionary<string, IEdge<INode, INode>>());
 
         x.AddOrUpdate(edge.Id, edge, updateValueFactory);
 
-        TryAddNode(edge.Source);
-        TryAddNode(edge.Target);
+        TryAddNode(sourceType, edge.Source);
+        TryAddNode(targetType, edge.Target);
     }
 
     /// <summary>
@@ -129,11 +123,11 @@ public class GraphBase : IEquatable<GraphBase>
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    public List<T>? GetEdges<T>() where T : IEdge<INode, INode>
+    /*public List<T>? GetEdges<T>() where T : IEdge<INode, INode>
     {
         return GetEdges<T>(Utilities.TypeToString<T>());
-    }
-    public List<T>? GetEdges<T>(string type) where T : IEdge<INode, INode>
+    }*/
+    public List<T>? GetEdges<T>(GraphComponentType type) where T : IEdge<INode, INode>
     {
         if (!_edges.ContainsKey(type))
             return null;

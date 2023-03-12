@@ -2,6 +2,11 @@
 
 public class S2SEdge : Edge<ScriptNode, ScriptNode>
 {
+    public new static GraphComponentType ComponentType
+    {
+        get { return GraphComponentType.BitcoinS2S; }
+    }
+
     public S2SEdge(
         ScriptNode source, ScriptNode target,
         double value, EdgeType type,

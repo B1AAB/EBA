@@ -4,14 +4,39 @@
 
 public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
 {
+    public new static GraphComponentType ComponentType
+    {
+        get { return GraphComponentType.BitcoinGraph; }
+    }
+
     public void AddOrUpdateEdge(C2TEdge edge)
     {
-        AddOrUpdateEdge(edge, (_, oldValue) => edge.Update(oldValue.Value));
+        AddOrUpdateEdge(
+            edge, 
+            (_, oldValue) => edge.Update(oldValue.Value),
+            TxNode.ComponentType,
+            TxNode.ComponentType,
+            C2TEdge.ComponentType);
+    }
+
+    public void AddOrUpdateEdge(C2SEdge edge)
+    {
+        AddOrUpdateEdge(
+            edge,
+            (_, oldValue) => edge.Update(oldValue.Value),
+            ScriptNode.ComponentType,
+            ScriptNode.ComponentType,
+            C2SEdge.ComponentType);
     }
 
     public void AddOrUpdateEdge(T2TEdge edge)
     {
-        AddOrUpdateEdge(edge, (_, oldEdge) => { return T2TEdge.Update((T2TEdge)oldEdge, edge); });
+        AddOrUpdateEdge(
+            edge,
+            (_, oldEdge) => { return T2TEdge.Update((T2TEdge)oldEdge, edge); },
+            TxNode.ComponentType,
+            TxNode.ComponentType,
+            T2TEdge.ComponentType);
     }
 
     public void AddOrUpdateEdge(S2SEdge edge)
@@ -20,15 +45,20 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
         /// If this is changed, the `Equals` method needs to be
         /// updated accordingly.
 
-        AddOrUpdateEdge(edge, (_, oldValue) => edge.Update(oldValue.Value));
+        AddOrUpdateEdge(
+            edge,
+            (_, oldValue) => edge.Update(oldValue.Value),
+            ScriptNode.ComponentType,
+            ScriptNode.ComponentType,
+            S2SEdge.ComponentType);
     }
 
     public S2SEdge GetOrAddEdge(IRelationship e)
     {
-        var source = GetOrAddNode(new ScriptNode(e.StartNodeElementId));
-        var target = GetOrAddNode(new ScriptNode(e.EndNodeElementId));
+        var source = GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(e.StartNodeElementId));
+        var target = GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(e.EndNodeElementId));
 
-        var edge = GetOrAddEdge(new S2SEdge(source, target, e));
+        var edge = GetOrAddEdge(GraphComponentType.BitcoinS2S, new S2SEdge(source, target, e));
 
         source.AddOutgoingEdges(edge);
         target.AddIncomingEdges(edge);

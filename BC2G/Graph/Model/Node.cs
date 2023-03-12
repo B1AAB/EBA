@@ -2,6 +2,11 @@
 
 public class Node : INode
 {
+    public GraphComponentType ComponentType
+    {
+        get { return GraphComponentType.Node; }
+    }
+
     public string Id { get; }
 
     public int InDegree { get { return IncomingEdges.Count; } }
