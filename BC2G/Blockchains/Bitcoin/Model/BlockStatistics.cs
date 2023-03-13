@@ -16,8 +16,7 @@ public class BlockStatistics
     /// </summary>
     public int Retries { set; get; } = 0;
 
-    public TimeSpan Runtime { get { return _runtime; } }
-    private TimeSpan _runtime;
+    public TimeSpan Runtime { get { return _stopwatch.Elapsed; } }
     private readonly Stopwatch _stopwatch = new();
 
     public int InputTxCount { get { return _inputTxCount; } }
@@ -80,7 +79,6 @@ public class BlockStatistics
     public void StopStopwatch()
     {
         _stopwatch.Stop();
-        _runtime = _stopwatch.Elapsed;
     }
 
     public void IncrementEdgeType(EdgeType type, double value)

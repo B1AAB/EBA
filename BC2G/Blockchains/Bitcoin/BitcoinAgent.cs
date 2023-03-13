@@ -204,6 +204,8 @@ public class BitcoinAgent : IDisposable
 
         graph.MergeQueuedTxGraphs(cT);
 
+        graph.Stats.StopStopwatch();
+
         return graph;
     }
 

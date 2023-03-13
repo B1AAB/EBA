@@ -39,6 +39,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         CancellationToken cT)
     {
         cT.ThrowIfCancellationRequested();
+        obj.Stats.StartStopwatch();
 
         // I am using `default` as a cancellation token in the following
         // because the two serialization methods need to conclude before
