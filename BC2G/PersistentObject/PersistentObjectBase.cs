@@ -72,7 +72,7 @@ public abstract class PersistentObjectBase<T> : IDisposable
             if (disposing)
             {
                 int graceCount = 3;
-                while (graceCount-- >= 0)
+                while ((_cancelled && graceCount-- >= 0) || true)
                 {
                     if (_isFree && (_buffer.Count == 0 || _cancelled))
                         break;
