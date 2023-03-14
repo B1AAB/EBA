@@ -72,6 +72,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 
             if (disposing)
             {
+                _graphDb.Dispose();
                 _pGraphStats.Dispose();
             }
 
