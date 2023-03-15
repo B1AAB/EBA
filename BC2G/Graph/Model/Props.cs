@@ -1,4 +1,4 @@
-﻿using BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
+﻿using BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
 
 namespace BC2G.Graph.Model;
 

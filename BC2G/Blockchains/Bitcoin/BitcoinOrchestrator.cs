@@ -18,7 +18,9 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         _host = host;
     }
 
-    public async Task TraverseAsync(Options options, CancellationToken cT)
+    public async Task TraverseAsync(
+        Options options, 
+        CancellationToken cT)
     {
         var chainInfo = await _agent.AssertChainAsync(cT);
         _logger.LogInformation("Head of the chain is at block {block:n0}.", chainInfo.Blocks);
@@ -51,7 +53,8 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         }
     }
 
-    private static PersistentConcurrentQueue SetupBlocksQueue(Options options)
+    private static PersistentConcurrentQueue SetupBlocksQueue(
+        Options options)
     {
         var heights = new List<long>();
         for (int h = options.Bitcoin.From;
@@ -62,7 +65,9 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         return GetPersistentBlocksQueue(options.Bitcoin.BlocksToProcessListFilename, heights);
     }
 
-    private static PersistentConcurrentQueue GetPersistentBlocksQueue(string filename, List<long>? init = null)
+    private static PersistentConcurrentQueue GetPersistentBlocksQueue(
+        string filename, 
+        List<long>? init = null)
     {
         PersistentConcurrentQueue blockHeightQueue;
         if (!File.Exists(filename))
@@ -78,7 +83,6 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
         return blockHeightQueue;
     }
-
 
     private async Task TraverseBlocksAsync(
         Options options,

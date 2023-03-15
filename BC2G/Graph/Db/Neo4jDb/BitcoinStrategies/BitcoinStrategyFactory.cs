@@ -1,4 +1,4 @@
-﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
+﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
 
 public class BitcoinStrategyFactory : IStrategyFactory
 {
