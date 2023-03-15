@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-public class BlockGraphStrategy : IGraphStrategy
+public class BlockGraphStrategy : StrategyBase
 {
     public const string labels = "Block";
 
@@ -26,16 +26,16 @@ public class BlockGraphStrategy : IGraphStrategy
         Props.SumFeeEdges
     };
 
-    public string GetCsvHeader()
+    public override string GetCsvHeader()
     {
         return string.Join(
             Neo4jDb.csvDelimiter,
             from x in _properties select x.CsvHeader);
     }
 
-    public string GetCsv(GraphBase g)
+    public override string GetCsv(IGraphComponent component)
     {
-        return GetCsv((BlockGraph)g);
+        return GetCsv((BlockGraph)component);
     }
 
     public static string GetCsv(BlockGraph g)
@@ -45,35 +45,28 @@ public class BlockGraphStrategy : IGraphStrategy
 
         /// Note that the ordre of the items in this array should 
         /// match those in the `_properties`. 
-        return string.Join(Neo4jDb.csvDelimiter, new string[]
-        {
-            g.Block.Height.ToString(),
-            g.Block.MedianTime.ToString(),
-            g.Block.Confirmations.ToString(),
-            g.Block.Difficulty.ToString(),
-            g.Block.TransactionsCount.ToString(),
-            g.Block.Size.ToString(),
-            g.Block.StrippedSize.ToString(),
-            g.Block.Weight.ToString(),
-            counts[EdgeType.Generation].ToString(),
-            counts[EdgeType.Transfer].ToString(),
-            counts[EdgeType.Fee].ToString(),
-            sums[EdgeType.Generation].ToString(),
-            sums[EdgeType.Transfer].ToString(),
-            sums[EdgeType.Fee].ToString()
-        });
+        return string.Join(
+            Neo4jDb.csvDelimiter,
+            new string[]
+            {
+                g.Block.Height.ToString(),
+                g.Block.MedianTime.ToString(),
+                g.Block.Confirmations.ToString(),
+                g.Block.Difficulty.ToString(),
+                g.Block.TransactionsCount.ToString(),
+                g.Block.Size.ToString(),
+                g.Block.StrippedSize.ToString(),
+                g.Block.Weight.ToString(),
+                counts[EdgeType.Generation].ToString(),
+                counts[EdgeType.Transfer].ToString(),
+                counts[EdgeType.Fee].ToString(),
+                sums[EdgeType.Generation].ToString(),
+                sums[EdgeType.Transfer].ToString(),
+                sums[EdgeType.Fee].ToString()
+            });
     }
 
-    public virtual void ToCsv(GraphBase graph, string filename)
-    {
-        using var writer = new StreamWriter(filename, append: true);
-        if (new FileInfo(filename).Length == 0)
-            writer.WriteLine(GetCsvHeader());
-
-        writer.WriteLine(GetCsv(graph));
-    }
-
-    public string GetQuery(string filename)
+    public override string GetQuery(string filename)
     {
         // The following is an example of the generated query.
         //

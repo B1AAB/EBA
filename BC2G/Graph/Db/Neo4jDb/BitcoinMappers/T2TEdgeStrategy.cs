@@ -22,7 +22,7 @@ public class T2TEdgeStrategy : BitcoinEdgeStrategy
             from x in _properties select x.CsvHeader);
     }
 
-    public override string GetCsv(IEdge<Model.INode, Model.INode> edge)
+    public override string GetCsv(IGraphComponent edge)
     {
         return GetCsv((T2TEdge)edge);
     }

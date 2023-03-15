@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-public class TxNodeStrategy : NodeStrategyBase
+public class TxNodeStrategy : StrategyBase
 {
     public const string labels = "Tx";
 
@@ -21,9 +21,9 @@ public class TxNodeStrategy : NodeStrategyBase
             from x in _properties select x.CsvHeader);
     }
 
-    public override string GetCsv(Model.INode node)
+    public override string GetCsv(IGraphComponent component)
     {
-        return GetCsv((TxNode)node);
+        return GetCsv((TxNode)component);
     }
 
     public static string GetCsv(TxNode node)

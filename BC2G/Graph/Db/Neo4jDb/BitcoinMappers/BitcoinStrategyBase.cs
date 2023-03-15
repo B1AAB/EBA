@@ -1,8 +1,6 @@
-﻿using INode = BC2G.Graph.Model.INode;
+﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
-
-public abstract class BitcoinEdgeStrategy : IEdgeStrategy
+public abstract class BitcoinEdgeStrategy : StrategyBase
 {
     public static string GetCreatesEdgeQuery(string blockVar = "block", string targetVar = "target")
     {
@@ -54,21 +52,5 @@ public abstract class BitcoinEdgeStrategy : IEdgeStrategy
             $"SET rel.Count = rel.Count + 1");
 
         return builder.ToString();
-    }
-
-    public abstract string GetCsvHeader();
-    public abstract string GetCsv(IEdge<INode, INode> edge);
-    public abstract string GetQuery(string filename);
-
-    public virtual void ToCsv(
-        IEnumerable<IEdge<INode, INode>> edges,
-        string filename)
-    {
-        using var writer = new StreamWriter(filename, append: true);
-        if (new FileInfo(filename).Length == 0)
-            writer.WriteLine(GetCsvHeader());
-
-        foreach (var edge in edges)
-            writer.WriteLine(GetCsv(edge));
     }
 }

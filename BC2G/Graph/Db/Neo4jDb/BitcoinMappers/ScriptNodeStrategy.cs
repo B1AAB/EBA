@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
-public class ScriptNodeStrategy : NodeStrategyBase
+public class ScriptNodeStrategy : StrategyBase
 {
     public const string labels = "Script";
 
@@ -17,16 +17,17 @@ public class ScriptNodeStrategy : NodeStrategyBase
             from x in _properties select x.CsvHeader);
     }
 
-    public override string GetCsv(Model.INode node)
+    public override string GetCsv(IGraphComponent component)
     {
-        return GetCsv((ScriptNode)node);
+        return GetCsv((ScriptNode)component);
     }
 
     public static string GetCsv(ScriptNode node)
     {
         return string.Join(
             Neo4jDb.csvDelimiter,
-            node.Address, node.ScriptType.ToString());
+            node.Address, 
+            node.ScriptType.ToString());
     }
 
     public override string GetQuery(string filename)

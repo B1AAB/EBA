@@ -25,26 +25,22 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         var batchInfo = await GetBatchAsync(
             nodes.Keys.Concat(edges.Keys).Append(graphType).ToList());
 
-        var factory = new BitcoinStrategyFactory();
-        var graphStrategy = factory.GetGraphStrategy(graphType);
         batchInfo.AddOrUpdate(graphType, 1);
-        graphStrategy.ToCsv(g, batchInfo.GetFilename(graphType));
+        var graphStrategy = StrategyFactory.GetStrategy(graphType);
+        await graphStrategy.ToCsvAsync(g, batchInfo.GetFilename(graphType));
 
         foreach (var type in nodes)
         {
             batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != BitcoinAgent.Coinbase));
-
-            var _strategy = factory.GetNodeStrategy(type.Key);
-            _strategy.ToCsv(
-                type.Value.Where(x => x.Id != BitcoinAgent.Coinbase), 
-                batchInfo.GetFilename(type.Key));
+            var _strategy = StrategyFactory.GetStrategy(type.Key);
+            await _strategy.ToCsvAsync(type.Value.Where(x => x.Id != BitcoinAgent.Coinbase), batchInfo.GetFilename(type.Key));
         }
 
         foreach (var type in edges)
         {
             batchInfo.AddOrUpdate(type.Key, type.Value.Count);
-            var _strategy = factory.GetEdgeStrategy(type.Key);
-            _strategy.ToCsv(type.Value, batchInfo.GetFilename(type.Key));
+            var _strategy = StrategyFactory.GetStrategy(type.Key);
+            await _strategy.ToCsvAsync(type.Value, batchInfo.GetFilename(type.Key));
         }
 
         await SerializeBatchesAsync();

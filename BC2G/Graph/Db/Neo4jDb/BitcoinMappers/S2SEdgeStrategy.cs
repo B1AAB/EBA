@@ -1,6 +1,4 @@
-﻿using INode = BC2G.Graph.Model.INode;
-
-namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
+﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
 public class S2SEdgeStrategy : BitcoinEdgeStrategy
 {
@@ -24,7 +22,7 @@ public class S2SEdgeStrategy : BitcoinEdgeStrategy
             from x in _properties select x.CsvHeader);
     }
 
-    public override string GetCsv(IEdge<INode, INode> edge)
+    public override string GetCsv(IGraphComponent edge)
     {
         return GetCsv((S2SEdge)edge);
     }

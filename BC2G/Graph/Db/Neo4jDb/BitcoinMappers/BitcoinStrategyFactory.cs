@@ -1,51 +1,48 @@
-﻿using BC2G.Exceptions;
-
-namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
+﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinMappers;
 
 public class BitcoinStrategyFactory : IStrategyFactory
 {
-    public IStrategyBase GetStrategyBase(GraphComponentType type)
+    private bool _disposed = false;
+
+    private readonly Dictionary<GraphComponentType, StrategyBase> _strategies;
+
+    public BitcoinStrategyFactory()
     {
-        try { return GetNodeStrategy(type); }
-        catch (MapperNotImplementedException) { }
-
-        try { return GetEdgeStrategy(type); }
-        catch (MapperNotImplementedException) { }
-
-        try { return GetGraphStrategy(type); }
-        catch (MapperNotImplementedException) { }
-
-        throw new MapperNotImplementedException(type);
-    }
-
-    public IGraphStrategy GetGraphStrategy(GraphComponentType type)
-    {
-        return type switch
+        _strategies = new()
         {
-            GraphComponentType.BitcoinGraph => new BlockGraphStrategy(),
-            _ => throw new MapperNotImplementedException(type)
+            {GraphComponentType.BitcoinGraph, new BlockGraphStrategy()},
+            {GraphComponentType.BitcoinScriptNode, new ScriptNodeStrategy()},
+            {GraphComponentType.BitcoinTxNode, new TxNodeStrategy()},
+            {GraphComponentType.BitcoinC2T,  new C2TEdgeStrategy()},
+            {GraphComponentType.BitcoinC2S,  new C2SEdgeStrategy()},
+            {GraphComponentType.BitcoinS2S,  new S2SEdgeStrategy()},
+            {GraphComponentType.BitcoinT2T, new T2TEdgeStrategy()}
         };
     }
 
-    public INodeStrategy GetNodeStrategy(GraphComponentType type)
+    public StrategyBase GetStrategy(GraphComponentType type)
     {
-        return type switch
-        {
-            GraphComponentType.BitcoinScriptNode => new ScriptNodeStrategy(),
-            GraphComponentType.BitcoinTxNode => new TxNodeStrategy(),
-            _ => throw new MapperNotImplementedException(type)
-        };
+        return _strategies[type];
     }
 
-    public IEdgeStrategy GetEdgeStrategy(GraphComponentType type)
+    public void Dispose()
     {
-        return type switch
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
         {
-            GraphComponentType.BitcoinC2S => new C2SEdgeStrategy(),
-            GraphComponentType.BitcoinC2T => new C2TEdgeStrategy(),
-            GraphComponentType.BitcoinS2S => new S2SEdgeStrategy(),
-            GraphComponentType.BitcoinT2T => new T2TEdgeStrategy(),
-            _ => throw new MapperNotImplementedException(type)
-        };
+            if (disposing)
+            {
+                foreach (var x in _strategies)
+                {
+                    x.Value.Dispose();
+                }
+            }
+
+            _disposed = true;
+        }
     }
 }

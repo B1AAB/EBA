@@ -1,9 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb;
 
-public interface IStrategyFactory
+public interface IStrategyFactory : IDisposable
 {
-    public IStrategyBase GetStrategyBase(GraphComponentType type);
-    public INodeStrategy GetNodeStrategy(GraphComponentType type);
-    public IEdgeStrategy GetEdgeStrategy(GraphComponentType type);
-    public IGraphStrategy GetGraphStrategy(GraphComponentType type);
+    public StrategyBase GetStrategy(GraphComponentType type);
 }

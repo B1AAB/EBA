@@ -18,7 +18,7 @@ public class C2SEdgeStrategy : S2SEdgeStrategy
             from x in _properties select x.CsvHeader);
     }
 
-    public override string GetCsv(IEdge<Model.INode, Model.INode> edge)
+    public override string GetCsv(IGraphComponent edge)
     {
         return GetCsv((C2SEdge)edge);
     }

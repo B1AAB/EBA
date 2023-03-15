@@ -8,6 +8,7 @@ public static class Neo4jDb
 public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 {
     protected Options Options { get; }
+    protected IStrategyFactory StrategyFactory { get; }
 
     /// <summary>
     /// Neo4j docs suggest between 10,000 and 100,000 updates 
@@ -18,8 +19,6 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     private const int _maxEntitiesPerBatch = 80000;
     private List<Batch> _batches = new();
 
-    private readonly IStrategyFactory _strategyFactory;
-
     private readonly ILogger<Neo4jDb<T>> _logger;
     private bool _disposed = false;
 
@@ -27,7 +26,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     {
         Options = options;
         _logger = logger;
-        _strategyFactory = strategyFactory;
+        StrategyFactory = strategyFactory;
     }
 
     public abstract Task SerializeAsync(T g, CancellationToken ct);
@@ -80,17 +79,17 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             var typesKeys = importOrder ?? typesInfo.Keys;
             foreach (var typeKey in typesKeys)
             {
-                if(!typesInfo.ContainsKey(typeKey))
+                if (!typesInfo.ContainsKey(typeKey))
                 {
                     _logger.LogInformation(
-                        "Skipping type {t} since the batch {b} does not contain it.", 
+                        "Skipping type {t} since the batch {b} does not contain it.",
                         typeKey, batch.Name);
                     continue;
                 }
 
                 _logger.LogInformation("Importing type {t}.", typeKey);
-                var mapper = _strategyFactory.GetStrategyBase(typeKey);
-                await ExecuteLoadQueryAsync(driver, mapper, typesInfo[typeKey].Filename);
+                var strategy = StrategyFactory.GetStrategy(typeKey);
+                await ExecuteLoadQueryAsync(driver, strategy, typesInfo[typeKey].Filename);
                 _logger.LogInformation("Importing type {t} finished.", typeKey);
             }
         }
@@ -179,7 +178,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         return driver;
     }
 
-    private async Task ExecuteLoadQueryAsync(IDriver driver, IStrategyBase mapper, string filename)
+    private async Task ExecuteLoadQueryAsync(IDriver driver, StrategyBase strategy, string filename)
     {
         // Localization, if needed.
         // Neo4j import needs files to be placed in a particular folder 
@@ -201,7 +200,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
         var queryResult = await session.ExecuteWriteAsync(async x =>
         {
-            IResultCursor cursor = await x.RunAsync(mapper.GetQuery(filename4Query));
+            IResultCursor cursor = await x.RunAsync(strategy.GetQuery(filename4Query));
             return await cursor.ToListAsync();
         });
 
@@ -260,10 +259,13 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     // TODO: Make the following methods more generic, e.g., replace ScriptNode with INode
     public abstract Task<List<ScriptNode>> GetRandomNodes(
         IDriver driver, int nodesCount, double rootNodesSelectProb = 0.1);
+
     public abstract Task<GraphBase> GetNeighborsAsync(
         IDriver driver, string rootScriptAddress, int maxHops);
+
     public abstract Task<GraphBase> GetRandomEdges(
         IDriver driver, int edgeCount, double edgeSelectProb = 0.2);
+
     public abstract Task<bool> TrySampleNeighborsAsync(
         IDriver driver, ScriptNode rootNode, string baseOutputDir);
 
@@ -276,7 +278,10 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     {
         if (!_disposed)
         {
-            if (disposing) { }
+            if (disposing)
+            {
+                StrategyFactory.Dispose();
+            }
         }
 
         _disposed = true;
