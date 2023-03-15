@@ -42,8 +42,6 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             var _strategy = StrategyFactory.GetStrategy(type.Key);
             await _strategy.ToCsvAsync(type.Value, batchInfo.GetFilename(type.Key));
         }
-
-        await SerializeBatchesAsync();
     }
 
     public override Task ImportAsync(string batchName = "", List<GraphComponentType>? importOrder = null)

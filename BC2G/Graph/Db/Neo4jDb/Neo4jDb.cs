@@ -221,11 +221,19 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         return _batches[^1];
     }
+
+    protected void SerializeBatches()
+    {
+        JsonSerializer<List<Batch>>.Serialize(
+            _batches, Options.Neo4j.BatchesFilename);
+    }
+
     protected async Task SerializeBatchesAsync()
     {
         await JsonSerializer<List<Batch>>.SerializeAsync(
             _batches, Options.Neo4j.BatchesFilename);
     }
+
     private async Task<List<Batch>> DeserializeBatchesAsync()
     {
         return await JsonSerializer<List<Batch>>.DeserializeAsync(
@@ -281,6 +289,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             if (disposing)
             {
                 StrategyFactory.Dispose();
+                SerializeBatches();
             }
         }
 

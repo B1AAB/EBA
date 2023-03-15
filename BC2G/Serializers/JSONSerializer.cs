@@ -27,4 +27,10 @@ public class JsonSerializer<T> where T : new()
         using var stream = File.Open(path, FileMode.Create);
         await JsonSerializer.SerializeAsync(stream, obj, _options, cT);
     }
+
+    public static void Serialize(T obj, string path)
+    {
+        using var stream = File.Open(path, FileMode.Create);
+        JsonSerializer.Serialize(stream, obj, _options);
+    }
 }
