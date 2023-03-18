@@ -171,9 +171,12 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
                     if (utxos.Count >= options.Bitcoin.DbCommitAtUtxoBufferSize)
                     {
                         _logger.LogInformation(
-                            "Max UTXO buffer size reached, waiting for {count} " +
+                            "Max UTXO buffer size reached (limit={b:n0}, waiting for {count} " +
                             "other concurrent tasks; Current phase {phase}.",
-                            barrier.ParticipantsRemaining, barrier.CurrentPhaseNumber);
+                            options.Bitcoin.DbCommitAtUtxoBufferSize,
+                            barrier.ParticipantsRemaining, 
+                            barrier.CurrentPhaseNumber);
+
                         barrier.SignalAndWait(cT);
                     }
 
@@ -215,7 +218,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
     private void CommitInMemUtxo(ConcurrentDictionary<string, Utxo> utxos, object dbLock)
     {
-        _logger.LogInformation("Committing in-memory UTXO to database.");
+        _logger.LogInformation("Committing the in-memory UTXO to the database.");
         DatabaseContext.OptimisticAddOrUpdate(
             dbLock,
             utxos.Values,
