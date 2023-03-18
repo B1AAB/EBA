@@ -54,9 +54,9 @@ public class Batch
         return _typesInfo[type].Filename;
     }
 
-    public int GetTotalCount()
+    public int GetMaxCount()
     {
-        return (from x in _typesInfo.Values select x.Count).Sum();
+        return (from x in _typesInfo.Values select x.Count).Max();
     }
 
     public TypeInfo GetTypeInfo(GraphComponentType type)
