@@ -69,9 +69,11 @@ public class DatabaseContext : DbContext
                         "Trying to optimistically add UTXOs to the database. " +
                         "UTXOs count: {c:n0}", utxos.Count);
 
-                    using var c = contextFactory.CreateDbContext();
-                    c.Utxos.AddRange(utxos);
-                    c.SaveChanges();
+                    using (var c = contextFactory.CreateDbContext())
+                    {
+                        c.Utxos.AddRange(utxos);
+                        c.SaveChanges();
+                    }
 
                     logger.LogInformation("Finished optimistically adding UTXO's to the database.");
                 },
