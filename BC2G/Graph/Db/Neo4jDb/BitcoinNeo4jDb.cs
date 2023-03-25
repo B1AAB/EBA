@@ -12,7 +12,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
     {
         var driver = await base.GetDriver(options);
         await EnsureCoinbaseNodeAsync(driver);
-        await EnsureConstraintsAsync(driver);
+        await CreateIndexesAndConstraintsAsync(driver);
 
         return driver;
     }
@@ -236,131 +236,62 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 throw new Exception($"Found {count} {BitcoinAgent.Coinbase} nodes; expected zero or one.");
         }
     }
-    private static async Task EnsureConstraintsAsync(IDriver driver)
+    private static async Task CreateIndexesAndConstraintsAsync(IDriver driver)
     {
         using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
 
-        /* TODO:
-         * - create constraints on address and script type so lookup could be much faster. 
-         * -- check if constraints already exist or not, and add if missing. 
-         * 
-         * - When using MERGE or MATCH with LOAD CSV, make sure you have an index or a 
-         * unique constraint on the property that you are merging on. This will 
-         * ensure that the query executes in a performant way.
-         * 
-         * - make sure apoc and all the necessary plug-ins are installed on the given
-         * Neo4j database at the time of initialization. Currently if any of the plug 
-         * ins are not installed it fails at the load time. 
-         */
-
-        // TODO: do not create contraints if they already exist,
-        // otherwise you'll get the following error: 
-        //
-        // One or more errors occurred. (An equivalent constraint
-        // already exists, 'Constraint( id=4,
-        // name='UniqueAddressContraint', type='UNIQUENESS',
-        // schema=(:Script {Address}), ownedIndex=3 )'.)
-        //
-        // Solution: first check if the constraint exists, and only 
-        // create if not.
-        //
-        // Check if existing contraints as the following, and add contrains only
-        // if they are not already defined. Alternatively, try creating the contrains, 
-        // and if they already exist, you'll see an Exception (non-blocking) in the
-        // above code. 
-        /*var xyz = await session.ReadTransactionAsync(async x =>
+        await session.ExecuteWriteAsync(async x =>
         {
-            var result = await x.RunAsync("CALL db.constraints");
-            return result.ToListAsync();
-        });*/
+            var result = await x.RunAsync(
+                $"CREATE INDEX ScriptAddressIndex " +
+                $"IF NOT EXISTS " +
+                $"FOR (n:{ScriptNodeStrategy.labels}) " +
+                $"ON (n.{Props.ScriptAddress.Name})");
+        });
 
-        // TODO: handle the exceptions raised in running the following.
-        // Note that the exceptions are stored in the Exceptions property
-        // and do not log and stop execution when raised. 
-
-        try
+        await session.ExecuteWriteAsync(async x =>
         {
-            await session.ExecuteWriteAsync(async x =>
-            {
-                var result = await x.RunAsync(
-                    "CREATE CONSTRAINT UniqueScriptAddressContraint " +
-                    $"FOR (script:{ScriptNodeStrategy.labels}) " +
-                    $"REQUIRE script.{Props.ScriptAddress.Name} IS UNIQUE");
-            });
-        }
-        catch (Exception) { }
+            var result = await x.RunAsync(
+                $"CREATE INDEX TxidIndex " +
+                $"IF NOT EXISTS " +
+                $"FOR (n:{TxNodeStrategy.labels}) " +
+                $"ON (n.{Props.Txid.Name})");
+        });
 
-        try
+        await session.ExecuteWriteAsync(async x =>
         {
-            await session.ExecuteWriteAsync(async x =>
-            {
-                var result = await x.RunAsync(
-                    $"CREATE INDEX FOR (script:{ScriptNodeStrategy.labels}) " +
-                    $"ON (script.{Props.ScriptAddress.Name})");
-            });
-        }
-        catch (Exception)
+            var result = await x.RunAsync(
+                $"CREATE INDEX BlockHeightIndex " +
+                $"IF NOT EXISTS " +
+                $"FOR (block:{BlockGraphStrategy.labels}) " +
+                $"ON (block.{Props.Height.Name})");
+        });
+        
+        await session.ExecuteWriteAsync(async x =>
         {
-
-        }
-
-
-        try
+            var result = await x.RunAsync(
+                $"CREATE INDEX GenerationEdgeIndex " +
+                $"IF NOT EXISTS " +
+                $"FOR ()-[r:{EdgeType.Generation}]->()" +
+                $"on (r.{Props.Height.Name})");
+        });
+        
+        await session.ExecuteWriteAsync(async x =>
         {
-            await session.ExecuteWriteAsync(async x =>
-            {
-                var result = await x.RunAsync(
-                    "CREATE CONSTRAINT UniqueTxidContraint " +
-                    $"FOR (n:{TxNodeStrategy.labels}) " +
-                    $"REQUIRE n.{Props.Txid.Name} IS UNIQUE");
-            });
-        }
-        catch (Exception e)
+            var result = await x.RunAsync(
+                $"CREATE INDEX TransferEdgeIndex " +
+                $"IF NOT EXISTS " +
+                $"FOR ()-[r:{EdgeType.Transfer}]->()" +
+                $"on (r.{Props.Height.Name})");
+        });
+        
+        await session.ExecuteWriteAsync(async x =>
         {
-
-        }
-
-        try
-        {
-            await session.ExecuteWriteAsync(async x =>
-            {
-                var result = await x.RunAsync(
-                    $"CREATE INDEX FOR (n:{TxNodeStrategy.labels})" +
-                    $" on (n.{Props.Txid.Name})");
-            });
-        }
-        catch (Exception e)
-        {
-
-        }
-
-        try
-        {
-            await session.ExecuteWriteAsync(async x =>
-            {
-                var result = await x.RunAsync(
-                    "CREATE CONSTRAINT UniqueBlockHeightContraint " +
-                    $"FOR (n:{BlockGraphStrategy.labels}) " +
-                    $"REQUIRE n.{Props.Height.Name} IS UNIQUE");
-            });
-        }
-        catch (Exception e)
-        {
-
-        }
-
-        try
-        {
-            await session.ExecuteWriteAsync(async x =>
-            {
-                var result = await x.RunAsync(
-                    $"CREATE INDEX FOR (block:{BlockGraphStrategy.labels})" +
-                    $" on (block.{Props.Height.Name})");
-            });
-        }
-        catch (Exception e)
-        {
-
-        }
+            var result = await x.RunAsync(
+                $"CREATE INDEX FeeEdgeIndex " +
+                $"IF NOT EXISTS " +
+                $"FOR ()-[r:{EdgeType.Fee}]->()" +
+                $"on (r.{Props.Height.Name})");
+        });
     }
 }
