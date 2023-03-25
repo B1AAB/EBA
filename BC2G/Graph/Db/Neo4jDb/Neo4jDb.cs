@@ -68,8 +68,8 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             batches.Count(), Options.Neo4j.BatchesFilename);
 
         var c = 0;
+        var importRuntime = TimeSpan.Zero;
         var stopwatch = new Stopwatch();
-        stopwatch.Start();
 
         foreach (var batch in batches)
         {
@@ -81,6 +81,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             var typesKeys = importOrder ?? typesInfo.Keys;
             foreach (var typeKey in typesKeys)
             {
+                stopwatch.Restart();
                 if (!typesInfo.ContainsKey(typeKey))
                 {
                     _logger.LogInformation(
@@ -92,12 +93,16 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 _logger.LogInformation("Importing type {t}.", typeKey);
                 var strategy = StrategyFactory.GetStrategy(typeKey);
                 await ExecuteLoadQueryAsync(driver, strategy, typesInfo[typeKey].Filename);
-                _logger.LogInformation("Importing type {t} finished.", typeKey);
+
+                stopwatch.Stop();
+                importRuntime += stopwatch.Elapsed;
+                _logger.LogInformation(
+                    "Importing type {t} finished in {et} seconds.", 
+                    typeKey, stopwatch.Elapsed.TotalSeconds);
             }
         }
 
-        stopwatch.Stop();
-        _logger.LogInformation("Successfully finished import in {et}.", stopwatch.Elapsed);
+        _logger.LogInformation("Successfully finished import in {et}.", importRuntime);
     }
 
     public async Task<bool> TrySampleAsync()
