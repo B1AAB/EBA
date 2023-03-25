@@ -54,7 +54,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         await Task.WhenAll(tasks);
     }
 
-    public override Task ImportAsync(string batchName = "", List<GraphComponentType>? importOrder = null)
+    public override Task ImportAsync(CancellationToken ct, string batchName = "", List<GraphComponentType>? importOrder = null)
     {
         importOrder ??= new List<GraphComponentType>()
         {
@@ -66,7 +66,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             GraphComponentType.BitcoinS2S,
             GraphComponentType.BitcoinT2T
         };
-        return base.ImportAsync(batchName, importOrder);
+        return base.ImportAsync(ct, batchName, importOrder);
     }
 
     public override async Task<List<ScriptNode>> GetRandomNodes(

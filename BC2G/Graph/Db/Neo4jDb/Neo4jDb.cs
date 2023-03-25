@@ -34,7 +34,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     /// <summary>
     /// No precedence should be assumed on serializing different types.
     /// </summary>
-    public virtual async Task ImportAsync(string batchName = "", List<GraphComponentType>? importOrder = null)
+    public virtual async Task ImportAsync(CancellationToken ct, string batchName = "", List<GraphComponentType>? importOrder = null)
     {
         using var driver = await GetDriver(Options.Neo4j);
 
@@ -73,6 +73,8 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         foreach (var batch in batches)
         {
+            ct.ThrowIfCancellationRequested();
+
             _logger.LogInformation("Processing batch {b} {c}.", batch.Name, $"({++c:n0}/{batches.Count():n0})");
 
             var typesInfo = batch.TypesInfo;
