@@ -25,23 +25,33 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         var batchInfo = await GetBatchAsync(
             nodes.Keys.Concat(edges.Keys).Append(graphType).ToList());
 
+        var tasks = new List<Task>();
+
         batchInfo.AddOrUpdate(graphType, 1);
         var graphStrategy = StrategyFactory.GetStrategy(graphType);
-        await graphStrategy.ToCsvAsync(g, batchInfo.GetFilename(graphType));
+        tasks.Add(graphStrategy.ToCsvAsync(g, batchInfo.GetFilename(graphType)));
 
         foreach (var type in nodes)
         {
             batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != BitcoinAgent.Coinbase));
             var _strategy = StrategyFactory.GetStrategy(type.Key);
-            await _strategy.ToCsvAsync(type.Value.Where(x => x.Id != BitcoinAgent.Coinbase), batchInfo.GetFilename(type.Key));
+            tasks.Add(
+                _strategy.ToCsvAsync(
+                    type.Value.Where(x => x.Id != BitcoinAgent.Coinbase), 
+                    batchInfo.GetFilename(type.Key)));
         }
 
         foreach (var type in edges)
         {
             batchInfo.AddOrUpdate(type.Key, type.Value.Count);
             var _strategy = StrategyFactory.GetStrategy(type.Key);
-            await _strategy.ToCsvAsync(type.Value, batchInfo.GetFilename(type.Key));
+            tasks.Add(
+                _strategy.ToCsvAsync(
+                    type.Value,
+                    batchInfo.GetFilename(type.Key)));
         }
+
+        await Task.WhenAll(tasks);
     }
 
     public override Task ImportAsync(string batchName = "", List<GraphComponentType>? importOrder = null)
