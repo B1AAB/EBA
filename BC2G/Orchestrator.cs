@@ -60,7 +60,7 @@ public class Orchestrator : IDisposable
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
 
         var graphDb = host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>();
-        await graphDb.ImportAsync();
+        await graphDb.ImportAsync(_cT);
     }
 
     private async Task SampleGraphAsync(Options options)
