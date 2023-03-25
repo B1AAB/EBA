@@ -39,33 +39,30 @@ public class C2SEdgeStrategy : S2SEdgeStrategy
     public override string GetQuery(string csvFilename)
     {
         // The following is an example of the query this method generates.
+        // Indentation and line breaks are added for the readiblity and 
+        // are not included in the generated query.
         //
         //
-        // LOAD CSV WITH HEADERS FROM 'file:///filename.csv' AS line
-        // FIELDTERMINATOR '	'
+        // LOAD CSV WITH HEADERS FROM 'file:///filename.csv'
+        // AS line FIELDTERMINATOR '	'
         //
         // MATCH (coinbase:Coinbase)
-        // MATCH (block:Block {Height:toInteger(line.Height)})
         // MATCH (target:Script {Address:line.TargetAddress})
+        // MATCH (block:Block {Height:toInteger(line.Height)})
         //
-        // MERGE (block)-[:Creates {Height:toInteger(line.Height)}]->(target)
+        // CREATE (block)-[:Creates {Height:toInteger(line.Height), Value:toFloat(line.Value)}]->(target)
         //
         // WITH line, block, coinbase, target
-        // CALL apoc.merge.relationship(
-        //   coinbase,
-        //   line.EdgeType,
-        //   {
-        //     Value:toFloat(line.Value),
-        //     Height:toInteger(line.Height)
-        //   },
-        //   {
-        //     Count : 0
-        //   },
-        //   target,
-        //   {})
         //
+        // CALL apoc.create.relationship(
+        //     coinbase,
+        //     line.EdgeType,
+        //     {
+        //         Height:toInteger(line.Height),
+        //         Value:toFloat(line.Value)
+        //     },
+        //     target)
         // YIELD rel
-        // SET rel.Count = rel.Count + 1
         // RETURN distinct 'DONE'
         //
 
@@ -83,7 +80,7 @@ public class C2SEdgeStrategy : S2SEdgeStrategy
         builder.Append(GetCreatesEdgeQuery(b, t) + " ");
         builder.Append($"WITH {l}, {b}, {s}, {t} ");
 
-        builder.Append(GetEdgeQuery(new List<Property>() { Props.EdgeValue, Props.Height }, s, t));
+        builder.Append(GetApocCreateEdgeQuery(GetEdgePropertiesBase(), s, t));
         builder.Append(" RETURN distinct 'DONE'");
 
         return builder.ToString();

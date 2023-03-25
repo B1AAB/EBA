@@ -38,7 +38,10 @@ public class C2TEdgeStrategy : BitcoinEdgeStrategy
 
     public override string GetQuery(string csvFilename)
     {
-        // The following is an example of the query this method generates. 
+        // The following is an example of the query this method generates.
+        // Indentation and linebreaks are added for the readability and 
+        // not included in the gerated queries.
+        //
         //
         // LOAD CSV WITH HEADERS FROM 'file:///filename.csv' AS line
         // FIELDTERMINATOR '	'
@@ -47,23 +50,19 @@ public class C2TEdgeStrategy : BitcoinEdgeStrategy
         // MATCH (target:Tx {Txid:line.TargetId})
         // MATCH (block:Block {Height:toInteger(line.Height)})
         //
-        // MERGE (block)-[:Creates {Height:toInteger(line.Height)}]->(target)
+        // CREATE (block)-[:Creates {Height:toInteger(line.Height), Value:toFloat(line.Value)}]->(target)
         //
         // WITH line, block, coinbase, target
         //
-        // CALL apoc.merge.relationship(
-        //   coinbase,
-        //   line.EdgeType,
-        //   {
-        //     Value:toFloat(line.Value),
-        //     Height:toInteger(line.Height)
-        //   },
-        //   {
-        //     Count : 0
-        //   },
-        //   target,
-        //   {})
-        // YIELD rel SET rel.Count = rel.Count + 1
+        // CALL apoc.create.relationship(
+        //     coinbase,
+        //     line.EdgeType,
+        //     {
+        //         Height:toInteger(line.Height),
+        //         Value:toFloat(line.Value)
+        //     },
+        //     target)
+        // YIELD rel
         // RETURN distinct 'DONE'
         //
 
@@ -81,7 +80,7 @@ public class C2TEdgeStrategy : BitcoinEdgeStrategy
         builder.Append(GetCreatesEdgeQuery(b, t) + " ");
         builder.Append($"WITH {l}, {b}, {s}, {t} ");
 
-        builder.Append(GetEdgeQuery(new List<Property>() { Props.EdgeValue, Props.Height }, s, t));
+        builder.Append(GetApocCreateEdgeQuery(GetEdgePropertiesBase(), s, t));
         builder.Append(" RETURN distinct 'DONE'");
 
         return builder.ToString();

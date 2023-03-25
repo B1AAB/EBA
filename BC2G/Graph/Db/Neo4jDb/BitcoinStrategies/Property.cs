@@ -3,6 +3,9 @@
 public class Property
 {
     public const string lineVarName = "line";
+    public const string createsEdgeLabel = "Creates";
+    public const string redeemsEdgeLabel = "Redeems";
+
     public string Name { get; }
     public string CsvHeader { get; }
 
@@ -30,7 +33,7 @@ public class Property
         return $"{varName}.{Name} = CASE {lineVarName}.{CsvHeader} WHEN \"\" THEN null ELSE {GetReader()} END";
     }
 
-    private string GetReader()
+    public string GetReader()
     {
         return _type switch
         {
