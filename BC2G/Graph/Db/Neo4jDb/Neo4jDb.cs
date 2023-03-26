@@ -205,11 +205,21 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         var filename4Query = Options.Neo4j.CypherImportPrefix + Path.GetFileName(localFilename);
 
         using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
-        var queryResult = await session.ExecuteWriteAsync(async x =>
+        try
         {
-            IResultCursor cursor = await x.RunAsync(strategy.GetQuery(filename4Query));
-            return await cursor.ToListAsync();
-        });
+            var queryResult = await session.ExecuteWriteAsync(async x =>
+            {
+                IResultCursor cursor = await x.RunAsync(strategy.GetQuery(filename4Query));
+                return await cursor.ToListAsync();
+            });
+        }
+        catch(Exception e)
+        {
+            _logger.LogCritical(
+                "The folloiwng exceptions occurred executing a Neo4j query. {e}",
+                string.Join("; ", e.InnerException?.Message));
+            throw;
+        }
 
         // Delocalization.
         if (fileLocalized)
