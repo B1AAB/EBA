@@ -11,6 +11,9 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
 
     public void AddOrUpdateEdge(C2TEdge edge)
     {
+        if (edge.Value == 0)
+            return;
+
         AddOrUpdateEdge(
             edge, 
             (_, oldValue) => edge.Update(oldValue.Value),
@@ -21,6 +24,9 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
 
     public void AddOrUpdateEdge(C2SEdge edge)
     {
+        if (edge.Value == 0)
+            return;
+
         AddOrUpdateEdge(
             edge,
             (_, oldValue) => edge.Update(oldValue.Value),
@@ -31,6 +37,9 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
 
     public void AddOrUpdateEdge(T2TEdge edge)
     {
+        if (edge.Value == 0)
+            return;
+
         AddOrUpdateEdge(
             edge,
             (_, oldEdge) => { return T2TEdge.Update((T2TEdge)oldEdge, edge); },
@@ -44,6 +53,9 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
         /// Note that the hashkey is invariant to the edge value.
         /// If this is changed, the `Equals` method needs to be
         /// updated accordingly.
+
+        if (edge.Value == 0)
+            return;
 
         AddOrUpdateEdge(
             edge,
