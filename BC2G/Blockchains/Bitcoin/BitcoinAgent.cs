@@ -222,7 +222,7 @@ public class BitcoinAgent : IDisposable
 
         var generationTxGraph = new TransactionGraph(coinbaseTx);
 
-        var g = new BlockGraph(block, generationTxGraph);
+        var g = new BlockGraph(block, generationTxGraph, _logger);
 
         var rewardAddresses = new List<ScriptNode>();
         foreach (var output in coinbaseTx.Outputs.Where(x => x.IsValueTransfer))

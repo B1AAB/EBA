@@ -19,10 +19,13 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 
     private readonly ConcurrentQueue<TransactionGraph> _txGraphsQueue = new();
 
-    public BlockGraph(Block block, TransactionGraph coinbaseTxGraph) : base()
+    private readonly ILogger<BitcoinAgent> _logger;
+
+    public BlockGraph(Block block, TransactionGraph coinbaseTxGraph, ILogger<BitcoinAgent> logger) : base()
     {
         Block = block;
         _coinbaseTxGraph = coinbaseTxGraph;
+        _logger = logger;
 
         // TODO: with the above block ref, no need to keep a copy of height and timestamp.
         Height = block.Height;
@@ -32,16 +35,6 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         Timestamp = block.MedianTime;
 
         Stats = new BlockStatistics(block);
-        Stats.StartStopwatch();
-    }
-
-    // TODO: this constructor is required by the deserializer
-    // mostly for testing purposes, should improve avoid
-    // needing constructor.
-    public BlockGraph(long height)
-    {
-        Height = height;
-        Stats = new BlockStatistics(height);
         Stats.StartStopwatch();
     }
 
@@ -95,6 +88,23 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         double totalPaidToMiner,
         CancellationToken ct)
     {
+        // VERY IMPORTANT TODO: THIS IS TEMPORARY UNTIL A GOOD SOLUTION IS IMPLEMENTED.
+        if (txGraph.SourceScripts.Count > 20 && txGraph.TargetScripts.Count > 20)
+        {
+            _logger.LogWarning(
+                "Skipping a transaction because it contains more than 20 source and target nodes, " +
+                "maximum currently supported. " +
+                "Block: {b:n0}; " +
+                "source scripts count: {s:n0}; " +
+                "target scripts count: {t:n0}; " +
+                "transaction hash: {tx}.",
+                Height,
+                txGraph.SourceScripts.Count,
+                txGraph.TargetScripts.Count,
+                txGraph.TxNode.Txid);
+            return;
+        }
+
         var fee = txGraph.Fee;
         if (fee > 0.0)
         {
