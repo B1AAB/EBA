@@ -136,4 +136,9 @@ internal class Utilities
     {
         return $"{DateTime.Now:yyyyMMddHHmmssffff}";
     }
+
+    public static string GetEtInSeconds(TimeSpan elapsed)
+    {
+        return elapsed.TotalSeconds.ToString("F3");
+    }
 }

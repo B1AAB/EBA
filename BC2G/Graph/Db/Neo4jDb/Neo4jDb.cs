@@ -98,7 +98,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 importRuntime += stopwatch.Elapsed;
                 _logger.LogInformation(
                     "Importing type {t} finished in {et} seconds.", 
-                    typeKey, stopwatch.Elapsed.TotalSeconds);
+                    typeKey, Utilities.GetEtInSeconds(stopwatch.Elapsed));
             }
         }
 
