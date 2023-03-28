@@ -8,8 +8,13 @@ public class TransactionGraph : GraphBase
     }
 
     public TxNode TxNode { get; }
-    public double TotalInputValue { set; get; }
-    public double TotalOutputValue { set; get; }
+
+    public double TotalInputValue { get { return _totalInputValue; } }
+    private double _totalInputValue;
+
+    public double TotalOutputValue { get { return _totalOutputValue; } }
+    private double _totalOutputValue;
+
     public double Fee { set; get; }
 
     public ConcurrentDictionary<string, double> SourceTxes { set; get; } = new();
@@ -24,14 +29,19 @@ public class TransactionGraph : GraphBase
     public ScriptNode AddSource(string txid, Utxo utxo)
     {
         SourceTxes.AddOrUpdate(txid, utxo.Value, (_, oldValue) => oldValue + utxo.Value);
-        TotalInputValue += utxo.Value;
+        RoundedIncrement(ref _totalInputValue, utxo.Value);
         return AddOrUpdate(SourceScripts, new ScriptNode(utxo), utxo.Value);
     }
 
     public ScriptNode AddTarget(Utxo utxo)
     {
-        TotalOutputValue += utxo.Value;
+        RoundedIncrement(ref _totalOutputValue, utxo.Value);
         return AddOrUpdate(TargetScripts, new ScriptNode(utxo), utxo.Value);
+    }
+
+    private static void RoundedIncrement(ref double value, double increment)
+    {
+        value = Utilities.Round(value + increment);
     }
 
     private static ScriptNode AddOrUpdate(
