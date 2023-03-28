@@ -66,11 +66,11 @@ public class Utxo
 
     // This constructor is required by EF.
     public Utxo(
-        string id, string address, double value, ScriptType scriptType,
+        string id, string? address, double value, ScriptType scriptType,
         string createdIn, string? referencedIn = null)
     {
         Id = id;
-        Address = address;
+        Address = address ?? Id;
         Value = value;
         ScriptType = scriptType;
 
@@ -87,7 +87,7 @@ public class Utxo
     }
 
     public Utxo(
-        string txid, int voutN, string address, double value, ScriptType scriptType,
+        string txid, int voutN, string? address, double value, ScriptType scriptType,
         string createdIn, string? referencedIn = null) :
         this(GetId(txid, voutN), address, value, scriptType, createdIn, referencedIn)
     { }

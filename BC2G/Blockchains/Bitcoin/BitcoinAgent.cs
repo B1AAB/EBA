@@ -227,7 +227,7 @@ public class BitcoinAgent : IDisposable
         var rewardAddresses = new List<ScriptNode>();
         foreach (var output in coinbaseTx.Outputs.Where(x => x.IsValueTransfer))
         {
-            output.TryGetAddress(out string address);
+            output.TryGetAddress(out string? address);
 
             var utxo = new Utxo(
                 coinbaseTx.Txid, output.Index, address, output.Value, 
@@ -326,7 +326,7 @@ public class BitcoinAgent : IDisposable
                     if (vout == null)
                         throw new NotImplementedException($"{vout} not in {input.TxId}; not expected.");
 
-                    vout.TryGetAddress(out string address);
+                    vout.TryGetAddress(out string? address);
 
                     var cIn = exTx.BlockHash;
                     var rIn = g.Block.Hash;
@@ -348,7 +348,7 @@ public class BitcoinAgent : IDisposable
         {
             cT.ThrowIfCancellationRequested();
 
-            output.TryGetAddress(out string address);
+            output.TryGetAddress(out string? address);
             var cIn = g.Block.Hash;
             var utxo = new Utxo(tx.Txid, output.Index, address, output.Value, output.GetScriptType(), cIn);
             txGraph.AddTarget(utxo);
