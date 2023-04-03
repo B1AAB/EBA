@@ -67,10 +67,11 @@ public class BlockStatistics
         TransactionsCount = block.TransactionsCount;
     }
 
+    /*
     public BlockStatistics(long height)
     {
         Height = height;
-    }
+    }*/
 
     public void StartStopwatch()
     {
@@ -109,7 +110,7 @@ public class BlockStatistics
         return string.Join(_delimiter, new string[]
         {
             "BlockHeight",
-            "Runtime",
+            "Runtime(seconds)",
             "Confirmations",
             "Bits",
             "Difficulty",
@@ -123,11 +124,11 @@ public class BlockStatistics
             string.Join(
                 _delimiter,
                 ((EdgeType[])Enum.GetValues(typeof(EdgeType))).Select(
-                    x => "Graph" + x + "TxCount").ToArray()),
+                    x => "BlockGraph" + x + "TxCount").ToArray()),
             string.Join(
                 _delimiter,
                 ((EdgeType[])Enum.GetValues(typeof(EdgeType))).Select(
-                    x => "Graph" + x + "TxSum").ToArray()),
+                    x => "BlockGraph" + x + "TxSum").ToArray()),
         });
     }
 
@@ -136,7 +137,7 @@ public class BlockStatistics
         return string.Join(_delimiter, new string[]
         {
             Height.ToString(),
-            Runtime.ToString(),
+            Runtime.TotalSeconds.ToString(),
             Confirmations.ToString(),
             Bits,
             Difficulty.ToString(),
