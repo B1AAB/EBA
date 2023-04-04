@@ -2,8 +2,10 @@
 
 namespace BC2G.Graph.Model;
 
-public class GraphBase : IEquatable<GraphBase>, IGraphComponent
+public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
 {
+    private bool _disposed = false;
+
     public GraphComponentType ComponentType { get { return GraphComponentType.Graph; } }
 
     public int NodeCount
@@ -179,5 +181,21 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent
     public override int GetHashCode()
     {
         throw new NotImplementedException();
+    }
+
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            { }
+        }
+
+        _disposed = true;
     }
 }
