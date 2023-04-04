@@ -39,7 +39,6 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         CancellationToken cT)
     {
         cT.ThrowIfCancellationRequested();
-        obj.Stats.StartStopwatch();
 
         // I am using `default` as a cancellation token in the following
         // because the two serialization methods need to conclude before
@@ -48,9 +47,13 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         // A better alternative for this is using roll-back approaches 
         // on cancellation and recovery, but that can add additional 
         // complexities not essential at this point.
-        await _graphDb.SerializeAsync(obj, default);
-        obj.Stats.StopStopwatch();
-        await _pGraphStats.SerializeAsync(obj.Stats.ToString(), default);
+        var tasks = new List<Task>
+        {
+            _graphDb.SerializeAsync(obj, default),
+            _pGraphStats.SerializeAsync(obj.Stats.ToString(), default)
+        };
+
+        await Task.WhenAll(tasks);
 
         _blocksHeightsInBuffer.TryRemove(obj.Height, out byte _);
 
