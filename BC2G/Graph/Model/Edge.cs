@@ -80,7 +80,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
     public string GetHashCode(bool ignoreValue)
     {
         if (ignoreValue)
-            return HashCode.Combine(Source, Target, Type, Timestamp).ToString();
+            return HashCode.Combine(Source.Id, Target.Id, Type, Timestamp).ToString();
         else
             return GetHashCode().ToString();
     }
@@ -88,13 +88,13 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
     public int GetHashCodeInt(bool ignoreValue)
     {
         if (ignoreValue)
-            return HashCode.Combine(Source, Target, Type, Timestamp);
+            return HashCode.Combine(Source.Id, Target.Id, Type, Timestamp);
         else
             return GetHashCode();
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Source, Target, Value, Type, Timestamp);
+        return HashCode.Combine(Source.Id, Target.Id, Value, Type, Timestamp);
     }
 }
