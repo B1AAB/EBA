@@ -67,12 +67,6 @@ public class BlockStatistics
         TransactionsCount = block.TransactionsCount;
     }
 
-    /*
-    public BlockStatistics(long height)
-    {
-        Height = height;
-    }*/
-
     public void StartStopwatch()
     {
         _stopwatch.Start();
