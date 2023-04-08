@@ -242,8 +242,10 @@ public class BitcoinAgent : IDisposable
 
             var node = generationTxGraph.AddTarget(utxo);
             rewardAddresses.Add(node);
-            g.Stats.AddInputTxCount(1);
         }
+
+        g.Stats.AddInputTxCount(1); // Coinbase.
+        g.Stats.AddOutputTxCount(rewardAddresses.Count);
 
         cT.ThrowIfCancellationRequested();
 
