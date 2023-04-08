@@ -141,4 +141,27 @@ internal class Utilities
     {
         return elapsed.TotalSeconds.ToString("F3");
     }
+
+    public static double GetMedian(IEnumerable<int> data)
+    {
+        var count = data.Count();
+        var sortedData = data.OrderBy(x => x);
+
+        if(count % 2 ==0)
+        {
+            var middle = count / 2;
+            return (sortedData.ElementAt(middle - 1) + sortedData.ElementAt(middle)) / 2.0;
+        }
+        else
+        {
+            return sortedData.ElementAt(count / 2);
+        }
+    }
+
+    public static double GetVariance(IEnumerable<int> data)
+    {
+        var mean = data.Average();
+        var sumOfSquares = data.Sum(x => Math.Pow(x - mean, 2));
+        return sumOfSquares / (data.Count() - 1);
+    }
 }
