@@ -8,8 +8,8 @@ public class PersistentObject<T> : PersistentObjectBase<T>, IDisposable
     private bool _disposed = false;
 
     public PersistentObject(
-        string filename, CancellationToken cT, string? header = null) :
-        base(cT)
+        string filename, ILogger<PersistentObject<T>> logger, CancellationToken cT, string? header = null) :
+        base(logger, cT)
     {
         if (string.IsNullOrEmpty(filename))
             throw new ArgumentException(

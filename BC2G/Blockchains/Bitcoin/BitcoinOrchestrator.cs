@@ -100,6 +100,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         using var gBuffer = new PersistentGraphBuffer(
             _host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>(),
             _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),
+            _host.Services.GetRequiredService<ILogger<PersistentGraphStatistics>>(),
             options.Bitcoin.StatsFilename,
             cT);
 

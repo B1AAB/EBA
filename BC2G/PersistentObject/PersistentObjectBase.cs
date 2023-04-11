@@ -1,5 +1,12 @@
 ﻿namespace BC2G.PersistentObject;
 
+/// TODO
+/// If an exception is occurred in this class, the exception will not
+/// be propogated to the caller, because the caller does not wait for
+/// this taks to finish, which is correct, because this task only exits
+/// when the application exists. So, it will never finish until the
+/// program exits.
+
 /// <summary>
 /// Persists enqueued objects on disk in 
 /// a non-blocking fashion.
@@ -15,10 +22,12 @@ public abstract class PersistentObjectBase<T> : IDisposable
     private bool _disposed = false;
 
     private readonly BlockingCollection<T> _buffer;
+    private readonly ILogger<PersistentObjectBase<T>> _logger;
 
-    public PersistentObjectBase(CancellationToken cT)
+    public PersistentObjectBase(ILogger<PersistentObjectBase<T>> logger, CancellationToken cT)
     {
         _buffer = new();
+        _logger = logger;
 
         var listner = Task.Factory
             .StartNew(
@@ -48,7 +57,23 @@ public abstract class PersistentObjectBase<T> : IDisposable
                 continue;
 
             _isFree = false;
-            await SerializeAsync(obj, cT);
+            try
+            {
+                await SerializeAsync(obj, cT);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(
+                    "Exception occurred persisting an instance of type `{o}`. {e}", 
+                    obj, e.Message);
+                // TODO: re-throwing exception here has no impact.
+                // fixing it requires a bit of reengineering how this method is used.
+                // The exception does not propogate because the caller does not 
+                // wait for this method to finish, which is by-design as this
+                // method only exits when the application is exiting.
+                // The following is a _temp_ work-around.
+                Environment.Exit(1);
+            }
             _isFree = true;
         }
     }

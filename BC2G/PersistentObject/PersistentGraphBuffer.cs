@@ -19,13 +19,14 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     public PersistentGraphBuffer(
         IGraphDb<BitcoinGraph> graphDb,
         ILogger<PersistentGraphBuffer> logger,
+        ILogger<PersistentGraphStatistics> pgStatsLogger,
         string graphStatsFilename,
         CancellationToken ct) :
-        base(ct)
+        base(logger, ct)
     {
         _graphDb = graphDb;
         _logger = logger;
-        _pGraphStats = new(graphStatsFilename, ct);
+        _pGraphStats = new(graphStatsFilename, pgStatsLogger, ct);
     }
 
     public new void Enqueue(BlockGraph graph)
