@@ -140,6 +140,7 @@ public class BlockStatistics
     {
         var inTxExCoinbase = new List<int>(_inputTxCounts);
         inTxExCoinbase.Remove(1);
+        var inTxExCMin = inTxExCoinbase.Count > 0 ? inTxExCoinbase.Min().ToString() : "0";
 
         return string.Join(_delimiter, new string[]
         {
@@ -154,13 +155,13 @@ public class BlockStatistics
             Retries.ToString(),
             TransactionsCount.ToString(),
 
-            inTxExCoinbase.Min().ToString(),
+            inTxExCMin,
             _inputTxCounts.Max().ToString(),
             _inputTxCounts.Sum().ToString(),
             _inputTxCounts.Average().ToString(),
             Utilities.GetMedian(_inputTxCounts).ToString(),
             Utilities.GetVariance(_inputTxCounts).ToString(),
-
+            
             _outputTxCounts.Min().ToString(),
             _outputTxCounts.Max().ToString(),
             _outputTxCounts.Sum().ToString(),
@@ -171,9 +172,11 @@ public class BlockStatistics
             string.Join(
                 _delimiter,
                 _edgeTypeFrequency.Select((v, i) => v.ToString()).ToArray()),
+
             string.Join(
                 _delimiter,
                 _edgeTypeTxSum.Select((v, i) => v.ToString()).ToArray()),
+
             Environment.NewLine
         });
     }
