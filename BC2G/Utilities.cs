@@ -144,10 +144,13 @@ internal class Utilities
 
     public static double GetMedian(IEnumerable<int> data)
     {
+        if (!data.Any())
+            return double.NaN;
+
         var count = data.Count();
         var sortedData = data.OrderBy(x => x);
 
-        if(count % 2 ==0)
+        if (count % 2 == 0)
         {
             var middle = count / 2;
             return (sortedData.ElementAt(middle - 1) + sortedData.ElementAt(middle)) / 2.0;
@@ -160,6 +163,9 @@ internal class Utilities
 
     public static double GetVariance(IEnumerable<int> data)
     {
+        if (data.Count() < 2)
+            return double.NaN;
+
         var mean = data.Average();
         var sumOfSquares = data.Sum(x => Math.Pow(x - mean, 2));
         return sumOfSquares / (data.Count() - 1);
