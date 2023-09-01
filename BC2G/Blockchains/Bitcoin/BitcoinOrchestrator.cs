@@ -119,6 +119,10 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             parallelOptions.MaxDegreeOfParallelism =
                 (int)options.Bitcoin.MaxConcurrentBlocks;
 
+        #if DEBUG
+        parallelOptions.MaxDegreeOfParallelism = 1;
+        #endif
+
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, cT);
 
         cT.ThrowIfCancellationRequested();

@@ -8,7 +8,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
     }
 
     public string Txid { get; }
-    public int? Version { get; }
+    public ulong? Version { get; }
     public int? Size { get; }
     public int? VSize { get; }
     public int? Weight { get; }
@@ -22,7 +22,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
     }
 
     public TxNode(
-        string id, string txid, int? version,
+        string id, string txid, ulong? version,
         int? size, int? vSize, int? weight,
         long? lockTime) : base(id)
     {
@@ -35,7 +35,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
     }
 
     public TxNode(
-        string txid, int? version,
+        string txid, ulong? version,
         int? size, int? vSize, int? weight,
         long? lockTime) :
         base(txid)

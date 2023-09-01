@@ -12,7 +12,7 @@ public class Block
     public long Height { set; get; }
 
     [JsonPropertyName("version")]
-    public int Version { set; get; }
+    public ulong Version { set; get; }
 
     [JsonPropertyName("versionHex")]
     public string VersionHex { set; get; } = string.Empty;

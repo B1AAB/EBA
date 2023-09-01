@@ -12,7 +12,7 @@ public class Transaction
     public string Hash { set; get; } = string.Empty;
     
     [JsonPropertyName("version")]
-    public int Version { set; get; }
+    public ulong Version { set; get; }
     
     [JsonPropertyName("size")]
     public int Size { set; get; }
