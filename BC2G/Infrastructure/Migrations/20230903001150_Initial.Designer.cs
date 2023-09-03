@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BC2G.Infrastructure.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20230209163316_Initial")]
+    [Migration("20230903001150_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -19,12 +19,12 @@ namespace BC2G.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.1")
+                .HasAnnotation("ProductVersion", "7.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("BC2G.Model.Utxo", b =>
+            modelBuilder.Entity("BC2G.Blockchains.Bitcoin.Model.Utxo", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text");
