@@ -4,7 +4,6 @@ public class DatabaseContext : DbContext
 {
     public DbSet<Utxo> Utxos => Set<Utxo>();
 
-    // Needed by the migration scripts
     public DatabaseContext(
         DbContextOptions<DatabaseContext> options) :
         base(options)
