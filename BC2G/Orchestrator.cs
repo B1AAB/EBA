@@ -48,7 +48,18 @@ public class Orchestrator : IDisposable
     {
         var host = await SetupAndGetHostAsync(options);
         using (var dbContext = host.Services.GetRequiredService<DatabaseContext>())
-            await dbContext.Database.EnsureCreatedAsync(_cT);
+        {
+            try
+            {
+                await dbContext.Database.EnsureCreatedAsync(_cT);
+            }
+            catch (NpgsqlException e)
+            {
+                _logger?.LogError(
+                    "Cannot connect to database; make sure PostgreSQL 16 is installed and listening on port {p}. {e}",
+                    5432, e.Message);
+            }
+        }
 
         var bitcoinOrchestrator = host.Services.GetRequiredService<BitcoinOrchestrator>();
         await bitcoinOrchestrator.TraverseAsync(options, _cT);
