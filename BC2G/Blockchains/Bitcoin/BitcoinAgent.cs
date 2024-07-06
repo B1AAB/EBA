@@ -236,9 +236,7 @@ public class BitcoinAgent : IDisposable
             utxos.AddOrUpdate(utxo.Id, utxo,
                 (k, oldValue) =>
                 {
-                    // changing to hash in order to be compatible with
-                    // the rest of the code calling this method, which 
-                    // call using the block hash.
+                    // using hash instead of height for the compatibility with the rest of the code
                     oldValue.AddCreatedIn(block.Hash); //.Height.ToString());
                     return oldValue;
                 });

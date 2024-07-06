@@ -7,7 +7,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     public Block Block { get; }
     public BlockStatistics Stats { set; get; }
 
-    public List<ScriptNode> RewardsAddresses { set; get; } = new();
+    public List<ScriptNode> RewardsAddresses { set; get; } = [];
 
     /// <summary>
     /// Is the sum of all the tranactions fee.

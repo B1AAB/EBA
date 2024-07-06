@@ -1,15 +1,15 @@
 ﻿namespace BC2G.Blockchains.Bitcoin.Model;
 
-public class BlockStatistics
+public class BlockStatistics(Block block)
 {
-    public long Height { get; }
-    public int Confirmations { get; }
-    public string Bits { get; }
-    public double Difficulty { get; }
-    public int Size { get; }
-    public int StrippedSize { get; }
-    public int Weight { get; }
-    public int TransactionsCount { get; }
+    public long Height { get; } = block.Height;
+    public int Confirmations { get; } = block.Confirmations;
+    public string Bits { get; } = block.Bits;
+    public double Difficulty { get; } = block.Difficulty;
+    public int Size { get; } = block.Size;
+    public int StrippedSize { get; } = block.StrippedSize;
+    public int Weight { get; } = block.Weight;
+    public int TransactionsCount { get; } = block.TransactionsCount;
 
     /// <summary>
     /// Sets and gets retry attempts to contruct the block graph.
@@ -20,10 +20,10 @@ public class BlockStatistics
     private readonly Stopwatch _stopwatch = new();
 
     public int InputTxCountsSum { get { return _inputTxCounts.Sum(); } }
-    private readonly ConcurrentBag<int> _inputTxCounts = new();
+    private readonly ConcurrentBag<int> _inputTxCounts = [];
 
     public int OutputTxCountsSum { get { return _outputTxCounts.Sum(); } }    
-    private readonly ConcurrentBag<int> _outputTxCounts = new();
+    private readonly ConcurrentBag<int> _outputTxCounts = [];
 
     public Dictionary<EdgeType, uint> EdgeTypeFrequency
     {
@@ -54,18 +54,6 @@ public class BlockStatistics
         new double[Enum.GetNames(typeof(EdgeType)).Length];
 
     private const char _delimiter = '\t';
-
-    public BlockStatistics(Block block)
-    {
-        Height = block.Height;
-        Confirmations = block.Confirmations;
-        Bits = block.Bits;
-        Difficulty = block.Difficulty;
-        Size = block.Size;
-        StrippedSize = block.StrippedSize;
-        Weight = block.Weight;
-        TransactionsCount = block.TransactionsCount;
-    }
 
     public void StartStopwatch()
     {
@@ -101,39 +89,40 @@ public class BlockStatistics
 
     public static string GetHeader()
     {
-        return string.Join(_delimiter, new string[]
-        {
-            "BlockHeight",
-            "Runtime(seconds)",
-            "Confirmations",
-            "Bits",
-            "Difficulty",
-            "Size",
-            "StrippedSize",
-            "Weight",
-            "Retries",
-            "TxCount",
-            "InputTxCountsMin(ExcludingCoinbase)",
-            "InputTxCountsMax",
-            "InputTxCountsSum",
-            "InputTxCountsAvg",
-            "InputTxCountsMedian",
-            "InputTxCountsVariance",
-            "OutputTxCountsMin",
-            "OutputTxCountsMax",
-            "OutputTxCountsSum",
-            "OutputTxCountsAvg",
-            "OutputTxCountsMedian",
-            "OutputTxCountsVariance",
-            string.Join(
-                _delimiter,
-                ((EdgeType[])Enum.GetValues(typeof(EdgeType))).Select(
-                    x => "BlockGraph" + x + "TxCount").ToArray()),
-            string.Join(
-                _delimiter,
-                ((EdgeType[])Enum.GetValues(typeof(EdgeType))).Select(
-                    x => "BlockGraph" + x + "TxSum").ToArray()),
-        });
+        return string.Join(
+            _delimiter,
+            [
+                "BlockHeight",
+                "Runtime(seconds)",
+                "Confirmations",
+                "Bits",
+                "Difficulty",
+                "Size",
+                "StrippedSize",
+                "Weight",
+                "Retries",
+                "TxCount",
+                "InputTxCountsMin(ExcludingCoinbase)",
+                "InputTxCountsMax",
+                "InputTxCountsSum",
+                "InputTxCountsAvg",
+                "InputTxCountsMedian",
+                "InputTxCountsVariance",
+                "OutputTxCountsMin",
+                "OutputTxCountsMax",
+                "OutputTxCountsSum",
+                "OutputTxCountsAvg",
+                "OutputTxCountsMedian",
+                "OutputTxCountsVariance",
+                string.Join(
+                    _delimiter,
+                    ((EdgeType[])Enum.GetValues(typeof(EdgeType))).Select(
+                        x => "BlockGraph" + x + "TxCount").ToArray()),
+                string.Join(
+                    _delimiter,
+                    ((EdgeType[])Enum.GetValues(typeof(EdgeType))).Select(
+                        x => "BlockGraph" + x + "TxSum").ToArray()),
+            ]);
     }
 
     public override string ToString()
@@ -142,42 +131,43 @@ public class BlockStatistics
         inTxExCoinbase.Remove(1);
         var inTxExCMin = inTxExCoinbase.Count > 0 ? inTxExCoinbase.Min().ToString() : "0";
 
-        return string.Join(_delimiter, new string[]
-        {
-            Height.ToString(),
-            Runtime.TotalSeconds.ToString(),
-            Confirmations.ToString(),
-            Bits,
-            Difficulty.ToString(),
-            Size.ToString(),
-            StrippedSize.ToString(),
-            Weight.ToString(),
-            Retries.ToString(),
-            TransactionsCount.ToString(),
+        return string.Join(
+            _delimiter,
+            [
+                Height.ToString(),
+                Runtime.TotalSeconds.ToString(),
+                Confirmations.ToString(),
+                Bits,
+                Difficulty.ToString(),
+                Size.ToString(),
+                StrippedSize.ToString(),
+                Weight.ToString(),
+                Retries.ToString(),
+                TransactionsCount.ToString(),
 
-            inTxExCMin,
-            _inputTxCounts.Max().ToString(),
-            _inputTxCounts.Sum().ToString(),
-            _inputTxCounts.Average().ToString(),
-            Utilities.GetMedian(_inputTxCounts).ToString(),
-            Utilities.GetVariance(_inputTxCounts).ToString(),
+                inTxExCMin,
+                _inputTxCounts.Max().ToString(),
+                _inputTxCounts.Sum().ToString(),
+                _inputTxCounts.Average().ToString(),
+                Utilities.GetMedian(_inputTxCounts).ToString(),
+                Utilities.GetVariance(_inputTxCounts).ToString(),
             
-            _outputTxCounts.Min().ToString(),
-            _outputTxCounts.Max().ToString(),
-            _outputTxCounts.Sum().ToString(),
-            _outputTxCounts.Average().ToString(),
-            Utilities.GetMedian(_outputTxCounts).ToString(),
-            Utilities.GetVariance(_outputTxCounts).ToString(),
+                _outputTxCounts.Min().ToString(),
+                _outputTxCounts.Max().ToString(),
+                _outputTxCounts.Sum().ToString(),
+                _outputTxCounts.Average().ToString(),
+                Utilities.GetMedian(_outputTxCounts).ToString(),
+                Utilities.GetVariance(_outputTxCounts).ToString(),
 
-            string.Join(
-                _delimiter,
-                _edgeTypeFrequency.Select((v, i) => v.ToString()).ToArray()),
+                string.Join(
+                    _delimiter,
+                    _edgeTypeFrequency.Select((v, i) => v.ToString()).ToArray()),
 
-            string.Join(
-                _delimiter,
-                _edgeTypeTxSum.Select((v, i) => v.ToString()).ToArray()),
+                string.Join(
+                    _delimiter,
+                    _edgeTypeTxSum.Select((v, i) => v.ToString()).ToArray()),
 
-            Environment.NewLine
-        });
+                Environment.NewLine
+            ]);
     }
 }
