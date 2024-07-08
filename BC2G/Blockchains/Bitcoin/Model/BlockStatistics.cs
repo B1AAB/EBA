@@ -22,8 +22,11 @@ public class BlockStatistics(Block block)
     public int InputTxCountsSum { get { return _inputTxCounts.Sum(); } }
     private readonly ConcurrentBag<int> _inputTxCounts = [];
 
-    public int OutputTxCountsSum { get { return _outputTxCounts.Sum(); } }    
+    public int OutputTxCountsSum { get { return _outputTxCounts.Sum(); } }
     private readonly ConcurrentBag<int> _outputTxCounts = [];
+
+    public List<string> OutputAddresses { get { return [.. _outputAddresses]; } }
+    private readonly ConcurrentBag<string> _outputAddresses = [];
 
     public Dictionary<EdgeType, uint> EdgeTypeFrequency
     {
@@ -50,7 +53,7 @@ public class BlockStatistics(Block block)
         }
     }
 
-    private readonly double[] _edgeTypeTxSum = 
+    private readonly double[] _edgeTypeTxSum =
         new double[Enum.GetNames(typeof(EdgeType)).Length];
 
     private const char _delimiter = '\t';
@@ -79,6 +82,13 @@ public class BlockStatistics(Block block)
         _outputTxCounts.Add(value);
     }
 
+    public void AddOutputAddress(string? address)
+    {
+        if (!string.IsNullOrEmpty(address))
+            _outputAddresses.Add(address);
+    }
+
+    // TODO: fixme, this is not used.
     public void AddEdgeType(EdgeType type, uint value)
     {
         _edgeTypeFrequency[(int)type] =
@@ -151,7 +161,7 @@ public class BlockStatistics(Block block)
                 _inputTxCounts.Average().ToString(),
                 Utilities.GetMedian(_inputTxCounts).ToString(),
                 Utilities.GetVariance(_inputTxCounts).ToString(),
-            
+
                 _outputTxCounts.Min().ToString(),
                 _outputTxCounts.Max().ToString(),
                 _outputTxCounts.Sum().ToString(),
@@ -167,6 +177,22 @@ public class BlockStatistics(Block block)
                     _delimiter,
                     _edgeTypeTxSum.Select((v, i) => v.ToString()).ToArray()),
 
+                Environment.NewLine
+            ]);
+    }
+
+    public static string GetHeaderAddresses()
+    {
+        return string.Join(_delimiter, ["BlockHeight", "OutputAddresses"]);
+    }
+
+    public string ToStringAddressess()
+    {
+        return string.Join(
+            _delimiter,
+            [
+                Height.ToString(),
+                string.Join(";", _outputAddresses),
                 Environment.NewLine
             ]);
     }

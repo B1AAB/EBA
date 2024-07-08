@@ -69,6 +69,8 @@ public class BitcoinOptions
 
     public string StatsFilename { init; get; } = "bitcoin_blocks_stats.tsv";
 
+    public string PerBlockAddressesFilename { init; get; } = "addressess.tsv";
+
     public int DbCommitAtUtxoBufferSize { init; get; } = 5000000;
 
     // null default lets runtime decide on max concurrency which is not static and changes w.r.t the load.

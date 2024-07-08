@@ -229,6 +229,8 @@ public class BitcoinAgent : IDisposable
         {
             output.TryGetAddress(out string? address);
 
+            g.Stats.AddOutputAddress(address);
+
             var utxo = new Utxo(
                 coinbaseTx.Txid, output.Index, address, output.Value, 
                 output.GetScriptType(), block.Hash);
@@ -237,7 +239,7 @@ public class BitcoinAgent : IDisposable
                 (k, oldValue) =>
                 {
                     // using hash instead of height for the compatibility with the rest of the code
-                    oldValue.AddCreatedIn(block.Hash); //.Height.ToString());
+                    oldValue.AddCreatedIn(block.Hash);
                     return oldValue;
                 });
 
@@ -245,7 +247,7 @@ public class BitcoinAgent : IDisposable
             rewardAddresses.Add(node);
         }
 
-        g.Stats.AddInputTxCount(1); // Coinbase.
+        g.Stats.AddInputTxCount(1); // Coinbase
         g.Stats.AddOutputTxCount(rewardAddresses.Count);
 
         cT.ThrowIfCancellationRequested();
@@ -313,6 +315,7 @@ public class BitcoinAgent : IDisposable
                     {
                         utxo.AddReferencedIn(g.Block.Hash);
 
+                        // TODO: fixme:
                         // This invalidates the ACID property since if the
                         // block process is canceled before it completes, 
                         // some related changes are already saved in the db. 
@@ -352,6 +355,8 @@ public class BitcoinAgent : IDisposable
             cT.ThrowIfCancellationRequested();
 
             output.TryGetAddress(out string? address);
+            g.Stats.AddOutputAddress(address);
+
             var cIn = g.Block.Hash;
             var utxo = new Utxo(tx.Txid, output.Index, address, output.Value, output.GetScriptType(), cIn);
             txGraph.AddTarget(utxo);

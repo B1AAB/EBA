@@ -5,6 +5,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     private readonly IGraphDb<BitcoinGraph> _graphDb;
     private readonly ILogger<PersistentGraphBuffer> _logger;
     private readonly PersistentGraphStatistics _pGraphStats;
+    private readonly PersistentBlockAddressess _pBlockAddressess;
     private bool _disposed = false;
 
     public ReadOnlyCollection<long> BlocksHeightInBuffer
@@ -20,13 +21,16 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         IGraphDb<BitcoinGraph> graphDb,
         ILogger<PersistentGraphBuffer> logger,
         ILogger<PersistentGraphStatistics> pgStatsLogger,
+        ILogger<PersistentBlockAddressess> pgAddressessLogger,
         string graphStatsFilename,
+        string perBlockAddressessFilename,
         CancellationToken ct) :
         base(logger, ct)
     {
         _graphDb = graphDb;
         _logger = logger;
         _pGraphStats = new(graphStatsFilename, pgStatsLogger, ct);
+        _pBlockAddressess = new(perBlockAddressessFilename, pgAddressessLogger, ct);
     }
 
     public new void Enqueue(BlockGraph graph)
@@ -41,7 +45,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     {
         cT.ThrowIfCancellationRequested();
 
-        // I am using `default` as a cancellation token in the following
+        // Using `default` as a cancellation token in the following
         // because the two serialization methods need to conclude before
         // this can exit, otherwise, it may end up partially persisting graph 
         // or persisting graph but skipping the serialization of its stats.
@@ -51,7 +55,8 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         var tasks = new List<Task>
         {
             _graphDb.SerializeAsync(obj, default),
-            _pGraphStats.SerializeAsync(obj.Stats.ToString(), default)
+            _pGraphStats.SerializeAsync(obj.Stats.ToString(), default),
+            _pBlockAddressess.SerializeAsync(obj.Stats.ToStringAddressess(), default)
         };
 
         await Task.WhenAll(tasks);

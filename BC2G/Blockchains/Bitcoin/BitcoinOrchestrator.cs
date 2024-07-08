@@ -101,7 +101,9 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             _host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>(),
             _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),
             _host.Services.GetRequiredService<ILogger<PersistentGraphStatistics>>(),
+            _host.Services.GetRequiredService<ILogger<PersistentBlockAddressess>>(),
             options.Bitcoin.StatsFilename,
+            options.Bitcoin.PerBlockAddressesFilename,
             cT);
 
         _logger.LogInformation(
