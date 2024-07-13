@@ -29,6 +29,7 @@ public class Output : IBase64Serializable
         if (ScriptPubKey != null)
             address = ScriptPubKey.GetAddress();
         else
+            // TODO: fixme.
             throw new NotImplementedException();
 
         if (string.IsNullOrEmpty(address))
