@@ -245,12 +245,11 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
     {
         cT.ThrowIfCancellationRequested();
 
-        _logger.LogInformation("Started processing block {height:n0}.", height);
+        _logger.LogInformation("{step} for block {height:n0}: Started processing", "[1/3]", height);
 
         var strategy = ResilienceStrategyFactory.Bitcoin.GetGraphStrategy(
             options.Bitcoin.BitcoinAgentResilienceStrategy);
 
-        _logger.LogInformation("Trying processing block {height:n0}.", height);
         var agent = _host.Services.GetRequiredService<BitcoinAgent>();
         var blockGraph = await agent.GetGraph(height, utxos, dbContextLock, strategy, cT);
 
@@ -258,8 +257,8 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             return false;
 
         _logger.LogInformation(
-            "Obtained block graph for height {height:n0}, " +
-            "enqueued for graph serialization.", height);
+            "{step} for block {height:n0}: Obtained block graph and enqueued for serialization.", 
+            "[2/3]", height);
 
         // This should be the last step of this process,
         // do not check for cancellation after this.
