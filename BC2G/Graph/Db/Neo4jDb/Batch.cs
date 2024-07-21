@@ -1,4 +1,6 @@
-﻿using System.Collections.Immutable;
+﻿using BC2G.Utilities;
+
+using System.Collections.Immutable;
 
 namespace BC2G.Graph.Db.Neo4jDb;
 
@@ -29,7 +31,7 @@ public class Batch
     {
         Name = name;
         DefaultDirectory = defaultDirectory;
-        var timestamp = Utilities.GetTimestamp();
+        var timestamp = Helpers.GetTimestamp();
 
         _typesInfo = new();
         foreach (var type in types)
@@ -69,7 +71,7 @@ public class Batch
         if (!_typesInfo.ContainsKey(type))
         {
             _typesInfo.Add(type, new TypeInfo(
-                CreateFilename(type, Utilities.GetTimestamp(), directory), 0));
+                CreateFilename(type, Helpers.GetTimestamp(), directory), 0));
         }
     }
 

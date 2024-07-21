@@ -1,4 +1,6 @@
-﻿namespace BC2G.Blockchains.Bitcoin.Graph;
+﻿using BC2G.Utilities;
+
+namespace BC2G.Blockchains.Bitcoin.Graph;
 
 public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 {
@@ -40,7 +42,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 
     public void Enqueue(TransactionGraph g)
     {
-        Utilities.ThreadsafeAdd(ref _totalFee, g.Fee);
+        Helpers.ThreadsafeAdd(ref _totalFee, g.Fee);
         _txGraphsQueue.Enqueue(g);
     }
 
@@ -76,7 +78,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         {
             AddOrUpdateEdge(new C2SEdge(
                 item.Key,
-                Utilities.Round((item.Value * blockReward) / totalPaidToMiner),
+                Helpers.Round((item.Value * blockReward) / totalPaidToMiner),
                 Timestamp,
                 Height));
         }
@@ -116,9 +118,9 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
             foreach (var s in txGraph.SourceScripts)
                 txGraph.SourceScripts.AddOrUpdate(
                     s.Key, s.Value,
-                    (_, oldValue) => Utilities.Round(
-                        oldValue - Utilities.Round(
-                            oldValue * Utilities.Round(
+                    (_, oldValue) => Helpers.Round(
+                        oldValue - Helpers.Round(
+                            oldValue * Helpers.Round(
                                 fee / txGraph.TotalInputValue))));
 
             AddOrUpdateEdge(new T2TEdge(txGraph.TxNode, coinbaseTxG.TxNode, fee, EdgeType.Fee, Timestamp, Height));
@@ -143,7 +145,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 
                 var v = 0.0;
                 if (d != 0)
-                    v = Utilities.Round(t.Value * Utilities.Round(s.Value / d));
+                    v = Helpers.Round(t.Value * Helpers.Round(s.Value / d));
 
                 AddOrUpdateEdge(new S2SEdge(
                     s.Key, t.Key, v,
@@ -152,11 +154,11 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                     Height));
             }
 
-            var x = fee * Utilities.Round(s.Value / sumInputWithoutFee == 0 ? 1 : sumInputWithoutFee);
+            var x = fee * Helpers.Round(s.Value / sumInputWithoutFee == 0 ? 1 : sumInputWithoutFee);
             if (fee > 0)
                 foreach (var m in coinbaseTxG.TargetScripts)
                     AddOrUpdateEdge(new S2SEdge(s.Key, m.Key,
-                        Utilities.Round(x * Utilities.Round(m.Value / totalPaidToMiner)),
+                        Helpers.Round(x * Helpers.Round(m.Value / totalPaidToMiner)),
                         EdgeType.Fee, Timestamp, Height));
         }
 

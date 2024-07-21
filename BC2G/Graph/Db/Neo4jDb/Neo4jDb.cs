@@ -1,4 +1,6 @@
-﻿namespace BC2G.Graph.Db.Neo4jDb;
+﻿using BC2G.Utilities;
+
+namespace BC2G.Graph.Db.Neo4jDb;
 
 public static class Neo4jDb
 {
@@ -98,7 +100,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 importRuntime += stopwatch.Elapsed;
                 _logger.LogInformation(
                     "Importing type {t} finished in {et} seconds.", 
-                    typeKey, Utilities.GetEtInSeconds(stopwatch.Elapsed));
+                    typeKey, Helpers.GetEtInSeconds(stopwatch.Elapsed));
             }
         }
 
@@ -111,7 +113,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         var sampledGraphsCounter = 0;
         var attempts = 0;
-        var baseOutputDir = Path.Join(Options.WorkingDir, $"sampled_graphs_{Utilities.GetTimestamp()}");
+        var baseOutputDir = Path.Join(Options.WorkingDir, $"sampled_graphs_{Helpers.GetTimestamp()}");
 
         while (
             sampledGraphsCounter < Options.GraphSample.Count
@@ -193,7 +195,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         var fileLocalized = false;
         var localFilename = filename;
 
-        if (!Utilities.AssertPathEqual(
+        if (!Helpers.AssertPathEqual(
             Path.GetDirectoryName(filename),
             Options.Neo4j.ImportDirectory))
         {

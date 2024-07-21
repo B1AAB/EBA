@@ -1,4 +1,6 @@
-﻿using System.Collections.Immutable;
+﻿using BC2G.Utilities;
+
+using System.Collections.Immutable;
 
 namespace BC2G.Graph.Model;
 
@@ -146,22 +148,22 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
         var x = GetFeatures();
         Directory.CreateDirectory(outputDir);
 
-        Utilities.CsvSerialize(
+        Helpers.CsvSerialize(
             x.NodeFeatures,
             Path.Join(outputDir, nodeFeaturesFilename),
             x.NodeFeaturesHeader);
 
-        Utilities.CsvSerialize(
+        Helpers.CsvSerialize(
             x.EdgeFeatures,
             Path.Join(outputDir, edgeFeaturesFilename),
             x.EdgeFeaturesHeader);
 
-        Utilities.CsvSerialize(
+        Helpers.CsvSerialize(
             x.PairIndices,
             Path.Join(outputDir, pairIndicesFilename),
             x.PairIndicesHeader);
 
-        Utilities.CsvSerialize(
+        Helpers.CsvSerialize(
             x.Labels,
             Path.Combine(outputDir, labelsFilename),
             x.LabelsHeader);

@@ -1,3 +1,5 @@
+using BC2G.Utilities;
+
 namespace BC2G.Blockchains.Bitcoin.Graph;
 
 public class TransactionGraph : GraphBase
@@ -41,7 +43,7 @@ public class TransactionGraph : GraphBase
 
     private static void RoundedIncrement(ref double value, double increment)
     {
-        value = Utilities.Round(value + increment);
+        value = Helpers.Round(value + increment);
     }
 
     private static ScriptNode AddOrUpdate(
@@ -50,8 +52,8 @@ public class TransactionGraph : GraphBase
         double value)
     {
         collection.AddOrUpdate(
-            node, Utilities.Round(value),
-            (_, oldValue) => Utilities.Round(oldValue + value));
+            node, Helpers.Round(value),
+            (_, oldValue) => Helpers.Round(oldValue + value));
 
         return node;
     }

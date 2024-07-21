@@ -1,4 +1,6 @@
-﻿namespace BC2G.Blockchains.Bitcoin.Model;
+﻿using BC2G.Utilities;
+
+namespace BC2G.Blockchains.Bitcoin.Model;
 
 public class BlockStatistics(Block block)
 {
@@ -70,7 +72,7 @@ public class BlockStatistics(Block block)
     public void IncrementEdgeType(EdgeType type, double value)
     {
         Interlocked.Increment(ref _edgeTypeFrequency[(int)type]);
-        Utilities.ThreadsafeAdd(ref _edgeTypeTxSum[(int)type], value);
+        Helpers.ThreadsafeAdd(ref _edgeTypeTxSum[(int)type], value);
     }
 
     public void AddInputTxCount(int value)
@@ -92,7 +94,7 @@ public class BlockStatistics(Block block)
     public void AddEdgeType(EdgeType type, uint value)
     {
         _edgeTypeFrequency[(int)type] =
-            Utilities.ThreadsafeAdd(
+            Helpers.ThreadsafeAdd(
                 ref _edgeTypeFrequency[(int)type],
                 value);
     }
@@ -159,15 +161,15 @@ public class BlockStatistics(Block block)
                 _inputTxCounts.Max().ToString(),
                 _inputTxCounts.Sum().ToString(),
                 _inputTxCounts.Average().ToString(),
-                Utilities.GetMedian(_inputTxCounts).ToString(),
-                Utilities.GetVariance(_inputTxCounts).ToString(),
+                Helpers.GetMedian(_inputTxCounts).ToString(),
+                Helpers.GetVariance(_inputTxCounts).ToString(),
 
                 _outputTxCounts.Min().ToString(),
                 _outputTxCounts.Max().ToString(),
                 _outputTxCounts.Sum().ToString(),
                 _outputTxCounts.Average().ToString(),
-                Utilities.GetMedian(_outputTxCounts).ToString(),
-                Utilities.GetVariance(_outputTxCounts).ToString(),
+                Helpers.GetMedian(_outputTxCounts).ToString(),
+                Helpers.GetVariance(_outputTxCounts).ToString(),
 
                 string.Join(
                     _delimiter,

@@ -1,6 +1,6 @@
-﻿namespace BC2G;
+﻿namespace BC2G.Utilities;
 
-internal class Utilities
+internal class Helpers
 {
     // Bitcoin clinet has 8 fractional points, add a few
     // bases to account for numbers smaller than that

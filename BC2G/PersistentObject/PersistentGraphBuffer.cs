@@ -1,4 +1,6 @@
-﻿namespace BC2G.PersistentObject;
+﻿using BC2G.Utilities;
+
+namespace BC2G.PersistentObject;
 
 public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposable
 {
@@ -65,7 +67,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 
         _logger.LogInformation(
             "{step} for block {height:n0}: Finished processing in {runtime} seconds.",
-            "[3/3]", obj.Height, Utilities.GetEtInSeconds(obj.Stats.Runtime));
+            "[3/3]", obj.Height, Helpers.GetEtInSeconds(obj.Stats.Runtime));
     }
 
     public new void Dispose()
