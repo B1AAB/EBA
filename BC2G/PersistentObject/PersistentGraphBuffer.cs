@@ -66,8 +66,8 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         _blocksHeightsInBuffer.TryRemove(obj.Height, out byte _);
 
         _logger.LogInformation(
-            "{step} for block {height:n0}: Finished processing in {runtime} seconds.",
-            "[3/3]", obj.Height, Helpers.GetEtInSeconds(obj.Stats.Runtime));
+            "Block {height:n0} {step}: Finished processing in {runtime} seconds.",
+            obj.Height, "[3/3]", Helpers.GetEtInSeconds(obj.Stats.Runtime));
     }
 
     public new void Dispose()
