@@ -24,6 +24,12 @@ public enum ScriptType
     
     witness_v0_scripthash,
     witness_v1_taproot,
+
+    /// <summary>
+    /// Example: Block: 710061, Txid: c24bd72e3eaea797bd5c879480a0db90980297bc7085efda97df2bf7d31413fb, vout: 0, address: bc1pm9jzmujvdqjj6y28hptk859zs3yyv78hlz84pm
+    /// </summary>
+    witness_unknown,
+
     multisig,
     nonstandard, // e.g., block #71036
 
