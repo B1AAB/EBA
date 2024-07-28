@@ -19,24 +19,13 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
             if (!string.IsNullOrEmpty(_address))
                 return _address;
 
-            var parsedHex = Script.FromHex(Hex);
-            BitcoinAddress? address = null;
-            if (parsedHex.IsScriptType(NBitcoin.ScriptType.P2PKH))
+            if (Type == "nonstandard")
             {
-                address = parsedHex.GetDestinationAddress(Network.Main);
-            }
-            else if (parsedHex.IsScriptType(NBitcoin.ScriptType.P2PK))
-            {
-                var pubkeys = parsedHex.GetDestinationPublicKeys();
-                address = pubkeys[0].GetAddress(ScriptPubKeyType.Legacy, Network.Main);
+                _address = string.Empty;
+                return _address;
             }
 
-            if (address != null)
-                _address = address.ToString();
-            else
-            {
-                throw new Exception("Check me");
-            }
+            _address = ExtractAddress();
 
             return _address;
         }
@@ -61,6 +50,60 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
     public override string GetAddress()
     {
         return Address;
+    }
+
+    private string ExtractAddress()
+    {
+        var parsedHex = Script.FromHex(Hex);
+        BitcoinAddress? address;
+
+        if (parsedHex.IsScriptType(NBitcoin.ScriptType.P2PKH))
+        {
+            address = parsedHex.GetDestinationAddress(Network.Main);
+        }
+        else if (parsedHex.IsScriptType(NBitcoin.ScriptType.P2PK))
+        {
+            var pubkeys = parsedHex.GetDestinationPublicKeys();
+            if (pubkeys.Length == 1)
+            {
+                address = pubkeys[0].GetAddress(ScriptPubKeyType.Legacy, Network.Main);
+            }
+            else
+            {
+                // Length = 0
+                // Example:
+                //   Height=292744,
+                //   HEX="410400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ac"
+                // 
+                return string.Empty;
+            }
+        }
+        else if (parsedHex.IsScriptType(NBitcoin.ScriptType.MultiSig))
+        {
+            return string.Empty;
+        }
+        else
+        {
+            // This condition is not expected to happen when interfacing
+            // the Main network work using Bitcoin Core, because it already returns
+            // address for these types.
+            //
+            // If happens, it may only happen for the following script types:
+            // NBitcoin.ScriptType.P2SH
+            // NBitcoin.ScriptType.P2WSH
+            // NBitcoin.ScriptType.P2WPKH
+            // NBitcoin.ScriptType.P2WSH
+            // NBitcoin.ScriptType.Taproot
+            // NBitcoin.ScriptType.P2SH
+            // NBitcoin.ScriptType.Witness
+
+            address = parsedHex.GetDestinationAddress(Network.Main);
+        }
+
+        if (address != null)
+            return address.ToString();
+        else
+            throw new Exception($"Cannot extract destination address unexpectedly. HEX: {Hex}");
     }
 
     public string ToBase64String()

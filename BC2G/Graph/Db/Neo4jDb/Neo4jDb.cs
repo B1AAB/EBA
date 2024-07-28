@@ -19,7 +19,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     /// Ref: https://neo4j.com/blog/bulk-data-import-neo4j-3-0/
     /// </summary>
     private const int _maxEntitiesPerBatch = 80000;
-    private List<Batch> _batches = new();
+    private List<Batch> _batches = [];
 
     private readonly ILogger<Neo4jDb<T>> _logger;
     private bool _disposed = false;
