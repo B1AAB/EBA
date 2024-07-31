@@ -1,4 +1,6 @@
-﻿namespace BC2G.Blockchains.Bitcoin;
+﻿using BC2G.Blockchains.Bitcoin.Model;
+
+namespace BC2G.Blockchains.Bitcoin;
 
 public class BitcoinOrchestrator : IBlockchainOrchestrator
 {
@@ -231,8 +233,25 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             utxos.Values,
             _host.Services.GetRequiredService<IDbContextFactory<DatabaseContext>>(),
             _host.Services.GetRequiredService<ILogger<DatabaseContext>>());
-        utxos.Clear();
-        _logger.LogInformation("In-memory UTXO cleared.");
+
+
+        //utxos.Clear();
+
+        var spentTxo = utxos.Where(kvp => kvp.Value.ReferencedInCount > 0).Select(kvp => kvp.Key).ToList();
+        _logger.LogInformation("Removing {count} spent transactions from the in-memory UTXO collection.", spentTxo.Count);
+        foreach (var txo in spentTxo)
+            utxos.Remove(txo, out _);
+        _logger.LogInformation("Removed {count} spent transactions from the in-memory UTXO collection.", spentTxo.Count);
+
+        // Shrink the size
+        var nItemsToRemove = utxos.Count - (int)(utxos.Count * 0.2);
+        var keysToRemove = utxos.Keys.Take(nItemsToRemove).ToList();
+        _logger.LogInformation("Removing {count} unspent transactions from the in-memory UTXO collection, in order to reduce the memory usage.", nItemsToRemove);
+        foreach (var key in keysToRemove)
+            utxos.Remove(key, out _);
+        _logger.LogInformation("Removed {count} unspent transactions from the in-memory UTXO collection, in order to reduce the memory usage.", nItemsToRemove);
+
+        //_logger.LogInformation("In-memory UTXO cleared.");
     }
 
     private async Task<bool> TryProcessBlock(
