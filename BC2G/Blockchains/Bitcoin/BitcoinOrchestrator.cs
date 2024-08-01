@@ -227,6 +227,25 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
     private void CommitInMemUtxo(ConcurrentDictionary<string, Utxo> utxos, object dbLock)
     {
+        // TODO: read this from config.
+        var retainInMemoryTxCount = 1000000;
+
+        _logger.LogInformation("Selecting in-memory utxo to commit in database.");
+        var utxoToKeepIds = utxos.Where(kvp => kvp.Value.ReferencedInCount == 0).Select(kvp => kvp.Key).ToList();
+        var spentTxCount = utxoToKeepIds.Count;
+        utxoToKeepIds = utxoToKeepIds.Take(retainInMemoryTxCount).ToList();
+        var utxoToKeep = new ConcurrentDictionary<string, Utxo>();
+        foreach (var id in utxoToKeepIds)
+        {
+            utxos.Remove(id, out var value);
+            if (value != null)
+                utxoToKeep.TryAdd(id, value);
+        }
+        _logger.LogInformation(
+            "Selected {toKeep:n0} utxo to keep in-memory, and {toCommit:n0} tx out to commit to database ({spent:n0} are spent tx out).",
+            utxoToKeep.Count, utxos.Count, spentTxCount);
+
+
         _logger.LogInformation("Committing the in-memory UTXO to the database.");
         DatabaseContext.OptimisticAddOrUpdate(
             dbLock,
@@ -234,24 +253,8 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             _host.Services.GetRequiredService<IDbContextFactory<DatabaseContext>>(),
             _host.Services.GetRequiredService<ILogger<DatabaseContext>>());
 
-
-        //utxos.Clear();
-
-        var spentTxo = utxos.Where(kvp => kvp.Value.ReferencedInCount > 0).Select(kvp => kvp.Key).ToList();
-        _logger.LogInformation("Removing {count} spent transactions from the in-memory UTXO collection.", spentTxo.Count);
-        foreach (var txo in spentTxo)
-            utxos.Remove(txo, out _);
-        _logger.LogInformation("Removed {count} spent transactions from the in-memory UTXO collection.", spentTxo.Count);
-
-        // Shrink the size
-        var nItemsToRemove = utxos.Count - (int)(utxos.Count * 0.2);
-        var keysToRemove = utxos.Keys.Take(nItemsToRemove).ToList();
-        _logger.LogInformation("Removing {count} unspent transactions from the in-memory UTXO collection, in order to reduce the memory usage.", nItemsToRemove);
-        foreach (var key in keysToRemove)
-            utxos.Remove(key, out _);
-        _logger.LogInformation("Removed {count} unspent transactions from the in-memory UTXO collection, in order to reduce the memory usage.", nItemsToRemove);
-
-        //_logger.LogInformation("In-memory UTXO cleared.");
+        _logger.LogInformation("Finished committing the in-memory UTXO to the database.");
+        utxos = utxoToKeep;
     }
 
     private async Task<bool> TryProcessBlock(
