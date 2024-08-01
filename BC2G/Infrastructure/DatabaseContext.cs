@@ -55,7 +55,7 @@ public class DatabaseContext : DbContext
 
     public static void OptimisticAddOrUpdate(
         object dbLock,
-        ICollection<Utxo> utxos,
+        IEnumerable<Utxo> utxos,
         IDbContextFactory<DatabaseContext> contextFactory,
         ILogger<DatabaseContext> logger)
     {
@@ -66,7 +66,7 @@ public class DatabaseContext : DbContext
                 {
                     logger.LogInformation(
                         "Trying to optimistically add UTXOs to the database. " +
-                        "UTXOs count: {c:n0}", utxos.Count);
+                        "UTXOs count: {c:n0}", utxos.Count());
 
                     using (var c = contextFactory.CreateDbContext())
                     {
