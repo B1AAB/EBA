@@ -6,7 +6,7 @@ public class BitcoinOptions
     {
         init
         {
-            if (value.AbsoluteUri.EndsWith("/"))
+            if (value.AbsoluteUri.EndsWith('/'))
                 _clientUri = value;
             else
                 _clientUri = new Uri(value.AbsoluteUri + "/");

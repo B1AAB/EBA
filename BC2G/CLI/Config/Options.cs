@@ -10,7 +10,7 @@ public class Options
         new()
         {
             // The `_` before `.log` is added to separate RepoName from a 
-            // timestamp serilog adds for each rolling file.
+            // timestamp that serilog adds for each rolling file.
             LogFilename = Path.Join(_wd, $"{new LoggerOptions().RepoName}_.log")
         };
 

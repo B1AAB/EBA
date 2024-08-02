@@ -58,6 +58,7 @@ public class Orchestrator : IDisposable
                 _logger?.LogError(
                     "Cannot connect to database; make sure PostgreSQL 16 is installed and listening on port {p}. {e}",
                     5432, e.Message);
+                throw;
             }
         }
 

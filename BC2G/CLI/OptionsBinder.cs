@@ -99,7 +99,8 @@ internal class OptionsBinder : BinderBase<Options>
         var options = new Options()
         {
             WorkingDir = wd,
-            StatusFile = GetValue(defs.StatusFile, _statusFilenameOption, c),
+            StatusFile = GetValue(defs.StatusFile, _statusFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
+            Logger = new() { LogFilename = Path.Join(wd, Path.GetFileName(defs.Logger.LogFilename)) },
             Bitcoin = bitcoinOps,
             GraphSample = gsample,
             Neo4j = neo4jOps
@@ -108,7 +109,7 @@ internal class OptionsBinder : BinderBase<Options>
         return options;
     }
 
-    private static T GetValue<T>(T defaultValue, Option<T>? option, BindingContext context)
+    private static T GetValue<T>(T defaultValue, Option<T>? option, BindingContext context, Func<T, T>? composeValue = null)
     {
         if (option == null)
             return defaultValue;
@@ -121,6 +122,9 @@ internal class OptionsBinder : BinderBase<Options>
         var value = context.ParseResult.GetValueForOption(option);
         if (value == null)
             return defaultValue;
+
+        if (value.Equals(defaultValue) && composeValue != null)
+            return composeValue(value);
 
         return value;
     }
