@@ -136,7 +136,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         var utxos = new ConcurrentDictionary<string, Utxo>();
         var barrier = new Barrier(0, (barrier) =>
         {
-            CommitInMemUtxo(utxos, dbLock);
+            CommitInMemUtxo(utxos, dbLock, options);
         });
 
         try
@@ -221,18 +221,17 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             _logger.LogInformation("Serialized the updated list of blocks-to-process.");
 
             if (!exceptionThrown)
-                CommitInMemUtxo(utxos, dbLock);
+                CommitInMemUtxo(utxos, dbLock, options);
         }
     }
 
-    private void CommitInMemUtxo(ConcurrentDictionary<string, Utxo> utxos, object dbLock)
+    private void CommitInMemUtxo(ConcurrentDictionary<string, Utxo> utxos, object dbLock, Options options)
     {
-        // TODO: read this from config.
-        var retainInMemoryTxCount = 1000000;
+        var retainInMemoryTxCount = options.Bitcoin.MaxInMemoryUtxosAfterDbCommit;
 
         _logger.LogInformation("Selecting in-memory utxo to commit in database.");
         var utxoToKeepIds = utxos.Where(kvp => kvp.Value.ReferencedInCount == 0).Select(kvp => kvp.Key).ToList();
-        var spentTxCount = utxoToKeepIds.Count;
+        var utxoCount = utxoToKeepIds.Count;
         utxoToKeepIds = utxoToKeepIds.Take(retainInMemoryTxCount).ToList();
         var utxoToKeep = new ConcurrentDictionary<string, Utxo>();
         foreach (var id in utxoToKeepIds)
@@ -242,9 +241,8 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
                 utxoToKeep.TryAdd(id, value);
         }
         _logger.LogInformation(
-            "Selected {toKeep:n0} utxo to keep in-memory, and {toCommit:n0} tx out to commit to database ({spent:n0} are spent tx out).",
-            utxoToKeep.Count, utxos.Count, spentTxCount);
-
+            "Selected {toKeep:n0} utxo to keep in-memory, and {toCommit:n0} txo to commit to database ({spent:n0}/{toCommit:n0} are utxo).",
+            utxoToKeep.Count, utxos.Count, utxoCount - retainInMemoryTxCount, utxos.Count);
 
         _logger.LogInformation("Committing the in-memory UTXO to the database.");
         DatabaseContext.OptimisticAddOrUpdate(
