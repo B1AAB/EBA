@@ -18,6 +18,7 @@ internal class Cli
         Func<Options, Task> bitcoinTraverseCmdHandlerAsync,
         Func<Options, Task> sampleCmdHandlerAsync,
         Func<Options, Task> bitcoinImportCmdHandlerAsync,
+        Func<Options, Task> addressStatsHandlerAsync,
         Action<Exception, InvocationContext> exceptionHandler)
     {
         var defOps = new Options();
@@ -79,7 +80,8 @@ internal class Cli
             defOps,
             bitcoinTraverseCmdHandlerAsync,
             bitcoinImportCmdHandlerAsync,
-            sampleCmdHandlerAsync));
+            sampleCmdHandlerAsync,
+            addressStatsHandlerAsync));
 
         _parser = new CommandLineBuilder(_rootCmd)
             //.UseDefaults() // Do NOT add this since it will cause issues with handling exceptions.
@@ -100,7 +102,7 @@ internal class Cli
                     x =>
                     {
                         if (x.ParseResult.Errors.Any())
-                            return new List<HelpSectionDelegate>();
+                            return [];
 
                         return HelpBuilder.Default.GetLayout().Prepend(
                        _ => AnsiConsole.Write(
@@ -123,21 +125,23 @@ internal class Cli
     }
 
     private Command GetBitcoinCmd(
-        Options defOps,
+        Options defaultOptions,
         Func<Options, Task> traverseHandlerAsync,
         Func<Options, Task> importHandlerAsync,
-        Func<Options, Task> sampleHandlerAsync)
+        Func<Options, Task> sampleHandlerAsync,
+        Func<Options, Task> addressStatsHandlerAsync)
     {
         var cmd = new Command(
             name: "bitcoin",
-            description: "TODO: add some description");
-        cmd.AddCommand(GetTraverseCmd(defOps, traverseHandlerAsync));
-        cmd.AddCommand(GetImportCmd(defOps, importHandlerAsync));
-        cmd.AddCommand(GetSampleCmd(defOps, sampleHandlerAsync));
+            description: ""); // TODO add some description
+        cmd.AddCommand(GetTraverseCmd(defaultOptions, traverseHandlerAsync));
+        cmd.AddCommand(GetImportCmd(defaultOptions, importHandlerAsync));
+        cmd.AddCommand(GetSampleCmd(defaultOptions, sampleHandlerAsync));
+        cmd.AddCommand(GetAddressStatsCmd(defaultOptions, addressStatsHandlerAsync));
         return cmd;
     }
 
-    private Command GetTraverseCmd(Options defOps, Func<Options, Task> handlerAsync)
+    private Command GetTraverseCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
         var fromOption = new Option<int>(
             name: "--from",
@@ -155,17 +159,17 @@ internal class Cli
             name: "--granularity",
             description: "Set the blockchain traversal granularity." +
             "For instance, if set to `10`, it implies processing every 10 blocks in the blockchain.",
-            getDefaultValue: () => defOps.Bitcoin.Granularity);
+            getDefaultValue: () => defaultOptions.Bitcoin.Granularity);
 
         var clientUriOption = new Option<Uri>(
             name: "--client-uri",
             description: "The URI where the Bitcoin client can be reached. The client should " +
             "be started with REST endpoint enabled.",
-            getDefaultValue: () => defOps.Bitcoin.ClientUri);
+            getDefaultValue: () => defaultOptions.Bitcoin.ClientUri);
 
         var cmd = new Command(
             name: "traverse",
-            description: "TODO ...")
+            description: "") // TODO: add description
         {
             fromOption,
             toOption,
@@ -188,11 +192,11 @@ internal class Cli
         return cmd;
     }
 
-    private Command GetImportCmd(Options defOps, Func<Options, Task> handlerAsync)
+    private Command GetImportCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
         var batchFilenameOption = new Option<string>(
             name: "--batch-filename",
-            description: "...")
+            description: "") // TODO: add description
         {
             IsRequired = true
         };
@@ -219,7 +223,7 @@ internal class Cli
         return cmd;
     }
 
-    private Command GetSampleCmd(Options defOps, Func<Options, Task> handlerAsync)
+    private Command GetSampleCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
         var countOption = new Option<int>(
             name: "--count",
@@ -253,30 +257,30 @@ internal class Cli
 
         var minNodeCountOption = new Option<int>(
             "--min-node-count",
-            getDefaultValue: () => defOps.GraphSample.MinNodeCount);
+            getDefaultValue: () => defaultOptions.GraphSample.MinNodeCount);
 
         var maxNodeCountOption = new Option<int>(
             "--max-node-count",
-            getDefaultValue: () => defOps.GraphSample.MaxNodeCount);
+            getDefaultValue: () => defaultOptions.GraphSample.MaxNodeCount);
 
         var minEdgeCountOption = new Option<int>(
             "--min-edge-count",
-            getDefaultValue: () => defOps.GraphSample.MinEdgeCount);
+            getDefaultValue: () => defaultOptions.GraphSample.MinEdgeCount);
 
         var maxEdgeCountOption = new Option<int>(
             "--max-edge-count",
-            getDefaultValue: () => defOps.GraphSample.MaxEdgeCount);
+            getDefaultValue: () => defaultOptions.GraphSample.MaxEdgeCount);
 
         var rootNodeSelectProbOption = new Option<double>(
             "--root-node-select-prob",
             description: "The value should be between 0 and 1 (inclusive), " +
             "if the given value is not in this range, it will be replaced " +
             "by the default value.",
-            getDefaultValue: () => defOps.GraphSample.RootNodeSelectProb);
+            getDefaultValue: () => defaultOptions.GraphSample.RootNodeSelectProb);
 
         var cmd = new Command(
             name: "sample",
-            description: "TODO: add some description")
+            description: "") // TODO: add description
         {
             countOption,
             hopsOption,
@@ -303,6 +307,39 @@ internal class Cli
             graphSampleRootNodeSelectProb: rootNodeSelectProbOption,
             workingDirOption: _workingDirOption,
             statusFilenameOption: _statusFilenameOption));
+
+        return cmd;
+    }
+
+    private Command GetAddressStatsCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    {
+        var addressesFilenameOption = new Option<string>(
+            name: "--addresses-filename",
+            description: "File containing addresses in each block.");
+
+        var statsFilenameOption = new Option<string>(
+            name: "--stats-filename",
+            description: "File containing the block stats.");
+
+        var cmd = new Command(
+            name: "addresses-to-stats",
+            description: "Extends the per-block stats with statistics about the " +
+            "addresses computed from the file containing addresses in each block.")
+        {
+            addressesFilenameOption,
+            statsFilenameOption
+        };
+
+
+        cmd.SetHandler(async (options) =>
+        {
+            await handlerAsync(options);
+        },
+        new OptionsBinder(
+            workingDirOption: _workingDirOption,
+            statusFilenameOption: _statusFilenameOption,
+            addressesFilenameOption: addressesFilenameOption,
+            statsFilenameOption: statsFilenameOption));
 
         return cmd;
     }

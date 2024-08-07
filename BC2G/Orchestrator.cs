@@ -20,6 +20,7 @@ public class Orchestrator : IDisposable
             TraverseBitcoinAsync,
             SampleGraphAsync,
             ImportGraphAsync,
+            AddressStatsAsync,
             (e, c) =>
             {
                 if (_logger != null)
@@ -85,6 +86,17 @@ public class Orchestrator : IDisposable
             _logger?.LogInformation("Successfully completed sampling graphs.");
         else
             _logger?.LogError("Faild sampling graphs with the given parameters.");
+    }
+
+    private async Task AddressStatsAsync(Options options)
+    {
+        _ = await SetupAndGetHostAsync(options);
+        await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
+
+        _logger?.LogWarning("This command runs an in-memory process that may need significant memory.");
+
+        var newAddressCounter = new NewAddressCounter(_logger);
+        newAddressCounter.Analyze(options.Bitcoin.PerBlockAddressesFilename, options.Bitcoin.StatsFilename, options.WorkingDir);
     }
 
     public void Dispose()

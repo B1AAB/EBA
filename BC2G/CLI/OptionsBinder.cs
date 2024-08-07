@@ -17,6 +17,8 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<string>? _workingDirOption;
     private readonly Option<string>? _statusFilenameOption;
     private readonly Option<string>? _batchFilenameOption;
+    private readonly Option<string>? _addressesFilenameOption;
+    private readonly Option<string>? _statsFilenameOption;
 
     public OptionsBinder(
         Option<int>? fromOption = null,
@@ -33,7 +35,9 @@ internal class OptionsBinder : BinderBase<Options>
         Option<double>? graphSampleRootNodeSelectProb = null,
         Option<string>? workingDirOption = null,
         Option<string>? statusFilenameOption = null,
-        Option<string>? batchFilenameOption = null)
+        Option<string>? batchFilenameOption = null,
+        Option<string>? addressesFilenameOption = null,
+        Option<string>? statsFilenameOption = null)
     {
         _fromOption = fromOption;
         _toOption = toOption;
@@ -50,6 +54,8 @@ internal class OptionsBinder : BinderBase<Options>
         _workingDirOption = workingDirOption;
         _statusFilenameOption = statusFilenameOption;
         _batchFilenameOption = batchFilenameOption;
+        _addressesFilenameOption = addressesFilenameOption;
+        _statsFilenameOption = statsFilenameOption;
     }
 
     protected override Options GetBoundValue(BindingContext c)
@@ -75,8 +81,8 @@ internal class OptionsBinder : BinderBase<Options>
             Granularity = GetValue(defs.Bitcoin.Granularity, _granularityOption, c),
             BlocksToProcessListFilename = Path.Join(wd, defs.Bitcoin.BlocksToProcessListFilename),
             BlocksFailedToProcessListFilename = Path.Join(wd, defs.Bitcoin.BlocksFailedToProcessListFilename),
-            StatsFilename = Path.Join(wd, defs.Bitcoin.StatsFilename),
-            PerBlockAddressesFilename = Path.Join(wd, defs.Bitcoin.PerBlockAddressesFilename)
+            StatsFilename = GetValue(defs.Bitcoin.StatsFilename, _statsFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
+            PerBlockAddressesFilename = GetValue(defs.Bitcoin.PerBlockAddressesFilename, _addressesFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); })
         };
 
         var gsample = new GraphSampleOptions()
