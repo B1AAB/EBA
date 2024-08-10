@@ -78,6 +78,7 @@ internal class NewAddressCounter(ILogger logger)
     private void ExtractAddressStats(string addressesFilename, string outFilename)
     {
         var addresses = new HashSet<string>();
+        var blocks = new Dictionary<string, string>();
 
         const int BufferSize = 4096;
         using var inFileStream = File.OpenRead(addressesFilename);
@@ -99,8 +100,44 @@ internal class NewAddressCounter(ILogger logger)
                 _logger.LogInformation("Read {counter} Lines.", lineCounter);
 
             var cols = line.Split('\t');
+            var blockHeight = cols[0];
             var blockAddresses = cols[1].Split(';');
             var newAddressesCounter = 0;
+
+            // This section is trying to make sure duplicate address stats are not included.
+            // This can happen if the addressess file contains duplicates.
+            // Duplicates may exist due to a bug in a corner case when traversing bitcoin,
+            // when the processes is stopped and resumed and the processed block addresses
+            // is not removed for the staged list.
+            // TODO: fix this.
+            Array.Sort(blockAddresses);
+            var joinedSortedAddresses = string.Join(';', blockAddresses);
+            var byteArray = Encoding.UTF8.GetBytes(joinedSortedAddresses);
+            var hashBytes = SHA256.HashData(byteArray);
+            var hashString = new StringBuilder();
+            foreach (byte b in hashBytes)
+                hashString.Append(b.ToString("x2"));
+            var addressessHash = hashString.ToString();
+            if (!blocks.TryAdd(blockHeight, addressessHash))
+            {
+                var previousHash = blocks[blockHeight];
+                if (previousHash == addressessHash)
+                {
+                    _logger.LogWarning(
+                        "Duplicate block addressess found, skipping duplicate entry. Height: {height}, Addresses hash: {hash}",
+                        blockHeight,
+                        addressessHash);
+                    continue;
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "Duplicate block addressess found, addresses hash do NOT match, adding duplicate entry. Height: {height}, Addresses hash: {hash}, Previous addresses hash: {pre}",
+                        blockHeight,
+                        addressessHash,
+                        previousHash);
+                }
+            }
 
             var blockSpecificAddresses = new HashSet<string>();
 
@@ -115,7 +152,7 @@ internal class NewAddressCounter(ILogger logger)
                 blockSpecificAddresses.Add(address);
             }
 
-            streamWriter.WriteLine(Stats.ToString(cols[0], blockAddresses.Length, blockSpecificAddresses.Count, newAddressesCounter));
+            streamWriter.WriteLine(Stats.ToString(blockHeight, blockAddresses.Length, blockSpecificAddresses.Count, newAddressesCounter));
         }
 
         _logger.LogInformation("Finished extracting address stats, and persisting them in a temp file ({tmpFilename}).", outFilename);
