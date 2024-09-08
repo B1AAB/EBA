@@ -19,14 +19,14 @@ internal class NewAddressCounter(ILogger logger)
         {
             return string.Join(
                 _delimiter,
-                "Block", "#AddressesInBlock", "#UniqueAddressesInBlock", "#UniqueAddresses");
+                "Block", "AddressesInBlockCount", "UniqueAddressesInBlockCount", "UniqueAddressesCount");
         }
 
         public static string ToStringHeaderWithoutHeight()
         {
             return string.Join(
                 _delimiter,
-                "#AddressesInBlock", "#UniqueAddressesInBlock", "#UniqueAddresses");
+                "AddressesInBlockCount", "UniqueAddressesInBlockCount", "UniqueAddressesCount");
         }
 
         public static Stats Parse(string line)
@@ -186,6 +186,8 @@ internal class NewAddressCounter(ILogger logger)
 
         while ((line = statsStreamReader.ReadLine()) != null)
         {
+            line = line.TrimEnd('\r', '\n', '\t');
+
             var blockHeight = int.Parse(line.Split('\t')[0]);
             var stat = stats[blockHeight];
             streamWriter.WriteLine($"{line}\t{stat.ToStringWithoutHeight()}");
