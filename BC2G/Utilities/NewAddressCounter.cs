@@ -103,7 +103,7 @@ internal class NewAddressCounter(ILogger logger)
 
             lineCounter++;
             if (lineCounter % 1000 == 0)
-                _logger.LogInformation("Read {counter} Lines.", lineCounter);
+                _logger.LogInformation("Read {counter} Lines.", lineCounter.ToString("N0"));
 
             var cols = line.Split('\t');
             var blockHeight = cols[0];
