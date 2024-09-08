@@ -153,6 +153,7 @@ public class BitcoinAgent : IDisposable
     public async Task<BlockGraph?> GetGraph(
         long height,
         ConcurrentDictionary<string, Utxo> utxos,
+        bool useTxDatabase,
         object dbContextLock,
         IAsyncPolicy strategy,
         CancellationToken cT)
@@ -166,7 +167,7 @@ public class BitcoinAgent : IDisposable
                 async (context, cT) =>
                 {
                     retryAttempts++;
-                    graph = await GetGraph(height, utxos, dbContextLock, cT);
+                    graph = await GetGraph(height, utxos, useTxDatabase, dbContextLock, cT);
                     graph.Stats.Retries = retryAttempts;
                 },
                 new Context()
@@ -187,6 +188,7 @@ public class BitcoinAgent : IDisposable
     public async Task<BlockGraph> GetGraph(
         long height,
         ConcurrentDictionary<string, Utxo> utxos, 
+        bool useTxDatabase,
         object dbContextLock, 
         CancellationToken cT)
     {
@@ -200,7 +202,7 @@ public class BitcoinAgent : IDisposable
 
         cT.ThrowIfCancellationRequested();
 
-        var graph = await ProcessBlockAsync(block, utxos, dbContextLock, cT);
+        var graph = await ProcessBlockAsync(block, utxos, useTxDatabase, dbContextLock, cT);
 
         graph.MergeQueuedTxGraphs(cT);
 
@@ -212,6 +214,7 @@ public class BitcoinAgent : IDisposable
     private async Task<BlockGraph> ProcessBlockAsync(
         Block block, 
         ConcurrentDictionary<string, Utxo> utxos,
+        bool useTxDatabase,
         object dbContextLock, 
         CancellationToken cT)
     {
@@ -254,7 +257,8 @@ public class BitcoinAgent : IDisposable
 
         g.RewardsAddresses = rewardAddresses;
 
-        var dbContext = _dbContextFactory.CreateDbContext();
+        DatabaseContext? dbContext = useTxDatabase ? _dbContextFactory.CreateDbContext() : null;
+
         var options = new ParallelOptions()
         {
             CancellationToken = cT,
@@ -273,7 +277,7 @@ public class BitcoinAgent : IDisposable
 
         
         cT.ThrowIfCancellationRequested();
-        dbContext.Dispose();
+        dbContext?.Dispose();
 
         return g;
     }
@@ -282,7 +286,7 @@ public class BitcoinAgent : IDisposable
         BlockGraph g,
         Transaction tx,
         ConcurrentDictionary<string, Utxo> utxos,
-        DatabaseContext dbContext,
+        DatabaseContext? dbContext,
         object dbContextLock,
         CancellationToken cT)
     {
@@ -308,6 +312,8 @@ public class BitcoinAgent : IDisposable
             }
             else
             {
+                if (dbContext != null)
+                {
                 lock (dbContextLock)
                 {
                     utxo = dbContext.Utxos.Find(id);
@@ -321,6 +327,7 @@ public class BitcoinAgent : IDisposable
                         // some related changes are already saved in the db. 
                         dbContext.SaveChanges();
                     }
+                }
                 }
 
                 if (utxo == null)

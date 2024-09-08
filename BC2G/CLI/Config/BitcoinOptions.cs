@@ -81,6 +81,8 @@ public class BitcoinOptions
     // When setting this, make sure it is more than the timeout of related Resilience strategies.
     public TimeSpan HttpClientTimeout { init; get; } = TimeSpan.FromMinutes(10);
 
+    public bool UseTxDatabase { init; get; } = false;
+
     public ResilienceStrategyOptions HttpClientResilienceStrategy { init; get; } = new();
 
     public ResilienceStrategyOptions BitcoinAgentResilienceStrategy { init; get; } = new()

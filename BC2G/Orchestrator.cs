@@ -48,8 +48,10 @@ public class Orchestrator : IDisposable
     private async Task TraverseBitcoinAsync(Options options)
     {
         var host = await SetupAndGetHostAsync(options);
-        using (var dbContext = host.Services.GetRequiredService<DatabaseContext>())
+
+        if (options.Bitcoin.UseTxDatabase)
         {
+            using var dbContext = host.Services.GetRequiredService<DatabaseContext>();
             try
             {
                 await dbContext.Database.EnsureCreatedAsync(_cT);

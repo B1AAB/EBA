@@ -167,6 +167,18 @@ internal class Cli
             "be started with REST endpoint enabled.",
             getDefaultValue: () => defaultOptions.Bitcoin.ClientUri);
 
+        var useTxDatabaseOption = new Option<bool>(
+            name: "--use-tx-database",
+            description: "If set, it uses a postgres database to write and read " +
+            "utxo when traversing the blockchain. When using this option, the database size " +
+            "can grow big (depending on the number of blocks it traverses), and it can take a " +
+            "considerable amount of time to commit transactions to the database. It will be more " +
+            "optimal to run the database on a separate persistence media, or ideally use a " +
+            "separate database system (e.g., a separate local machine in the network on a database " +
+            "service on the cloud). The advantage of this option is that it uses less API requests " +
+            "to the Bitcoin agent that can lead to better performance if the database service is " +
+            "highly performant; otherwise, the overhead may not lead to a significant performance boost.");
+
         var cmd = new Command(
             name: "traverse",
             description: "") // TODO: add description
@@ -174,7 +186,8 @@ internal class Cli
             fromOption,
             toOption,
             granularityOption,
-            clientUriOption
+            clientUriOption,
+            useTxDatabaseOption
         };
 
         cmd.SetHandler(async (options) =>
@@ -187,7 +200,8 @@ internal class Cli
             granularityOption: granularityOption,
             bitcoinClientUri: clientUriOption,
             workingDirOption: _workingDirOption,
-            statusFilenameOption: _statusFilenameOption));
+            statusFilenameOption: _statusFilenameOption, 
+            useTxDatabaseOption: useTxDatabaseOption));
 
         return cmd;
     }

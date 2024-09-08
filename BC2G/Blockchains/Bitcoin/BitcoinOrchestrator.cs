@@ -244,6 +244,8 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             "Selected {toKeep:n0} utxo to keep in-memory, and {toCommit:n0} txo to commit to database ({spent:n0}/{toCommit:n0} are utxo).",
             utxoToKeep.Count, utxos.Count, utxoCount - retainInMemoryTxCount, utxos.Count);
 
+        if (options.Bitcoin.UseTxDatabase)
+        {
         _logger.LogInformation("Committing the in-memory UTXO to the database.");
         DatabaseContext.OptimisticAddOrUpdate(
             dbLock,
@@ -252,6 +254,9 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             _host.Services.GetRequiredService<ILogger<DatabaseContext>>());
 
         _logger.LogInformation("Finished committing the in-memory UTXO to the database.");
+        }
+
+        utxos.Clear();
         utxos = utxoToKeep;
     }
 
@@ -271,7 +276,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             options.Bitcoin.BitcoinAgentResilienceStrategy);
 
         var agent = _host.Services.GetRequiredService<BitcoinAgent>();
-        var blockGraph = await agent.GetGraph(height, utxos, dbContextLock, strategy, cT);
+        var blockGraph = await agent.GetGraph(height, utxos, options.Bitcoin.UseTxDatabase, dbContextLock, strategy, cT);
 
         if (blockGraph == null)
             return false;

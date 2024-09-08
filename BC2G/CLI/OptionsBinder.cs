@@ -19,6 +19,7 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<string>? _batchFilenameOption;
     private readonly Option<string>? _addressesFilenameOption;
     private readonly Option<string>? _statsFilenameOption;
+    private readonly Option<bool>? _useTxDatabaseOption;
 
     public OptionsBinder(
         Option<int>? fromOption = null,
@@ -37,7 +38,8 @@ internal class OptionsBinder : BinderBase<Options>
         Option<string>? statusFilenameOption = null,
         Option<string>? batchFilenameOption = null,
         Option<string>? addressesFilenameOption = null,
-        Option<string>? statsFilenameOption = null)
+        Option<string>? statsFilenameOption = null,
+        Option<bool>? useTxDatabaseOption = null)
     {
         _fromOption = fromOption;
         _toOption = toOption;
@@ -56,6 +58,7 @@ internal class OptionsBinder : BinderBase<Options>
         _batchFilenameOption = batchFilenameOption;
         _addressesFilenameOption = addressesFilenameOption;
         _statsFilenameOption = statsFilenameOption;
+        _useTxDatabaseOption = useTxDatabaseOption;
     }
 
     protected override Options GetBoundValue(BindingContext c)
@@ -82,7 +85,8 @@ internal class OptionsBinder : BinderBase<Options>
             BlocksToProcessListFilename = Path.Join(wd, defs.Bitcoin.BlocksToProcessListFilename),
             BlocksFailedToProcessListFilename = Path.Join(wd, defs.Bitcoin.BlocksFailedToProcessListFilename),
             StatsFilename = GetValue(defs.Bitcoin.StatsFilename, _statsFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
-            PerBlockAddressesFilename = GetValue(defs.Bitcoin.PerBlockAddressesFilename, _addressesFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); })
+            PerBlockAddressesFilename = GetValue(defs.Bitcoin.PerBlockAddressesFilename, _addressesFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
+            UseTxDatabase = GetValue(defs.Bitcoin.UseTxDatabase, _useTxDatabaseOption, c)
         };
 
         var gsample = new GraphSampleOptions()
