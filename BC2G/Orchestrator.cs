@@ -96,7 +96,7 @@ public class Orchestrator : IDisposable
         _logger?.LogWarning("This command runs an in-memory process that may need significant memory.");
 
         var newAddressCounter = new NewAddressCounter(_logger);
-        newAddressCounter.Analyze(options.Bitcoin.PerBlockAddressesFilename, options.Bitcoin.StatsFilename, options.WorkingDir);
+        newAddressCounter.Analyze(options.Bitcoin.PerBlockAddressesFilename, options.Bitcoin.StatsFilename, options.WorkingDir, _cT);
     }
 
     public void Dispose()
