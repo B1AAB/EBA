@@ -20,8 +20,10 @@ namespace BC2G.Infrastructure.Migrations
                     Value = table.Column<double>(type: "double precision", nullable: false),
                     ScriptType = table.Column<int>(type: "integer", nullable: false),
                     CreatedIn = table.Column<string>(type: "text", nullable: false),
+                    CreatedInHeight = table.Column<string>(type: "text", nullable: false),
                     CreatedInCount = table.Column<int>(type: "integer", nullable: false),
                     ReferencedIn = table.Column<string>(type: "text", nullable: false),
+                    ReferencedInHeight = table.Column<string>(type: "text", nullable: false),
                     ReferencedInCount = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>

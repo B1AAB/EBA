@@ -236,13 +236,13 @@ public class BitcoinAgent : IDisposable
 
             var utxo = new Utxo(
                 coinbaseTx.Txid, output.Index, address, output.Value, 
-                output.GetScriptType(), block.Hash);
+                output.GetScriptType(), block.Hash, block.Height.ToString());
 
             utxos.AddOrUpdate(utxo.Id, utxo,
                 (k, oldValue) =>
                 {
                     // using hash instead of height for the compatibility with the rest of the code
-                    oldValue.AddCreatedIn(block.Hash);
+                    oldValue.AddCreatedIn(block.Hash, block.Height.ToString());
                     return oldValue;
                 });
 
@@ -308,7 +308,7 @@ public class BitcoinAgent : IDisposable
             //   to the utxo dict so it will be persisted in the db. 
             if (utxos.TryGetValue(id, out Utxo? utxo))
             {
-                utxo.AddReferencedIn(g.Block.Hash);
+                utxo.AddReferencedIn(g.Block.Hash, g.Block.Height.ToString());
             }
             else
             {
@@ -319,7 +319,7 @@ public class BitcoinAgent : IDisposable
                         utxo = dbContext.Utxos.Find(id);
                         if (utxo != null)
                         {
-                            utxo.AddReferencedIn(g.Block.Hash);
+                            utxo.AddReferencedIn(g.Block.Hash, g.Block.Height.ToString());
 
                             // TODO: fixme:
                             // This invalidates the ACID property since if the
@@ -347,8 +347,8 @@ public class BitcoinAgent : IDisposable
 
                     utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
                     {
-                        oldValue.AddCreatedIn(cIn);
-                        oldValue.AddReferencedIn(rIn);
+                        oldValue.AddCreatedIn(cIn, null);
+                        oldValue.AddReferencedIn(rIn, g.Block.Height.ToString());
                         return oldValue;
                     });
                 }
@@ -365,12 +365,12 @@ public class BitcoinAgent : IDisposable
             g.Stats.AddOutputAddress(address);
 
             var cIn = g.Block.Hash;
-            var utxo = new Utxo(tx.Txid, output.Index, address, output.Value, output.GetScriptType(), cIn);
+            var utxo = new Utxo(tx.Txid, output.Index, address, output.Value, output.GetScriptType(), cIn, g.Block.Height.ToString());
             txGraph.AddTarget(utxo);
 
             utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
             {
-                oldValue.AddCreatedIn(cIn);
+                oldValue.AddCreatedIn(cIn, g.Block.Height.ToString());
                 return oldValue;
             });
         }

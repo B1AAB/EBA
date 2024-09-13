@@ -38,6 +38,13 @@ public class Utxo
     }
     private string _createdIn = string.Empty;
 
+    public string CreatedInHeight
+    {
+        set { _createdInHeight = value; }
+        get { return _createdInHeight; }
+    }
+    private string _createdInHeight = string.Empty;
+
     public int CreatedInCount
     {
         set { _createdInCount = value; }
@@ -57,6 +64,13 @@ public class Utxo
     }
     private string _refdIn = string.Empty;
 
+    public string ReferencedInHeight
+    {
+        set { _refdInHeight = value; }
+        get { return _refdInHeight; }
+    }
+    private string _refdInHeight = string.Empty;
+
     public int ReferencedInCount
     {
         set { _refdInCount = value; }
@@ -67,7 +81,8 @@ public class Utxo
     // This constructor is required by EF.
     public Utxo(
         string id, string? address, double value, ScriptType scriptType,
-        string createdIn, string? referencedIn = null)
+        string createdIn, string? referencedIn = null,
+        string? createdInHeight = null, string? referencedInHeight = null)
     {
         Id = id;
         Address = address ?? Id;
@@ -84,12 +99,18 @@ public class Utxo
             ReferencedInCount = 1;
             ReferencedIn = referencedIn;
         }
+
+        if (!string.IsNullOrEmpty(createdInHeight))
+            CreatedInHeight = createdInHeight;
+
+        if (!string.IsNullOrEmpty(referencedInHeight))
+            ReferencedInHeight = referencedInHeight;
     }
 
     public Utxo(
         string txid, int voutN, string? address, double value, ScriptType scriptType,
-        string createdIn, string? referencedIn = null) :
-        this(GetId(txid, voutN), address, value, scriptType, createdIn, referencedIn)
+        string createdIn, string createdInHeight, string? referencedIn = null, string? referencedInHeight = null) :
+        this(GetId(txid, voutN), address, value, scriptType, createdIn, referencedIn, createdInHeight, referencedInHeight)
     { }
 
     public static string GetId(string txid, int voutN)
@@ -101,14 +122,21 @@ public class Utxo
         return id.Split('-')[1];
     }
 
-    public void AddReferencedIn(string address)
+    public void AddReferencedIn(string address, string height)
     {
         UpdateRefs(ref _refdIn, ref _refdInCount, address);
+        var dummy = 0;
+        UpdateRefs(ref _refdInHeight, ref dummy, height);
     }
 
-    public void AddCreatedIn(string address)
+    public void AddCreatedIn(string address, string? height)
     {
         UpdateRefs(ref _createdIn, ref _createdInCount, address);
+        if (height != null)
+        {
+            var dummy = 0;
+            UpdateRefs(ref _createdInHeight, ref dummy, height);
+        }
     }
 
     private static void UpdateRefs(ref string refs, ref int counts, string newRef)

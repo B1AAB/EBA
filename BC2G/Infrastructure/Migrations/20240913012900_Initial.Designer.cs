@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BC2G.Infrastructure.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20230903001150_Initial")]
+    [Migration("20240913012900_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -19,7 +19,7 @@ namespace BC2G.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.3")
+                .HasAnnotation("ProductVersion", "8.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -40,12 +40,20 @@ namespace BC2G.Infrastructure.Migrations
                     b.Property<int>("CreatedInCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("CreatedInHeight")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("ReferencedIn")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("ReferencedInCount")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ReferencedInHeight")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int>("ScriptType")
                         .HasColumnType("integer");

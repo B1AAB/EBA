@@ -156,8 +156,8 @@ public class DatabaseContext : DbContext
                 }
                 else
                 {
-                    inDbUtxo.AddCreatedIn(utxo.CreatedIn);
-                    inDbUtxo.AddReferencedIn(utxo.ReferencedIn);
+                    inDbUtxo.AddCreatedIn(utxo.CreatedIn, utxo.CreatedInHeight);
+                    inDbUtxo.AddReferencedIn(utxo.ReferencedIn, utxo.ReferencedInHeight);
                 }
 
                 c.SaveChanges();
@@ -193,8 +193,8 @@ public class DatabaseContext : DbContext
                 }
                 else
                 {
-                    inDbUtxo.AddCreatedIn(utxo.CreatedIn);
-                    inDbUtxo.AddReferencedIn(utxo.ReferencedIn);
+                    inDbUtxo.AddCreatedIn(utxo.CreatedIn, utxo.CreatedInHeight);
+                    inDbUtxo.AddReferencedIn(utxo.ReferencedIn, utxo.ReferencedInHeight);
                 }
 
                 await c.SaveChangesAsync(ct);
