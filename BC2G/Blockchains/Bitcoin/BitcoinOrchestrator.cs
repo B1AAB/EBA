@@ -246,14 +246,14 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
         if (options.Bitcoin.UseTxDatabase)
         {
-        _logger.LogInformation("Committing the in-memory UTXO to the database.");
-        DatabaseContext.OptimisticAddOrUpdate(
-            dbLock,
-            utxos.Values,
-            _host.Services.GetRequiredService<IDbContextFactory<DatabaseContext>>(),
-            _host.Services.GetRequiredService<ILogger<DatabaseContext>>());
+            _logger.LogInformation("Committing the in-memory UTXO to the database.");
+            DatabaseContext.OptimisticAddOrUpdate(
+                dbLock,
+                utxos.Values,
+                _host.Services.GetRequiredService<IDbContextFactory<DatabaseContext>>(),
+                _host.Services.GetRequiredService<ILogger<DatabaseContext>>());
 
-        _logger.LogInformation("Finished committing the in-memory UTXO to the database.");
+            _logger.LogInformation("Finished committing the in-memory UTXO to the database.");
         }
 
         utxos.Clear();

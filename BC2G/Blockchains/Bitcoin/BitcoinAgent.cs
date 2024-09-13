@@ -314,20 +314,20 @@ public class BitcoinAgent : IDisposable
             {
                 if (dbContext != null)
                 {
-                lock (dbContextLock)
-                {
-                    utxo = dbContext.Utxos.Find(id);
-                    if (utxo != null)
+                    lock (dbContextLock)
                     {
-                        utxo.AddReferencedIn(g.Block.Hash);
+                        utxo = dbContext.Utxos.Find(id);
+                        if (utxo != null)
+                        {
+                            utxo.AddReferencedIn(g.Block.Hash);
 
-                        // TODO: fixme:
-                        // This invalidates the ACID property since if the
-                        // block process is canceled before it completes, 
-                        // some related changes are already saved in the db. 
-                        dbContext.SaveChanges();
+                            // TODO: fixme:
+                            // This invalidates the ACID property since if the
+                            // block process is canceled before it completes, 
+                            // some related changes are already saved in the db. 
+                            dbContext.SaveChanges();
+                        }
                     }
-                }
                 }
 
                 if (utxo == null)
