@@ -15,15 +15,7 @@ public class BlockGraphStrategy : StrategyBase
         Props.BlockTxCount,
         Props.BlockSize,
         Props.BlockStrippedSize,
-        Props.BlockWeight,
-        Props.NumGenerationEdges,
-        Props.NumTransferEdges,
-        Props.NumChangeEdges,
-        Props.NumFeeEdges,
-        Props.SumGenerationEdges,
-        Props.SumTransferEdges,
-        Props.SumChangeEdges,
-        Props.SumFeeEdges
+        Props.BlockWeight
     };
 
     public override string GetCsvHeader()
@@ -40,9 +32,6 @@ public class BlockGraphStrategy : StrategyBase
 
     public static string GetCsv(BlockGraph g)
     {
-        var counts = g.Stats.EdgeTypeFrequency;
-        var sums = g.Stats.EdgeTypeTxSum;
-
         /// Note that the ordre of the items in this array should 
         /// match those in the `_properties`. 
         return string.Join(
@@ -57,12 +46,6 @@ public class BlockGraphStrategy : StrategyBase
                 g.Block.Size.ToString(),
                 g.Block.StrippedSize.ToString(),
                 g.Block.Weight.ToString(),
-                counts[EdgeType.Generation].ToString(),
-                counts[EdgeType.Transfer].ToString(),
-                counts[EdgeType.Fee].ToString(),
-                sums[EdgeType.Generation].ToString(),
-                sums[EdgeType.Transfer].ToString(),
-                sums[EdgeType.Fee].ToString()
             });
     }
 
