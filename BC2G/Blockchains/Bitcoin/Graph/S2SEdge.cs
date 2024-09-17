@@ -7,6 +7,13 @@ public class S2SEdge : Edge<ScriptNode, ScriptNode>
         get { return GraphComponentType.BitcoinS2S; }
     }
 
+    public EdgeLabel Label
+    {
+        get { return _label; }
+        init { _label = Type == EdgeType.Transfer ? EdgeLabel.S2STransfer : EdgeLabel.S2SFee; }
+    }
+    private EdgeLabel _label;
+
     public S2SEdge(
         ScriptNode source, ScriptNode target,
         double value, EdgeType type,

@@ -13,6 +13,8 @@ public class C2SEdge : S2SEdge
         get { return GraphComponentType.BitcoinC2S; }
     }
 
+    public new EdgeLabel Label { get; } = EdgeLabel.C2SGeneration;
+
     public C2SEdge(
         ScriptNode target, double value, uint timestamp, long blockHeight) :
         base(

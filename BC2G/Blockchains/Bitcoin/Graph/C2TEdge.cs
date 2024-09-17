@@ -7,6 +7,8 @@ public class C2TEdge : T2TEdge
         get { return GraphComponentType.BitcoinC2T; }
     }
 
+    public new EdgeLabel Label { get; } = EdgeLabel.C2TGeneration;
+
     public C2TEdge(
         TxNode target, double value, uint timestamp, long blockHeight) :
         base(
