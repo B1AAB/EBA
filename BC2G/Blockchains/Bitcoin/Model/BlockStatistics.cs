@@ -30,33 +30,33 @@ public class BlockStatistics(Block block)
     public List<string> OutputAddresses { get { return [.. _outputAddresses]; } }
     private readonly ConcurrentBag<string> _outputAddresses = [];
 
-    public Dictionary<EdgeType, uint> EdgeTypeFrequency
+    public Dictionary<EdgeLabel, uint> EdgeLabelCount
     {
         get
         {
             return
-                _edgeTypeFrequency
-                .Select((v, i) => new { Key = (EdgeType)i, Value = v })
+                _edgeLabelCount
+                .Select((v, i) => new { Key = (EdgeLabel)i, Value = v })
                 .ToDictionary(x => x.Key, x => x.Value);
         }
     }
 
-    private readonly uint[] _edgeTypeFrequency =
-        new uint[Enum.GetNames(typeof(EdgeType)).Length];
+    private readonly uint[] _edgeLabelCount =
+        new uint[Enum.GetNames(typeof(EdgeLabel)).Length];
 
-    public Dictionary<EdgeType, double> EdgeTypeTxSum
+    public Dictionary<EdgeLabel, double> EdgeLabelValueSum
     {
         get
         {
             return
-                _edgeTypeTxSum
-                .Select((v, i) => new { Key = (EdgeType)i, Value = v })
+                _edgeLabelValueSum
+                .Select((v, i) => new { Key = (EdgeLabel)i, Value = v })
                 .ToDictionary(x => x.Key, x => x.Value);
         }
     }
 
-    private readonly double[] _edgeTypeTxSum =
-        new double[Enum.GetNames(typeof(EdgeType)).Length];
+    private readonly double[] _edgeLabelValueSum =
+        new double[Enum.GetNames(typeof(EdgeLabel)).Length];
 
     private const char _delimiter = '\t';
 
@@ -69,10 +69,10 @@ public class BlockStatistics(Block block)
         _stopwatch.Stop();
     }
 
-    public void IncrementEdgeType(EdgeType type, double value)
+    public void IncrementEdgeType(EdgeLabel label, double value)
     {
-        Interlocked.Increment(ref _edgeTypeFrequency[(int)type]);
-        Helpers.ThreadsafeAdd(ref _edgeTypeTxSum[(int)type], value);
+        Interlocked.Increment(ref _edgeLabelCount[(int)label]);
+        Helpers.ThreadsafeAdd(ref _edgeLabelValueSum[(int)label], value);
     }
 
     public void AddInputTxCount(int value)
@@ -88,15 +88,6 @@ public class BlockStatistics(Block block)
     {
         if (!string.IsNullOrEmpty(address))
             _outputAddresses.Add(address);
-    }
-
-    // TODO: fixme, this is not used.
-    public void AddEdgeType(EdgeType type, uint value)
-    {
-        _edgeTypeFrequency[(int)type] =
-            Helpers.ThreadsafeAdd(
-                ref _edgeTypeFrequency[(int)type],
-                value);
     }
 
     public static string GetHeader()
@@ -126,14 +117,15 @@ public class BlockStatistics(Block block)
                 "OutputTxCountsAvg",
                 "OutputTxCountsMedian",
                 "OutputTxCountsVariance",
+
                 string.Join(
                     _delimiter,
-                    ((EdgeType[])Enum.GetValues(typeof(EdgeType))).Select(
-                        x => "BlockGraph" + x + "TxCount").ToArray()),
+                    ((EdgeLabel[])Enum.GetValues(typeof(EdgeLabel))).Select(
+                        x => "BlockGraph" + x + "EdgeCount").ToArray()),
                 string.Join(
                     _delimiter,
-                    ((EdgeType[])Enum.GetValues(typeof(EdgeType))).Select(
-                        x => "BlockGraph" + x + "TxSum").ToArray()),
+                    ((EdgeLabel[])Enum.GetValues(typeof(EdgeLabel))).Select(
+                        x => "BlockGraph" + x + "EdgeValueSum").ToArray()),
             ]);
     }
 
@@ -173,11 +165,11 @@ public class BlockStatistics(Block block)
 
                 string.Join(
                     _delimiter,
-                    _edgeTypeFrequency.Select((v, i) => v.ToString()).ToArray()),
+                    _edgeLabelCount.Select((v, i) => v.ToString()).ToArray()),
 
                 string.Join(
                     _delimiter,
-                    _edgeTypeTxSum.Select((v, i) => v.ToString()).ToArray()),
+                    _edgeLabelValueSum.Select((v, i) => v.ToString()).ToArray()),
 
                 Environment.NewLine
             ]);
