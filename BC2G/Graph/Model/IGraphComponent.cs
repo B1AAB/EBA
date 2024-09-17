@@ -37,18 +37,18 @@
 
 public enum GraphComponentType
 {
-    Undefined,
-    Graph,
-    Node,
-    Edge,
-    BitcoinGraph,
-    BitcoinTxGraph,
-    BitcoinC2T,
-    BitcoinC2S,
-    BitcoinT2T,
-    BitcoinS2S,
-    BitcoinTxNode,
-    BitcoinScriptNode
+    Undefined = 0,
+    Graph = 1,
+    Node = 2,
+    Edge = 3,
+    BitcoinGraph = 4,
+    BitcoinTxGraph = 5,
+    BitcoinC2T = 6,
+    BitcoinC2S = 7,
+    BitcoinT2T = 8,
+    BitcoinS2S = 9,
+    BitcoinTxNode = 10,
+    BitcoinScriptNode = 11
 }
 
 public interface IGraphComponent
