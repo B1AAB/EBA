@@ -48,10 +48,13 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 
     public void MergeQueuedTxGraphs(CancellationToken ct)
     {
-        double totalPaidToMiner = _coinbaseTxGraph.TargetScripts.Sum(x => x.Value);
-        double blockReward = totalPaidToMiner - TotalFee;
+        double miningReward = _coinbaseTxGraph.TargetScripts.Sum(x => x.Value);
+        double mintedBitcoins = miningReward - TotalFee;
 
-        AddOrUpdateEdge(new C2TEdge(_coinbaseTxGraph.TxNode, blockReward, Timestamp, Height));
+        Stats.MintedBitcoins = mintedBitcoins;
+        Stats.TxFees = TotalFee;
+
+        AddOrUpdateEdge(new C2TEdge(_coinbaseTxGraph.TxNode, mintedBitcoins, Timestamp, Height));
 
         // First process all non-coinbase transactions;
         // this helps determine all the fee paied to the
@@ -68,7 +71,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                 if (ct.IsCancellationRequested)
                 { state.Stop(); return; }
 
-                Merge(txGraph, _coinbaseTxGraph, totalPaidToMiner, ct);
+                Merge(txGraph, _coinbaseTxGraph, miningReward, ct);
 
                 if (ct.IsCancellationRequested)
                 { state.Stop(); return; }
@@ -78,7 +81,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         {
             AddOrUpdateEdge(new C2SEdge(
                 item.Key,
-                Helpers.Round((item.Value * blockReward) / totalPaidToMiner),
+                Helpers.Round((item.Value * mintedBitcoins) / miningReward),
                 Timestamp,
                 Height));
         }
@@ -178,25 +181,25 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     public new void AddOrUpdateEdge(C2TEdge edge)
     {
         base.AddOrUpdateEdge(edge);
-        Stats.IncrementEdgeType(edge.Type, edge.Value);
+        Stats.IncrementEdgeType(edge.Label, edge.Value);
     }
 
     public new void AddOrUpdateEdge(C2SEdge edge)
     {
         base.AddOrUpdateEdge(edge);
-        Stats.IncrementEdgeType(edge.Type, edge.Value);
+        Stats.IncrementEdgeType(edge.Label, edge.Value);
     }
 
     public new void AddOrUpdateEdge(T2TEdge edge)
     {
         base.AddOrUpdateEdge(edge);
-        Stats.IncrementEdgeType(edge.Type, edge.Value);
+        Stats.IncrementEdgeType(edge.Label, edge.Value);
     }
     
     public new void AddOrUpdateEdge(S2SEdge edge)
     {
         base.AddOrUpdateEdge(edge);
-        Stats.IncrementEdgeType(edge.Type, edge.Value);
+        Stats.IncrementEdgeType(edge.Label, edge.Value);
     }
 
     public bool Equals(BlockGraph? other)

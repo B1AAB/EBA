@@ -13,6 +13,9 @@ public class BlockStatistics(Block block)
     public int Weight { get; } = block.Weight;
     public int TransactionsCount { get; } = block.TransactionsCount;
 
+    public double MintedBitcoins { set; get; }
+    public double TxFees { set; get; }
+
     /// <summary>
     /// Sets and gets retry attempts to contruct the block graph.
     /// </summary>
@@ -105,6 +108,8 @@ public class BlockStatistics(Block block)
                 "Weight",
                 "Retries",
                 "TxCount",
+                "MintedBitcoins",
+                "TransactionFees",
                 "InputTxCountsMin(ExcludingCoinbase)",
                 "InputTxCountsMax",
                 "InputTxCountsSum",
@@ -148,6 +153,8 @@ public class BlockStatistics(Block block)
                 Weight.ToString(),
                 Retries.ToString(),
                 TransactionsCount.ToString(),
+                MintedBitcoins.ToString(),
+                TxFees.ToString(),
 
                 inTxExCMin,
                 _inputTxCounts.Max().ToString(),
