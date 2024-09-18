@@ -250,8 +250,7 @@ public class BitcoinAgent : IDisposable
             rewardAddresses.Add(node);
         }
 
-        g.Stats.AddInputTxCount(1); // Coinbase
-        g.Stats.AddOutputTxCount(rewardAddresses.Count);
+        g.Stats.CoinbaseOutputsCount = rewardAddresses.Count;
 
         cT.ThrowIfCancellationRequested();
 
@@ -275,7 +274,6 @@ public class BitcoinAgent : IDisposable
                 await ProcessTx(g, tx, utxos, dbContext, dbContextLock, cT);
             });
 
-        
         cT.ThrowIfCancellationRequested();
         dbContext?.Dispose();
 
@@ -357,9 +355,12 @@ public class BitcoinAgent : IDisposable
             txGraph.AddSource(input.TxId, utxo);
         }
 
+        var transferOutputsCount = 0;
         foreach (var output in tx.Outputs.Where(x => x.IsValueTransfer))
         {
             cT.ThrowIfCancellationRequested();
+
+            transferOutputsCount++;
 
             output.TryGetAddress(out string? address);
             g.Stats.AddOutputAddress(address);
@@ -375,8 +376,8 @@ public class BitcoinAgent : IDisposable
             });
         }
 
-        g.Stats.AddInputTxCount(tx.Inputs.Count);
-        g.Stats.AddOutputTxCount(tx.Outputs.Count);
+        g.Stats.AddInputsCount(tx.Inputs.Count);
+        g.Stats.AddOutputsCount(transferOutputsCount);
         g.Enqueue(txGraph);
     }
 

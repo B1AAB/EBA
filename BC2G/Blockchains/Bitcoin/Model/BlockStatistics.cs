@@ -16,6 +16,8 @@ public class BlockStatistics(Block block)
     public double MintedBitcoins { set; get; }
     public double TxFees { set; get; }
 
+    public int CoinbaseOutputsCount { set; get; }
+
     /// <summary>
     /// Sets and gets retry attempts to contruct the block graph.
     /// </summary>
@@ -24,11 +26,11 @@ public class BlockStatistics(Block block)
     public TimeSpan Runtime { get { return _stopwatch.Elapsed; } }
     private readonly Stopwatch _stopwatch = new();
 
-    public int InputTxCountsSum { get { return _inputTxCounts.Sum(); } }
-    private readonly ConcurrentBag<int> _inputTxCounts = [];
+    public int InputsCount { get { return _inputsCounts.Sum(); } }
+    private readonly ConcurrentBag<int> _inputsCounts = [];
 
-    public int OutputTxCountsSum { get { return _outputTxCounts.Sum(); } }
-    private readonly ConcurrentBag<int> _outputTxCounts = [];
+    public int OutputsCount { get { return _outputsCounts.Sum(); } }
+    private readonly ConcurrentBag<int> _outputsCounts = [];
 
     public List<string> OutputAddresses { get { return [.. _outputAddresses]; } }
     private readonly ConcurrentBag<string> _outputAddresses = [];
@@ -78,13 +80,13 @@ public class BlockStatistics(Block block)
         Helpers.ThreadsafeAdd(ref _edgeLabelValueSum[(int)label], value);
     }
 
-    public void AddInputTxCount(int value)
+    public void AddInputsCount(int value)
     {
-        _inputTxCounts.Add(value);
+        _inputsCounts.Add(value);
     }
-    public void AddOutputTxCount(int value)
+    public void AddOutputsCount(int value)
     {
-        _outputTxCounts.Add(value);
+        _outputsCounts.Add(value);
     }
 
     public void AddOutputAddress(string? address)
@@ -110,18 +112,22 @@ public class BlockStatistics(Block block)
                 "TxCount",
                 "MintedBitcoins",
                 "TransactionFees",
-                "InputTxCountsMin(ExcludingCoinbase)",
-                "InputTxCountsMax",
-                "InputTxCountsSum",
-                "InputTxCountsAvg",
-                "InputTxCountsMedian",
-                "InputTxCountsVariance",
-                "OutputTxCountsMin",
-                "OutputTxCountsMax",
-                "OutputTxCountsSum",
-                "OutputTxCountsAvg",
-                "OutputTxCountsMedian",
-                "OutputTxCountsVariance",
+
+                "CoinbaseOutputsCount",
+
+                "InputsCount",
+                "InputsCountsMax",
+                "InputsCountsMin",
+                "InputsCountsAvg",
+                "InputsCountsMedian",
+                "InputsCountsVariance",
+
+                "OutputsCount",
+                "OutputsCountsMax",
+                "OutputsCountsMin",
+                "OutputsCountsAvg",
+                "OutputsCountsMedian",
+                "OutputsCountsVariance",
 
                 string.Join(
                     _delimiter,
@@ -136,10 +142,6 @@ public class BlockStatistics(Block block)
 
     public override string ToString()
     {
-        var inTxExCoinbase = new List<int>(_inputTxCounts);
-        inTxExCoinbase.Remove(1);
-        var inTxExCMin = inTxExCoinbase.Count > 0 ? inTxExCoinbase.Min().ToString() : "0";
-
         return string.Join(
             _delimiter,
             [
@@ -156,19 +158,21 @@ public class BlockStatistics(Block block)
                 MintedBitcoins.ToString(),
                 TxFees.ToString(),
 
-                inTxExCMin,
-                _inputTxCounts.Max().ToString(),
-                _inputTxCounts.Sum().ToString(),
-                _inputTxCounts.Average().ToString(),
-                Helpers.GetMedian(_inputTxCounts).ToString(),
-                Helpers.GetVariance(_inputTxCounts).ToString(),
+                CoinbaseOutputsCount.ToString(),
 
-                _outputTxCounts.Min().ToString(),
-                _outputTxCounts.Max().ToString(),
-                _outputTxCounts.Sum().ToString(),
-                _outputTxCounts.Average().ToString(),
-                Helpers.GetMedian(_outputTxCounts).ToString(),
-                Helpers.GetVariance(_outputTxCounts).ToString(),
+                _inputsCounts.Sum().ToString(),
+                _inputsCounts.Max().ToString(),
+                _inputsCounts.Min().ToString(),
+                _inputsCounts.Average().ToString(),
+                Helpers.GetMedian(_inputsCounts).ToString(),
+                Helpers.GetVariance(_inputsCounts).ToString(),
+
+                _outputsCounts.Sum().ToString(),
+                _outputsCounts.Max().ToString(),
+                _outputsCounts.Min().ToString(),
+                _outputsCounts.Average().ToString(),
+                Helpers.GetMedian(_outputsCounts).ToString(),
+                Helpers.GetVariance(_outputsCounts).ToString(),
 
                 string.Join(
                     _delimiter,
