@@ -32,6 +32,9 @@ public class BlockStatistics(Block block)
     public int OutputsCount { get { return _outputsCounts.Sum(); } }
     private readonly ConcurrentBag<int> _outputsCounts = [];
 
+    private readonly ConcurrentBag<double> _inputValues = [];
+    private readonly ConcurrentBag<double> _outputValues = [];
+
     public List<string> OutputAddresses { get { return [.. _outputAddresses]; } }
     private readonly ConcurrentBag<string> _outputAddresses = [];
 
@@ -89,6 +92,15 @@ public class BlockStatistics(Block block)
         _outputsCounts.Add(value);
     }
 
+    public void AddInputValue(double value)
+    {
+        _inputValues.Add(value);
+    }
+    public void AddOutputValue(double value)
+    {
+        _outputValues.Add(value);
+    }
+
     public void AddOutputAddress(string? address)
     {
         if (!string.IsNullOrEmpty(address))
@@ -115,19 +127,33 @@ public class BlockStatistics(Block block)
 
                 "CoinbaseOutputsCount",
 
-                "InputsCount",
+                "InputsCountsSum",
                 "InputsCountsMax",
                 "InputsCountsMin",
                 "InputsCountsAvg",
                 "InputsCountsMedian",
                 "InputsCountsVariance",
 
-                "OutputsCount",
+                "OutputsCountsSum",
                 "OutputsCountsMax",
                 "OutputsCountsMin",
                 "OutputsCountsAvg",
                 "OutputsCountsMedian",
                 "OutputsCountsVariance",
+
+                "InputsValuesSum",
+                "InputsValuesMax",
+                "InputsValuesMin",
+                "InputsValuesAvg",
+                "InputsValuesMedian",
+                "InputsValuesVariance",
+
+                "OutputsValuesSum",
+                "OutputsValuesMax",
+                "OutputsValuesMin",
+                "OutputsValuesAvg",
+                "OutputsValuesMedian",
+                "OutputsValuesVariance",
 
                 string.Join(
                     _delimiter,
@@ -173,6 +199,20 @@ public class BlockStatistics(Block block)
                 _outputsCounts.Average().ToString(),
                 Helpers.GetMedian(_outputsCounts).ToString(),
                 Helpers.GetVariance(_outputsCounts).ToString(),
+
+                _inputValues.Sum().ToString(),
+                _inputValues.Max().ToString(),
+                _inputValues.Min().ToString(),
+                _inputValues.Average().ToString(),
+                Helpers.GetMedian(_inputValues).ToString(),
+                Helpers.GetVariance(_inputValues).ToString(),
+
+                _outputValues.Sum().ToString(),
+                _outputValues.Max().ToString(),
+                _outputValues.Min().ToString(),
+                _outputValues.Average().ToString(),
+                Helpers.GetMedian(_outputValues).ToString(),
+                Helpers.GetVariance(_outputValues).ToString(),
 
                 string.Join(
                     _delimiter,

@@ -352,6 +352,7 @@ public class BitcoinAgent : IDisposable
                 }
             }
 
+            g.Stats.AddInputValue(utxo.Value);
             txGraph.AddSource(input.TxId, utxo);
         }
 
@@ -368,6 +369,7 @@ public class BitcoinAgent : IDisposable
             var cIn = g.Block.Hash;
             var utxo = new Utxo(tx.Txid, output.Index, address, output.Value, output.GetScriptType(), cIn, g.Block.Height.ToString());
             txGraph.AddTarget(utxo);
+            g.Stats.AddOutputValue(utxo.Value);
 
             utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
             {
