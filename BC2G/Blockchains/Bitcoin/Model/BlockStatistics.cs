@@ -68,10 +68,10 @@ public class BlockStatistics(Block block)
     private readonly double[] _edgeLabelValueSum =
         new double[Enum.GetNames(typeof(EdgeLabel)).Length];
 
-    private readonly Dictionary<ScriptType, uint> _scriptTypeCount = 
-        Enum.GetValues(typeof(ScriptType))
-            .Cast<ScriptType>()
-            .ToDictionary(x => x, x => (uint)0);
+    private readonly ConcurrentDictionary<ScriptType, uint> _scriptTypeCount =
+        new(Enum.GetValues(typeof(ScriptType))
+                .Cast<ScriptType>()
+                .ToDictionary(x => x, x => (uint)0));
 
     private const char _delimiter = '\t';
 
@@ -108,10 +108,12 @@ public class BlockStatistics(Block block)
         _outputValues.Add(value);
     }
 
-    public void AddOutputAddress(string? address)
+    public void AddOutputAddress(string? address, ScriptType scriptType)
     {
         if (!string.IsNullOrEmpty(address))
             _outputAddresses.Add(address);
+
+        _scriptTypeCount.AddOrUpdate(scriptType, 0, (k, v) => v++);
     }
 
     public static string GetHeader()
@@ -162,6 +164,8 @@ public class BlockStatistics(Block block)
                 "OutputsValuesMedian",
                 "OutputsValuesVariance",
 
+                string.Join(_delimiter,((ScriptType[])Enum.GetValues(typeof(ScriptType))).Select(x => $"ScriptType{x}")),
+
                 string.Join(
                     _delimiter,
                     ((EdgeLabel[])Enum.GetValues(typeof(EdgeLabel))).Select(
@@ -190,7 +194,7 @@ public class BlockStatistics(Block block)
                 TransactionsCount.ToString(),
                 MintedBitcoins.ToString(),
                 TxFees.ToString(),
-
+                
                 CoinbaseOutputsCount.ToString(),
 
                 _inputsCounts.Sum().ToString(),
@@ -220,6 +224,10 @@ public class BlockStatistics(Block block)
                 _outputValues.Average().ToString(),
                 Helpers.GetMedian(_outputValues).ToString(),
                 Helpers.GetVariance(_outputValues).ToString(),
+
+                string.Join(
+                    _delimiter,
+                    Enum.GetValues(typeof(ScriptType)).Cast<ScriptType>().Select(e => _scriptTypeCount[e])),
 
                 string.Join(
                     _delimiter,
