@@ -179,6 +179,14 @@ internal class Cli
             "to the Bitcoin agent that can lead to better performance if the database service is " +
             "highly performant; otherwise, the overhead may not lead to a significant performance boost.");
 
+        var addressesFilenameOption = new Option<string>(
+            name: "--addresses-filename",
+            description: "Sets the filename to persist addresses in each block.");
+
+        var statsFilenameOption = new Option<string>(
+            name: "--stats-filename",
+            description: "Sets the filename to store statistics collected during the traverse.");
+
         var cmd = new Command(
             name: "traverse",
             description: "") // TODO: add description
@@ -187,7 +195,9 @@ internal class Cli
             toOption,
             granularityOption,
             clientUriOption,
-            useTxDatabaseOption
+            useTxDatabaseOption,
+            statsFilenameOption,
+            addressesFilenameOption
         };
 
         cmd.SetHandler(async (options) =>
@@ -200,8 +210,10 @@ internal class Cli
             granularityOption: granularityOption,
             bitcoinClientUri: clientUriOption,
             workingDirOption: _workingDirOption,
-            statusFilenameOption: _statusFilenameOption, 
-            useTxDatabaseOption: useTxDatabaseOption));
+            statusFilenameOption: _statusFilenameOption,
+            useTxDatabaseOption: useTxDatabaseOption,
+            addressesFilenameOption: addressesFilenameOption,
+            statsFilenameOption: statsFilenameOption));
 
         return cmd;
     }
