@@ -121,19 +121,19 @@ internal class OptionsBinder : BinderBase<Options>
 
     private static T GetValue<T>(T defaultValue, Option<T>? option, BindingContext context, Func<T, T>? composeValue = null)
     {
-        if (option == null)
-            return defaultValue;
+        var value = defaultValue;
 
-        var valueGiven = context.ParseResult.FindResultFor(option) != null;
+        if (option != null)
+        {
+            if (context.ParseResult.FindResultFor(option) != null)
+            {
+                var givenValue = context.ParseResult.GetValueForOption(option);
+                if (givenValue != null)
+                    value = givenValue;
+            }
+        }
 
-        if (!valueGiven)
-            return defaultValue;
-
-        var value = context.ParseResult.GetValueForOption(option);
-        if (value == null)
-            return defaultValue;
-
-        if (value.Equals(defaultValue) && composeValue != null)
+        if (value != null && value.Equals(defaultValue) && composeValue != null)
             return composeValue(value);
 
         return value;
