@@ -70,8 +70,11 @@ public class DatabaseContext : DbContext
 
                     using (var c = contextFactory.CreateDbContext())
                     {
+                        logger.LogInformation("Created database context, adding the utxos.");
                         c.Utxos.AddRange(utxos);
+                        logger.LogInformation("Utxos are added, saving changes to the database context.");
                         c.SaveChanges();
+                        logger.LogInformation("Changes to the database context are saved.");
                     }
 
                     logger.LogInformation("Finished optimistically adding UTXO's to the database.");
