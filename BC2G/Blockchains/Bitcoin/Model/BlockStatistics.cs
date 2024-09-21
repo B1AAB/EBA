@@ -179,6 +179,12 @@ public class BlockStatistics(Block block)
 
     public override string ToString()
     {
+        var insCounts = _inputsCounts.DefaultIfEmpty();
+        var outsCounts = _outputsCounts.DefaultIfEmpty();
+
+        var inValues = _inputValues.DefaultIfEmpty();
+        var outValues = _outputValues.DefaultIfEmpty();
+
         return string.Join(
             _delimiter,
             [
@@ -197,33 +203,33 @@ public class BlockStatistics(Block block)
                 
                 CoinbaseOutputsCount.ToString(),
 
-                _inputsCounts.Sum().ToString(),
-                _inputsCounts.Max().ToString(),
-                _inputsCounts.Min().ToString(),
-                _inputsCounts.Average().ToString(),
-                Helpers.GetMedian(_inputsCounts).ToString(),
-                Helpers.GetVariance(_inputsCounts).ToString(),
+                insCounts.Sum().ToString(),
+                insCounts.Max().ToString(),
+                insCounts.Min().ToString(),
+                insCounts.Average().ToString(),
+                Helpers.GetMedian(insCounts).ToString(),
+                Helpers.GetVariance(insCounts).ToString(),
 
-                _outputsCounts.Sum().ToString(),
-                _outputsCounts.Max().ToString(),
-                _outputsCounts.Min().ToString(),
-                _outputsCounts.Average().ToString(),
-                Helpers.GetMedian(_outputsCounts).ToString(),
-                Helpers.GetVariance(_outputsCounts).ToString(),
+                outsCounts.Sum().ToString(),
+                outsCounts.Max().ToString(),
+                outsCounts.Min().ToString(),
+                outsCounts.Average().ToString(),
+                Helpers.GetMedian(outsCounts).ToString(),
+                Helpers.GetVariance(outsCounts).ToString(),
 
-                _inputValues.Sum().ToString(),
-                _inputValues.Max().ToString(),
-                _inputValues.Min().ToString(),
-                _inputValues.Average().ToString(),
-                Helpers.GetMedian(_inputValues).ToString(),
-                Helpers.GetVariance(_inputValues).ToString(),
+                inValues.Sum().ToString(),
+                inValues.Max().ToString(),
+                inValues.Min().ToString(),
+                inValues.Average().ToString(),
+                Helpers.GetMedian(inValues).ToString(),
+                Helpers.GetVariance(inValues).ToString(),
 
-                _outputValues.Sum().ToString(),
-                _outputValues.Max().ToString(),
-                _outputValues.Min().ToString(),
-                _outputValues.Average().ToString(),
-                Helpers.GetMedian(_outputValues).ToString(),
-                Helpers.GetVariance(_outputValues).ToString(),
+                outValues.Sum().ToString(),
+                outValues.Max().ToString(),
+                outValues.Min().ToString(),
+                outValues.Average().ToString(),
+                Helpers.GetMedian(outValues).ToString(),
+                Helpers.GetVariance(outValues).ToString(),
 
                 string.Join(
                     _delimiter,
