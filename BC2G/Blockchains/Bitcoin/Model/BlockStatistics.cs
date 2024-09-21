@@ -1,5 +1,7 @@
 ﻿using BC2G.Utilities;
 
+using System;
+
 namespace BC2G.Blockchains.Bitcoin.Model;
 
 public class BlockStatistics(Block block)
@@ -65,6 +67,11 @@ public class BlockStatistics(Block block)
 
     private readonly double[] _edgeLabelValueSum =
         new double[Enum.GetNames(typeof(EdgeLabel)).Length];
+
+    private readonly Dictionary<ScriptType, uint> _scriptTypeCount = 
+        Enum.GetValues(typeof(ScriptType))
+            .Cast<ScriptType>()
+            .ToDictionary(x => x, x => (uint)0);
 
     private const char _delimiter = '\t';
 
