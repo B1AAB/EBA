@@ -1,4 +1,6 @@
-﻿namespace BC2G.Blockchains.Bitcoin.Model;
+﻿using System.Data;
+
+namespace BC2G.Blockchains.Bitcoin.Model;
 
 [Table("Utxo")]
 public class Utxo
@@ -26,24 +28,25 @@ public class Utxo
     [Required]
     public ScriptType ScriptType { set; get; }
 
+
+    public string CreatedInBlockHash
+    {
+        set { _createdInBlockHash = value; }
+        get { return _createdInBlockHash; }
+    }
+    private string _createdInBlockHash = string.Empty;
+
     /// <summary>
     /// A list of comma-separated block heights where this txo 
     /// is defined as output.
     /// </summary>
     [Required]
-    public string CreatedIn
+    public string CreatedInBlockHeight
     {
-        set { _createdIn = value; }
-        get { return _createdIn; }
+        set { _createdInBlockHeight = value; }
+        get { return _createdInBlockHeight; }
     }
-    private string _createdIn = string.Empty;
-
-    public string CreatedInHeight
-    {
-        set { _createdInHeight = value; }
-        get { return _createdInHeight; }
-    }
-    private string _createdInHeight = string.Empty;
+    private string _createdInBlockHeight = string.Empty;
 
     public int CreatedInCount
     {
@@ -57,14 +60,7 @@ public class Utxo
     /// is defined as input. If this list is empty, the tx is 
     /// unspent (utxo).
     /// </summary>
-    public string ReferencedIn
-    {
-        set { _refdIn = value; }
-        get { return _refdIn; }
-    }
-    private string _refdIn = string.Empty;
-
-    public string ReferencedInHeight
+    public string ReferencedInBlockHeight
     {
         set { _refdInHeight = value; }
         get { return _refdInHeight; }
@@ -78,39 +74,49 @@ public class Utxo
     }
     private int _refdInCount;
 
-    // This constructor is required by EF.
     public Utxo(
         string id, string? address, double value, ScriptType scriptType,
-        string createdIn, string? referencedIn = null,
-        string? createdInHeight = null, string? referencedInHeight = null)
+        string? createdInBlockHash = null, string? createdInBlockHeight = null,
+        string? referencedInBlockHeight = null)
     {
         Id = id;
         Address = address ?? Id;
         Value = value;
         ScriptType = scriptType;
 
-        if (!string.IsNullOrEmpty(createdIn))
+        if (string.IsNullOrEmpty(createdInBlockHash) && string.IsNullOrEmpty(createdInBlockHeight))
+            throw new NoNullAllowedException("Created-in block hash and height cannot be both null.");
+
+        if (!string.IsNullOrEmpty(createdInBlockHeight))
         {
             CreatedInCount = 1;
-            CreatedIn = createdIn;
+            CreatedInBlockHeight = createdInBlockHeight;
         }
-        if (!string.IsNullOrEmpty(referencedIn))
+
+        if (!string.IsNullOrEmpty(createdInBlockHash))
+            CreatedInBlockHash = createdInBlockHash;
+
+        if (!string.IsNullOrEmpty(referencedInBlockHeight))
         {
             ReferencedInCount = 1;
-            ReferencedIn = referencedIn;
+            ReferencedInBlockHeight = referencedInBlockHeight;
         }
-
-        if (!string.IsNullOrEmpty(createdInHeight))
-            CreatedInHeight = createdInHeight;
-
-        if (!string.IsNullOrEmpty(referencedInHeight))
-            ReferencedInHeight = referencedInHeight;
     }
 
     public Utxo(
         string txid, int voutN, string? address, double value, ScriptType scriptType,
-        string createdIn, string createdInHeight, string? referencedIn = null, string? referencedInHeight = null) :
-        this(GetId(txid, voutN), address, value, scriptType, createdIn, referencedIn, createdInHeight, referencedInHeight)
+        string? createdInBlockHash = null, string? createdInHeight = null, string? referencedInHeight = null) :
+        this(GetId(txid, voutN), address, value, scriptType, createdInBlockHash, createdInHeight, referencedInHeight)
+    { }
+
+    // This constructor is required by EF.
+    public Utxo(
+        string id, string? address, double value, ScriptType scriptType,
+        string createdInBlockHeight,
+        string? referencedInBlockHeight = null)
+        : this(id, address, value, scriptType,
+              createdInBlockHash: null, createdInBlockHeight: createdInBlockHeight,
+              referencedInBlockHeight: referencedInBlockHeight)
     { }
 
     public static string GetId(string txid, int voutN)
@@ -122,21 +128,24 @@ public class Utxo
         return id.Split('-')[1];
     }
 
-    public void AddReferencedIn(string address, string height)
+    public void AddCreatedIn(string? height, string? blockHash = null)
     {
-        UpdateRefs(ref _refdIn, ref _refdInCount, address);
-        var dummy = 0;
-        UpdateRefs(ref _refdInHeight, ref dummy, height);
-    }
+        if (string.IsNullOrEmpty(height) && string.IsNullOrEmpty(blockHash))
+            throw new NoNullAllowedException("Created-in block hash and height cannot be both null.");
 
-    public void AddCreatedIn(string address, string? height)
-    {
-        UpdateRefs(ref _createdIn, ref _createdInCount, address);
-        if (height != null)
+        if (!string.IsNullOrEmpty(height))
+            UpdateRefs(ref _createdInBlockHeight, ref _createdInCount, height);
+
+        if (!string.IsNullOrEmpty(blockHash))
         {
             var dummy = 0;
-            UpdateRefs(ref _createdInHeight, ref dummy, height);
+            UpdateRefs(ref _createdInBlockHash, ref dummy, blockHash);
         }
+    }
+
+    public void AddReferencedIn(string height)
+    {
+        UpdateRefs(ref _refdInHeight, ref _refdInCount, height);
     }
 
     private static void UpdateRefs(ref string refs, ref int counts, string newRef)

@@ -11,7 +11,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BC2G.Infrastructure.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20240913012900_Initial")]
+    [Migration("20240922223952_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -33,27 +33,23 @@ namespace BC2G.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("CreatedIn")
+                    b.Property<string>("CreatedInBlockHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CreatedInBlockHeight")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("CreatedInCount")
                         .HasColumnType("integer");
 
-                    b.Property<string>("CreatedInHeight")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("ReferencedIn")
+                    b.Property<string>("ReferencedInBlockHeight")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("ReferencedInCount")
                         .HasColumnType("integer");
-
-                    b.Property<string>("ReferencedInHeight")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<int>("ScriptType")
                         .HasColumnType("integer");

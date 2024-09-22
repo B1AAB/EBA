@@ -22,15 +22,15 @@ public class BitcoinAgent : IDisposable
     }
 
     private async Task<Stream> GetResourceAsync(
-        string endpoint, 
-        string hash, 
+        string endpoint,
+        string hash,
         CancellationToken cT)
     {
         return await GetStreamAsync($"{endpoint}/{hash}.json", cT);
     }
 
     private async Task<Stream> GetStreamAsync(
-        string endpoint, 
+        string endpoint,
         CancellationToken cT)
     {
         var response = await _client.GetAsync(endpoint, HttpCompletionOption.ResponseHeadersRead, cT);
@@ -123,14 +123,14 @@ public class BitcoinAgent : IDisposable
         {
             _logger.LogError(
                 "Failed getting block hash for block {h:n0}; " +
-                "this exception can happen when the given block height is invalid. {e}", 
+                "this exception can happen when the given block height is invalid. {e}",
                 height, e.Message);
             throw;
         }
     }
 
     public async Task<Block> GetBlockAsync(
-        string hash, 
+        string hash,
         CancellationToken cT)
     {
         await using var stream = await GetResourceAsync("block", hash, cT);
@@ -187,9 +187,9 @@ public class BitcoinAgent : IDisposable
 
     public async Task<BlockGraph> GetGraph(
         long height,
-        ConcurrentDictionary<string, Utxo> utxos, 
+        ConcurrentDictionary<string, Utxo> utxos,
         bool useTxDatabase,
-        object dbContextLock, 
+        object dbContextLock,
         CancellationToken cT)
     {
         cT.ThrowIfCancellationRequested();
@@ -212,10 +212,10 @@ public class BitcoinAgent : IDisposable
     }
 
     private async Task<BlockGraph> ProcessBlockAsync(
-        Block block, 
+        Block block,
         ConcurrentDictionary<string, Utxo> utxos,
         bool useTxDatabase,
-        object dbContextLock, 
+        object dbContextLock,
         CancellationToken cT)
     {
         // By definition, each block has a generative block that is the
@@ -235,14 +235,13 @@ public class BitcoinAgent : IDisposable
             g.Stats.AddOutputAddress(address, output.GetScriptType());
 
             var utxo = new Utxo(
-                coinbaseTx.Txid, output.Index, address, output.Value, 
-                output.GetScriptType(), block.Hash, block.Height.ToString());
+                coinbaseTx.Txid, output.Index, address, output.Value, output.GetScriptType(),
+                createdInHeight: block.Height.ToString(), referencedInHeight: block.Height.ToString());
 
             utxos.AddOrUpdate(utxo.Id, utxo,
                 (k, oldValue) =>
                 {
-                    // using hash instead of height for the compatibility with the rest of the code
-                    oldValue.AddCreatedIn(block.Hash, block.Height.ToString());
+                    oldValue.AddCreatedIn(block.Height.ToString());
                     return oldValue;
                 });
 
@@ -261,9 +260,9 @@ public class BitcoinAgent : IDisposable
         var options = new ParallelOptions()
         {
             CancellationToken = cT,
-            #if (DEBUG)
+#if (DEBUG)
             MaxDegreeOfParallelism = 1
-            #endif
+#endif
         };
         await Parallel.ForEachAsync(
             block.Transactions.Where(x => !x.IsCoinbase),
@@ -306,7 +305,7 @@ public class BitcoinAgent : IDisposable
             //   to the utxo dict so it will be persisted in the db. 
             if (utxos.TryGetValue(id, out Utxo? utxo))
             {
-                utxo.AddReferencedIn(g.Block.Hash, g.Block.Height.ToString());
+                utxo.AddReferencedIn(g.Block.Height.ToString());
             }
             else
             {
@@ -317,7 +316,7 @@ public class BitcoinAgent : IDisposable
                         utxo = dbContext.Utxos.Find(id);
                         if (utxo != null)
                         {
-                            utxo.AddReferencedIn(g.Block.Hash, g.Block.Height.ToString());
+                            utxo.AddReferencedIn(g.Block.Height.ToString());
 
                             // TODO: fixme:
                             // This invalidates the ACID property since if the
@@ -340,13 +339,14 @@ public class BitcoinAgent : IDisposable
                     vout.TryGetAddress(out string? address);
 
                     var cIn = exTx.BlockHash;
-                    var rIn = g.Block.Hash;
-                    utxo = new Utxo(id, address, vout.Value, vout.GetScriptType(), cIn, rIn);
+                    utxo = new Utxo(
+                        id, address, vout.Value, vout.GetScriptType(),
+                        createdInBlockHash: cIn, referencedInBlockHeight: g.Block.Height.ToString());
 
                     utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
                     {
-                        oldValue.AddCreatedIn(cIn, null);
-                        oldValue.AddReferencedIn(rIn, g.Block.Height.ToString());
+                        oldValue.AddCreatedIn(height: string.Empty, cIn);
+                        oldValue.AddReferencedIn(g.Block.Height.ToString());
                         return oldValue;
                     });
                 }
@@ -367,13 +367,16 @@ public class BitcoinAgent : IDisposable
             g.Stats.AddOutputAddress(address, output.GetScriptType());
 
             var cIn = g.Block.Hash;
-            var utxo = new Utxo(tx.Txid, output.Index, address, output.Value, output.GetScriptType(), cIn, g.Block.Height.ToString());
+            var utxo = new Utxo(
+                tx.Txid, output.Index, address, output.Value, output.GetScriptType(),
+                createdInHeight: g.Block.Height.ToString());
+
             txGraph.AddTarget(utxo);
             g.Stats.AddOutputValue(utxo.Value);
 
             utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
             {
-                oldValue.AddCreatedIn(cIn, g.Block.Height.ToString());
+                oldValue.AddCreatedIn(g.Block.Height.ToString());
                 return oldValue;
             });
         }
