@@ -322,7 +322,7 @@ public class BitcoinAgent : IDisposable
                             // This invalidates the ACID property since if the
                             // block process is canceled before it completes, 
                             // some related changes are already saved in the db. 
-                            dbContext.SaveChanges();
+                            //dbContext.SaveChanges();
                         }
                     }
                 }
