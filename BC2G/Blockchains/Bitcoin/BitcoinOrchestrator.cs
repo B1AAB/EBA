@@ -130,13 +130,14 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, cT);
 
         cT.ThrowIfCancellationRequested();
-        var exceptionThrown = false;
+        var needFinalDbCommit = true;
         var dbContextLock = new object();
         var dbLock = new object();
         var utxos = new ConcurrentDictionary<string, Utxo>();
         var barrier = new Barrier(0, (barrier) =>
         {
             CommitInMemUtxo(utxos, dbLock, options);
+            needFinalDbCommit = false;
         });
 
         try
@@ -153,6 +154,8 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
                     barrier.AddParticipant();
                     blocksQueue.TryDequeue(out var h);
+
+                    needFinalDbCommit = true;
 
                     try
                     {
@@ -195,7 +198,6 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         }
         catch (Exception)
         {
-            exceptionThrown = true;
             throw;
         }
         finally
@@ -220,7 +222,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             blocksQueue.Serialize();
             _logger.LogInformation("Serialized the updated list of blocks-to-process.");
 
-            if (!exceptionThrown)
+            if (needFinalDbCommit)
                 CommitInMemUtxo(utxos, dbLock, options);
         }
     }
