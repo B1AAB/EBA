@@ -113,7 +113,7 @@ public class BlockStatistics(Block block)
         if (!string.IsNullOrEmpty(address))
             _outputAddresses.Add(address);
 
-        _scriptTypeCount.AddOrUpdate(scriptType, 0, (k, v) => v++);
+        _scriptTypeCount.AddOrUpdate(scriptType, 0, (k, v) => v + 1);
     }
 
     public static string GetHeader()

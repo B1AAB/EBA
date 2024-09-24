@@ -7,18 +7,16 @@ public class T2TEdge : Edge<TxNode, TxNode>
         get { return GraphComponentType.BitcoinT2T; }
     }
 
-    public EdgeLabel Label
-    {
-        get { return _label; }
-        init { _label = Type == EdgeType.Transfer ? EdgeLabel.S2STransfer : EdgeLabel.S2SFee; }
-    }
-    private EdgeLabel _label;
+    public EdgeLabel Label { get { return _label; } }
+    private readonly EdgeLabel _label;
 
     public T2TEdge(
         TxNode source, TxNode target,
         double value, EdgeType type, uint timestamp, long blockHeight) :
         base(source, target, value, type, timestamp, blockHeight)
-    { }
+    {
+        _label = Type == EdgeType.Transfer ? EdgeLabel.T2TTransfer : EdgeLabel.T2TFee;
+    }
 
     public static T2TEdge Update(T2TEdge oldEdge, T2TEdge newEdge)
     {
