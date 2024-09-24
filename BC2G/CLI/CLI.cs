@@ -187,6 +187,20 @@ internal class Cli
             name: "--stats-filename",
             description: "Sets the filename to store statistics collected during the traverse.");
 
+        var maxBufferSizeOption = new Option<int>(
+            name: "--max-utxo-buffer-size",
+            description: "[Advanced] Sets the maximum number of UTXO to keep in memory. " +
+            "This helps reduce the number of API calls to Bitcoin-qt or database queries. " +
+            "Buffer size is in linear correlation with memory usage. When max buffer size reaches," +
+            "BC2G will implement a strategy the removes (or commits to database) the used Txos, " +
+            "keeps a set number of UTXO in the buffer (see --utxo-keep-after-buffer-cleanup), " +
+            "and empties the reset of buffer.");
+
+        var utxoKeepAfterCleanupOption = new Option<int>(
+            name: "--utxo-keep-after-buffer-cleanup",
+            description: "[Advanced] Related to --max-utxo-buffer-size, sets the max number of UTXO to " +
+            "keep in memory after buffer size limit has reached and clean up strategy is executed.");
+
         var cmd = new Command(
             name: "traverse",
             description: "") // TODO: add description
@@ -197,7 +211,9 @@ internal class Cli
             clientUriOption,
             useTxDatabaseOption,
             statsFilenameOption,
-            addressesFilenameOption
+            addressesFilenameOption,
+            maxBufferSizeOption,
+            utxoKeepAfterCleanupOption,
         };
 
         cmd.SetHandler(async (options) =>
@@ -213,7 +229,9 @@ internal class Cli
             statusFilenameOption: _statusFilenameOption,
             useTxDatabaseOption: useTxDatabaseOption,
             addressesFilenameOption: addressesFilenameOption,
-            statsFilenameOption: statsFilenameOption));
+            statsFilenameOption: statsFilenameOption,
+            maxBufferSizeOption: maxBufferSizeOption,
+            utxoKeepAfterCleanupOption: utxoKeepAfterCleanupOption));
 
         return cmd;
     }
