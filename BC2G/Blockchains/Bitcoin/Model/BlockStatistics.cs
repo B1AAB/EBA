@@ -73,6 +73,11 @@ public class BlockStatistics(Block block)
                 .Cast<ScriptType>()
                 .ToDictionary(x => x, x => (uint)0));
 
+    private readonly ConcurrentDictionary<TransactionType, uint> _txType =
+        new(Enum.GetValues(typeof(TransactionType))
+            .Cast<TransactionType>()
+            .ToDictionary(x => x, x => (uint)0));
+
     private const char _delimiter = '\t';
 
     public void StartStopwatch()
@@ -108,12 +113,13 @@ public class BlockStatistics(Block block)
         _outputValues.Add(value);
     }
 
-    public void AddOutputAddress(string? address, ScriptType scriptType)
+    public void AddOutputStatistics(string? address, ScriptType scriptType, TransactionType txType)
     {
         if (!string.IsNullOrEmpty(address))
             _outputAddresses.Add(address);
 
         _scriptTypeCount.AddOrUpdate(scriptType, 0, (k, v) => v + 1);
+        _txType.AddOrUpdate(txType, 0, (k, v) => v + 1);
     }
 
     public static string GetHeader()
@@ -164,7 +170,9 @@ public class BlockStatistics(Block block)
                 "OutputsValuesMedian",
                 "OutputsValuesVariance",
 
-                string.Join(_delimiter,((ScriptType[])Enum.GetValues(typeof(ScriptType))).Select(x => $"ScriptType{x}")),
+                string.Join(_delimiter,((ScriptType[])Enum.GetValues(typeof(ScriptType))).Select(x => $"ScriptType_{x}")),
+
+                string.Join(_delimiter, ((TransactionType[])Enum.GetValues(typeof(TransactionType))).Select(x=>$"TransactionType_{x}")),
 
                 string.Join(
                     _delimiter,
@@ -234,6 +242,10 @@ public class BlockStatistics(Block block)
                 string.Join(
                     _delimiter,
                     Enum.GetValues(typeof(ScriptType)).Cast<ScriptType>().Select(e => _scriptTypeCount[e])),
+
+                string.Join(
+                    _delimiter,
+                    Enum.GetValues(typeof(TransactionType)).Cast<TransactionType>().Select(e => _txType[e])),
 
                 string.Join(
                     _delimiter,

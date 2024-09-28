@@ -232,7 +232,7 @@ public class BitcoinAgent : IDisposable
         {
             output.TryGetAddress(out string? address);
 
-            g.Stats.AddOutputAddress(address, output.GetScriptType());
+            g.Stats.AddOutputStatistics(address, output.GetScriptType(), output.PaymentType);
 
             var utxo = new Utxo(
                 coinbaseTx.Txid, output.Index, address, output.Value, output.GetScriptType(),
@@ -364,7 +364,7 @@ public class BitcoinAgent : IDisposable
             transferOutputsCount++;
 
             output.TryGetAddress(out string? address);
-            g.Stats.AddOutputAddress(address, output.GetScriptType());
+            g.Stats.AddOutputStatistics(address, output.GetScriptType(), output.PaymentType);
 
             var cIn = g.Block.Hash;
             var utxo = new Utxo(
