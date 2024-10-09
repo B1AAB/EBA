@@ -8,6 +8,7 @@ public class BlockStatistics(Block block)
 {
     public long Height { get; } = block.Height;
     public int Confirmations { get; } = block.Confirmations;
+    public uint MedianTime { get; } = block.MedianTime;
     public string Bits { get; } = block.Bits;
     public double Difficulty { get; } = block.Difficulty;
     public int Size { get; } = block.Size;
@@ -130,6 +131,7 @@ public class BlockStatistics(Block block)
                 "BlockHeight",
                 "Runtime(seconds)",
                 "Confirmations",
+                "MedianTime",
                 "Bits",
                 "Difficulty",
                 "Size",
@@ -199,6 +201,7 @@ public class BlockStatistics(Block block)
                 Height.ToString(),
                 Runtime.TotalSeconds.ToString(),
                 Confirmations.ToString(),
+                MedianTime.ToString(),
                 Bits,
                 Difficulty.ToString(),
                 Size.ToString(),
