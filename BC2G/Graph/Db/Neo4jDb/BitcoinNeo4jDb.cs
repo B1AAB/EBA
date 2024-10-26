@@ -86,7 +86,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         foreach (GraphComponentType gcType in supportedComponentTypes)
         {
             var strategy = StrategyFactory.GetStrategy(gcType);
-            var filename = Path.Join(Options.WorkingDir, $"cypher_query_{gcType}.txt");
+            var filename = Path.Join(Options.WorkingDir, $"cypher_query_{gcType}.cypher");
             using var writer = new StreamWriter(filename);
             writer.WriteLine(strategy.GetQuery("file:///filename_under_dbms_directories_import"));
 
