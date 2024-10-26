@@ -19,6 +19,7 @@ internal class Cli
         Func<Options, Task> sampleCmdHandlerAsync,
         Func<Options, Task> bitcoinImportCmdHandlerAsync,
         Func<Options, Task> addressStatsHandlerAsync,
+        Func<Options, Task> importCypherQueriesAsync,
         Action<Exception, InvocationContext> exceptionHandler)
     {
         var defOps = new Options();
@@ -81,7 +82,8 @@ internal class Cli
             bitcoinTraverseCmdHandlerAsync,
             bitcoinImportCmdHandlerAsync,
             sampleCmdHandlerAsync,
-            addressStatsHandlerAsync));
+            addressStatsHandlerAsync,
+            importCypherQueriesAsync));
 
         _parser = new CommandLineBuilder(_rootCmd)
             //.UseDefaults() // Do NOT add this since it will cause issues with handling exceptions.
@@ -129,13 +131,15 @@ internal class Cli
         Func<Options, Task> traverseHandlerAsync,
         Func<Options, Task> importHandlerAsync,
         Func<Options, Task> sampleHandlerAsync,
-        Func<Options, Task> addressStatsHandlerAsync)
+        Func<Options, Task> addressStatsHandlerAsync,
+        Func<Options, Task> importCypherQueriesAsync)
     {
         var cmd = new Command(
             name: "bitcoin",
             description: ""); // TODO add some description
         cmd.AddCommand(GetTraverseCmd(defaultOptions, traverseHandlerAsync));
         cmd.AddCommand(GetImportCmd(defaultOptions, importHandlerAsync));
+        cmd.AddCommand(GetImportCypherQueriesCmd(defaultOptions, importCypherQueriesAsync));
         cmd.AddCommand(GetSampleCmd(defaultOptions, sampleHandlerAsync));
         cmd.AddCommand(GetAddressStatsCmd(defaultOptions, addressStatsHandlerAsync));
         return cmd;
@@ -263,6 +267,23 @@ internal class Cli
             workingDirOption: _workingDirOption,
             statusFilenameOption: _statusFilenameOption,
             batchFilenameOption: batchFilenameOption));
+
+        return cmd;
+    }
+
+    private Command GetImportCypherQueriesCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    {
+        var cmd = new Command(
+            name: "cypher-queries",
+            description: "Writes Neo4j Cypher queries used to import data from batches into a neo4j graph database.");
+
+        cmd.SetHandler(async (options) =>
+        {
+            await handlerAsync(options);
+        },
+        new OptionsBinder(
+            workingDirOption: _workingDirOption,
+            statusFilenameOption: _statusFilenameOption));
 
         return cmd;
     }

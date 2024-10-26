@@ -11,6 +11,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 {
     protected Options Options { get; }
     protected IStrategyFactory StrategyFactory { get; }
+    protected ILogger<Neo4jDb<T>> Logger { get; }
 
     /// <summary>
     /// Neo4j docs suggest between 10,000 and 100,000 updates 
@@ -21,17 +22,18 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     private const int _maxEntitiesPerBatch = 80000;
     private List<Batch> _batches = [];
 
-    private readonly ILogger<Neo4jDb<T>> _logger;
     private bool _disposed = false;
 
     public Neo4jDb(Options options, ILogger<Neo4jDb<T>> logger, IStrategyFactory strategyFactory)
     {
         Options = options;
-        _logger = logger;
+        Logger = logger;
         StrategyFactory = strategyFactory;
     }
 
     public abstract Task SerializeAsync(T g, CancellationToken ct);
+
+    public abstract void ReportQueries();
 
     /// <summary>
     /// No precedence should be assumed on serializing different types.
@@ -46,7 +48,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         if (string.IsNullOrEmpty(batchName))
         {
             batches = _batches;
-            _logger.LogInformation("No batch name is given, processing all the batches in the given batch file.");
+            Logger.LogInformation("No batch name is given, processing all the batches in the given batch file.");
         }
         else
         {
@@ -56,16 +58,16 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                     $"A batch named {batchName} not found in " +
                     $"{Options.Neo4j.BatchesFilename}");
             batches = new List<Batch>() { batch };
-            _logger.LogInformation("Given batch name is {batchName}.", batchName);
+            Logger.LogInformation("Given batch name is {batchName}.", batchName);
         }
 
         if (!batches.Any())
         {
-            _logger.LogInformation("No batch found in {f}.", Options.Neo4j.BatchesFilename);
+            Logger.LogInformation("No batch found in {f}.", Options.Neo4j.BatchesFilename);
             return;
         }
 
-        _logger.LogInformation(
+        Logger.LogInformation(
             "Processing {n:n0} batch(es) found in {f}.",
             batches.Count(), Options.Neo4j.BatchesFilename);
 
@@ -77,7 +79,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         {
             ct.ThrowIfCancellationRequested();
 
-            _logger.LogInformation("Processing batch {b} {c}.", batch.Name, $"({++c:n0}/{batches.Count():n0})");
+            Logger.LogInformation("Processing batch {b} {c}.", batch.Name, $"({++c:n0}/{batches.Count():n0})");
 
             var typesInfo = batch.TypesInfo;
             var typesKeys = importOrder ?? typesInfo.Keys;
@@ -86,25 +88,25 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 stopwatch.Restart();
                 if (!typesInfo.ContainsKey(typeKey))
                 {
-                    _logger.LogInformation(
+                    Logger.LogInformation(
                         "Skipping type {t} since the batch {b} does not contain it.",
                         typeKey, batch.Name);
                     continue;
                 }
 
-                _logger.LogInformation("Importing type {t}.", typeKey);
+                Logger.LogInformation("Importing type {t}.", typeKey);
                 var strategy = StrategyFactory.GetStrategy(typeKey);
                 await ExecuteLoadQueryAsync(driver, strategy, typesInfo[typeKey].Filename);
 
                 stopwatch.Stop();
                 importRuntime += stopwatch.Elapsed;
-                _logger.LogInformation(
+                Logger.LogInformation(
                     "Importing type {t} finished in {et} seconds.", 
                     typeKey, Helpers.GetEtInSeconds(stopwatch.Elapsed));
             }
         }
 
-        _logger.LogInformation("Successfully finished import in {et}.", importRuntime);
+        Logger.LogInformation("Successfully finished import in {et}.", importRuntime);
     }
 
     public async Task<bool> TrySampleAsync()
@@ -119,7 +121,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             sampledGraphsCounter < Options.GraphSample.Count
             && ++attempts <= Options.GraphSample.MaxAttempts)
         {
-            _logger.LogInformation(
+            Logger.LogInformation(
                 "Sampling {n} graphs; remaining {r}; attempt {a}/{m}.",
                 Options.GraphSample.Count,
                 Options.GraphSample.Count - sampledGraphsCounter,
@@ -136,7 +138,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 if (await TrySampleNeighborsAsync(driver, rootNode, baseDir))
                 {
                     sampledGraphsCounter++;
-                    _logger.LogInformation(
+                    Logger.LogInformation(
                         "Finished writting sampled graph {n}/{t} features to {b}.",
                         sampledGraphsCounter,
                         Options.GraphSample.Count,
@@ -147,7 +149,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         if (attempts > Options.GraphSample.MaxAttempts)
         {
-            _logger.LogError(
+            Logger.LogError(
                 "Failed creating {g} {g_msg} after {a} {a_msg}; created {c} {c_msg}. " +
                 "You may retry, and if the error persists, try adjusting the values of " +
                 "{minN}={minNV}, {maxN}={maxNV}, {minE}={minEV}, and {maxE}={maxEV}.",
@@ -217,7 +219,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         }
         catch(Exception e)
         {
-            _logger.LogCritical(
+            Logger.LogCritical(
                 "The folloiwng exceptions occurred executing a Neo4j query. {e}",
                 string.Join("; ", e.InnerException?.Message));
             throw;

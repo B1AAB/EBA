@@ -1,4 +1,5 @@
-﻿using BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
+﻿using BC2G.Blockchains.Bitcoin.Graph;
+using BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
 
 namespace BC2G.Graph.Db.Neo4jDb;
 
@@ -67,6 +68,32 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             GraphComponentType.BitcoinT2T
         };
         return base.ImportAsync(ct, batchName, importOrder);
+    }
+
+    public override void ReportQueries()
+    {
+        var supportedComponentTypes = new GraphComponentType[]
+        {
+            GraphComponentType.BitcoinGraph,
+            GraphComponentType.BitcoinScriptNode,
+            GraphComponentType.BitcoinTxNode,
+            GraphComponentType.BitcoinC2S,
+            GraphComponentType.BitcoinC2T,
+            GraphComponentType.BitcoinS2S,
+            GraphComponentType.BitcoinT2T
+        };
+
+        foreach (GraphComponentType gcType in supportedComponentTypes)
+        {
+            var strategy = StrategyFactory.GetStrategy(gcType);
+            var filename = Path.Join(Options.WorkingDir, $"cypher_query_{gcType}.txt");
+            using var writer = new StreamWriter(filename);
+            writer.WriteLine(strategy.GetQuery("file:///filename_under_dbms_directories_import"));
+
+            Logger.LogInformation("Serialized cypher query for {gcType} to {filename}.", gcType.ToString(), filename);
+        }
+
+        Logger.LogInformation("Finished serializing all cypher queries for Bitcoin graph.");
     }
 
     public override async Task<List<ScriptNode>> GetRandomNodes(

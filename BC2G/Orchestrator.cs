@@ -22,6 +22,7 @@ public class Orchestrator : IDisposable
             SampleGraphAsync,
             ImportGraphAsync,
             AddressStatsAsync,
+            ImportCypherQueriesAsync,
             (e, c) =>
             {
                 if (_logger != null)
@@ -77,6 +78,15 @@ public class Orchestrator : IDisposable
 
         var graphDb = host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>();
         await graphDb.ImportAsync(_cT);
+    }
+
+    private async Task ImportCypherQueriesAsync(Options options)
+    {
+        var host = await SetupAndGetHostAsync(options);
+        await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
+
+        var graphDb = host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>();
+        graphDb.ReportQueries();
     }
 
     private async Task SampleGraphAsync(Options options)
