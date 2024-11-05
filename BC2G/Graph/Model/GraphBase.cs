@@ -116,6 +116,9 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
 
         x.AddOrUpdate(edge.Id, edge, updateValueFactory);
 
+        edge.Source.AddOutgoingEdge(edge);
+        edge.Target.AddIncomingEdge(edge);
+
         TryAddNode(sourceType, edge.Source);
         TryAddNode(targetType, edge.Target);
     }
