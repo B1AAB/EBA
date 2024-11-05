@@ -6,14 +6,14 @@ public class T2TEdgeStrategy : BitcoinEdgeStrategy
 
     /// Note that the ordre of the items in this array should 
     /// match those in the `GetCSV` method.
-    private readonly Property[] _properties = new Property[]
-    {
+    private readonly Property[] _properties =
+    [
         Props.T2TEdgeSourceTxid,
         Props.T2TEdgeTargetTxid,
         Props.EdgeType,
         Props.EdgeValue,
         Props.Height
-    };
+    ];
 
     public override string GetCsvHeader()
     {
@@ -29,14 +29,14 @@ public class T2TEdgeStrategy : BitcoinEdgeStrategy
 
     public static string GetCsv(T2TEdge edge)
     {
-        return string.Join(Neo4jDb.csvDelimiter, new string[]
-        {
+        return string.Join(Neo4jDb.csvDelimiter,
+        [
             edge.Source.Txid,
             edge.Target.Txid,
             edge.Type.ToString(),
             edge.Value.ToString(),
             edge.BlockHeight.ToString()
-        });
+        ]);
     }
 
     public override string GetQuery(string csvFilename)

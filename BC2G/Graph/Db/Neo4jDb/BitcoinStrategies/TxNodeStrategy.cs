@@ -4,8 +4,8 @@ public class TxNodeStrategy : StrategyBase
 {
     public const string labels = "Tx";
 
-    private readonly Property[] _properties = new Property[]
-    {
+    private readonly Property[] _properties =
+    [
         Props.Txid,
         Props.TxVersion,
         Props.TxSize,
@@ -13,7 +13,7 @@ public class TxNodeStrategy : StrategyBase
         Props.TxWeight,
         Props.TxLockTime,
         Props.HasIncomingEdges
-    };
+    ];
 
     public override string GetCsvHeader()
     {

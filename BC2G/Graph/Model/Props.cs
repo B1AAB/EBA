@@ -36,5 +36,5 @@ public static class Props
     public static Property EdgeValue { get; } = new("Value", FieldType.Float);
     public static Property T2TEdgeSourceTxid { get; } = new Property(_txNodeTxid, csvHeader: "SourceId");
     public static Property T2TEdgeTargetTxid { get; } = new Property(_txNodeTxid, csvHeader: "TargetId");
-    public static Property HasIncomingEdges { get; } = new Property("HasIncomingEdges", csvHeader: "HasIncomingEdges");
+    public static Property HasIncomingEdges { get; } = new Property("HasIncomingEdges", csvHeader: "HasIncomingEdges");  // TODO: not sure if this properly incorporated in cypher queries. 
 }
