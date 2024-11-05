@@ -72,8 +72,8 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
 
         var edge = GetOrAddEdge(GraphComponentType.BitcoinS2S, new S2SEdge(source, target, e));
 
-        source.AddOutgoingEdges(edge);
-        target.AddIncomingEdges(edge);
+        source.AddOutgoingEdge(edge);
+        target.AddIncomingEdge(edge);
 
         return edge;
     }

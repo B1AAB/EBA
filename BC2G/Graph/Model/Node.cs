@@ -33,7 +33,7 @@ public class Node : INode
         Id = id;
     }
 
-    public void AddIncomingEdges(IEdge<INode, INode> incomingEdge)
+    public void AddIncomingEdge(IEdge<INode, INode> incomingEdge)
     {
         IncomingEdges.Add(incomingEdge);
     }
@@ -48,7 +48,7 @@ public class Node : INode
         OutgoingEdges.AddRange(outgoingEdges);
     }
 
-    public void AddOutgoingEdges(IEdge<INode, INode> outgoingEdge)
+    public void AddOutgoingEdge(IEdge<INode, INode> outgoingEdge)
     {
         OutgoingEdges.Add(outgoingEdge);
     }
