@@ -11,8 +11,7 @@ public class TxNodeStrategy : StrategyBase
         Props.TxSize,
         Props.TxVSize,
         Props.TxWeight,
-        Props.TxLockTime,
-        Props.HasIncomingEdges
+        Props.TxLockTime
     ];
 
     public override string GetCsvHeader()
@@ -36,8 +35,7 @@ public class TxNodeStrategy : StrategyBase
             node.Size,
             node.VSize,
             node.Weight,
-            node.LockTime,
-            node.IncomingEdges.Count > 0);
+            node.LockTime);
     }
 
     public override string GetQuery(string filename)

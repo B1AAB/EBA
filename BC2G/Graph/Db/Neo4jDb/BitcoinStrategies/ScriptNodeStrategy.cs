@@ -7,8 +7,7 @@ public class ScriptNodeStrategy : StrategyBase
     private readonly Property[] _properties = new Property[]
     {
         Props.ScriptAddress,
-        Props.ScriptType,
-        Props.HasIncomingEdges
+        Props.ScriptType
     };
 
     public override string GetCsvHeader()
@@ -28,8 +27,7 @@ public class ScriptNodeStrategy : StrategyBase
         return string.Join(
             Neo4jDb.csvDelimiter,
             node.Address,
-            node.ScriptType.ToString(),
-            node.IncomingEdges.Count > 0);
+            node.ScriptType.ToString());
     }
 
     public override string GetQuery(string filename)
