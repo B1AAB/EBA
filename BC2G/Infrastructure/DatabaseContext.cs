@@ -160,7 +160,7 @@ public class DatabaseContext : DbContext
                 else
                 {
                     inDbUtxo.AddCreatedIn(utxo.CreatedInBlockHeight);
-                    inDbUtxo.AddReferencedIn(utxo.ReferencedInBlockHeight);
+                    inDbUtxo.AddSpentIn(utxo.SpentInBlockHeight);
                 }
 
                 c.SaveChanges();
@@ -197,7 +197,7 @@ public class DatabaseContext : DbContext
                 else
                 {
                     inDbUtxo.AddCreatedIn(utxo.CreatedInBlockHeight);
-                    inDbUtxo.AddReferencedIn(utxo.ReferencedInBlockHeight);
+                    inDbUtxo.AddSpentIn(utxo.SpentInBlockHeight);
                 }
 
                 await c.SaveChangesAsync(ct);

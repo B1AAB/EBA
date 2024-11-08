@@ -236,7 +236,7 @@ public class BitcoinAgent : IDisposable
 
             var utxo = new Utxo(
                 coinbaseTx.Txid, output.Index, address, output.Value, output.GetScriptType(),
-                createdInHeight: block.Height.ToString(), referencedInHeight: block.Height.ToString());
+                createdInHeight: block.Height.ToString());
 
             utxos.AddOrUpdate(utxo.Id, utxo,
                 (k, oldValue) =>
@@ -305,7 +305,7 @@ public class BitcoinAgent : IDisposable
             //   to the utxo dict so it will be persisted in the db. 
             if (utxos.TryGetValue(id, out Utxo? utxo))
             {
-                utxo.AddReferencedIn(g.Block.Height.ToString());
+                utxo.AddSpentIn(g.Block.Height.ToString());
             }
             else
             {
@@ -316,7 +316,7 @@ public class BitcoinAgent : IDisposable
                         utxo = dbContext.Utxos.Find(id);
                         if (utxo != null)
                         {
-                            utxo.AddReferencedIn(g.Block.Height.ToString());
+                            utxo.AddSpentIn(g.Block.Height.ToString());
 
                             // TODO: fixme:
                             // This invalidates the ACID property since if the
@@ -341,12 +341,12 @@ public class BitcoinAgent : IDisposable
                     var cIn = exTx.BlockHash;
                     utxo = new Utxo(
                         id, address, vout.Value, vout.GetScriptType(),
-                        createdInBlockHash: cIn, referencedInBlockHeight: g.Block.Height.ToString());
+                        createdInBlockHash: cIn, spentInBlockHeight: g.Block.Height.ToString());
 
                     utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
                     {
                         oldValue.AddCreatedIn(height: string.Empty, cIn);
-                        oldValue.AddReferencedIn(g.Block.Height.ToString());
+                        oldValue.AddSpentIn(g.Block.Height.ToString());
                         return oldValue;
                     });
                 }

@@ -60,24 +60,24 @@ public class Utxo
     /// is defined as input. If this list is empty, the tx is 
     /// unspent (utxo).
     /// </summary>
-    public string ReferencedInBlockHeight
+    public string SpentInBlockHeight
     {
-        set { _refdInHeight = value; }
-        get { return _refdInHeight; }
+        set { _spentInHeight = value; }
+        get { return _spentInHeight; }
     }
-    private string _refdInHeight = string.Empty;
+    private string _spentInHeight = string.Empty;
 
-    public int ReferencedInCount
+    public int SpentInCount
     {
-        set { _refdInCount = value; }
-        get { return _refdInCount; }
+        set { _spentInCount = value; }
+        get { return _spentInCount; }
     }
-    private int _refdInCount;
+    private int _spentInCount;
 
     public Utxo(
         string id, string? address, double value, ScriptType scriptType,
         string? createdInBlockHash = null, string? createdInBlockHeight = null,
-        string? referencedInBlockHeight = null)
+        string? spentInBlockHeight = null)
     {
         Id = id;
         Address = address ?? Id;
@@ -96,27 +96,27 @@ public class Utxo
         if (!string.IsNullOrEmpty(createdInBlockHash))
             CreatedInBlockHash = createdInBlockHash;
 
-        if (!string.IsNullOrEmpty(referencedInBlockHeight))
+        if (!string.IsNullOrEmpty(spentInBlockHeight))
         {
-            ReferencedInCount = 1;
-            ReferencedInBlockHeight = referencedInBlockHeight;
+            SpentInCount = 1;
+            SpentInBlockHeight = spentInBlockHeight;
         }
     }
 
     public Utxo(
         string txid, int voutN, string? address, double value, ScriptType scriptType,
-        string? createdInBlockHash = null, string? createdInHeight = null, string? referencedInHeight = null) :
-        this(GetId(txid, voutN), address, value, scriptType, createdInBlockHash, createdInHeight, referencedInHeight)
+        string? createdInBlockHash = null, string? createdInHeight = null, string? spentInHeight = null) :
+        this(GetId(txid, voutN), address, value, scriptType, createdInBlockHash, createdInHeight, spentInHeight)
     { }
 
     // This constructor is required by EF.
     public Utxo(
         string id, string? address, double value, ScriptType scriptType,
         string createdInBlockHeight,
-        string? referencedInBlockHeight = null)
+        string? spentInBlockHeight = null)
         : this(id, address, value, scriptType,
               createdInBlockHash: null, createdInBlockHeight: createdInBlockHeight,
-              referencedInBlockHeight: referencedInBlockHeight)
+              spentInBlockHeight: spentInBlockHeight)
     { }
 
     public static string GetId(string txid, int voutN)
@@ -143,9 +143,9 @@ public class Utxo
         }
     }
 
-    public void AddReferencedIn(string height)
+    public void AddSpentIn(string height)
     {
-        UpdateRefs(ref _refdInHeight, ref _refdInCount, height);
+        UpdateRefs(ref _spentInHeight, ref _spentInCount, height);
     }
 
     private static void UpdateRefs(ref string refs, ref int counts, string newRef)
