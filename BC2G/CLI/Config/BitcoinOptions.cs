@@ -78,7 +78,7 @@ public class BitcoinOptions
 
     public string PerBlockAddressesFilename { init; get; } = "addressess.tsv";
 
-    public int DbCommitAtUtxoBufferSize { init; get; } = (int)2e7;
+    public int DbCommitAtUtxoBufferSize { init; get; } = (int)1.5e7;
 
     public int MaxInMemoryUtxosAfterDbCommit { init; get; } = (int)1e6;
 

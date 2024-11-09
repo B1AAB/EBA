@@ -17,7 +17,7 @@ public class Options
     /// Also, setting it to a very high value may result in port exhaustion and may 
     /// interfere with other operation system network-related processes.
     /// </summary>
-    public int DefaultConnectionLimit { init; get; } = 150;
+    public int DefaultConnectionLimit { init; get; } = 100;
 
     public LoggerOptions Logger { init; get; } =
         new()
