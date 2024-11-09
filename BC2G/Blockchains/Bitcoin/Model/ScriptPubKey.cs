@@ -5,10 +5,17 @@ namespace BC2G.Blockchains.Bitcoin.Model;
 public class ScriptPubKey : BasePaymentType, IBase64Serializable
 {
     [JsonPropertyName("asm")]
-    public string Asm { get; set; } = string.Empty;
+    public string Asm { set; get; } = string.Empty;
+
+    /// <summary>
+    /// Output Descriptor, docs:
+    /// https://github.com/bitcoin/bitcoin/blob/master/doc/descriptors.md
+    /// </summary>
+    [JsonPropertyName("desc")]
+    public string Descriptor { set; get; } = string.Empty;
 
     [JsonPropertyName("hex")]
-    public string Hex { get; set; } = string.Empty;
+    public string Hex { set; get; } = string.Empty;
 
     [JsonPropertyName("address")]
     public string Address
@@ -33,7 +40,7 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
     private string _address = string.Empty;
 
     [JsonPropertyName("type")]
-    public string Type { get; set; } = string.Empty;
+    public string Type { set; get; } = string.Empty;
 
     public override ScriptType ScriptType
     {
