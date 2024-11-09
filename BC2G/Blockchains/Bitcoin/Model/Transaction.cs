@@ -30,10 +30,10 @@ public class Transaction
     public double Fee { set; get; }
 
     [JsonPropertyName("vin")]
-    public List<Input> Inputs { set; get; } = new List<Input>();
+    public List<Input> Inputs { set; get; } = [];
 
     [JsonPropertyName("vout")]
-    public List<Output> Outputs { set; get; } = new List<Output>();
+    public List<Output> Outputs { set; get; } = [];
 
     public bool IsCoinbase
     {
