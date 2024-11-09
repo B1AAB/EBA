@@ -3,20 +3,23 @@
 public class Input
 {
     [JsonPropertyName("coinbase")]
-    public string Coinbase { get; set; } = string.Empty;
+    public string Coinbase { set; get; } = string.Empty;
 
     [JsonPropertyName("txid")]
-    public string TxId { get; set; } = string.Empty;
+    public string TxId { set; get; } = string.Empty;
 
     [JsonPropertyName("vout")]
-    public int OutputIndex { get; set; }
+    public int OutputIndex { set; get; }
 
     [JsonPropertyName("scriptSig")]
-    public ScriptSig? ScriptSig { get; set; }
+    public ScriptSig? ScriptSig { set; get; }
 
     [JsonPropertyName("txinwitness")]
-    public List<string>? TxInputWitness { get; set; }
+    public List<string>? TxInputWitness { set; get; }
 
     [JsonPropertyName("sequence")]
-    public long Sequence { get; set; }
+    public long Sequence { set; get; }
+
+    [JsonPropertyName("prevout")]
+    public PrevOut? PrevOut { set; get; }
 }
