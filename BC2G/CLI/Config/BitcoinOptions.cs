@@ -2,6 +2,13 @@
 
 public class BitcoinOptions
 {
+    public enum TxoPersistencePolicy
+    {
+        None,
+        CacheInDatabase,
+        PersistToFileOnly
+    };
+
     public Uri ClientUri
     {
         init
@@ -81,7 +88,9 @@ public class BitcoinOptions
     // When setting this, make sure it is more than the timeout of related Resilience strategies.
     public TimeSpan HttpClientTimeout { init; get; } = TimeSpan.FromMinutes(10);
 
-    public bool UseTxDatabase { init; get; } = false;
+    public TxoPersistencePolicy TxoPersistenceStrategy { init; get; } = TxoPersistencePolicy.None;
+
+    public string TxoFilename { init; get; } = "bitcoin_txo.tsv";
 
     public ResilienceStrategyOptions HttpClientResilienceStrategy { init; get; } = new();
 

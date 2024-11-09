@@ -19,9 +19,10 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<string>? _batchFilenameOption;
     private readonly Option<string>? _addressesFilenameOption;
     private readonly Option<string>? _statsFilenameOption;
-    private readonly Option<bool>? _useTxDatabaseOption;
     private readonly Option<int>? _maxBufferSizeOption;
     private readonly Option<int>? _utxoKeepAfterCleanupOption;
+    private readonly Option<BitcoinOptions.TxoPersistencePolicy>? _txoPersistanceOption;
+    private readonly Option<string>? _txoFilenameOption;
 
     public OptionsBinder(
         Option<int>? fromOption = null,
@@ -41,9 +42,10 @@ internal class OptionsBinder : BinderBase<Options>
         Option<string>? batchFilenameOption = null,
         Option<string>? addressesFilenameOption = null,
         Option<string>? statsFilenameOption = null,
-        Option<bool>? useTxDatabaseOption = null, 
         Option<int>? maxBufferSizeOption = null,
-        Option<int>? utxoKeepAfterCleanupOption = null)
+        Option<int>? utxoKeepAfterCleanupOption = null,
+        Option<BitcoinOptions.TxoPersistencePolicy>? txoPersistanceOption = null,
+        Option<string>? txoFilenameOption = null)
     {
         _fromOption = fromOption;
         _toOption = toOption;
@@ -62,9 +64,10 @@ internal class OptionsBinder : BinderBase<Options>
         _batchFilenameOption = batchFilenameOption;
         _addressesFilenameOption = addressesFilenameOption;
         _statsFilenameOption = statsFilenameOption;
-        _useTxDatabaseOption = useTxDatabaseOption;
         _maxBufferSizeOption = maxBufferSizeOption;
         _utxoKeepAfterCleanupOption = utxoKeepAfterCleanupOption;
+        _txoPersistanceOption = txoPersistanceOption;
+        _txoFilenameOption = txoFilenameOption;
     }
 
     protected override Options GetBoundValue(BindingContext c)
@@ -92,10 +95,13 @@ internal class OptionsBinder : BinderBase<Options>
             BlocksFailedToProcessListFilename = Path.Join(wd, defs.Bitcoin.BlocksFailedToProcessListFilename),
             StatsFilename = GetValue(defs.Bitcoin.StatsFilename, _statsFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
             PerBlockAddressesFilename = GetValue(defs.Bitcoin.PerBlockAddressesFilename, _addressesFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
-            UseTxDatabase = GetValue(defs.Bitcoin.UseTxDatabase, _useTxDatabaseOption, c),
             DbCommitAtUtxoBufferSize = GetValue(defs.Bitcoin.DbCommitAtUtxoBufferSize, _maxBufferSizeOption, c),
             MaxInMemoryUtxosAfterDbCommit = GetValue(defs.Bitcoin.MaxInMemoryUtxosAfterDbCommit, _utxoKeepAfterCleanupOption, c),
+            TxoPersistenceStrategy = GetValue(defs.Bitcoin.TxoPersistenceStrategy, _txoPersistanceOption, c),
+            TxoFilename = GetValue(defs.Bitcoin.TxoFilename, _txoFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
         };
+
+        // TODO: add a warning hen txofilename is set hwile txoPeristenceStrategy is not set to persist to text file.
 
         var gsample = new GraphSampleOptions()
         {

@@ -171,21 +171,29 @@ internal class Cli
             "be started with REST endpoint enabled.",
             getDefaultValue: () => defaultOptions.Bitcoin.ClientUri);
 
-        var useTxDatabaseOption = new Option<bool>(
-            name: "--use-tx-database",
-            description: "If set, it uses a postgres database to write and read " +
-            "utxo when traversing the blockchain. When using this option, the database size " +
-            "can grow big (depending on the number of blocks it traverses), and it can take a " +
-            "considerable amount of time to commit transactions to the database. It will be more " +
-            "optimal to run the database on a separate persistence media, or ideally use a " +
+        var txoPersistenceStrategy = new Option<BitcoinOptions.TxoPersistencePolicy>(
+            name: "--txo-persistance-policy",
+            description: "options are: None, CacheInDatabase, PersistToFileOnly." +
+            "None: do not store txo, so also not cached (anytime txo is needed, it will use bitcoin agent to fetch the info)" +
+            "CacheInDatabase:  store to a database, and can use the database to fetch info prior to asking the bitcoin agent. " +
+            "If set, it uses a postgres database to write and read utxo when traversing the blockchain. " +
+            "When using this option, the database size can grow big (depending on the number of blocks it traverses), " +
+            "and it can take a considerable amount of time to commit transactions to the database. " +
+            "It will be more optimal to run the database on a separate persistence media, or ideally use a " +
             "separate database system (e.g., a separate local machine in the network on a database " +
             "service on the cloud). The advantage of this option is that it uses less API requests " +
             "to the Bitcoin agent that can lead to better performance if the database service is " +
-            "highly performant; otherwise, the overhead may not lead to a significant performance boost.");
+            "highly performant; otherwise, the overhead may not lead to a significant performance boost." +
+            "PersistToFileOnly: only stores txo to a text file, and does not use them for caching purposes, " +
+            "so if the txo info is not in memory, it will use bitcoin agent to get the info.");
 
         var addressesFilenameOption = new Option<string>(
             name: "--addresses-filename",
             description: "Sets the filename to persist addresses in each block.");
+
+        var txoFilenameOption = new Option<string>(
+            name: "--txo-filename",
+            description: "Sets the filename used when the txo-persistence-policy is set to PersistToFileOnly.");
 
         var statsFilenameOption = new Option<string>(
             name: "--stats-filename",
@@ -213,11 +221,12 @@ internal class Cli
             toOption,
             granularityOption,
             clientUriOption,
-            useTxDatabaseOption,
+            txoPersistenceStrategy,
             statsFilenameOption,
             addressesFilenameOption,
             maxBufferSizeOption,
             utxoKeepAfterCleanupOption,
+            txoFilenameOption
         };
 
         cmd.SetHandler(async (options) =>
@@ -231,11 +240,11 @@ internal class Cli
             bitcoinClientUri: clientUriOption,
             workingDirOption: _workingDirOption,
             statusFilenameOption: _statusFilenameOption,
-            useTxDatabaseOption: useTxDatabaseOption,
             addressesFilenameOption: addressesFilenameOption,
             statsFilenameOption: statsFilenameOption,
             maxBufferSizeOption: maxBufferSizeOption,
-            utxoKeepAfterCleanupOption: utxoKeepAfterCleanupOption));
+            utxoKeepAfterCleanupOption: utxoKeepAfterCleanupOption,
+            txoFilenameOption: txoFilenameOption));
 
         return cmd;
     }

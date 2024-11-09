@@ -51,7 +51,7 @@ public class Orchestrator : IDisposable
     {
         var host = await SetupAndGetHostAsync(options);
 
-        if (options.Bitcoin.UseTxDatabase)
+        if (options.Bitcoin.TxoPersistenceStrategy == BitcoinOptions.TxoPersistencePolicy.CacheInDatabase)
         {
             using var dbContext = host.Services.GetRequiredService<DatabaseContext>();
             try
