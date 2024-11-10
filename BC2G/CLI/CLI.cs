@@ -182,15 +182,6 @@ internal class Cli
         var statsFilenameOption = new Option<string>(
             name: "--stats-filename",
             description: "Sets the filename to store statistics collected during the traverse.");
-        /*
-        var maxBufferSizeOption = new Option<int>(
-            name: "--max-utxo-buffer-size",
-            description: "[Advanced] Sets the maximum number of UTXO to keep in memory. " +
-            "This helps reduce the number of API calls to Bitcoin-qt or database queries. " +
-            "Buffer size is in linear correlation with memory usage. When max buffer size reaches," +
-            "BC2G will implement a strategy the removes (or commits to database) the used Txos, " +
-            "keeps a set number of UTXO in the buffer (see --utxo-keep-after-buffer-cleanup), " +
-            "and empties the reset of buffer.");*/
 
         var maxBlocksInBufferOption = new Option<int>(
             name: "--max-blocks-in-buffer",

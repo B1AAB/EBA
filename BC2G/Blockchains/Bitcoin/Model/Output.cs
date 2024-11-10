@@ -28,7 +28,7 @@ public class Output : IBase64Serializable
             address = ScriptPubKey.GetAddress();
         else
             // TODO: fixme.
-            throw new NotImplementedException();
+            throw new NotImplementedException("Get address when script pub key is not defined is not implemented");
 
         if (string.IsNullOrEmpty(address))
         {
