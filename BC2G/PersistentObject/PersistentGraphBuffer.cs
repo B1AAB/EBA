@@ -44,7 +44,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 
     public new void Enqueue(BlockGraph graph)
     {
-        _blocksHeightsInBuffer.TryAdd(graph.Height, 0);
+        _blocksHeightsInBuffer.TryAdd(graph.Block.Height, 0);
         base.Enqueue(graph);
     }
 
@@ -70,11 +70,11 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 
         await Task.WhenAll(tasks);
 
-        _blocksHeightsInBuffer.TryRemove(obj.Height, out byte _);
+        _blocksHeightsInBuffer.TryRemove(obj.Block.Height, out byte _);
 
         _logger.LogInformation(
             "Block {height:n0} {step}: Finished processing in {runtime} seconds.",
-            obj.Height, "[3/3]", Helpers.GetEtInSeconds(obj.Stats.Runtime));
+            obj.Block.Height, "[3/3]", Helpers.GetEtInSeconds(obj.Stats.Runtime));
 
         _semaphore.Release();
     }

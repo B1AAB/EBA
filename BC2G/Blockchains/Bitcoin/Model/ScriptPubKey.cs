@@ -48,7 +48,7 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
         {
             return
                 Enum.TryParse(
-                    Type, ignoreCase:true, 
+                    Type, ignoreCase: true,
                     out ScriptType scriptType)
                 ? scriptType : ScriptType.Unknown;
         }

@@ -4,7 +4,6 @@ namespace BC2G.Blockchains.Bitcoin.Graph;
 
 public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 {
-    public long Height { get; }
     public uint Timestamp { get; }
     public Block Block { get; }
     public BlockStatistics Stats { set; get; }
@@ -29,9 +28,6 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         _coinbaseTxGraph = coinbaseTxGraph;
         _logger = logger;
 
-        // TODO: with the above block ref, no need to keep a copy of height and timestamp.
-        Height = block.Height;
-
         // See the following BIP on using `mediantime` instead of `time`.
         // https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
         Timestamp = block.MedianTime;
@@ -54,7 +50,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         Stats.MintedBitcoins = mintedBitcoins;
         Stats.TxFees = TotalFee;
 
-        AddOrUpdateEdge(new C2TEdge(_coinbaseTxGraph.TxNode, mintedBitcoins, Timestamp, Height));
+        AddOrUpdateEdge(new C2TEdge(_coinbaseTxGraph.TxNode, mintedBitcoins, Timestamp, Block.Height));
 
         // First process all non-coinbase transactions;
         // this helps determine all the fee paied to the
@@ -83,7 +79,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                 item.Key,
                 Helpers.Round((item.Value * mintedBitcoins) / miningReward),
                 Timestamp,
-                Height));
+                Block.Height));
         }
     }
 
@@ -103,7 +99,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                 "source scripts count: {s:n0}; " +
                 "target scripts count: {t:n0}; " +
                 "transaction hash: {tx}.",
-                Height,
+                Block.Height,
                 txGraph.SourceScripts.Count,
                 txGraph.TargetScripts.Count,
                 txGraph.TxNode.Txid);
@@ -126,7 +122,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                             oldValue * Helpers.Round(
                                 fee / txGraph.TotalInputValue))));
 
-            AddOrUpdateEdge(new T2TEdge(txGraph.TxNode, coinbaseTxG.TxNode, fee, EdgeType.Fee, Timestamp, Height));
+            AddOrUpdateEdge(new T2TEdge(txGraph.TxNode, coinbaseTxG.TxNode, fee, EdgeType.Fee, Timestamp, Block.Height));
         }
 
         var sumInputWithoutFee = txGraph.TotalInputValue - fee;
@@ -154,7 +150,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                     s.Key, t.Key, v,
                     EdgeType.Transfer,
                     Timestamp,
-                    Height));
+                    Block.Height));
             }
 
             var x = fee * Helpers.Round(s.Value / sumInputWithoutFee == 0 ? 1 : sumInputWithoutFee);
@@ -162,7 +158,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                 foreach (var m in coinbaseTxG.TargetScripts)
                     AddOrUpdateEdge(new S2SEdge(s.Key, m.Key,
                         Helpers.Round(x * Helpers.Round(m.Value / totalPaidToMiner)),
-                        EdgeType.Fee, Timestamp, Height));
+                        EdgeType.Fee, Timestamp, Block.Height));
         }
 
         if (ct.IsCancellationRequested)
@@ -174,7 +170,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                 continue;
 
             AddOrUpdateEdge(new T2TEdge(
-                new TxNode(tx.Key), txGraph.TxNode, tx.Value, EdgeType.Transfer, Timestamp, Height));
+                new TxNode(tx.Key), txGraph.TxNode, tx.Value, EdgeType.Transfer, Timestamp, Block.Height));
         }
     }
 

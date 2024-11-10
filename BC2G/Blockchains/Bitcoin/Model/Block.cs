@@ -23,6 +23,10 @@ public class Block
     [JsonPropertyName("time")]
     public uint Time { set; get; }
 
+    /// <summary>
+    /// See the following BIP on mediantime diff. compared to time.
+    /// https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
+    /// </summary>
     [JsonPropertyName("mediantime")]
     public uint MedianTime { set; get; }
 
