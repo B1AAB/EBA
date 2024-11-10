@@ -50,23 +50,6 @@ public class Orchestrator : IDisposable
     private async Task TraverseBitcoinAsync(Options options)
     {
         var host = await SetupAndGetHostAsync(options);
-
-        if (options.Bitcoin.TxoPersistenceStrategy == BitcoinOptions.TxoPersistencePolicy.CacheInDatabase)
-        {
-            using var dbContext = host.Services.GetRequiredService<DatabaseContext>();
-            try
-            {
-                await dbContext.Database.EnsureCreatedAsync(_cT);
-            }
-            catch (NpgsqlException e)
-            {
-                _logger?.LogError(
-                    "Cannot connect to database; make sure PostgreSQL 16 is installed and listening on port {p}. {e}",
-                    5432, e.Message);
-                throw;
-            }
-        }
-
         var bitcoinOrchestrator = host.Services.GetRequiredService<BitcoinOrchestrator>();
         await bitcoinOrchestrator.TraverseAsync(options, _cT);
     }

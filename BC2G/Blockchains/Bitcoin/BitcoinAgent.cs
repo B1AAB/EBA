@@ -7,17 +7,14 @@ public class BitcoinAgent : IDisposable
 
     private readonly HttpClient _client;
     private readonly ILogger<BitcoinAgent> _logger;
-    private readonly IDbContextFactory<DatabaseContext> _dbContextFactory;
 
     private bool _disposed = false;
 
     public BitcoinAgent(
         HttpClient client,
-        IDbContextFactory<DatabaseContext> dbContextFactory,
         ILogger<BitcoinAgent> logger)
     {
         _client = client;
-        _dbContextFactory = dbContextFactory;
         _logger = logger;
     }
 

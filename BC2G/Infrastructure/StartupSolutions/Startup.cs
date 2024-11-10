@@ -17,15 +17,6 @@ public class Startup
             .MinimumLevel.Override(
                 "System.Net.Http.HttpClient",
                 Serilog.Events.LogEventLevel.Warning)
-            .MinimumLevel.Override(
-                "Microsoft.EntityFrameworkCore.Database.Command",
-                Serilog.Events.LogEventLevel.Warning)
-            .MinimumLevel.Override(
-                "Microsoft.EntityFrameworkCore.Database.Connection",
-                Serilog.Events.LogEventLevel.Warning)
-            .MinimumLevel.Override(
-                "Microsoft.EntityFrameworkCore.Infrastructure",
-                Serilog.Events.LogEventLevel.Warning)
             .Enrich.FromLogContext()
             .WriteTo.File(
                 path: logFilename,
@@ -106,25 +97,5 @@ public class Startup
 
         // This sets the limit for all the endpoints globally. 
         ServicePointManager.DefaultConnectionLimit = options.DefaultConnectionLimit;
-
-        // I am using DbContextFactory instead of DbContext because
-        // an scoped instance of database (mainly in BitcoinAgent)
-        // is used for multiple unit-of-work, and it is recommended
-        // to use an scoped instace of DbContext for one unit-of-work
-        // only. See the following link on details.
-        // https://learn.microsoft.com/en-us/ef/core/dbcontext-configuration/
-        services.AddDbContextFactory<DatabaseContext>(optionsBuilder =>
-        {
-            optionsBuilder.UseNpgsql(
-                $"Host={options.Psql.Host};" +
-                $"Database={options.Psql.Database};" +
-                $"Username={options.Psql.Username};" +
-                $"Password={options.Psql.Password}");
-
-            // Read these docs on the effect of the following settings: 
-            // https://www.npgsql.org/doc/connection-string-parameters.html
-            optionsBuilder.EnableSensitiveDataLogging();
-            optionsBuilder.EnableDetailedErrors();
-        });
     }
 }
