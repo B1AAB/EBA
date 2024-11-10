@@ -9,20 +9,28 @@ public enum ScriptType
 {
     PubKey,
 
+    /// <summary>
+    /// P2PKH
+    /// </summary>
     PubKeyHash,
 
     /// <summary>
-    /// Pay-to-script-hash. 
+    /// Pay-to-script-hash (P2SH)
     /// <see cref="https://bitcoin.stackexchange.com/a/9703/129532"/>
     /// </summary>
     ScriptHash,
 
     /// <summary>
     /// Native Segwit version of a pay-to-public-key-hash.
+    /// (P2WPKH)
     /// </summary>
     witness_v0_keyhash,
     
     witness_v0_scripthash,
+
+    /// <summary>
+    /// P2TR
+    /// </summary>
     witness_v1_taproot,
 
     /// <summary>
