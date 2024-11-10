@@ -1,4 +1,6 @@
-﻿namespace BC2G.Blockchains.Bitcoin;
+﻿using System;
+
+namespace BC2G.Blockchains.Bitcoin;
 
 public class BitcoinOrchestrator : IBlockchainOrchestrator
 {
@@ -97,13 +99,20 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             _logger.LogWarning("Added block {h:n0} to the list of failed blocks.", h);
         }
 
+        var pgbSemaphore = new SemaphoreSlim(
+            initialCount: options.Bitcoin.MaxBlocksInBuffer, 
+            maxCount: options.Bitcoin.MaxBlocksInBuffer);
+
         using var gBuffer = new PersistentGraphBuffer(
             _host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>(),
             _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),
             _host.Services.GetRequiredService<ILogger<PersistentGraphStatistics>>(),
             _host.Services.GetRequiredService<ILogger<PersistentBlockAddressess>>(),
+            _host.Services.GetRequiredService<ILogger<PersistentTxoLifeCycleBuffer>>(),
             options.Bitcoin.StatsFilename,
             options.Bitcoin.PerBlockAddressesFilename,
+            options.Bitcoin.TxoFilename,
+            pgbSemaphore,
             cT);
 
         _logger.LogInformation(
@@ -128,15 +137,6 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, cT);
 
         cT.ThrowIfCancellationRequested();
-        var needFinalDbCommit = true;
-        var dbContextLock = new object();
-        var dbLock = new object();
-        var utxos = new ConcurrentDictionary<string, Utxo>();
-        var barrier = new Barrier(0, (barrier) =>
-        {
-            CommitInMemUtxo(utxos, dbLock, options);
-            needFinalDbCommit = false;
-        });
 
         try
         {
@@ -148,16 +148,15 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
                 parallelOptions,
                 async (_, _loopCancellationToken) =>
                 {
+                    pgbSemaphore.Wait(_loopCancellationToken);
+
                     _loopCancellationToken.ThrowIfCancellationRequested();
 
-                    barrier.AddParticipant();
                     blocksQueue.TryDequeue(out var h);
-
-                    needFinalDbCommit = true;
 
                     try
                     {
-                        if (!await TryProcessBlock(options, gBuffer, h, utxos, dbContextLock, cT))
+                        if (!await TryProcessBlock(options, gBuffer, h, cT))
                             RegisterFailed(h);
                     }
                     catch (Exception e) when (
@@ -176,21 +175,6 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
                         throw;
                     }
 
-                    _loopCancellationToken.ThrowIfCancellationRequested();
-
-                    if (utxos.Count >= options.Bitcoin.DbCommitAtUtxoBufferSize)
-                    {
-                        _logger.LogInformation(
-                            "Max UTXO buffer size reached (limit={b:n0}, waiting for {count} " +
-                            "other concurrent tasks; Current phase {phase}.",
-                            options.Bitcoin.DbCommitAtUtxoBufferSize,
-                            barrier.ParticipantsRemaining, 
-                            barrier.CurrentPhaseNumber);
-
-                        barrier.SignalAndWait(cT);
-                    }
-
-                    barrier.RemoveParticipant();
                     _loopCancellationToken.ThrowIfCancellationRequested();
                 });
         }
@@ -219,88 +203,13 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
             blocksQueue.Serialize();
             _logger.LogInformation("Serialized the updated list of blocks-to-process.");
-
-            if (needFinalDbCommit)
-                CommitInMemUtxo(utxos, dbLock, options, needFinalDbCommit);
-            // TODO: this should call a variation of this method where it saves every 
-            // in-memory utxo, not just a subset and continue retaining the other subset in memory (which is as implemented).
         }
-    }
-
-    private void CommitInMemUtxo(ConcurrentDictionary<string, Utxo> utxos, object dbLock, Options options, bool isLastCommit = false)
-    {
-        _logger.LogInformation(
-            "Reached in-memory UTXO buffer size, {max:n0}; running memory usage reduction strategy.",
-            options.Bitcoin.DbCommitAtUtxoBufferSize);
-
-        var retainInMemoryTxCount = options.Bitcoin.MaxInMemoryUtxosAfterDbCommit;
-
-        _logger.LogInformation("Selecting in-memory utxo to commit in database.");
-        var utxoToKeepIds = utxos.Where(kvp => kvp.Value.SpentInCount == 0).Select(kvp => kvp.Key).ToList();
-        var utxoCount = utxoToKeepIds.Count;
-        utxoToKeepIds = utxoToKeepIds.Take(retainInMemoryTxCount).ToList();
-        var utxoToKeep = new ConcurrentDictionary<string, Utxo>();
-        foreach (var id in utxoToKeepIds)
-        {
-            utxos.Remove(id, out var value);
-            if (value != null)
-                utxoToKeep.TryAdd(id, value);
-        }
-
-        var txoPolicyMsg = options.Bitcoin.TxoPersistenceStrategy switch
-        {
-            BitcoinOptions.TxoPersistencePolicy.None => "remove from buffer",
-            BitcoinOptions.TxoPersistencePolicy.CacheInDatabase => "commit to database",
-            BitcoinOptions.TxoPersistencePolicy.PersistToFileOnly => "persist to file and remove from buffer",
-            _ => throw new NotImplementedException()
-        };
-
-        _logger.LogInformation(
-            "Selected {toKeep:n0} utxo to keep in-memory, and {toCommit:n0} txo to {commitOrRemove} ({spent:n0}/{toCommit:n0} are utxo).",
-            utxoToKeep.Count,
-            utxos.Count,
-            txoPolicyMsg,
-            retainInMemoryTxCount > utxoCount ? 0 : utxoCount - retainInMemoryTxCount,
-            utxos.Count);
-
-        if (options.Bitcoin.TxoPersistenceStrategy == BitcoinOptions.TxoPersistencePolicy.CacheInDatabase)
-        {
-            _logger.LogInformation("Committing the in-memory UTXO to the database.");
-            DatabaseContext.OptimisticAddOrUpdate(
-                dbLock,
-                utxos.Values,
-                _host.Services.GetRequiredService<IDbContextFactory<DatabaseContext>>(),
-                _host.Services.GetRequiredService<ILogger<DatabaseContext>>());
-
-            _logger.LogInformation("Finished committing the in-memory UTXO to the database.");
-        }
-        else if (options.Bitcoin.TxoPersistenceStrategy == BitcoinOptions.TxoPersistencePolicy.PersistToFileOnly)
-        {
-            using var writer = new StreamWriter(options.Bitcoin.TxoFilename);
-            foreach (var x in utxos)
-            {
-                writer.WriteLine(string.Join('\t', x.Value.Id, x.Value.Value, x.Value.CreatedInBlockHeight, x.Value.SpentInBlockHeight));
-            }
-
-            if (isLastCommit)
-            {
-                foreach (var x in utxoToKeep)
-                {
-                    writer.WriteLine(string.Join('\t', x.Value.Id, x.Value.Value, x.Value.CreatedInBlockHeight, x.Value.SpentInBlockHeight));
-                }
-            }
-        }
-
-        utxos.Clear();
-        utxos = utxoToKeep;
     }
 
     private async Task<bool> TryProcessBlock(
         Options options,
         PersistentGraphBuffer gBuffer,
         long height,
-        ConcurrentDictionary<string, Utxo> utxos,
-        object dbContextLock,
         CancellationToken cT)
     {
         cT.ThrowIfCancellationRequested();
@@ -311,7 +220,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             options.Bitcoin.BitcoinAgentResilienceStrategy);
 
         var agent = _host.Services.GetRequiredService<BitcoinAgent>();
-        var blockGraph = await agent.GetGraph(height, utxos, options.Bitcoin.TxoPersistenceStrategy == BitcoinOptions.TxoPersistencePolicy.CacheInDatabase, dbContextLock, strategy, cT);
+        var blockGraph = await agent.GetGraph(height, strategy, cT);
 
         if (blockGraph == null)
             return false;

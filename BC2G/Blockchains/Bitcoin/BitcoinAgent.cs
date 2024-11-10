@@ -152,9 +152,6 @@ public class BitcoinAgent : IDisposable
 
     public async Task<BlockGraph?> GetGraph(
         long height,
-        ConcurrentDictionary<string, Utxo> utxos,
-        bool useTxDatabase,
-        object dbContextLock,
         IAsyncPolicy strategy,
         CancellationToken cT)
     {
@@ -167,7 +164,7 @@ public class BitcoinAgent : IDisposable
                 async (context, cT) =>
                 {
                     retryAttempts++;
-                    graph = await GetGraph(height, utxos, useTxDatabase, dbContextLock, cT);
+                    graph = await GetGraph(height, cT);
                     graph.Stats.Retries = retryAttempts;
                 },
                 new Context()
@@ -186,10 +183,7 @@ public class BitcoinAgent : IDisposable
     }
 
     public async Task<BlockGraph> GetGraph(
-        long height,
-        ConcurrentDictionary<string, Utxo> utxos,
-        bool useTxDatabase,
-        object dbContextLock,
+        long height, 
         CancellationToken cT)
     {
         cT.ThrowIfCancellationRequested();
@@ -202,7 +196,7 @@ public class BitcoinAgent : IDisposable
 
         cT.ThrowIfCancellationRequested();
 
-        var graph = await ProcessBlockAsync(block, utxos, useTxDatabase, dbContextLock, cT);
+        var graph = await ProcessBlockAsync(block, cT);
 
         graph.MergeQueuedTxGraphs(cT);
 
@@ -213,9 +207,6 @@ public class BitcoinAgent : IDisposable
 
     private async Task<BlockGraph> ProcessBlockAsync(
         Block block,
-        ConcurrentDictionary<string, Utxo> utxos,
-        bool useTxDatabase,
-        object dbContextLock,
         CancellationToken cT)
     {
         // By definition, each block has a generative block that is the
@@ -236,12 +227,12 @@ public class BitcoinAgent : IDisposable
 
             var utxo = new Utxo(
                 coinbaseTx.Txid, output.Index, address, output.Value, output.GetScriptType(),
-                createdInHeight: block.Height.ToString());
+                createdInHeight: block.Height);
 
-            utxos.AddOrUpdate(utxo.Id, utxo,
+            g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo,
                 (k, oldValue) =>
                 {
-                    oldValue.AddCreatedIn(block.Height.ToString());
+                    oldValue.AddCreatedIn(block.Height);
                     return oldValue;
                 });
 
@@ -254,8 +245,6 @@ public class BitcoinAgent : IDisposable
         cT.ThrowIfCancellationRequested();
 
         g.RewardsAddresses = rewardAddresses;
-
-        DatabaseContext? dbContext = useTxDatabase ? _dbContextFactory.CreateDbContext() : null;
 
         var options = new ParallelOptions()
         {
@@ -270,22 +259,15 @@ public class BitcoinAgent : IDisposable
             async (tx, _loopCancellationToken) =>
             {
                 _loopCancellationToken.ThrowIfCancellationRequested();
-                await ProcessTx(g, tx, utxos, dbContext, dbContextLock, cT);
+                await ProcessTx(g, tx, cT);
             });
 
         cT.ThrowIfCancellationRequested();
-        dbContext?.Dispose();
 
         return g;
     }
 
-    private async Task ProcessTx(
-        BlockGraph g,
-        Transaction tx,
-        ConcurrentDictionary<string, Utxo> utxos,
-        DatabaseContext? dbContext,
-        object dbContextLock,
-        CancellationToken cT)
+    private async Task ProcessTx(BlockGraph g, Transaction tx, CancellationToken cT)
     {
         var txGraph = new TransactionGraph(tx) { Fee = tx.Fee };
 
@@ -295,61 +277,52 @@ public class BitcoinAgent : IDisposable
 
             var id = Utxo.GetId(input.TxId, input.OutputIndex);
 
-            // This tries to find the output that the given input references, 
-            // it performs it in the following order: 
-            // - search among the newly created but not in the db instances,
-            //   if found, update accordingly;
-            // - search db, if found, update it and save changes---all under
-            //   a lock synchronized through-out the program;
-            // - query the bitcoin client, and add the determined output 
-            //   to the utxo dict so it will be persisted in the db. 
-            if (utxos.TryGetValue(id, out Utxo? utxo))
+            Utxo? utxo = null;
+
+            if (input.PrevOut != null)
             {
-                utxo.AddSpentIn(g.Block.Height.ToString());
+                input.PrevOut.ConstructedOutput.TryGetAddress(out string? address);
+
+                utxo = new Utxo(
+                    txid: input.TxId,
+                    voutN: input.OutputIndex,
+                    address: address,
+                    value: input.PrevOut.Value,
+                    scriptType: input.PrevOut.ConstructedOutput.GetScriptType(),
+                    createdInHeight: input.PrevOut.Height,
+                    spentInHeight: g.Block.Height);
+
+                g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
+                {
+                    oldValue.AddCreatedIn(height: input.PrevOut.Height);
+                    oldValue.AddSpentIn(g.Block.Height);
+                    return oldValue;
+                });
             }
             else
             {
-                if (dbContext != null)
+                throw new NotImplementedException($"This is not expected. Block = {g.Block.Height}");
+
+                // Extended transaction: details of the transaction are
+                // retrieved from the bitcoin client.
+                /*var exTx = await GetTransactionAsync(input.TxId, cT);
+                var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
+                if (vout == null)
+                    throw new NotImplementedException($"{vout} not in {input.TxId}; not expected.");
+
+                vout.TryGetAddress(out string? address);
+
+                var cIn = exTx.BlockHash;
+                utxo = new Utxo(
+                    id, address, vout.Value, vout.GetScriptType(),
+                    createdInBlockHash: cIn, spentInBlockHeight: g.Block.Height.ToString());
+
+                utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
                 {
-                    lock (dbContextLock)
-                    {
-                        utxo = dbContext.Utxos.Find(id);
-                        if (utxo != null)
-                        {
-                            utxo.AddSpentIn(g.Block.Height.ToString());
-
-                            // TODO: fixme:
-                            // This invalidates the ACID property since if the
-                            // block process is canceled before it completes, 
-                            // some related changes are already saved in the db. 
-                            //dbContext.SaveChanges();
-                        }
-                    }
-                }
-
-                if (utxo == null)
-                {
-                    // Extended transaction: details of the transaction are
-                    // retrieved from the bitcoin client.
-                    var exTx = await GetTransactionAsync(input.TxId, cT);
-                    var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
-                    if (vout == null)
-                        throw new NotImplementedException($"{vout} not in {input.TxId}; not expected.");
-
-                    vout.TryGetAddress(out string? address);
-
-                    var cIn = exTx.BlockHash;
-                    utxo = new Utxo(
-                        id, address, vout.Value, vout.GetScriptType(),
-                        createdInBlockHash: cIn, spentInBlockHeight: g.Block.Height.ToString());
-
-                    utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
-                    {
-                        oldValue.AddCreatedIn(height: string.Empty, cIn);
-                        oldValue.AddSpentIn(g.Block.Height.ToString());
-                        return oldValue;
-                    });
-                }
+                    oldValue.AddCreatedIn(height: string.Empty, cIn);
+                    oldValue.AddSpentIn(g.Block.Height.ToString());
+                    return oldValue;
+                });*/
             }
 
             g.Stats.AddInputValue(utxo.Value);
@@ -369,14 +342,14 @@ public class BitcoinAgent : IDisposable
             var cIn = g.Block.Hash;
             var utxo = new Utxo(
                 tx.Txid, output.Index, address, output.Value, output.GetScriptType(),
-                createdInHeight: g.Block.Height.ToString());
+                createdInHeight: g.Block.Height);
 
             txGraph.AddTarget(utxo);
             g.Stats.AddOutputValue(utxo.Value);
 
-            utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
+            g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
             {
-                oldValue.AddCreatedIn(g.Block.Height.ToString());
+                oldValue.AddCreatedIn(g.Block.Height);
                 return oldValue;
             });
         }

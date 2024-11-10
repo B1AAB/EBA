@@ -19,9 +19,7 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<string>? _batchFilenameOption;
     private readonly Option<string>? _addressesFilenameOption;
     private readonly Option<string>? _statsFilenameOption;
-    private readonly Option<int>? _maxBufferSizeOption;
-    private readonly Option<int>? _utxoKeepAfterCleanupOption;
-    private readonly Option<BitcoinOptions.TxoPersistencePolicy>? _txoPersistanceOption;
+    private readonly Option<int>? _maxBlocksInBufferOption;
     private readonly Option<string>? _txoFilenameOption;
 
     public OptionsBinder(
@@ -42,9 +40,7 @@ internal class OptionsBinder : BinderBase<Options>
         Option<string>? batchFilenameOption = null,
         Option<string>? addressesFilenameOption = null,
         Option<string>? statsFilenameOption = null,
-        Option<int>? maxBufferSizeOption = null,
-        Option<int>? utxoKeepAfterCleanupOption = null,
-        Option<BitcoinOptions.TxoPersistencePolicy>? txoPersistanceOption = null,
+        Option<int>? maxBlocksInBufferOption = null,
         Option<string>? txoFilenameOption = null)
     {
         _fromOption = fromOption;
@@ -64,9 +60,7 @@ internal class OptionsBinder : BinderBase<Options>
         _batchFilenameOption = batchFilenameOption;
         _addressesFilenameOption = addressesFilenameOption;
         _statsFilenameOption = statsFilenameOption;
-        _maxBufferSizeOption = maxBufferSizeOption;
-        _utxoKeepAfterCleanupOption = utxoKeepAfterCleanupOption;
-        _txoPersistanceOption = txoPersistanceOption;
+        _maxBlocksInBufferOption = maxBlocksInBufferOption;
         _txoFilenameOption = txoFilenameOption;
     }
 
@@ -95,9 +89,7 @@ internal class OptionsBinder : BinderBase<Options>
             BlocksFailedToProcessListFilename = Path.Join(wd, defs.Bitcoin.BlocksFailedToProcessListFilename),
             StatsFilename = GetValue(defs.Bitcoin.StatsFilename, _statsFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
             PerBlockAddressesFilename = GetValue(defs.Bitcoin.PerBlockAddressesFilename, _addressesFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
-            DbCommitAtUtxoBufferSize = GetValue(defs.Bitcoin.DbCommitAtUtxoBufferSize, _maxBufferSizeOption, c),
-            MaxInMemoryUtxosAfterDbCommit = GetValue(defs.Bitcoin.MaxInMemoryUtxosAfterDbCommit, _utxoKeepAfterCleanupOption, c),
-            TxoPersistenceStrategy = GetValue(defs.Bitcoin.TxoPersistenceStrategy, _txoPersistanceOption, c),
+            MaxBlocksInBuffer = GetValue(defs.Bitcoin.MaxBlocksInBuffer, _maxBlocksInBufferOption, c),
             TxoFilename = GetValue(defs.Bitcoin.TxoFilename, _txoFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
         };
 

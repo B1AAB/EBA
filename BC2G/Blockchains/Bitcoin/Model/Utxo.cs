@@ -2,121 +2,87 @@
 
 namespace BC2G.Blockchains.Bitcoin.Model;
 
-[Table("Utxo")]
 public class Utxo
 {
-    private const char _delimiter = ';';
-
-    [Required]
     public string Id { set; get; } = string.Empty;
-
-    /// <summary>
-    /// This is used for optimistic concurrency. See:
-    /// https://www.npgsql.org/efcore/modeling/concurrency.html
-    /// </summary>
-    [Timestamp]
-    public uint Version { get; set; }
 
     public string Txid { get { return GetTxid(Id); } }
 
-    [Required]
     public string Address { set; get; } = string.Empty;
 
-    [Required]
     public double Value { set; get; }
 
-    [Required]
     public ScriptType ScriptType { set; get; }
 
-
-    public string CreatedInBlockHash
+    public ReadOnlyCollection<long> CreatedInBlockHeight
     {
-        set { _createdInBlockHash = value; }
-        get { return _createdInBlockHash; }
+        get { return _createdInBlockHeight.AsReadOnly(); }
     }
-    private string _createdInBlockHash = string.Empty;
-
-    /// <summary>
-    /// A list of comma-separated block heights where this txo 
-    /// is defined as output.
-    /// </summary>
-    [Required]
-    public string CreatedInBlockHeight
-    {
-        set { _createdInBlockHeight = value; }
-        get { return _createdInBlockHeight; }
-    }
-    private string _createdInBlockHeight = string.Empty;
+    private readonly List<long> _createdInBlockHeight = [];
 
     public int CreatedInCount
     {
-        set { _createdInCount = value; }
-        get { return _createdInCount; }
+        get { return _createdInBlockHeight.Count; }
     }
-    private int _createdInCount;
 
-    /// <summary>
-    /// A list of comma-separated block heights where this txo
-    /// is defined as input. If this list is empty, the tx is 
-    /// unspent (utxo).
-    /// </summary>
-    public string SpentInBlockHeight
+    public ReadOnlyCollection<long> SpentInBlockHeight
     {
-        set { _spentInHeight = value; }
-        get { return _spentInHeight; }
+        get { return _spentInHeight.AsReadOnly(); }
     }
-    private string _spentInHeight = string.Empty;
+    private readonly List<long> _spentInHeight = [];
 
     public int SpentInCount
     {
-        set { _spentInCount = value; }
-        get { return _spentInCount; }
+        get { return _spentInHeight.Count; }
     }
-    private int _spentInCount;
 
     public Utxo(
         string id, string? address, double value, ScriptType scriptType,
-        string? createdInBlockHash = null, string? createdInBlockHeight = null,
-        string? spentInBlockHeight = null)
+        List<long>? createdInBlockHeights = null,
+        List<long>? spentInBlockHeights = null)
     {
         Id = id;
         Address = address ?? Id;
         Value = value;
         ScriptType = scriptType;
 
-        if (string.IsNullOrEmpty(createdInBlockHash) && string.IsNullOrEmpty(createdInBlockHeight))
-            throw new NoNullAllowedException("Created-in block hash and height cannot be both null.");
+        if ((createdInBlockHeights == null || createdInBlockHeights.Count == 0) &&
+            (spentInBlockHeights == null || spentInBlockHeights.Count == 0))
+            throw new NoNullAllowedException("Created-in and spent-in list of blocks cannot be both null/empty.");
 
-        if (!string.IsNullOrEmpty(createdInBlockHeight))
-        {
-            CreatedInCount = 1;
-            CreatedInBlockHeight = createdInBlockHeight;
-        }
+        if (createdInBlockHeights != null)
+            _createdInBlockHeight = createdInBlockHeights;
 
-        if (!string.IsNullOrEmpty(createdInBlockHash))
-            CreatedInBlockHash = createdInBlockHash;
-
-        if (!string.IsNullOrEmpty(spentInBlockHeight))
-        {
-            SpentInCount = 1;
-            SpentInBlockHeight = spentInBlockHeight;
-        }
+        if (spentInBlockHeights != null)
+            _spentInHeight = spentInBlockHeights;
     }
 
     public Utxo(
         string txid, int voutN, string? address, double value, ScriptType scriptType,
-        string? createdInBlockHash = null, string? createdInHeight = null, string? spentInHeight = null) :
-        this(GetId(txid, voutN), address, value, scriptType, createdInBlockHash, createdInHeight, spentInHeight)
+        List<long>? createdInHeights = null, List<long>? spentInHeights = null) :
+        this(GetId(txid, voutN), address, value, scriptType, createdInHeights, spentInHeights)
     { }
 
-    // This constructor is required by EF.
     public Utxo(
         string id, string? address, double value, ScriptType scriptType,
-        string createdInBlockHeight,
-        string? spentInBlockHeight = null)
-        : this(id, address, value, scriptType,
-              createdInBlockHash: null, createdInBlockHeight: createdInBlockHeight,
-              spentInBlockHeight: spentInBlockHeight)
+        long? createdInHeight = null, long? spentInHeight = null)
+    {
+        Id = id;
+        Address = address ?? Id;
+        Value = value;
+        ScriptType = scriptType;
+
+        if (createdInHeight != null)
+            _createdInBlockHeight.Add((long)createdInHeight);
+
+        if (spentInHeight != null)
+            _spentInHeight.Add((long)spentInHeight);
+    }
+
+    public Utxo(
+        string txid, int voutN, string? address, double value, ScriptType scriptType,
+        long? createdInHeight = null, long? spentInHeight = null) :
+        this(GetId(txid, voutN), address, value, scriptType, createdInHeight, spentInHeight)
     { }
 
     public static string GetId(string txid, int voutN)
@@ -128,38 +94,41 @@ public class Utxo
         return id.Split('-')[1];
     }
 
-    public void AddCreatedIn(string? height, string? blockHash = null)
+    public void AddCreatedIn(long height)
     {
-        if (string.IsNullOrEmpty(height) && string.IsNullOrEmpty(blockHash))
-            throw new NoNullAllowedException("Created-in block hash and height cannot be both null.");
-
-        if (!string.IsNullOrEmpty(height))
-            UpdateRefs(ref _createdInBlockHeight, ref _createdInCount, height);
-
-        if (!string.IsNullOrEmpty(blockHash))
-        {
-            var dummy = 0;
-            UpdateRefs(ref _createdInBlockHash, ref dummy, blockHash);
-        }
+        if (!_createdInBlockHeight.Contains(height))
+            _createdInBlockHeight.Add(height);
     }
 
-    public void AddSpentIn(string height)
+    public void AddSpentIn(long height)
     {
-        UpdateRefs(ref _spentInHeight, ref _spentInCount, height);
+        if (!_spentInHeight.Contains(height))
+            _spentInHeight.Add(height);
     }
 
-    private static void UpdateRefs(ref string refs, ref int counts, string newRef)
+    public static string GetHeader()
     {
-        if (string.IsNullOrWhiteSpace(newRef))
-            return;
+        return string.Join(
+            '\t',
+            "Id",
+            "Value",
+            "CreatedInBlockHeights",
+            "CreatedInBlockHeightsCount",
+            "SpentInBlockHeights",
+            "SpentInBlockHeightsCount",
+            "ScriptType");
+    }
 
-        var existingRefs = refs.Split(_delimiter, StringSplitOptions.RemoveEmptyEntries);
-        if (existingRefs.Contains(newRef))
-            return;
-
-        counts++;
-        if (existingRefs.Length > 0)
-            refs += _delimiter;
-        refs += newRef;
+    public override string ToString()
+    {
+        return string.Join(
+            '\t',
+            Id,
+            Value.ToString(),
+            string.Join(';', CreatedInBlockHeight),
+            CreatedInCount,
+            string.Join(";", SpentInBlockHeight),
+            SpentInCount,
+            ScriptType);
     }
 }

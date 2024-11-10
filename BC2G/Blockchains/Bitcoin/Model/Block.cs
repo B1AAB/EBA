@@ -57,5 +57,7 @@ public class Block
     public int Weight { set; get; }
 
     [JsonPropertyName("tx")]
-    public List<Transaction> Transactions { set; get; } = new List<Transaction>();
+    public List<Transaction> Transactions { set; get; } = [];
+
+    public ConcurrentDictionary<string, Utxo> TxoLifecycle { set; get; } = [];
 }

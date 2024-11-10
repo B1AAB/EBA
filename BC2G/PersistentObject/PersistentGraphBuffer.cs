@@ -8,13 +8,15 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     private readonly ILogger<PersistentGraphBuffer> _logger;
     private readonly PersistentGraphStatistics _pGraphStats;
     private readonly PersistentBlockAddressess _pBlockAddressess;
+    private readonly PersistentTxoLifeCycleBuffer _pTxoLifeCycleBuffer;
+    private readonly SemaphoreSlim _semaphore;
     private bool _disposed = false;
 
     public ReadOnlyCollection<long> BlocksHeightInBuffer
     {
         get
         {
-            return new ReadOnlyCollection<long>(_blocksHeightsInBuffer.Keys.ToArray());
+            return new ReadOnlyCollection<long>([.. _blocksHeightsInBuffer.Keys]);
         }
     }
     private readonly ConcurrentDictionary<long, byte> _blocksHeightsInBuffer = new();
@@ -24,8 +26,11 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         ILogger<PersistentGraphBuffer> logger,
         ILogger<PersistentGraphStatistics> pgStatsLogger,
         ILogger<PersistentBlockAddressess> pgAddressessLogger,
+        ILogger<PersistentTxoLifeCycleBuffer> pTxoLifeCyccleLogger,
         string graphStatsFilename,
         string perBlockAddressessFilename,
+        string txoLifeCycleFilename,
+        SemaphoreSlim semaphore,
         CancellationToken ct) :
         base(logger, ct)
     {
@@ -33,6 +38,8 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         _logger = logger;
         _pGraphStats = new(graphStatsFilename, pgStatsLogger, ct);
         _pBlockAddressess = new(perBlockAddressessFilename, pgAddressessLogger, ct);
+        _pTxoLifeCycleBuffer = new(txoLifeCycleFilename, pTxoLifeCyccleLogger, ct, header: Utxo.GetHeader());
+        _semaphore = semaphore;
     }
 
     public new void Enqueue(BlockGraph graph)
@@ -52,13 +59,13 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         // this can exit, otherwise, it may end up partially persisting graph 
         // or persisting graph but skipping the serialization of its stats.
         // A better alternative for this is using roll-back approaches 
-        // on cancellation and recovery, but that can add additional 
-        // complexities not essential at this point.
+        // on cancellation and recovery, but that can add additional complexities.
         var tasks = new List<Task>
         {
             _graphDb.SerializeAsync(obj, default),
             _pGraphStats.SerializeAsync(obj.Stats.ToString(), default),
-            _pBlockAddressess.SerializeAsync(obj.Stats.ToStringAddressess(), default)
+            _pBlockAddressess.SerializeAsync(obj.Stats.ToStringAddressess(), default),
+            _pTxoLifeCycleBuffer.SerializeAsync(obj.Block.TxoLifecycle.Values, default)
         };
 
         await Task.WhenAll(tasks);
@@ -68,6 +75,18 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         _logger.LogInformation(
             "Block {height:n0} {step}: Finished processing in {runtime} seconds.",
             obj.Height, "[3/3]", Helpers.GetEtInSeconds(obj.Stats.Runtime));
+
+        _semaphore.Release();
+    }
+
+    public override Task SerializeAsync(IEnumerable<BlockGraph> objs, CancellationToken cT)
+    {
+        throw new NotImplementedException();
+    }
+
+    public int GetBufferSize()
+    {
+        return _blocksHeightsInBuffer.Count;
     }
 
     public new void Dispose()

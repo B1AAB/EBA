@@ -26,7 +26,7 @@ public abstract class PersistentObjectBase<T> : IDisposable
 
     public PersistentObjectBase(ILogger<PersistentObjectBase<T>> logger, CancellationToken cT)
     {
-        _buffer = new();
+        _buffer = [];
         _logger = logger;
 
         var listner = Task.Factory
@@ -84,6 +84,7 @@ public abstract class PersistentObjectBase<T> : IDisposable
     }
 
     public abstract Task SerializeAsync(T obj, CancellationToken cT);
+    public abstract Task SerializeAsync(IEnumerable<T> objs, CancellationToken cT);
 
     public void Dispose()
     {

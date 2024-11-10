@@ -171,22 +171,6 @@ internal class Cli
             "be started with REST endpoint enabled.",
             getDefaultValue: () => defaultOptions.Bitcoin.ClientUri);
 
-        var txoPersistenceStrategy = new Option<BitcoinOptions.TxoPersistencePolicy>(
-            name: "--txo-persistance-policy",
-            description: "options are: None, CacheInDatabase, PersistToFileOnly." +
-            "None: do not store txo, so also not cached (anytime txo is needed, it will use bitcoin agent to fetch the info)" +
-            "CacheInDatabase:  store to a database, and can use the database to fetch info prior to asking the bitcoin agent. " +
-            "If set, it uses a postgres database to write and read utxo when traversing the blockchain. " +
-            "When using this option, the database size can grow big (depending on the number of blocks it traverses), " +
-            "and it can take a considerable amount of time to commit transactions to the database. " +
-            "It will be more optimal to run the database on a separate persistence media, or ideally use a " +
-            "separate database system (e.g., a separate local machine in the network on a database " +
-            "service on the cloud). The advantage of this option is that it uses less API requests " +
-            "to the Bitcoin agent that can lead to better performance if the database service is " +
-            "highly performant; otherwise, the overhead may not lead to a significant performance boost." +
-            "PersistToFileOnly: only stores txo to a text file, and does not use them for caching purposes, " +
-            "so if the txo info is not in memory, it will use bitcoin agent to get the info.");
-
         var addressesFilenameOption = new Option<string>(
             name: "--addresses-filename",
             description: "Sets the filename to persist addresses in each block.");
@@ -198,7 +182,7 @@ internal class Cli
         var statsFilenameOption = new Option<string>(
             name: "--stats-filename",
             description: "Sets the filename to store statistics collected during the traverse.");
-
+        /*
         var maxBufferSizeOption = new Option<int>(
             name: "--max-utxo-buffer-size",
             description: "[Advanced] Sets the maximum number of UTXO to keep in memory. " +
@@ -206,12 +190,17 @@ internal class Cli
             "Buffer size is in linear correlation with memory usage. When max buffer size reaches," +
             "BC2G will implement a strategy the removes (or commits to database) the used Txos, " +
             "keeps a set number of UTXO in the buffer (see --utxo-keep-after-buffer-cleanup), " +
-            "and empties the reset of buffer.");
+            "and empties the reset of buffer.");*/
 
-        var utxoKeepAfterCleanupOption = new Option<int>(
-            name: "--utxo-keep-after-buffer-cleanup",
-            description: "[Advanced] Related to --max-utxo-buffer-size, sets the max number of UTXO to " +
-            "keep in memory after buffer size limit has reached and clean up strategy is executed.");
+        var maxBlocksInBufferOption = new Option<int>(
+            name: "--max-blocks-in-buffer",
+            description: "[Advanced] max number of blocks in the serialization buffer. " +
+            "Lower values means buffer will be flushed more frequently, higher values means it will wait less frequently for the buffer to empty." +
+            "Buffer flushing speed depends on how the persistance media's performance on serliazing objects, the faster it is, " +
+            "the buffer will fill less frequently. " +
+            "Memory footprint of buffer is a function of the size of each data for eacch block to be seriliazed in the buffer," +
+            "such that earlier blocks with fewer Tx will have smaller footprint, and recent blocks with more tx will " +
+            "have more per-block memory requirement.");
 
         var cmd = new Command(
             name: "traverse",
@@ -221,11 +210,9 @@ internal class Cli
             toOption,
             granularityOption,
             clientUriOption,
-            txoPersistenceStrategy,
             statsFilenameOption,
             addressesFilenameOption,
-            maxBufferSizeOption,
-            utxoKeepAfterCleanupOption,
+            maxBlocksInBufferOption,
             txoFilenameOption
         };
 
@@ -242,8 +229,7 @@ internal class Cli
             statusFilenameOption: _statusFilenameOption,
             addressesFilenameOption: addressesFilenameOption,
             statsFilenameOption: statsFilenameOption,
-            maxBufferSizeOption: maxBufferSizeOption,
-            utxoKeepAfterCleanupOption: utxoKeepAfterCleanupOption,
+            maxBlocksInBufferOption: maxBlocksInBufferOption,
             txoFilenameOption: txoFilenameOption));
 
         return cmd;

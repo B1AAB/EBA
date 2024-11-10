@@ -29,10 +29,17 @@ public class PersistentObject<T> : PersistentObjectBase<T>, IDisposable
 
     public override async Task SerializeAsync(T obj, CancellationToken cT)
     {
-        if (obj is null)
-            throw new ArgumentNullException(nameof(obj));
+        ArgumentNullException.ThrowIfNull(obj);
 
         await _stream.WriteAsync(obj.ToString());
+    }
+
+    public override async Task SerializeAsync(IEnumerable<T> objs, CancellationToken cT)
+    {
+        ArgumentNullException.ThrowIfNull(objs);
+
+        foreach (var obj in objs)
+            await _stream.WriteAsync(obj.ToString());
     }
 
     public new void Dispose()

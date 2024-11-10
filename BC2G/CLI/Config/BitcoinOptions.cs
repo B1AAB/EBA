@@ -2,13 +2,6 @@
 
 public class BitcoinOptions
 {
-    public enum TxoPersistencePolicy
-    {
-        None,
-        CacheInDatabase,
-        PersistToFileOnly
-    };
-
     public Uri ClientUri
     {
         init
@@ -78,17 +71,13 @@ public class BitcoinOptions
 
     public string PerBlockAddressesFilename { init; get; } = "addressess.tsv";
 
-    public int DbCommitAtUtxoBufferSize { init; get; } = (int)1.5e7;
-
-    public int MaxInMemoryUtxosAfterDbCommit { init; get; } = (int)1e6;
+    public int MaxBlocksInBuffer { init; get; } = 1000;
 
     // null default lets runtime decide on max concurrency which is not static and changes w.r.t the load.
     public int? MaxConcurrentBlocks { init; get; } = null;
 
     // When setting this, make sure it is more than the timeout of related Resilience strategies.
     public TimeSpan HttpClientTimeout { init; get; } = TimeSpan.FromMinutes(10);
-
-    public TxoPersistencePolicy TxoPersistenceStrategy { init; get; } = TxoPersistencePolicy.None;
 
     public string TxoFilename { init; get; } = "bitcoin_txo.tsv";
 
