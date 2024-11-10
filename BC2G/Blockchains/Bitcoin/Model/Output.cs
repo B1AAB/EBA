@@ -17,8 +17,6 @@ public class Output : IBase64Serializable
     [JsonPropertyName("n")]
     public int Index { set; get; }
 
-    public TransactionType PaymentType { set; get; }
-
     [JsonPropertyName("scriptPubKey")]
     public ScriptPubKey? ScriptPubKey { set; get; }
 
