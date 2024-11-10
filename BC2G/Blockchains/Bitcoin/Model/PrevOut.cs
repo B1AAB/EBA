@@ -14,13 +14,15 @@ public class PrevOut
     [JsonPropertyName("scriptPubKey")]
     public ScriptPubKey? ScriptPubKey { set; get; }
 
-    public Output ConstructedOutput { init;  get; }
-
-    public PrevOut()
+    public Output ConstructedOutput
     {
-        ConstructedOutput = new Output()
+        get
         {
-            ScriptPubKey = ScriptPubKey
-        };
+            return new Output()
+            {
+                Value = Value,
+                ScriptPubKey = ScriptPubKey
+            };
+        }
     }
 }
