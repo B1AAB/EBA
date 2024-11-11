@@ -89,6 +89,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         double totalPaidToMiner,
         CancellationToken ct)
     {
+        // TODO: all the AddOrUpdateEdge methods in the following are all hotspots.
         // VERY IMPORTANT TODO: THIS IS TEMPORARY UNTIL A GOOD SOLUTION IS IMPLEMENTED.
         if (txGraph.SourceScripts.Count > 20 && txGraph.TargetScripts.Count > 20)
         {

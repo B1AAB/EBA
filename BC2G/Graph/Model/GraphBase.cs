@@ -43,7 +43,7 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
     {
         get { return new ReadOnlyCollection<double>(_labels); }
     }
-    private readonly List<double> _labels = new();
+    private readonly List<double> _labels = [];
 
     public int GetNodeCount(GraphComponentType type)
     {
@@ -64,6 +64,7 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
 
     public bool TryAddNode<T>(GraphComponentType type, T node) where T : INode
     {
+        // TODO: this is a hotspot 
         var x = _nodes.GetOrAdd(
             type,
             new ConcurrentDictionary<string, INode>());
