@@ -71,7 +71,7 @@ public class BitcoinOptions
 
     public string PerBlockAddressesFilename { init; get; } = "addressess.tsv";
 
-    public int MaxBlocksInBuffer { init; get; } = 1000;
+    public int MaxBlocksInBuffer { init; get; } = 100;
 
     // null default lets runtime decide on max concurrency which is not static and changes w.r.t the load.
     public int? MaxConcurrentBlocks { init; get; } = null;
