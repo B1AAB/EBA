@@ -244,9 +244,7 @@ public class BlockStatistics(Block block)
 
                 string.Join(
                     _delimiter,
-                    _edgeLabelValueSum.Select((v, i) => v.ToString()).ToArray()),
-
-                Environment.NewLine
+                    _edgeLabelValueSum.Select((v, i) => v.ToString()).ToArray())
             ]);
     }
 
@@ -261,8 +259,7 @@ public class BlockStatistics(Block block)
             _delimiter,
             [
                 Height.ToString(),
-                string.Join(";", _outputAddresses),
-                Environment.NewLine
+                string.Join(";", _outputAddresses)
             ]);
     }
 }
