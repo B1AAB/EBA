@@ -38,6 +38,8 @@ public class BlockStatistics(Block block)
     private readonly ConcurrentBag<double> _inputValues = [];
     private readonly ConcurrentBag<double> _outputValues = [];
 
+    private readonly ConcurrentBag<int> _spentOutputsAge = [];
+
     public List<string> OutputAddresses { get { return [.. _outputAddresses]; } }
     private readonly ConcurrentBag<string> _outputAddresses = [];
 
@@ -109,6 +111,11 @@ public class BlockStatistics(Block block)
         _outputValues.Add(value);
     }
 
+    public void AddSpentOutputsAge(int age)
+    {
+        _spentOutputsAge.Add(age);
+    }
+
     public void AddOutputStatistics(string? address, ScriptType scriptType)
     {
         if (!string.IsNullOrEmpty(address))
@@ -176,6 +183,12 @@ public class BlockStatistics(Block block)
                     _delimiter,
                     ((EdgeLabel[])Enum.GetValues(typeof(EdgeLabel))).Select(
                         x => "BlockGraph" + x + "EdgeValueSum").ToArray()),
+
+                "SpentOutputAgeMax",
+                "SpentOutputAgeMin",
+                "SpentOutputAgeAvg",
+                "SpentOutputAgeMedian",
+                "SpentOutputAgeVariance"
             ]);
     }
 
@@ -244,7 +257,13 @@ public class BlockStatistics(Block block)
 
                 string.Join(
                     _delimiter,
-                    _edgeLabelValueSum.Select((v, i) => v.ToString()).ToArray())
+                    _edgeLabelValueSum.Select((v, i) => v.ToString()).ToArray()),
+
+                _spentOutputsAge.Max().ToString(),
+                _spentOutputsAge.Min().ToString(),
+                _spentOutputsAge.Average().ToString(),
+                Helpers.GetMedian(_spentOutputsAge).ToString(),
+                Helpers.GetVariance(_spentOutputsAge).ToString(),
             ]);
     }
 

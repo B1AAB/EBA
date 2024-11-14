@@ -1,4 +1,6 @@
-﻿namespace BC2G.Blockchains.Bitcoin;
+﻿using BC2G.Blockchains.Bitcoin.Model;
+
+namespace BC2G.Blockchains.Bitcoin;
 
 public class BitcoinAgent : IDisposable
 {
@@ -300,6 +302,8 @@ public class BitcoinAgent : IDisposable
                         oldValue.AddSpentIn(g.Block.Height);
                         return oldValue;
                     });
+
+                g.Stats.AddSpentOutputsAge((int)(input.PrevOut.Height - g.Block.Height));
             }
             else
             {
