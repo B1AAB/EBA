@@ -175,6 +175,11 @@ internal class Cli
             name: "--addresses-filename",
             description: "Sets the filename to persist addresses in each block.");
 
+        var trackTxoOption = new Option<bool>(
+            name: "--track-txo",
+            description: "if set, writes the list of txo it sees to a text file, this file will need to further processed" +
+            "and it will also add to storage requirements.");
+
         var txoFilenameOption = new Option<string>(
             name: "--txo-filename",
             description: "Sets the filename used when the txo-persistence-policy is set to PersistToFileOnly.");
@@ -204,7 +209,8 @@ internal class Cli
             statsFilenameOption,
             addressesFilenameOption,
             maxBlocksInBufferOption,
-            txoFilenameOption
+            txoFilenameOption,
+            trackTxoOption
         };
 
         cmd.SetHandler(async (options) =>

@@ -8,7 +8,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     private readonly ILogger<PersistentGraphBuffer> _logger;
     private readonly PersistentGraphStatistics _pGraphStats;
     private readonly PersistentBlockAddressess _pBlockAddressess;
-    private readonly PersistentTxoLifeCycleBuffer _pTxoLifeCycleBuffer;
+    private readonly PersistentTxoLifeCycleBuffer? _pTxoLifeCycleBuffer = null;
     private readonly SemaphoreSlim _semaphore;
     private bool _disposed = false;
 
@@ -26,10 +26,10 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         ILogger<PersistentGraphBuffer> logger,
         ILogger<PersistentGraphStatistics> pgStatsLogger,
         ILogger<PersistentBlockAddressess> pgAddressessLogger,
-        ILogger<PersistentTxoLifeCycleBuffer> pTxoLifeCyccleLogger,
+        ILogger<PersistentTxoLifeCycleBuffer>? pTxoLifeCyccleLogger,
         string graphStatsFilename,
         string perBlockAddressessFilename,
-        string txoLifeCycleFilename,
+        string? txoLifeCycleFilename,
         SemaphoreSlim semaphore,
         CancellationToken ct) :
         base(logger, ct)
@@ -38,7 +38,10 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         _logger = logger;
         _pGraphStats = new(graphStatsFilename, pgStatsLogger, ct);
         _pBlockAddressess = new(perBlockAddressessFilename, pgAddressessLogger, ct);
-        _pTxoLifeCycleBuffer = new(txoLifeCycleFilename, pTxoLifeCyccleLogger, ct, header: Utxo.GetHeader());
+
+        if (txoLifeCycleFilename != null && pTxoLifeCyccleLogger != null)
+            _pTxoLifeCycleBuffer = new(txoLifeCycleFilename, pTxoLifeCyccleLogger, ct, header: Utxo.GetHeader());
+
         _semaphore = semaphore;
     }
 
@@ -65,8 +68,10 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
             _graphDb.SerializeAsync(obj, default),
             _pGraphStats.SerializeAsync(obj.Stats.ToString(), default),
             _pBlockAddressess.SerializeAsync(obj.Stats.ToStringAddressess(), default),
-            _pTxoLifeCycleBuffer.SerializeAsync(obj.Block.TxoLifecycle.Values, default)
         };
+
+        if (_pTxoLifeCycleBuffer != null)
+            tasks.Add(_pTxoLifeCycleBuffer.SerializeAsync(obj.Block.TxoLifecycle.Values, default));
 
         await Task.WhenAll(tasks);
 

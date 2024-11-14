@@ -81,6 +81,8 @@ public class BitcoinOptions
 
     public string TxoFilename { init; get; } = "bitcoin_txo.tsv";
 
+    public bool TrackTxo { init; get; } = false;
+
     public ResilienceStrategyOptions HttpClientResilienceStrategy { init; get; } = new();
 
     public ResilienceStrategyOptions BitcoinAgentResilienceStrategy { init; get; } = new()

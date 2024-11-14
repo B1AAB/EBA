@@ -21,6 +21,7 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<string>? _statsFilenameOption;
     private readonly Option<int>? _maxBlocksInBufferOption;
     private readonly Option<string>? _txoFilenameOption;
+    private readonly Option<bool>? _trackTxoOption;
 
     public OptionsBinder(
         Option<int>? fromOption = null,
@@ -41,7 +42,8 @@ internal class OptionsBinder : BinderBase<Options>
         Option<string>? addressesFilenameOption = null,
         Option<string>? statsFilenameOption = null,
         Option<int>? maxBlocksInBufferOption = null,
-        Option<string>? txoFilenameOption = null)
+        Option<string>? txoFilenameOption = null,
+        Option<bool>? trackTxoOption = null)
     {
         _fromOption = fromOption;
         _toOption = toOption;
@@ -62,6 +64,7 @@ internal class OptionsBinder : BinderBase<Options>
         _statsFilenameOption = statsFilenameOption;
         _maxBlocksInBufferOption = maxBlocksInBufferOption;
         _txoFilenameOption = txoFilenameOption;
+        _trackTxoOption = trackTxoOption;
     }
 
     protected override Options GetBoundValue(BindingContext c)
@@ -91,6 +94,7 @@ internal class OptionsBinder : BinderBase<Options>
             PerBlockAddressesFilename = GetValue(defs.Bitcoin.PerBlockAddressesFilename, _addressesFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
             MaxBlocksInBuffer = GetValue(defs.Bitcoin.MaxBlocksInBuffer, _maxBlocksInBufferOption, c),
             TxoFilename = GetValue(defs.Bitcoin.TxoFilename, _txoFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
+            TrackTxo = GetValue(defs.Bitcoin.TrackTxo, _trackTxoOption, c)
         };
 
         // TODO: add a warning hen txofilename is set hwile txoPeristenceStrategy is not set to persist to text file.

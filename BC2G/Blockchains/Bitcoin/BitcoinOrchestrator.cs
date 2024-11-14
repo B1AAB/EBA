@@ -1,4 +1,6 @@
-﻿using System;
+﻿using BC2G.Graph.Db;
+
+using System;
 
 namespace BC2G.Blockchains.Bitcoin;
 
@@ -104,16 +106,16 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             maxCount: options.Bitcoin.MaxBlocksInBuffer);
 
         using var gBuffer = new PersistentGraphBuffer(
-            _host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>(),
-            _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),
-            _host.Services.GetRequiredService<ILogger<PersistentGraphStatistics>>(),
-            _host.Services.GetRequiredService<ILogger<PersistentBlockAddressess>>(),
-            _host.Services.GetRequiredService<ILogger<PersistentTxoLifeCycleBuffer>>(),
-            options.Bitcoin.StatsFilename,
-            options.Bitcoin.PerBlockAddressesFilename,
-            options.Bitcoin.TxoFilename,
-            pgbSemaphore,
-            cT);
+            graphDb: _host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>(),
+            logger: _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),
+            pgStatsLogger: _host.Services.GetRequiredService<ILogger<PersistentGraphStatistics>>(),
+            pgAddressessLogger: _host.Services.GetRequiredService<ILogger<PersistentBlockAddressess>>(),
+            pTxoLifeCyccleLogger: options.Bitcoin.TrackTxo ?_host.Services.GetRequiredService<ILogger<PersistentTxoLifeCycleBuffer>>() : null,
+            graphStatsFilename: options.Bitcoin.StatsFilename,
+            perBlockAddressessFilename: options.Bitcoin.PerBlockAddressesFilename,
+            txoLifeCycleFilename: options.Bitcoin.TrackTxo ? options.Bitcoin.TxoFilename : null,
+            semaphore: pgbSemaphore,
+            ct: cT);
 
         _logger.LogInformation(
             "Traversing blocks [{from:n0}, {to:n0}).",
@@ -220,7 +222,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             options.Bitcoin.BitcoinAgentResilienceStrategy);
 
         var agent = _host.Services.GetRequiredService<BitcoinAgent>();
-        var blockGraph = await agent.GetGraph(height, strategy, cT);
+        var blockGraph = await agent.GetGraph(height, strategy, options.Bitcoin, cT);
 
         if (blockGraph == null)
             return false;

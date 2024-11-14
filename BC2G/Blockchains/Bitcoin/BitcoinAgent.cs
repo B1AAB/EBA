@@ -150,6 +150,7 @@ public class BitcoinAgent : IDisposable
     public async Task<BlockGraph?> GetGraph(
         long height,
         IAsyncPolicy strategy,
+        BitcoinOptions options,
         CancellationToken cT)
     {
         BlockGraph? graph = null;
@@ -161,7 +162,7 @@ public class BitcoinAgent : IDisposable
                 async (context, cT) =>
                 {
                     retryAttempts++;
-                    graph = await GetGraph(height, cT);
+                    graph = await GetGraph(height, options, cT);
                     graph.Stats.Retries = retryAttempts;
                 },
                 new Context()
@@ -181,6 +182,7 @@ public class BitcoinAgent : IDisposable
 
     public async Task<BlockGraph> GetGraph(
         long height, 
+        BitcoinOptions options,
         CancellationToken cT)
     {
         cT.ThrowIfCancellationRequested();
@@ -193,7 +195,7 @@ public class BitcoinAgent : IDisposable
 
         cT.ThrowIfCancellationRequested();
 
-        var graph = await ProcessBlockAsync(block, cT);
+        var graph = await ProcessBlockAsync(block, options, cT);
 
         graph.MergeQueuedTxGraphs(cT);
 
@@ -204,6 +206,7 @@ public class BitcoinAgent : IDisposable
 
     private async Task<BlockGraph> ProcessBlockAsync(
         Block block,
+        BitcoinOptions options,
         CancellationToken cT)
     {
         // By definition, each block has a generative block that is the
@@ -226,12 +229,13 @@ public class BitcoinAgent : IDisposable
                 coinbaseTx.Txid, output.Index, address, output.Value, output.GetScriptType(),
                 createdInHeight: block.Height);
 
-            g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo,
-                (k, oldValue) =>
-                {
-                    oldValue.AddCreatedIn(block.Height);
-                    return oldValue;
-                });
+            if (options.TrackTxo)
+                g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo,
+                    (k, oldValue) =>
+                    {
+                        oldValue.AddCreatedIn(block.Height);
+                        return oldValue;
+                    });
 
             var node = generationTxGraph.AddTarget(utxo);
             rewardAddresses.Add(node);
@@ -243,20 +247,20 @@ public class BitcoinAgent : IDisposable
 
         g.RewardsAddresses = rewardAddresses;
 
-        var options = new ParallelOptions()
+        var parallelOptions = new ParallelOptions()
         {
             CancellationToken = cT,
-#if (DEBUG)
+            #if (DEBUG)
             MaxDegreeOfParallelism = 1
-#endif
+            #endif
         };
         await Parallel.ForEachAsync(
             block.Transactions.Where(x => !x.IsCoinbase),
-            options,
+            parallelOptions,
             async (tx, _loopCancellationToken) =>
             {
                 _loopCancellationToken.ThrowIfCancellationRequested();
-                await ProcessTx(g, tx, cT);
+                await ProcessTx(g, tx, options, cT);
             });
 
         cT.ThrowIfCancellationRequested();
@@ -264,7 +268,7 @@ public class BitcoinAgent : IDisposable
         return g;
     }
 
-    private async Task ProcessTx(BlockGraph g, Transaction tx, CancellationToken cT)
+    private async Task ProcessTx(BlockGraph g, Transaction tx, BitcoinOptions options, CancellationToken cT)
     {
         var txGraph = new TransactionGraph(tx) { Fee = tx.Fee };
 
@@ -289,12 +293,13 @@ public class BitcoinAgent : IDisposable
                     createdInHeight: input.PrevOut.Height,
                     spentInHeight: g.Block.Height);
 
-                g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
-                {
-                    oldValue.AddCreatedIn(height: input.PrevOut.Height);
-                    oldValue.AddSpentIn(g.Block.Height);
-                    return oldValue;
-                });
+                if (options.TrackTxo)
+                    g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
+                    {
+                        oldValue.AddCreatedIn(height: input.PrevOut.Height);
+                        oldValue.AddSpentIn(g.Block.Height);
+                        return oldValue;
+                    });
             }
             else
             {
@@ -344,11 +349,12 @@ public class BitcoinAgent : IDisposable
             txGraph.AddTarget(utxo);
             g.Stats.AddOutputValue(utxo.Value);
 
-            g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
-            {
-                oldValue.AddCreatedIn(g.Block.Height);
-                return oldValue;
-            });
+            if (options.TrackTxo)
+                g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
+                {
+                    oldValue.AddCreatedIn(g.Block.Height);
+                    return oldValue;
+                });
         }
 
         g.Stats.AddInputsCount(tx.Inputs.Count);
