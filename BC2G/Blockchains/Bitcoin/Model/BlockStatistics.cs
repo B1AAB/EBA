@@ -200,6 +200,8 @@ public class BlockStatistics(Block block)
         var inValues = _inputValues.DefaultIfEmpty();
         var outValues = _outputValues.DefaultIfEmpty();
 
+        var spentTxo = _spentOutputsAge.DefaultIfEmpty();
+
         return string.Join(
             _delimiter,
             [
@@ -259,11 +261,11 @@ public class BlockStatistics(Block block)
                     _delimiter,
                     _edgeLabelValueSum.Select((v, i) => v.ToString()).ToArray()),
 
-                _spentOutputsAge.Max().ToString(),
-                _spentOutputsAge.Min().ToString(),
-                _spentOutputsAge.Average().ToString(),
-                Helpers.GetMedian(_spentOutputsAge).ToString(),
-                Helpers.GetVariance(_spentOutputsAge).ToString(),
+                spentTxo.Max().ToString(),
+                spentTxo.Min().ToString(),
+                spentTxo.Average().ToString(),
+                Helpers.GetMedian(spentTxo).ToString(),
+                Helpers.GetVariance(spentTxo).ToString(),
             ]);
     }
 

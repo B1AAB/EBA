@@ -227,6 +227,7 @@ internal class Cli
             addressesFilenameOption: addressesFilenameOption,
             statsFilenameOption: statsFilenameOption,
             maxBlocksInBufferOption: maxBlocksInBufferOption,
+            trackTxoOption: trackTxoOption,
             txoFilenameOption: txoFilenameOption));
 
         return cmd;
