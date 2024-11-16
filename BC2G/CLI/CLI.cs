@@ -178,7 +178,10 @@ internal class Cli
         var trackTxoOption = new Option<bool>(
             name: "--track-txo",
             description: "if set, writes the list of txo it sees to a text file, this file will need to further processed" +
-            "and it will also add to storage requirements.");
+            "and it will also add to storage requirements. " +
+            "Enabling this will slow down the traverse (e.g., from 7h to 11h for the first 500k blocks), and additional storage " +
+            "requirements (e.g., ~140GB for the first 500k blocks) that needs post-traverse processing. Aggregated stats about Txo " +
+            "are recoded in block stats, so set this flag only if you need the complete list of spent and unspent Tx outputs.");
 
         var txoFilenameOption = new Option<string>(
             name: "--txo-filename",
