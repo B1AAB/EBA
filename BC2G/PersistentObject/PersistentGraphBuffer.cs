@@ -4,7 +4,7 @@ namespace BC2G.PersistentObject;
 
 public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposable
 {
-    private readonly IGraphDb<BitcoinGraph> _graphDb;
+    private readonly IGraphDb<BitcoinGraph>? _graphDb;
     private readonly ILogger<PersistentGraphBuffer> _logger;
     private readonly PersistentGraphStatistics _pGraphStats;
     private readonly PersistentBlockAddressess _pBlockAddressess;
@@ -22,7 +22,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     private readonly ConcurrentDictionary<long, byte> _blocksHeightsInBuffer = new();
 
     public PersistentGraphBuffer(
-        IGraphDb<BitcoinGraph> graphDb,
+        IGraphDb<BitcoinGraph>? graphDb,
         ILogger<PersistentGraphBuffer> logger,
         ILogger<PersistentGraphStatistics> pgStatsLogger,
         ILogger<PersistentBlockAddressess> pgAddressessLogger,
@@ -65,10 +65,12 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         // on cancellation and recovery, but that can add additional complexities.
         var tasks = new List<Task>
         {
-            _graphDb.SerializeAsync(obj, default),
             _pGraphStats.SerializeAsync(obj.Stats.ToString(), default),
             _pBlockAddressess.SerializeAsync(obj.Stats.ToStringAddressess(), default),
         };
+
+        if (_graphDb != null)
+            tasks.Add(_graphDb.SerializeAsync(obj, default));
 
         if (_pTxoLifeCycleBuffer != null)
             tasks.Add(_pTxoLifeCycleBuffer.SerializeAsync(obj.Block.TxoLifecycle.Values, default));

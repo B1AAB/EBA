@@ -22,6 +22,7 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<int>? _maxBlocksInBufferOption;
     private readonly Option<string>? _txoFilenameOption;
     private readonly Option<bool>? _trackTxoOption;
+    private readonly Option<bool>? _skipGraphSerialization;
 
     public OptionsBinder(
         Option<int>? fromOption = null,
@@ -43,7 +44,8 @@ internal class OptionsBinder : BinderBase<Options>
         Option<string>? statsFilenameOption = null,
         Option<int>? maxBlocksInBufferOption = null,
         Option<string>? txoFilenameOption = null,
-        Option<bool>? trackTxoOption = null)
+        Option<bool>? trackTxoOption = null,
+        Option<bool>? skipGraphSerialization = null)
     {
         _fromOption = fromOption;
         _toOption = toOption;
@@ -65,6 +67,7 @@ internal class OptionsBinder : BinderBase<Options>
         _maxBlocksInBufferOption = maxBlocksInBufferOption;
         _txoFilenameOption = txoFilenameOption;
         _trackTxoOption = trackTxoOption;
+        _skipGraphSerialization = skipGraphSerialization;
     }
 
     protected override Options GetBoundValue(BindingContext c)
@@ -94,7 +97,8 @@ internal class OptionsBinder : BinderBase<Options>
             PerBlockAddressesFilename = GetValue(defs.Bitcoin.PerBlockAddressesFilename, _addressesFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
             MaxBlocksInBuffer = GetValue(defs.Bitcoin.MaxBlocksInBuffer, _maxBlocksInBufferOption, c),
             TxoFilename = GetValue(defs.Bitcoin.TxoFilename, _txoFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
-            TrackTxo = GetValue(defs.Bitcoin.TrackTxo, _trackTxoOption, c)
+            TrackTxo = GetValue(defs.Bitcoin.TrackTxo, _trackTxoOption, c),
+            SkipGraphSerialization = GetValue(defs.Bitcoin.SkipGraphSerialization, _skipGraphSerialization, c)
         };
 
         // TODO: add a warning hen txofilename is set hwile txoPeristenceStrategy is not set to persist to text file.

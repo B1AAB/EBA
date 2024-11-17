@@ -187,6 +187,11 @@ internal class Cli
             name: "--txo-filename",
             description: "Sets the filename used when the txo-persistence-policy is set to PersistToFileOnly.");
 
+        var skipGraphSerialization = new Option<bool>(
+            name: "--skip-graph-serialization",
+            description: "if provided, it skips writting per-block graphs to files. " +
+            "This option is used when other stats are intended to be collected from traverse (e.g., per-block summary stats)");
+
         var statsFilenameOption = new Option<string>(
             name: "--stats-filename",
             description: "Sets the filename to store statistics collected during the traverse.");
@@ -213,6 +218,7 @@ internal class Cli
             addressesFilenameOption,
             maxBlocksInBufferOption,
             txoFilenameOption,
+            skipGraphSerialization,
             trackTxoOption
         };
 
@@ -231,7 +237,8 @@ internal class Cli
             statsFilenameOption: statsFilenameOption,
             maxBlocksInBufferOption: maxBlocksInBufferOption,
             trackTxoOption: trackTxoOption,
-            txoFilenameOption: txoFilenameOption));
+            txoFilenameOption: txoFilenameOption,
+            skipGraphSerialization: skipGraphSerialization));
 
         return cmd;
     }

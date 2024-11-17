@@ -83,6 +83,8 @@ public class BitcoinOptions
 
     public bool TrackTxo { init; get; } = false;
 
+    public bool SkipGraphSerialization {  init; get; } = false;
+
     public ResilienceStrategyOptions HttpClientResilienceStrategy { init; get; } = new();
 
     public ResilienceStrategyOptions BitcoinAgentResilienceStrategy { init; get; } = new()
