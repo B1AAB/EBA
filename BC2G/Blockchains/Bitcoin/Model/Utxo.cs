@@ -14,6 +14,8 @@ public class Utxo
 
     public ScriptType ScriptType { set; get; }
 
+    public bool IsGenerated { set; get; }
+
     public ReadOnlyCollection<long> CreatedInBlockHeight
     {
         get { return _createdInBlockHeight.AsReadOnly(); }
@@ -37,7 +39,7 @@ public class Utxo
     }
 
     public Utxo(
-        string id, string? address, double value, ScriptType scriptType,
+        string id, string? address, double value, ScriptType scriptType, bool isGenerated,
         List<long>? createdInBlockHeights = null,
         List<long>? spentInBlockHeights = null)
     {
@@ -45,6 +47,7 @@ public class Utxo
         Address = address ?? Id;
         Value = value;
         ScriptType = scriptType;
+        IsGenerated = isGenerated;
 
         if ((createdInBlockHeights == null || createdInBlockHeights.Count == 0) &&
             (spentInBlockHeights == null || spentInBlockHeights.Count == 0))
@@ -58,19 +61,20 @@ public class Utxo
     }
 
     public Utxo(
-        string txid, int voutN, string? address, double value, ScriptType scriptType,
+        string txid, int voutN, string? address, double value, ScriptType scriptType, bool isGenerated,
         List<long>? createdInHeights = null, List<long>? spentInHeights = null) :
-        this(GetId(txid, voutN), address, value, scriptType, createdInHeights, spentInHeights)
+        this(GetId(txid, voutN), address, value, scriptType, isGenerated, createdInHeights, spentInHeights)
     { }
 
     public Utxo(
-        string id, string? address, double value, ScriptType scriptType,
+        string id, string? address, double value, ScriptType scriptType, bool isGenerated,
         long? createdInHeight = null, long? spentInHeight = null)
     {
         Id = id;
         Address = address ?? Id;
         Value = value;
         ScriptType = scriptType;
+        IsGenerated = isGenerated;
 
         if (createdInHeight != null)
             _createdInBlockHeight.Add((long)createdInHeight);
@@ -80,9 +84,9 @@ public class Utxo
     }
 
     public Utxo(
-        string txid, int voutN, string? address, double value, ScriptType scriptType,
+        string txid, int voutN, string? address, double value, ScriptType scriptType, bool isGenerated,
         long? createdInHeight = null, long? spentInHeight = null) :
-        this(GetId(txid, voutN), address, value, scriptType, createdInHeight, spentInHeight)
+        this(GetId(txid, voutN), address, value, scriptType, isGenerated, createdInHeight, spentInHeight)
     { }
 
     public static string GetId(string txid, int voutN)
@@ -116,7 +120,8 @@ public class Utxo
             "CreatedInBlockHeightsCount",
             "SpentInBlockHeights",
             "SpentInBlockHeightsCount",
-            "ScriptType");
+            "ScriptType",
+            "IsGenerated(0=No,1=Yes)");
     }
 
     public override string ToString()
@@ -129,6 +134,7 @@ public class Utxo
             CreatedInCount,
             string.Join(";", SpentInBlockHeight),
             SpentInCount,
-            ScriptType);
+            ScriptType,
+            IsGenerated ? "1" : "0");
     }
 }

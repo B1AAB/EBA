@@ -229,7 +229,7 @@ public class BitcoinAgent : IDisposable
 
             var utxo = new Utxo(
                 coinbaseTx.Txid, output.Index, address, output.Value, output.GetScriptType(),
-                createdInHeight: block.Height);
+                isGenerated: true, createdInHeight: block.Height);
 
             if (options.TrackTxo)
                 g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo,
@@ -291,6 +291,7 @@ public class BitcoinAgent : IDisposable
                     voutN: input.OutputIndex,
                     address: address,
                     value: input.PrevOut.Value,
+                    isGenerated: input.PrevOut.Generated,
                     scriptType: input.PrevOut.ConstructedOutput.GetScriptType(),
                     createdInHeight: input.PrevOut.Height,
                     spentInHeight: g.Block.Height);
@@ -348,7 +349,7 @@ public class BitcoinAgent : IDisposable
             var cIn = g.Block.Hash;
             var utxo = new Utxo(
                 tx.Txid, output.Index, address, output.Value, output.GetScriptType(),
-                createdInHeight: g.Block.Height);
+                isGenerated: false, createdInHeight: g.Block.Height);
 
             txGraph.AddTarget(utxo);
             g.Stats.AddOutputValue(utxo.Value);
