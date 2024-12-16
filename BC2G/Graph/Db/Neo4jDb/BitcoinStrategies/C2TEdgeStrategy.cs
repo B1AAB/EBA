@@ -4,13 +4,13 @@ public class C2TEdgeStrategy : BitcoinEdgeStrategy
 {
     /// Note that the ordre of the items in this array should 
     /// match those in the `ToCSV` method.
-    private readonly Property[] _properties = new Property[]
-    {
+    private readonly Property[] _properties =
+    [
         Props.T2TEdgeTargetTxid,
         Props.EdgeType,
         Props.EdgeValue,
         Props.Height
-    };
+    ];
 
     public override string GetCsvHeader()
     {

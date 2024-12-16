@@ -4,11 +4,11 @@ public class ScriptNodeStrategy : StrategyBase
 {
     public const string labels = "Script";
 
-    private readonly Property[] _properties = new Property[]
-    {
+    private readonly Property[] _properties =
+    [
         Props.ScriptAddress,
         Props.ScriptType
-    };
+    ];
 
     public override string GetCsvHeader()
     {

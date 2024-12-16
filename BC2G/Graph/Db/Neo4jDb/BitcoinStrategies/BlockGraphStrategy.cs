@@ -6,8 +6,8 @@ public class BlockGraphStrategy : StrategyBase
 
     /// Note that the ordre of the items in this array should 
     /// match those returned from the `GetCsv()` method.
-    private static readonly Property[] _properties = new Property[]
-    {
+    private static readonly Property[] _properties =
+    [
         Props.Height,
         Props.BlockMedianTime,
         Props.BlockConfirmations,
@@ -16,7 +16,7 @@ public class BlockGraphStrategy : StrategyBase
         Props.BlockSize,
         Props.BlockStrippedSize,
         Props.BlockWeight
-    };
+    ];
 
     public override string GetCsvHeader()
     {
@@ -36,8 +36,7 @@ public class BlockGraphStrategy : StrategyBase
         /// match those in the `_properties`. 
         return string.Join(
             Neo4jDb.csvDelimiter,
-            new string[]
-            {
+            [
                 g.Block.Height.ToString(),
                 g.Block.MedianTime.ToString(),
                 g.Block.Confirmations.ToString(),
@@ -46,7 +45,7 @@ public class BlockGraphStrategy : StrategyBase
                 g.Block.Size.ToString(),
                 g.Block.StrippedSize.ToString(),
                 g.Block.Weight.ToString(),
-            });
+            ]);
     }
 
     public override string GetQuery(string filename)

@@ -61,20 +61,20 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
 
     public static string[] GetFeaturesName()
     {
-        return new string[] {
+        return [
             nameof(Value),
             nameof(Type),
             nameof(Timestamp),
-            nameof(BlockHeight) };
+            nameof(BlockHeight) ];
     }
 
     public virtual double[] GetFeatures()
     {
-        return new double[] {
+        return [
             Value,
             (double)Type,
             Timestamp - BitcoinAgent.GenesisTimestamp,
-            BlockHeight };
+            BlockHeight ];
     }
 
     public string GetHashCode(bool ignoreValue)
