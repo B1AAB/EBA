@@ -105,7 +105,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         var rndRecords = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"MATCH ({rndNodeVar}:{ScriptNodeStrategy.labels})-[:{EdgeType.Transfer}]->() " +
+                $"MATCH ({rndNodeVar}:{ScriptNodeStrategy.labels})-[:{EdgeType.Transfers}]->() " +
                 $"WHERE rand() < {rootNodesSelectProb} " +
                 $"RETURN {rndNodeVar} LIMIT {nodesCount}");
 
@@ -162,7 +162,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         var samplingResult = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"MATCH path = (p: {ScriptNodeStrategy.labels} {{ Address: \"{rootScriptAddress}\"}}) -[:{EdgeType.Transfer} * 1..{maxHops}]->(p2: {ScriptNodeStrategy.labels}) " +
+                $"MATCH path = (p: {ScriptNodeStrategy.labels} {{ Address: \"{rootScriptAddress}\"}}) -[:{EdgeType.Transfers} * 1..{maxHops}]->(p2: {ScriptNodeStrategy.labels}) " +
                 "WITH p, [n in nodes(path) where n <> p | n] as nodes, relationships(path) as relationships " +
                 "WITH collect(distinct p) as root, size(nodes) as cnt, collect(nodes[-1]) as nodes, collect(distinct relationships[-1]) as relationships " +
                 "RETURN root, nodes, relationships");
@@ -213,7 +213,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         var randomNodes = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"Match (source:{ScriptNodeStrategy.labels})-[edge:{EdgeType.Transfer}]->(target:{ScriptNodeStrategy.labels}) " +
+                $"Match (source:{ScriptNodeStrategy.labels})-[edge:{EdgeType.Transfers}]->(target:{ScriptNodeStrategy.labels}) " +
                 $"where rand() < {edgeSelectProb} " +
                 $"return source, edge, target limit {edgeCount}");
 
@@ -299,7 +299,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             var result = await x.RunAsync(
                 $"CREATE INDEX GenerationEdgeIndex " +
                 $"IF NOT EXISTS " +
-                $"FOR ()-[r:{EdgeType.Generation}]->()" +
+                $"FOR ()-[r:{EdgeType.Mints}]->()" +
                 $"on (r.{Props.Height.Name})");
         });
         
@@ -308,7 +308,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             var result = await x.RunAsync(
                 $"CREATE INDEX TransferEdgeIndex " +
                 $"IF NOT EXISTS " +
-                $"FOR ()-[r:{EdgeType.Transfer}]->()" +
+                $"FOR ()-[r:{EdgeType.Transfers}]->()" +
                 $"on (r.{Props.Height.Name})");
         });
         

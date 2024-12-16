@@ -13,13 +13,13 @@ public class C2SEdge : S2SEdge
         get { return GraphComponentType.BitcoinC2S; }
     }
 
-    public new EdgeLabel Label { get; } = EdgeLabel.C2SGeneration;
+    public new EdgeLabel Label { get; } = EdgeLabel.C2SMinting;
 
     public C2SEdge(
         ScriptNode target, double value, uint timestamp, long blockHeight) :
         base(
             ScriptNode.GetCoinbaseNode(), target,
-            value, EdgeType.Generation, timestamp, blockHeight)
+            value, EdgeType.Mints, timestamp, blockHeight)
     { }
 
     public C2SEdge(

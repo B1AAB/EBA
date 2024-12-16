@@ -216,9 +216,9 @@ public class BitcoinAgent : IDisposable
         // exception if the block is not corrupt.
         var coinbaseTx = block.Transactions.First(x => x.IsCoinbase);
 
-        var generationTxGraph = new TransactionGraph(coinbaseTx);
+        var mintingTxGraph = new TransactionGraph(coinbaseTx);
 
-        var g = new BlockGraph(block, generationTxGraph, _logger);
+        var g = new BlockGraph(block, mintingTxGraph, _logger);
 
         var rewardAddresses = new List<ScriptNode>();
         foreach (var output in coinbaseTx.Outputs.Where(x => x.IsValueTransfer))
@@ -239,7 +239,7 @@ public class BitcoinAgent : IDisposable
                         return oldValue;
                     });
 
-            var node = generationTxGraph.AddTarget(utxo);
+            var node = mintingTxGraph.AddTarget(utxo);
             rewardAddresses.Add(node);
         }
 

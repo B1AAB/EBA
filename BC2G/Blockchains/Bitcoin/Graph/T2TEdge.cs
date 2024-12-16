@@ -15,7 +15,7 @@ public class T2TEdge : Edge<TxNode, TxNode>
         double value, EdgeType type, uint timestamp, long blockHeight) :
         base(source, target, value, type, timestamp, blockHeight)
     {
-        _label = Type == EdgeType.Transfer ? EdgeLabel.T2TTransfer : EdgeLabel.T2TFee;
+        _label = Type == EdgeType.Transfers ? EdgeLabel.T2TTransfer : EdgeLabel.T2TFee;
     }
 
     public static T2TEdge Update(T2TEdge oldEdge, T2TEdge newEdge)

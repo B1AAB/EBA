@@ -149,7 +149,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 
                 AddOrUpdateEdge(new S2SEdge(
                     s.Key, t.Key, v,
-                    EdgeType.Transfer,
+                    EdgeType.Transfers,
                     Timestamp,
                     Block.Height));
             }
@@ -171,7 +171,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                 continue;
 
             AddOrUpdateEdge(new T2TEdge(
-                new TxNode(tx.Key), txGraph.TxNode, tx.Value, EdgeType.Transfer, Timestamp, Block.Height));
+                new TxNode(tx.Key), txGraph.TxNode, tx.Value, EdgeType.Transfers, Timestamp, Block.Height));
         }
     }
 

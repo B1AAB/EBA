@@ -16,7 +16,7 @@ public class S2SEdge : Edge<ScriptNode, ScriptNode>
         uint timestamp, long blockHeight) :
         base(source, target, value, type, timestamp, blockHeight)
     {
-        _label = Type == EdgeType.Transfer ? EdgeLabel.S2STransfer : EdgeLabel.S2SFee;
+        _label = Type == EdgeType.Transfers ? EdgeLabel.S2STransfer : EdgeLabel.S2SFee;
     }
 
     public S2SEdge(
@@ -24,7 +24,7 @@ public class S2SEdge : Edge<ScriptNode, ScriptNode>
         IRelationship relationship) :
         base(source, target, relationship)
     {
-        _label = Type == EdgeType.Transfer ? EdgeLabel.S2STransfer : EdgeLabel.S2SFee;
+        _label = Type == EdgeType.Transfers ? EdgeLabel.S2STransfer : EdgeLabel.S2SFee;
     }
 
     public S2SEdge Update(double value)

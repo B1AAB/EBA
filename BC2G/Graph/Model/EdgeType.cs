@@ -2,8 +2,8 @@
 
 public enum EdgeLabel
 {
-    C2TGeneration = 0,
-    C2SGeneration = 1,
+    C2TMinting = 0,
+    C2SMinting = 1,
     T2TTransfer = 2,
     T2TFee = 3,
     S2STransfer = 4,
@@ -12,7 +12,7 @@ public enum EdgeLabel
 
 public enum EdgeType
 {
-    Generation = 0,
-    Transfer = 1,
+    Mints = 0,
+    Transfers = 1,
     Fee = 2
 }
