@@ -74,8 +74,8 @@ public class C2SEdgeStrategy : S2SEdgeStrategy
 
         builder.Append(
             $"MATCH ({s}:{BitcoinAgent.Coinbase}) " +
-            $"MATCH ({t}:{ScriptNodeStrategy.labels} {{{Props.EdgeTargetAddress.GetSetter()}}}) " +
-            $"MATCH ({b}:{BlockGraphStrategy.labels} {{{Props.Height.GetSetter()}}}) ");
+            $"MATCH ({t}:{ScriptNodeStrategy.Labels} {{{Props.EdgeTargetAddress.GetSetter()}}}) " +
+            $"MATCH ({b}:{BlockNodeStrategy.Labels} {{{Props.Height.GetSetter()}}}) ");
 
         builder.Append(GetCreatesEdgeQuery(b, t) + " ");
         builder.Append($"WITH {l}, {b}, {s}, {t} ");

@@ -79,9 +79,9 @@ public class T2TEdgeStrategy : BitcoinEdgeStrategy
 
         builder.Append(
             $"MATCH " +
-            $"({s}:{TxNodeStrategy.labels} {{{Props.T2TEdgeSourceTxid.GetSetter()}}}), " +
-            $"({t}:{TxNodeStrategy.labels} {{{Props.T2TEdgeTargetTxid.GetSetter()}}}), " +
-            $"({b}:{BlockGraphStrategy.labels} {{{Props.Height.GetSetter()}}}) ");
+            $"({s}:{TxNodeStrategy.Labels} {{{Props.T2TEdgeSourceTxid.GetSetter()}}}), " +
+            $"({t}:{TxNodeStrategy.Labels} {{{Props.T2TEdgeTargetTxid.GetSetter()}}}), " +
+            $"({b}:{BlockNodeStrategy.Labels} {{{Props.Height.GetSetter()}}}) ");
 
         builder.Append(
             GetRedeemsEdgeQuery(b, s) + " " +

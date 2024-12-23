@@ -2,10 +2,12 @@
 
 public class Node : INode
 {
-    public GraphComponentType ComponentType
+    public static GraphComponentType ComponentType
     {
         get { return GraphComponentType.Node; }
     }
+
+    public virtual GraphComponentType GetGraphComponentType() { return ComponentType; }
 
     public string Id { get; }
 
@@ -55,18 +57,16 @@ public class Node : INode
 
     public static string[] GetFeaturesName()
     {
-        return new string[] { nameof(ScriptType), nameof(InDegree), nameof(OutDegree) };
+        return [nameof(ScriptType), nameof(InDegree), nameof(OutDegree)];
     }
 
     public virtual double[] GetFeatures()
     {
-        return new double[] { InDegree, OutDegree };
+        return [InDegree, OutDegree];
     }
 
     public override string ToString()
     {
-        return string.Join(
-            Delimiter,
-            new string[] { Id });
+        return string.Join(Delimiter, [Id]);
     }
 }

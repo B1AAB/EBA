@@ -118,8 +118,8 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         var baseOutputDir = Path.Join(Options.WorkingDir, $"sampled_graphs_{Helpers.GetTimestamp()}");
 
         while (
-            sampledGraphsCounter < Options.GraphSample.Count
-            && ++attempts <= Options.GraphSample.MaxAttempts)
+            sampledGraphsCounter < Options.GraphSample.Count &&
+            ++attempts <= Options.GraphSample.MaxAttempts)
         {
             Logger.LogInformation(
                 "Sampling {n} graphs; remaining {r}; attempt {a}/{m}.",
@@ -135,7 +135,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             foreach (var rootNode in rndRootNodes)
             {
                 var baseDir = Path.Join(baseOutputDir, sampledGraphsCounter.ToString());
-                if (await TrySampleNeighborsAsync(driver, rootNode, baseDir))
+                if (await TrySampleNeighborsAsync(driver, rootNode, baseOutputDir, baseDir))
                 {
                     sampledGraphsCounter++;
                     Logger.LogInformation(
@@ -296,7 +296,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         IDriver driver, int edgeCount, double edgeSelectProb = 0.2);
 
     public abstract Task<bool> TrySampleNeighborsAsync(
-        IDriver driver, ScriptNode rootNode, string baseOutputDir);
+        IDriver driver, ScriptNode rootNode, string workingDir, string baseOutputDir);
 
     public void Dispose()
     {

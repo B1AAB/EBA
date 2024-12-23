@@ -74,8 +74,8 @@ public class C2TEdgeStrategy : BitcoinEdgeStrategy
 
         builder.Append(
             $"MATCH ({s}:{BitcoinAgent.Coinbase}) " +
-            $"MATCH ({t}:{TxNodeStrategy.labels} {{{Props.T2TEdgeTargetTxid.GetSetter()}}}) " +
-            $"MATCH ({b}:{BlockGraphStrategy.labels} {{{Props.Height.GetSetter()}}}) ");
+            $"MATCH ({t}:{TxNodeStrategy.Labels} {{{Props.T2TEdgeTargetTxid.GetSetter()}}}) " +
+            $"MATCH ({b}:{BlockNodeStrategy.Labels} {{{Props.Height.GetSetter()}}}) ");
 
         builder.Append(GetCreatesEdgeQuery(b, t) + " ");
         builder.Append($"WITH {l}, {b}, {s}, {t} ");

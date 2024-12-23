@@ -2,14 +2,15 @@
 
 public enum GraphSampleMode
 {
-    GraphRndEdgePair, B, C
+    SubGraphOnly,
+    GraphRndEdgePair
 }
 
 public class GraphSampleOptions
 {
     public int Count { init; get; }
     public int Hops { init; get; }
-    public GraphSampleMode Mode { init; get; } = GraphSampleMode.GraphRndEdgePair;
+    public GraphSampleMode Mode { init; get; } = GraphSampleMode.SubGraphOnly;
     public int MinNodeCount { init; get; } = 3;
     public int MaxNodeCount { init; get; } = 200;
     public int MinEdgeCount { init; get; } = 3;

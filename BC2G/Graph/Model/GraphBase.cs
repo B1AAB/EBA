@@ -8,7 +8,8 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
 {
     private bool _disposed = false;
 
-    public GraphComponentType ComponentType { get { return GraphComponentType.Graph; } }
+    public static GraphComponentType ComponentType { get { return GraphComponentType.Graph; } }
+    public GraphComponentType GetGraphComponentType() => ComponentType;
 
     public int NodeCount
     {
@@ -60,6 +61,38 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
     public ImmutableDictionary<GraphComponentType, ICollection<IEdge<INode, INode>>> GetEdges()
     {
         return _edges.ToImmutableDictionary(x => x.Key, x => x.Value.Values);
+    }
+
+    public void GetNode(string id, out INode node, out GraphComponentType graphComponentType)
+    {
+        foreach (var nodeTypes in _nodes)
+        {
+            nodeTypes.Value.TryGetValue(id, out var n);
+            if (n != null)
+            {
+                node = n;
+                graphComponentType = nodeTypes.Key;
+                return;
+            }
+        }
+
+        throw new NotImplementedException();
+    }
+
+    public void GetEdge(string id, out IEdge<INode, INode> edge, out GraphComponentType graphComponentType)
+    {
+        foreach (var edgeTypes in _edges)
+        {
+            edgeTypes.Value.TryGetValue(id, out var e);
+            if (e != null)
+            {
+                edge = e;
+                graphComponentType = edgeTypes.Key;
+                return;
+            }
+        }
+
+        throw new NotImplementedException();
     }
 
     public bool TryAddNode<T>(GraphComponentType type, T node) where T : INode
@@ -137,40 +170,78 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
         _labels.Add(label);
     }
 
+    public void Serialize(
+        string workingDir,
+        string baseOutputDir,
+        string outputDir, 
+        string edgesFilename = "edges.tsv",
+        string nodeFeaturesFilename = "node_features.tsv",
+        string edgeFeaturesFilename = "edge_features.tsv",
+        string pairIndicesFilename = "pair_indices.tsv",
+        string labelsFilename = "labels.tsv")
+    {
+        SerializeFeatures(outputDir, nodeFeaturesFilename, edgeFeaturesFilename, pairIndicesFilename, labelsFilename);
+        SerializeEdges(workingDir, baseOutputDir, edgesFilename);
+    }
+
+    public void SerializeEdges(string workingDir, string baseOutputDir, string edgesFilename = "edges.tsv")
+    {
+        Directory.CreateDirectory(baseOutputDir);
+        var header = new[] { "SourceId", "TargetId", "SourceNodeType", "TargetNodeType", "EdgeValue", "EdgeType" };
+
+        var edges = _edges.Values.SelectMany(ids => ids.Values).Select(
+            edges => new[]
+            {
+                edges.Source.Id,
+                edges.Target.Id,
+                edges.Source.GetGraphComponentType().ToString(),
+                edges.Target.GetGraphComponentType().ToString(),
+                edges.Value.ToString(),
+                edges.Type.ToString()
+            });
+
+        Helpers.CsvSerialize(edges, Path.Combine(workingDir, edgesFilename), header, append: true);
+        Helpers.CsvSerialize(edges, Path.Combine(baseOutputDir, edgesFilename), header);
+    }
+
     public GraphFeatures GetFeatures()
     {
         return new GraphFeatures(this);
     }
 
-    public void WriteFeatures(
+    public void SerializeFeatures(
         string outputDir,
         string nodeFeaturesFilename = "node_features.tsv",
         string edgeFeaturesFilename = "edge_features.tsv",
         string pairIndicesFilename = "pair_indices.tsv",
         string labelsFilename = "labels.tsv")
     {
-        var x = GetFeatures();
         Directory.CreateDirectory(outputDir);
 
-        Helpers.CsvSerialize(
-            x.NodeFeatures,
-            Path.Join(outputDir, nodeFeaturesFilename),
-            x.NodeFeaturesHeader);
+        var gFeatures = GetFeatures();
+
+        foreach (var nodeType in gFeatures.NodeFeatures)
+        {
+            Helpers.CsvSerialize(
+                nodeType.Value,
+                Path.Join(outputDir, nodeType.Key + nodeFeaturesFilename),
+                gFeatures.NodeFeaturesHeader[nodeType.Key]);
+        }
 
         Helpers.CsvSerialize(
-            x.EdgeFeatures,
+            gFeatures.EdgeFeatures,
             Path.Join(outputDir, edgeFeaturesFilename),
-            x.EdgeFeaturesHeader);
+            gFeatures.EdgeFeaturesHeader);
 
         Helpers.CsvSerialize(
-            x.PairIndices,
+            gFeatures.PairIndices,
             Path.Join(outputDir, pairIndicesFilename),
-            x.PairIndicesHeader);
+            gFeatures.PairIndicesHeader);
 
         Helpers.CsvSerialize(
-            x.Labels,
+            gFeatures.Labels,
             Path.Combine(outputDir, labelsFilename),
-            x.LabelsHeader);
+            gFeatures.LabelsHeader);
     }
 
     public bool Equals(GraphBase? other)

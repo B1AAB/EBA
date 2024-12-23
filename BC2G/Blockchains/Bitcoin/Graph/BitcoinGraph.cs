@@ -1,4 +1,8 @@
-﻿namespace BC2G.Blockchains.Bitcoin.Graph;
+﻿using BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
+
+using INode = BC2G.Graph.Model.INode;
+
+namespace BC2G.Blockchains.Bitcoin.Graph;
 
 // TODO: can the following AddOrUpdateEdge methods made generic and simplified?!
 
@@ -65,15 +69,38 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
             S2SEdge.ComponentType);
     }
 
-    public S2SEdge GetOrAddEdge(IRelationship e)
+    public INode GetOrAddNode(Neo4j.Driver.INode node)
     {
-        var source = GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(e.StartNodeElementId));
-        var target = GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(e.EndNodeElementId));
+        if (node.Labels.Contains(ScriptNodeStrategy.Labels))
+        {
+            return GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(node));
+        }
+        else if (node.Labels.Contains(TxNodeStrategy.Labels))
+        {
+            return GetOrAddNode(GraphComponentType.BitcoinTxNode, new TxNode(node));
+        }
+        else if (node.Labels.Contains(BlockNodeStrategy.Labels))
+        {
+            return GetOrAddNode(GraphComponentType.BitcoinBlockNode, new BlockNode(node));
+        }
+        else if (node.Labels.Contains(BitcoinAgent.Coinbase))
+        {
+            throw new NotImplementedException();
+        }
+        else
+        {
+            throw new NotImplementedException();
+        }
+    }
 
-        var edge = GetOrAddEdge(GraphComponentType.BitcoinS2S, new S2SEdge(source, target, e));
+    public Edge<INode, INode> GetOrAddEdge(IRelationship e)
+    {
+        GetNode(e.StartNodeElementId, out var sourceNode, out var _);
+        GetNode(e.EndNodeElementId, out var targetNode, out var _);
 
-        source.AddOutgoingEdge(edge);
-        target.AddIncomingEdge(edge);
+        var edge = GetOrAddEdge(GraphComponentType.Edge, new Edge<INode, INode>(sourceNode, targetNode, e));
+        sourceNode.AddOutgoingEdge(edge);
+        targetNode.AddIncomingEdge(edge);
 
         return edge;
     }

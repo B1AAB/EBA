@@ -14,5 +14,8 @@ public enum EdgeType
 {
     Mints = 0,
     Transfers = 1,
-    Fee = 2
+    Fee = 2,
+    Redeems = 3,
+    Confirms = 4,
+    Credits = 5
 }

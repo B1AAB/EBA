@@ -82,9 +82,9 @@ public class S2SEdgeStrategy : BitcoinEdgeStrategy
 
         builder.Append(
             $"MATCH " +
-            $"({s}:{ScriptNodeStrategy.labels} {{{Props.EdgeSourceAddress.GetSetter()}}}), " +
-            $"({t}:{ScriptNodeStrategy.labels} {{{Props.EdgeTargetAddress.GetSetter()}}}), " +
-            $"({b}:{BlockGraphStrategy.labels} {{{Props.Height.GetSetter()}}}) ");
+            $"({s}:{ScriptNodeStrategy.Labels} {{{Props.EdgeSourceAddress.GetSetter()}}}), " +
+            $"({t}:{ScriptNodeStrategy.Labels} {{{Props.EdgeTargetAddress.GetSetter()}}}), " +
+            $"({b}:{BlockNodeStrategy.Labels} {{{Props.Height.GetSetter()}}}) ");
 
         builder.Append(GetRedeemsEdgeQuery(b, s) + " ");
         builder.Append(GetCreatesEdgeQuery(b, t) + " ");

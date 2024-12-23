@@ -2,7 +2,7 @@
 
 public class TxNodeStrategy : StrategyBase
 {
-    public const string labels = "Tx";
+    public const string Labels = "Tx";
 
     private readonly Property[] _properties =
     [
@@ -59,7 +59,7 @@ public class TxNodeStrategy : StrategyBase
         builder.Append(
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
             $"FIELDTERMINATOR '{Neo4jDb.csvDelimiter}' " +
-            $"MERGE ({node}:{labels} {{{Props.Txid.GetSetter()}}}) ");
+            $"MERGE ({node}:{Labels} {{{Props.Txid.GetSetter()}}}) ");
 
         builder.Append("SET ");
         builder.Append(string.Join(

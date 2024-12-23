@@ -2,9 +2,13 @@
 
 public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
 {
-    public new static GraphComponentType ComponentType
+    public static GraphComponentType ComponentType
     {
         get { return GraphComponentType.BitcoinScriptNode; }
+    }
+    public override GraphComponentType GetGraphComponentType()
+    {
+        return GraphComponentType.BitcoinScriptNode;
     }
 
     public string Address { get; } = BitcoinAgent.Coinbase;

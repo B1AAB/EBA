@@ -48,10 +48,12 @@ public enum GraphComponentType
     BitcoinT2T = 8,
     BitcoinS2S = 9,
     BitcoinTxNode = 10,
-    BitcoinScriptNode = 11
+    BitcoinScriptNode = 11,
+    BitcoinBlockNode = 12
 }
 
 public interface IGraphComponent
 {
-    public GraphComponentType ComponentType { get; }
+    public static GraphComponentType ComponentType { get; }
+    public GraphComponentType GetGraphComponentType();
 }

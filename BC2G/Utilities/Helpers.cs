@@ -100,10 +100,15 @@ internal class Helpers
         IEnumerable<T[]> data,
         string filename,
         IEnumerable<string>? header = null,
-        char delimiter = '\t')
+        char delimiter = '\t',
+        bool append = false)
     {
-        using var writter = new StreamWriter(filename);
-        if (header != null)
+        var addHeader = header != null ? true : false;
+        if (File.Exists(filename) && append)
+            addHeader = false;
+
+        using var writter = new StreamWriter(filename, append: append);
+        if (addHeader)
             writter.WriteLine(string.Join(delimiter, header));
         foreach (var item in data)
             writter.WriteLine(string.Join(delimiter, item));

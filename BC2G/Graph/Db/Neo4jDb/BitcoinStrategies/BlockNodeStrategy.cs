@@ -1,8 +1,8 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
 
-public class BlockGraphStrategy : StrategyBase
+public class BlockNodeStrategy : StrategyBase
 {
-    public const string labels = "Block";
+    public const string Labels = "Block";
 
     /// Note that the ordre of the items in this array should 
     /// match those returned from the `GetCsv()` method.
@@ -79,7 +79,7 @@ public class BlockGraphStrategy : StrategyBase
         builder.Append(
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
             $"FIELDTERMINATOR '{Neo4jDb.csvDelimiter}' " +
-            $"MERGE ({block}:{labels} " +
+            $"MERGE ({block}:{Labels} " +
             $"{{{Props.Height.GetSetter()}}}) ");
 
         builder.Append("SET ");

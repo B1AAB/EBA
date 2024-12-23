@@ -105,7 +105,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         var rndRecords = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"MATCH ({rndNodeVar}:{ScriptNodeStrategy.labels})-[:{EdgeType.Transfers}]->() " +
+                $"MATCH ({rndNodeVar}:{ScriptNodeStrategy.Labels})-[:{EdgeType.Transfers}]->() " +
                 $"WHERE rand() < {rootNodesSelectProb} " +
                 $"RETURN {rndNodeVar} LIMIT {nodesCount}");
 
@@ -120,7 +120,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
     }
 
     public override async Task<bool> TrySampleNeighborsAsync(
-        IDriver driver, ScriptNode rootNode, string baseOutputDir)
+        IDriver driver, ScriptNode rootNode, string workingDir, string baseOutputDir)
     {
         var graph = await GetNeighborsAsync(driver, rootNode.Address, Options.GraphSample.Hops);
 
@@ -145,11 +145,11 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 return false;
 
             rndGraph.AddLabel(1);
-            rndGraph.WriteFeatures(Path.Join(baseOutputDir, "random_edges"));
+            rndGraph.Serialize(workingDir: workingDir, baseOutputDir: baseOutputDir, outputDir: Path.Join(baseOutputDir, "random_edges"));
         }
 
         graph.AddLabel(0);
-        graph.WriteFeatures(Path.Join(baseOutputDir, "graph"));
+        graph.Serialize(workingDir: workingDir, baseOutputDir: baseOutputDir, outputDir: Path.Join(baseOutputDir, "graph"));
 
         return true;
     }
@@ -162,7 +162,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         var samplingResult = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"MATCH path = (p: {ScriptNodeStrategy.labels} {{ Address: \"{rootScriptAddress}\"}}) -[:{EdgeType.Transfers} * 1..{maxHops}]->(p2: {ScriptNodeStrategy.labels}) " +
+                $"MATCH path = (p: {ScriptNodeStrategy.Labels} {{ Address: \"{rootScriptAddress}\"}}) -[* 1..{maxHops}]->(p2) " +
                 "WITH p, [n in nodes(path) where n <> p | n] as nodes, relationships(path) as relationships " +
                 "WITH collect(distinct p) as root, size(nodes) as cnt, collect(nodes[-1]) as nodes, collect(distinct relationships[-1]) as relationships " +
                 "RETURN root, nodes, relationships");
@@ -195,7 +195,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             // adding edge, because `nodes` has all the node properties for each 
             // node, but `relationships` only contain their IDs.
             foreach (var node in hop.Values["nodes"].As<List<Neo4j.Driver.INode>>())
-                g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(node));
+                g.GetOrAddNode(node);
 
             foreach (var relationship in hop.Values["relationships"].As<List<IRelationship>>())
                 g.GetOrAddEdge(relationship);
@@ -213,7 +213,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         var randomNodes = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"Match (source:{ScriptNodeStrategy.labels})-[edge:{EdgeType.Transfers}]->(target:{ScriptNodeStrategy.labels}) " +
+                $"Match (source:{ScriptNodeStrategy.Labels})-[edge:{EdgeType.Transfers}]->(target:{ScriptNodeStrategy.Labels}) " +
                 $"where rand() < {edgeSelectProb} " +
                 $"return source, edge, target limit {edgeCount}");
 
@@ -272,7 +272,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             var result = await x.RunAsync(
                 $"CREATE INDEX ScriptAddressIndex " +
                 $"IF NOT EXISTS " +
-                $"FOR (n:{ScriptNodeStrategy.labels}) " +
+                $"FOR (n:{ScriptNodeStrategy.Labels}) " +
                 $"ON (n.{Props.ScriptAddress.Name})");
         });
 
@@ -281,7 +281,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             var result = await x.RunAsync(
                 $"CREATE INDEX TxidIndex " +
                 $"IF NOT EXISTS " +
-                $"FOR (n:{TxNodeStrategy.labels}) " +
+                $"FOR (n:{TxNodeStrategy.Labels}) " +
                 $"ON (n.{Props.Txid.Name})");
         });
 
@@ -290,7 +290,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             var result = await x.RunAsync(
                 $"CREATE INDEX BlockHeightIndex " +
                 $"IF NOT EXISTS " +
-                $"FOR (block:{BlockGraphStrategy.labels}) " +
+                $"FOR (block:{BlockNodeStrategy.Labels}) " +
                 $"ON (block.{Props.Height.Name})");
         });
         

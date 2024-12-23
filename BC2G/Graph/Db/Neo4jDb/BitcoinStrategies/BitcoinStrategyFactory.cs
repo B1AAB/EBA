@@ -10,7 +10,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
     {
         _strategies = new()
         {
-            {GraphComponentType.BitcoinGraph, new BlockGraphStrategy()},
+            {GraphComponentType.BitcoinGraph, new BlockNodeStrategy()},
             {GraphComponentType.BitcoinScriptNode, new ScriptNodeStrategy()},
             {GraphComponentType.BitcoinTxNode, new TxNodeStrategy()},
             {GraphComponentType.BitcoinC2T,  new C2TEdgeStrategy()},

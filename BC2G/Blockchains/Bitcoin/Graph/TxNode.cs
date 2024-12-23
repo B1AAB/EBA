@@ -2,10 +2,8 @@
 
 public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 {
-    public static new GraphComponentType ComponentType
-    {
-        get { return GraphComponentType.BitcoinTxNode; }
-    }
+    public new static GraphComponentType ComponentType { get { return GraphComponentType.BitcoinTxNode; } }
+    public override GraphComponentType GetGraphComponentType() { return ComponentType; }
 
     public string Txid { get; }
     public ulong? Version { get; }
@@ -48,6 +46,20 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         LockTime = lockTime;
     }
 
+    // TODO: all the following double-casting is because of the type
+    // normalization happens when bulk-loading data into neo4j.
+    // Find a better solution.
+
+    public TxNode(Neo4j.Driver.INode node) :
+        this(
+            txid: node.ElementId,
+            version: ulong.Parse((string)node.Properties[Props.TxVersion.Name]),
+            size: (int)(long)node.Properties[Props.TxSize.Name],
+            vSize: (int)(long)node.Properties[Props.TxVSize.Name],
+            weight: (int)(long)node.Properties[Props.TxWeight.Name],
+            lockTime: (long)node.Properties[Props.TxLockTime.Name])
+    { }
+
     public TxNode(Transaction tx) :
         this(tx.Txid, tx.Version, tx.Size, tx.VSize, tx.Weight, tx.LockTime)
     { }
@@ -59,12 +71,17 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 
     public static new string[] GetFeaturesName()
     {
-        throw new NotImplementedException();
+        return
+            new string[] { nameof(Size), nameof(Weight), nameof(LockTime) }
+            .Concat(Node.GetFeaturesName()).ToArray();
     }
 
     public override double[] GetFeatures()
     {
-        throw new NotImplementedException();
+        // TODO: fix null values and avoid casting
+        return
+            new double[] { (double)Size, (double)Weight, (double)LockTime }
+            .Concat(base.GetFeatures()).ToArray();
     }
 
     public int CompareTo(TxNode? other)
