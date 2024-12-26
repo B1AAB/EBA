@@ -77,7 +77,7 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
         }
         else if (node.Labels.Contains(TxNodeStrategy.Labels))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinTxNode, new TxNode(node));
+            return GetOrAddNode(GraphComponentType.BitcoinTxNode, TxNode.CreateTxNode(node));
         }
         else if (node.Labels.Contains(BlockNodeStrategy.Labels))
         {
@@ -85,11 +85,11 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
         }
         else if (node.Labels.Contains(BitcoinAgent.Coinbase))
         {
-            throw new NotImplementedException();
+            return GetOrAddNode(GraphComponentType.BitcoinCoinbaseNode, new CoinbaseNode(node));
         }
         else
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException($"Unexpected node type, labels: {string.Join(',', node.Labels)}");
         }
     }
 

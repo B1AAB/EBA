@@ -33,7 +33,8 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
     }
 
     public TxNode(
-        string txid, ulong? version,
+        string txid, 
+        ulong? version,
         int? size, int? vSize, int? weight,
         long? lockTime) :
         base(txid)
@@ -46,23 +47,41 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         LockTime = lockTime;
     }
 
-    // TODO: all the following double-casting is because of the type
-    // normalization happens when bulk-loading data into neo4j.
-    // Find a better solution.
-
-    public TxNode(Neo4j.Driver.INode node) :
-        this(
-            txid: node.ElementId,
-            version: ulong.Parse((string)node.Properties[Props.TxVersion.Name]),
-            size: (int)(long)node.Properties[Props.TxSize.Name],
-            vSize: (int)(long)node.Properties[Props.TxVSize.Name],
-            weight: (int)(long)node.Properties[Props.TxWeight.Name],
-            lockTime: (long)node.Properties[Props.TxLockTime.Name])
-    { }
-
     public TxNode(Transaction tx) :
-        this(tx.Txid, tx.Version, tx.Size, tx.VSize, tx.Weight, tx.LockTime)
+        this(tx.Txid, 
+            tx.Version, 
+            tx.Size, tx.VSize, tx.Weight, tx.LockTime)
     { }
+
+    public static TxNode CreateTxNode(Neo4j.Driver.INode node)
+    {
+        // TODO: all the following double-casting is because of the type
+        // normalization happens when bulk-loading data into neo4j.
+        // Find a better solution.
+
+        node.Properties.TryGetValue(Props.TxVersion.Name, out var v);
+        ulong? version = v == null ? null : ulong.Parse((string)v);
+
+        node.Properties.TryGetValue(Props.TxSize.Name, out var s);
+        int? size = s == null ? null : (int)(long)s;
+
+        node.Properties.TryGetValue(Props.TxVSize.Name, out var vs);
+        int? vSize = vs == null ? null : (int)(long)vs;
+
+        node.Properties.TryGetValue(Props.TxWeight.Name, out var w);
+        int? weight = w == null ? null : (int)(long)w;
+
+        node.Properties.TryGetValue(Props.TxLockTime.Name, out var t);
+        long? lockTime = t == null ? null : (long)t;
+
+        return new TxNode(
+            txid: node.ElementId,
+            version: version,
+            size: size,
+            vSize: vSize,
+            weight: weight,
+            lockTime: lockTime);
+    }
 
     public static TxNode GetCoinbaseNode()
     {
@@ -80,7 +99,12 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
     {
         // TODO: fix null values and avoid casting
         return
-            new double[] { (double)Size, (double)Weight, (double)LockTime }
+            new double[]
+            {
+                Size == null ? double.NaN : (double)Size,
+                Weight == null ? double.NaN :(double)Weight,
+                LockTime == null ? double.NaN : (double)LockTime
+            }
             .Concat(base.GetFeatures()).ToArray();
     }
 

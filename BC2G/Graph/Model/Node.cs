@@ -14,8 +14,8 @@ public class Node : INode
     public int InDegree { get { return IncomingEdges.Count; } }
     public int OutDegree { get { return OutgoingEdges.Count; } }
 
-    public List<IEdge<INode, INode>> IncomingEdges { get; } = new();
-    public List<IEdge<INode, INode>> OutgoingEdges { get; } = new();
+    public List<IEdge<INode, INode>> IncomingEdges { get; } = [];
+    public List<IEdge<INode, INode>> OutgoingEdges { get; } = [];
 
     public static string Header
     {

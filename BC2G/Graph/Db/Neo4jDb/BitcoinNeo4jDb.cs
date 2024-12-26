@@ -105,9 +105,12 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         var rndRecords = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"MATCH ({rndNodeVar}:{ScriptNodeStrategy.Labels})-[:{EdgeType.Transfers}]->() " +
+                $"MATCH ({rndNodeVar}:{ScriptNodeStrategy.Labels}) " +
                 $"WHERE rand() < {rootNodesSelectProb} " +
-                $"RETURN {rndNodeVar} LIMIT {nodesCount}");
+                $"WITH {rndNodeVar} " +
+                $"ORDER BY rand() " +
+                $"LIMIT {nodesCount} " +
+                $"RETURN {rndNodeVar}");
 
             return await result.ToListAsync();
         });
@@ -130,7 +133,16 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             maxNodeCount: Options.GraphSample.MaxNodeCount,
             minEdgeCount: Options.GraphSample.MinEdgeCount,
             maxEdgeCount: Options.GraphSample.MaxEdgeCount))
+        {
+            Logger.LogInformation(
+                "The sampled graph does not match required charactersitics: " +
+                "MinNodeCount: {a}, MaxNodeCount: {b}, MinEdgeCount: {c}, MaxEdgeCount: {d}",
+                Options.GraphSample.MinNodeCount,
+                Options.GraphSample.MaxNodeCount,
+                Options.GraphSample.MinEdgeCount,
+                Options.GraphSample.MaxEdgeCount);
             return false;
+        }
 
         if (Options.GraphSample.Mode == GraphSampleMode.GraphRndEdgePair)
         {
@@ -151,21 +163,57 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         graph.AddLabel(0);
         graph.Serialize(workingDir: workingDir, baseOutputDir: baseOutputDir, outputDir: Path.Join(baseOutputDir, "graph"));
 
+        Logger.LogInformation("Serialized the graph.");
+
         return true;
     }
 
     public override async Task<GraphBase> GetNeighborsAsync(
         IDriver driver, string rootScriptAddress, int maxHops)
     {
+        // TODO: the whole method of using 'Coinbase' to alter the functionality if this method seems "hacky"
+        // need to find a better solution.
+
+        Logger.LogInformation("Getting neighbors of random node {node}, at {hop} hop distance.", rootScriptAddress, maxHops);
+
         using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+
+        var qBuilder = new StringBuilder();
+        if (rootScriptAddress == BitcoinAgent.Coinbase)
+            qBuilder.Append($"MATCH (root:{BitcoinAgent.Coinbase}) ");
+        else
+            qBuilder.Append($"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{rootScriptAddress}\" }}) ");
+
+        qBuilder.Append($"CALL apoc.path.spanningTree(root, {{");
+        qBuilder.Append($"maxLevel: {maxHops}, ");
+        qBuilder.Append($"limit: {Options.GraphSample.MaxEdgesFetchFromNeighbor}, ");
+        
+        if (Options.GraphSample.PathSearchAlgorith == PathSearchAlgorith.BFS)
+            qBuilder.Append($"bfs: true, ");
+        else
+            qBuilder.Append($"bfs: false, ");
+
+        qBuilder.Append($"labelFilter: '{ScriptNodeStrategy.Labels}'");
+        //$"    relationshipFilter: \">{EdgeType.Transfers}\"" +
+        qBuilder.Append($"}}) ");
+        qBuilder.Append($"YIELD path ");
+        qBuilder.Append($"WITH root, ");
+        qBuilder.Append($"nodes(path) AS pathNodes, ");
+        qBuilder.Append($"relationships(path) AS pathRels ");
+        qBuilder.Append($"LIMIT {Options.GraphSample.MaxNodeFetchFromNeighbor} ");
+        qBuilder.Append($"RETURN [root] AS root, [n IN pathNodes WHERE n <> root] AS nodes, pathRels AS relationships");
+
+        var q = qBuilder.ToString();
 
         var samplingResult = await session.ExecuteReadAsync(async x =>
         {
-            var result = await x.RunAsync(
-                $"MATCH path = (p: {ScriptNodeStrategy.Labels} {{ Address: \"{rootScriptAddress}\"}}) -[* 1..{maxHops}]->(p2) " +
-                "WITH p, [n in nodes(path) where n <> p | n] as nodes, relationships(path) as relationships " +
-                "WITH collect(distinct p) as root, size(nodes) as cnt, collect(nodes[-1]) as nodes, collect(distinct relationships[-1]) as relationships " +
-                "RETURN root, nodes, relationships");
+            //var result = await x.RunAsync(
+            //    $"MATCH path = (p: {ScriptNodeStrategy.Labels} {{ Address: \"{rootScriptAddress}\"}}) -[* 1..{maxHops}]->(p2) " +
+            //    "WITH p, [n in nodes(path) where n <> p | n] as nodes, relationships(path) as relationships " +
+            //    "WITH collect(distinct p) as root, size(nodes) as cnt, collect(nodes[-1]) as nodes, collect(distinct relationships[-1]) as relationships " +
+            //    "RETURN root, nodes, relationships");
+
+            var result = await x.RunAsync(q);
 
             // Note:
             // Neo4j has apoc.neighbors.byhop method that returns
@@ -181,11 +229,19 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             return await result.ToListAsync();
         });
 
+        Logger.LogInformation("Retrieved neighbors.");
+        Logger.LogInformation("Building a graph from the neighbors.");
+
         var g = new BitcoinGraph();
 
         foreach (var hop in samplingResult)
         {
-            var root = new ScriptNode(hop.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
+            Node root;
+            if (rootScriptAddress == BitcoinAgent.Coinbase)
+                root = new CoinbaseNode(hop.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
+            else
+                root = new ScriptNode(hop.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
+
             if (root is null)
                 continue;
 
@@ -200,6 +256,8 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             foreach (var relationship in hop.Values["relationships"].As<List<IRelationship>>())
                 g.GetOrAddEdge(relationship);
         }
+
+        Logger.LogInformation("Build graph from the neighbors; {nodeCount} nodes and {edgeCount} edges.", g.NodeCount, g.EdgeCount);
 
         return g;
     }

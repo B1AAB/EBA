@@ -19,13 +19,14 @@ public class GraphFeatures
     public GraphFeatures(GraphBase graph)
     {
         var nodeFeatures = new Dictionary<GraphComponentType, List<double[]>>();
-        foreach (var nodeType in new[] { GraphComponentType.BitcoinBlockNode, GraphComponentType.BitcoinTxNode, GraphComponentType.BitcoinScriptNode })
+        foreach (var nodeType in new[] { GraphComponentType.BitcoinBlockNode, GraphComponentType.BitcoinTxNode, GraphComponentType.BitcoinScriptNode, GraphComponentType.BitcoinCoinbaseNode })
             nodeFeatures.Add(nodeType, []);
         
         NodeFeaturesHeader = [];
         NodeFeaturesHeader.Add(GraphComponentType.BitcoinBlockNode, BlockNode.GetFeaturesName());
         NodeFeaturesHeader.Add(GraphComponentType.BitcoinTxNode, TxNode.GetFeaturesName());
         NodeFeaturesHeader.Add(GraphComponentType.BitcoinScriptNode, ScriptNode.GetFeaturesName());
+        NodeFeaturesHeader.Add(GraphComponentType.BitcoinCoinbaseNode, CoinbaseNode.GetFeaturesName());
 
         var nodeIdToIdx = new Dictionary<string, int>();
         foreach (var node in graph.Nodes)

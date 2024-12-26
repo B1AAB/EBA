@@ -244,6 +244,60 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
             gFeatures.LabelsHeader);
     }
 
+
+    public void Downsample(int maxNodesCount, int maxEdgesCount, int? seed = null)
+    {
+        // TODO: this sampling is not ideal;
+        // (1) it is not the fastest;
+        // (2) it may lead to having fewer nodes/edges than requested;
+        // (3) most importantly, it removes nodes/edges independent of
+        //     "path" so it may lead to turning a graph into more than one subgraphs.
+        //
+        // For a better sampling algorithm, use "Reservoir sampling". Ref: 
+        // - https://stackoverflow.com/a/48089/947889
+        // - https://en.wikipedia.org/wiki/Reservoir_sampling
+        //
+
+        Random rnd = seed == null ? new Random() : new Random((int)seed);
+        var nodesToRemoveCount = NodeCount - maxNodesCount;
+        if (nodesToRemoveCount > 0)
+        {
+            var allNodesIds = _nodes.SelectMany(x => x.Value.Select(y => new object[] { x.Key, y.Key })).ToList();
+            var nodesToRemove = allNodesIds.OrderBy(x => rnd.Next()).Take(nodesToRemoveCount);
+
+            foreach (var nodeToRemove in nodesToRemove)
+            {
+                _nodes[(GraphComponentType)nodeToRemove[0]].Remove((string)nodeToRemove[1], out var removedNode);
+
+                if (removedNode != null)
+                {
+                    foreach (var e in removedNode.IncomingEdges)
+                        _edges[e.GetGraphComponentType()].Remove(e.Id, out _);
+
+                    foreach (var e in removedNode.OutgoingEdges)
+                        _edges[e.GetGraphComponentType()].Remove(e.Id, out _);
+                }
+            }
+        }
+
+        var edgesToRemoveCount = EdgeCount - maxEdgesCount;
+        if (edgesToRemoveCount > 0)
+        {
+            var allEdgesIds = _edges.SelectMany(x => x.Value.Select(y => new object[] { x.Key, y.Key })).ToList();
+            var edgesToRemove = allEdgesIds.OrderBy(x => rnd.Next()).Take(edgesToRemoveCount);
+
+            foreach (var edgeToRemove in edgesToRemove)
+                _edges[(GraphComponentType)edgeToRemove[0]].Remove((string)edgeToRemove[1], out _);
+        }
+
+        var disconnectNodes = _nodes
+            .SelectMany(t => t.Value.Where(n => n.Value.InDegree == 0 & n.Value.OutDegree == 0)
+            .Select(x => new object[] { t.Key, x.Key }));
+
+        foreach (var node in disconnectNodes)
+            _nodes[(GraphComponentType)node[0]].Remove((string)node[1], out _);
+    }
+
     public bool Equals(GraphBase? other)
     {
         if (other == null)

@@ -49,9 +49,12 @@ public enum GraphComponentType
     BitcoinS2S = 9,
     BitcoinTxNode = 10,
     BitcoinScriptNode = 11,
-    BitcoinBlockNode = 12
+    BitcoinBlockNode = 12,
+    BitcoinCoinbaseNode = 13
 }
 
+// TODO: change the following such that it enforces all the types to implement it
+// regardless of the implementation of their base type. 
 public interface IGraphComponent
 {
     public static GraphComponentType ComponentType { get; }
