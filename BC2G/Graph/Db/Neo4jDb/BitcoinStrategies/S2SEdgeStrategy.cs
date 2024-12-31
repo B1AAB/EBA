@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
 
-public class S2SEdgeStrategy : BitcoinEdgeStrategy
+public class S2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
 {
     public const string labels = "Script";
 

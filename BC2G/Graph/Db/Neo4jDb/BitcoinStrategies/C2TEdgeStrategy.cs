@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
 
-public class C2TEdgeStrategy : BitcoinEdgeStrategy
+public class C2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
 {
     /// Note that the ordre of the items in this array should 
     /// match those in the `ToCSV` method.

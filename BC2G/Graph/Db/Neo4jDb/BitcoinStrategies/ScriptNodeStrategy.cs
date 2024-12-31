@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
 
-public class ScriptNodeStrategy : StrategyBase
+public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
 {
     public const string Labels = "Script";
 

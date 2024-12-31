@@ -6,7 +6,7 @@ namespace BC2G.Graph.Db.Neo4jDb;
 public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 {
     public BitcoinNeo4jDb(Options options, ILogger<BitcoinNeo4jDb> logger) :
-        base(options, logger, new BitcoinStrategyFactory())
+        base(options, logger, new BitcoinStrategyFactory(options))
     { }
 
     public override async Task<IDriver> GetDriver(Neo4jOptions options)

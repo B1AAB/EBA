@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
 
-public abstract class BitcoinEdgeStrategy : StrategyBase
+public abstract class BitcoinEdgeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
 {
     public static string GetCreatesEdgeQuery(string blockVar = "block", string targetVar = "target")
     {
@@ -42,7 +42,7 @@ public abstract class BitcoinEdgeStrategy : StrategyBase
 
     public static ReadOnlyCollection<Property> GetEdgePropertiesBase()
     {
-        return new ReadOnlyCollection<Property>(new Property[] { Props.Height, Props.EdgeValue });
+        return new ReadOnlyCollection<Property>([Props.Height, Props.EdgeValue]);
     }
 
     public static string GetApocCreateEdgeQuery(

@@ -8,6 +8,7 @@ public class Batch
 {
     public string Name { get; }
     public string DefaultDirectory { get; }
+    private bool _compressOutput;
 
     public ImmutableDictionary<GraphComponentType, TypeInfo> TypesInfo
     {
@@ -27,13 +28,14 @@ public class Batch
         _typesInfo = new Dictionary<GraphComponentType, TypeInfo>(typesInfo);
     }
 
-    public Batch(string name, string defaultDirectory, List<GraphComponentType> types)
+    public Batch(string name, string defaultDirectory, List<GraphComponentType> types, bool compresseOutput)
     {
         Name = name;
         DefaultDirectory = defaultDirectory;
+        _compressOutput = compresseOutput;
         var timestamp = Helpers.GetTimestamp();
 
-        _typesInfo = new();
+        _typesInfo = [];
         foreach (var type in types)
             _typesInfo.Add(type, new TypeInfo(
                 CreateFilename(type, timestamp, DefaultDirectory), 0));
@@ -75,8 +77,8 @@ public class Batch
         }
     }
 
-    private static string CreateFilename(GraphComponentType type, string timestamp, string directory)
+    private string CreateFilename(GraphComponentType type, string timestamp, string directory)
     {
-        return Path.Join(directory, $"{timestamp}_{type}.csv");
+        return Path.Join(directory, $"{timestamp}_{type}.csv{(_compressOutput == true ? ".gz" : "")}");
     }
 }

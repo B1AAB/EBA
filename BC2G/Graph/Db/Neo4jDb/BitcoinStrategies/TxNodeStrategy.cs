@@ -1,9 +1,8 @@
 ﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
 
-public class TxNodeStrategy : StrategyBase
+public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
 {
     public const string Labels = "Tx";
-
     private readonly Property[] _properties =
     [
         Props.Txid,

@@ -13,13 +13,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     protected IStrategyFactory StrategyFactory { get; }
     protected ILogger<Neo4jDb<T>> Logger { get; }
 
-    /// <summary>
-    /// Neo4j docs suggest between 10,000 and 100,000 updates 
-    /// per transaction as a good target. 
-    /// 
-    /// Ref: https://neo4j.com/blog/bulk-data-import-neo4j-3-0/
-    /// </summary>
-    private const int _maxEntitiesPerBatch = 80000;
+    private readonly int _maxEntitiesPerBatch;
     private List<Batch> _batches = [];
 
     private bool _disposed = false;
@@ -29,6 +23,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         Options = options;
         Logger = logger;
         StrategyFactory = strategyFactory;
+        _maxEntitiesPerBatch = options.Neo4j.MaxEntitiesPerBatch;
     }
 
     public abstract Task SerializeAsync(T g, CancellationToken ct);
@@ -57,7 +52,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 throw new InvalidOperationException(
                     $"A batch named {batchName} not found in " +
                     $"{Options.Neo4j.BatchesFilename}");
-            batches = new List<Batch>() { batch };
+            batches = [batch];
             Logger.LogInformation("Given batch name is {batchName}.", batchName);
         }
 
@@ -261,7 +256,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             _batches = await DeserializeBatchesAsync();
 
         if (_batches.Count == 0 || _batches[^1].GetMaxCount() >= _maxEntitiesPerBatch)
-            _batches.Add(new Batch(_batches.Count.ToString(), Options.WorkingDir, types));
+            _batches.Add(new Batch(_batches.Count.ToString(), Options.WorkingDir, types, Options.Neo4j.CompressOutput));
 
         return _batches[^1];
     }

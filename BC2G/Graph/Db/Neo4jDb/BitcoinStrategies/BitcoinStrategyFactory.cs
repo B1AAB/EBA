@@ -6,17 +6,18 @@ public class BitcoinStrategyFactory : IStrategyFactory
 
     private readonly Dictionary<GraphComponentType, StrategyBase> _strategies;
 
-    public BitcoinStrategyFactory()
+    public BitcoinStrategyFactory(Options options)
     {
+        var compressOutput = options.Neo4j.CompressOutput;
         _strategies = new()
         {
-            {GraphComponentType.BitcoinGraph, new BlockNodeStrategy()},
-            {GraphComponentType.BitcoinScriptNode, new ScriptNodeStrategy()},
-            {GraphComponentType.BitcoinTxNode, new TxNodeStrategy()},
-            {GraphComponentType.BitcoinC2T,  new C2TEdgeStrategy()},
-            {GraphComponentType.BitcoinC2S,  new C2SEdgeStrategy()},
-            {GraphComponentType.BitcoinS2S,  new S2SEdgeStrategy()},
-            {GraphComponentType.BitcoinT2T, new T2TEdgeStrategy()}
+            {GraphComponentType.BitcoinGraph, new BlockNodeStrategy(compressOutput)},
+            {GraphComponentType.BitcoinScriptNode, new ScriptNodeStrategy(compressOutput)},
+            {GraphComponentType.BitcoinTxNode, new TxNodeStrategy(compressOutput)},
+            {GraphComponentType.BitcoinC2T,  new C2TEdgeStrategy(compressOutput)},
+            {GraphComponentType.BitcoinC2S,  new C2SEdgeStrategy(compressOutput)},
+            {GraphComponentType.BitcoinS2S,  new S2SEdgeStrategy(compressOutput)},
+            {GraphComponentType.BitcoinT2T, new T2TEdgeStrategy(compressOutput)}
         };
     }
 
