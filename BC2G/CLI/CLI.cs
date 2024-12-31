@@ -206,6 +206,17 @@ internal class Cli
             "such that earlier blocks with fewer Tx will have smaller footprint, and recent blocks with more tx will " +
             "have more per-block memory requirement.");
 
+        var maxEntriesPerBatch = new Option<int>(
+            name: "--max-entries-per-batch",
+            description: "[Advanced] Mainly related to importing data into a Neo4j database. " +
+            "Sets the total number of nodes and edges serialized to one batch of CSV files. " +
+            "The smaller this number is, the nodes and edges are serialized to more batches, hence more files; " +
+            "the larger the number is, fewer larger files will be created. If you intent to use neo4j admin to " +
+            "bulk import data into an empty database, then you may use a larger value for this parameter and " +
+            "have fewer larger files. Otherwise, if you intent to use incremental import, it is better to use " +
+            "smaller values. Neoj4 recomments 10k-100k if you intent to use incremental import. " +
+            "(reference: https://neo4j.com/blog/bulk-data-import-neo4j-3-0/)");
+
         var cmd = new Command(
             name: "traverse",
             description: "") // TODO: add description
@@ -219,7 +230,8 @@ internal class Cli
             maxBlocksInBufferOption,
             txoFilenameOption,
             skipGraphSerialization,
-            trackTxoOption
+            trackTxoOption,
+            maxEntriesPerBatch
         };
 
         cmd.SetHandler(async (options) =>
@@ -238,7 +250,8 @@ internal class Cli
             maxBlocksInBufferOption: maxBlocksInBufferOption,
             trackTxoOption: trackTxoOption,
             txoFilenameOption: txoFilenameOption,
-            skipGraphSerialization: skipGraphSerialization));
+            skipGraphSerialization: skipGraphSerialization,
+            maxEntriesPerBatch: maxEntriesPerBatch));
 
         return cmd;
     }

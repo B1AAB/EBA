@@ -23,6 +23,7 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<string>? _txoFilenameOption;
     private readonly Option<bool>? _trackTxoOption;
     private readonly Option<bool>? _skipGraphSerialization;
+    private readonly Option<int>? _maxEntriesPerBatch;
 
     public OptionsBinder(
         Option<int>? fromOption = null,
@@ -45,7 +46,8 @@ internal class OptionsBinder : BinderBase<Options>
         Option<int>? maxBlocksInBufferOption = null,
         Option<string>? txoFilenameOption = null,
         Option<bool>? trackTxoOption = null,
-        Option<bool>? skipGraphSerialization = null)
+        Option<bool>? skipGraphSerialization = null,
+        Option<int>? maxEntriesPerBatch = null)
     {
         _fromOption = fromOption;
         _toOption = toOption;
@@ -68,6 +70,7 @@ internal class OptionsBinder : BinderBase<Options>
         _txoFilenameOption = txoFilenameOption;
         _trackTxoOption = trackTxoOption;
         _skipGraphSerialization = skipGraphSerialization;
+        _maxEntriesPerBatch = maxEntriesPerBatch;
     }
 
     protected override Options GetBoundValue(BindingContext c)
@@ -118,6 +121,7 @@ internal class OptionsBinder : BinderBase<Options>
         var neo4jOps = new Neo4jOptions()
         {
             BatchesFilename = GetValue(Path.Join(wd, defs.Neo4j.BatchesFilename), _batchFilenameOption, c),
+            MaxEntitiesPerBatch = GetValue(defs.Neo4j.MaxEntitiesPerBatch, _maxEntriesPerBatch, c),
         };
 
         var options = new Options()
