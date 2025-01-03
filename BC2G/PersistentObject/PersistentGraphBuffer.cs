@@ -30,17 +30,19 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         string graphStatsFilename,
         string perBlockAddressessFilename,
         string? txoLifeCycleFilename,
+        int maxTxoPerFile,
+        int maxAddressesPerFile,
         SemaphoreSlim semaphore,
         CancellationToken ct) :
         base(logger, ct)
     {
         _graphDb = graphDb;
         _logger = logger;
-        _pGraphStats = new(graphStatsFilename, pgStatsLogger, ct);
-        _pBlockAddressess = new(perBlockAddressessFilename, pgAddressessLogger, ct);
+        _pGraphStats = new(graphStatsFilename, int.MaxValue, pgStatsLogger, ct);
+        _pBlockAddressess = new(perBlockAddressessFilename, maxAddressesPerFile, pgAddressessLogger, ct);
 
         if (txoLifeCycleFilename != null && pTxoLifeCyccleLogger != null)
-            _pTxoLifeCycleBuffer = new(txoLifeCycleFilename, pTxoLifeCyccleLogger, ct, header: Utxo.GetHeader());
+            _pTxoLifeCycleBuffer = new(txoLifeCycleFilename, maxTxoPerFile, pTxoLifeCyccleLogger, ct, header: Utxo.GetHeader());
 
         _semaphore = semaphore;
     }

@@ -142,6 +142,11 @@ internal class Helpers
         return $"{DateTime.Now:yyyyMMddHHmmssffff}";
     }
 
+    public static string GetUnixTimeSeconds()
+    {
+        return DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+    }
+
     public static string GetEtInSeconds(TimeSpan elapsed)
     {
         return elapsed.TotalSeconds.ToString("F3");

@@ -116,6 +116,8 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             graphStatsFilename: options.Bitcoin.StatsFilename,
             perBlockAddressessFilename: options.Bitcoin.PerBlockAddressesFilename,
             txoLifeCycleFilename: options.Bitcoin.TrackTxo ? options.Bitcoin.TxoFilename : null,
+            maxTxoPerFile: options.Bitcoin.MaxTxoPerFile,
+            maxAddressesPerFile: options.Bitcoin.MaxBlockAddressesPerFile,
             semaphore: pgbSemaphore,
             ct: cT);
 

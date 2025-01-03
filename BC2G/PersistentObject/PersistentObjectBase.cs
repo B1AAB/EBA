@@ -64,14 +64,28 @@ public abstract class PersistentObjectBase<T> : IDisposable
             catch (Exception e)
             {
                 _logger.LogError(
-                    "Exception occurred persisting an instance of type `{o}`. {e}", 
+                    "Exception occurred persisting an instance of type `{o}`. {e}",
                     obj, e.Message);
+
+                // TODO: This is temporary only to get details of errors to reproduce/debug them.
+                _logger.LogDebug("Exception details: {e}", e);
+
                 // TODO: re-throwing exception here has no impact.
                 // fixing it requires a bit of reengineering how this method is used.
                 // The exception does not propogate because the caller does not 
                 // wait for this method to finish, which is by-design as this
                 // method only exits when the application is exiting.
                 // The following is a _temp_ work-around.
+                //
+                //
+                // One of the examples of this exception is when the file size is `397,633,060,864 bytes`
+                // when you this method will throw the following exception:
+                //
+                //      Exception occurred persisting an instance of type
+                //      `BC2G.Blockchains.Bitcoin.Graph.BlockGraph`.
+                //      The requested operation could not be completed due
+                //      to a file system limitation :
+                //      'E:\run18\session_1735761967\bitcoin_txo.tsv'
                 Environment.Exit(1);
             }
             _isFree = true;
@@ -82,6 +96,17 @@ public abstract class PersistentObjectBase<T> : IDisposable
     {
         _buffer.Add(obj);
     }
+
+
+    // TODO: the following two methods should be changed to "protected",
+    // then all the derived classes implementing these should also make 
+    // their methods "protected" which results in making only the 
+    // "Enqueue" method public. 
+    // Currently, some instances of derived classes, for instance, 
+    // _pGraphStats and _pBlockAddressess are using the "SerializeAsync"
+    // methods directly that does not use the above buffer. 
+    // Think of improving this design and make it clear which 
+    // method should be used and how. 
 
     public abstract Task SerializeAsync(T obj, CancellationToken cT);
     public abstract Task SerializeAsync(IEnumerable<T> objs, CancellationToken cT);

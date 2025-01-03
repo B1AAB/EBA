@@ -1,9 +1,14 @@
 ﻿namespace BC2G.PersistentObject;
 
-public class PersistentGraphStatistics : PersistentObject<string>
-{
-    public PersistentGraphStatistics(
-        string filename, ILogger<PersistentGraphStatistics> logger, CancellationToken cT) :
-        base(filename, logger, cT, BlockStatistics.GetHeader())
-    { }
-}
+public class PersistentGraphStatistics(
+    string filename,
+    int maxObjectsPerFile,
+    ILogger<PersistentGraphStatistics> logger,
+    CancellationToken cT) :
+    PersistentObject<string>(
+        filename,
+        maxObjectsPerFile,
+        logger,
+        cT,
+        BlockStatistics.GetHeader())
+{ }

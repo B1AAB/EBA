@@ -79,11 +79,14 @@ public class BitcoinOptions
     // When setting this, make sure it is more than the timeout of related Resilience strategies.
     public TimeSpan HttpClientTimeout { init; get; } = TimeSpan.FromMinutes(10);
 
+    public int MaxTxoPerFile { init; get; } = (int)5e5;
+    public int MaxBlockAddressesPerFile { init; get; } = (int)5e5;
+
     public string TxoFilename { init; get; } = "bitcoin_txo.tsv";
 
     public bool TrackTxo { init; get; } = false;
 
-    public bool SkipGraphSerialization {  init; get; } = false;
+    public bool SkipGraphSerialization { init; get; } = false;
 
     public ResilienceStrategyOptions HttpClientResilienceStrategy { init; get; } = new();
 

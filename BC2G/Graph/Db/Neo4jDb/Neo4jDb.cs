@@ -110,7 +110,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         var sampledGraphsCounter = 0;
         var attempts = 0;
-        var baseOutputDir = Path.Join(Options.WorkingDir, $"sampled_graphs_{Helpers.GetTimestamp()}");
+        var baseOutputDir = Path.Join(Options.WorkingDir, $"sampled_graphs_{Helpers.GetUnixTimeSeconds()}");
 
         // creating a script node like the following just to ask for coinbase node is not ideal
         // TODO: find a better solution.

@@ -33,7 +33,7 @@ public class Batch
         Name = name;
         DefaultDirectory = defaultDirectory;
         _compressOutput = compresseOutput;
-        var timestamp = Helpers.GetTimestamp();
+        var timestamp = Helpers.GetUnixTimeSeconds();
 
         _typesInfo = [];
         foreach (var type in types)
@@ -73,7 +73,7 @@ public class Batch
         if (!_typesInfo.ContainsKey(type))
         {
             _typesInfo.Add(type, new TypeInfo(
-                CreateFilename(type, Helpers.GetTimestamp(), directory), 0));
+                CreateFilename(type, Helpers.GetUnixTimeSeconds(), directory), 0));
         }
     }
 
