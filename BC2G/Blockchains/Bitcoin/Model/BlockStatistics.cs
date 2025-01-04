@@ -274,13 +274,13 @@ public class BlockStatistics(Block block)
         return string.Join(_delimiter, ["BlockHeight", "OutputAddresses"]);
     }
 
-    public string ToStringAddressess()
+    // TODO: experimental 
+    public List<string> ToStringsAddressess()
     {
-        return string.Join(
-            _delimiter,
-            [
-                Height.ToString(),
-                string.Join(";", _outputAddresses)
-            ]);
+        var strings = new List<string>();
+        foreach(var x in _outputAddresses)
+            strings.Add($"{x}{_delimiter}{Height}");
+
+        return strings;
     }
 }

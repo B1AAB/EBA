@@ -68,7 +68,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         var tasks = new List<Task>
         {
             _pGraphStats.SerializeAsync(obj.Stats.ToString(), default),
-            _pBlockAddressess.SerializeAsync(obj.Stats.ToStringAddressess(), default),
+            _pBlockAddressess.SerializeAsync(obj.Stats.ToStringsAddressess(), default),
         };
 
         if (_graphDb != null)
@@ -111,7 +111,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 
             if (disposing)
             {
-                _graphDb.Dispose();
+                _graphDb?.Dispose();
                 //_pGraphStats.Dispose();
             }
 

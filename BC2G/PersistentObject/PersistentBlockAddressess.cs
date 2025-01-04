@@ -9,6 +9,5 @@ public class PersistentBlockAddressess(
         filename,
         maxObjectsPerFile,
         logger,
-        cT,
-        BlockStatistics.GetHeaderAddresses())
+        cT)
 { }
