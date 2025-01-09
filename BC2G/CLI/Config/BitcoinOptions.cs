@@ -69,7 +69,7 @@ public class BitcoinOptions
 
     public string StatsFilename { init; get; } = "bitcoin_blocks_stats.tsv";
 
-    public string PerBlockAddressesFilename { init; get; } = "addressess.tsv";
+    public string PerBlockAddressesFilename { init; get; } = "addresses.tsv";
 
     public int MaxBlocksInBuffer { init; get; } = 100;
 

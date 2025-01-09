@@ -275,7 +275,7 @@ public class BlockStatistics(Block block)
     }
 
     // TODO: experimental 
-    public List<string> ToStringsAddressess()
+    public List<string> ToStringsAddresses()
     {
         var strings = new List<string>();
         foreach(var x in _outputAddresses)

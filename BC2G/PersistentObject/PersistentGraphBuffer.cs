@@ -7,7 +7,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     private readonly IGraphDb<BitcoinGraph>? _graphDb;
     private readonly ILogger<PersistentGraphBuffer> _logger;
     private readonly PersistentGraphStatistics _pGraphStats;
-    private readonly PersistentBlockAddressess _pBlockAddressess;
+    private readonly PersistentBlockAddresses _pBlockAddresses;
     private readonly PersistentTxoLifeCycleBuffer? _pTxoLifeCycleBuffer = null;
     private readonly SemaphoreSlim _semaphore;
     private bool _disposed = false;
@@ -25,10 +25,10 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         IGraphDb<BitcoinGraph>? graphDb,
         ILogger<PersistentGraphBuffer> logger,
         ILogger<PersistentGraphStatistics> pgStatsLogger,
-        ILogger<PersistentBlockAddressess> pgAddressessLogger,
+        ILogger<PersistentBlockAddresses> pgAddressesLogger,
         ILogger<PersistentTxoLifeCycleBuffer>? pTxoLifeCyccleLogger,
         string graphStatsFilename,
-        string perBlockAddressessFilename,
+        string perBlockAddressesFilename,
         string? txoLifeCycleFilename,
         int maxTxoPerFile,
         int maxAddressesPerFile,
@@ -39,7 +39,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         _graphDb = graphDb;
         _logger = logger;
         _pGraphStats = new(graphStatsFilename, int.MaxValue, pgStatsLogger, ct);
-        _pBlockAddressess = new(perBlockAddressessFilename, maxAddressesPerFile, pgAddressessLogger, ct);
+        _pBlockAddresses = new(perBlockAddressesFilename, maxAddressesPerFile, pgAddressesLogger, ct);
 
         if (txoLifeCycleFilename != null && pTxoLifeCyccleLogger != null)
             _pTxoLifeCycleBuffer = new(txoLifeCycleFilename, maxTxoPerFile, pTxoLifeCyccleLogger, ct, header: Utxo.GetHeader());
@@ -68,7 +68,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         var tasks = new List<Task>
         {
             _pGraphStats.SerializeAsync(obj.Stats.ToString(), default),
-            _pBlockAddressess.SerializeAsync(obj.Stats.ToStringsAddressess(), default),
+            _pBlockAddresses.SerializeAsync(obj.Stats.ToStringsAddresses(), default),
         };
 
         if (_graphDb != null)

@@ -1,9 +1,9 @@
 ﻿namespace BC2G.PersistentObject;
 
-public class PersistentBlockAddressess(
+public class PersistentBlockAddresses(
     string filename,
     int maxObjectsPerFile,
-    ILogger<PersistentBlockAddressess> logger,
+    ILogger<PersistentBlockAddresses> logger,
     CancellationToken cT) :
     PersistentObject<string>(
         filename,
