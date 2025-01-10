@@ -42,7 +42,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         _pBlockAddresses = new(perBlockAddressesFilename, maxAddressesPerFile, pgAddressesLogger, ct);
 
         if (txoLifeCycleFilename != null && pTxoLifeCyccleLogger != null)
-            _pTxoLifeCycleBuffer = new(txoLifeCycleFilename, maxTxoPerFile, pTxoLifeCyccleLogger, ct, header: Utxo.GetHeader());
+            _pTxoLifeCycleBuffer = new(txoLifeCycleFilename, maxTxoPerFile, pTxoLifeCyccleLogger, ct);
 
         _semaphore = semaphore;
     }
