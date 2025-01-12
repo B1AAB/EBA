@@ -16,8 +16,8 @@ public class BlockStatistics(Block block)
     public int Weight { get; } = block.Weight;
     public int TransactionsCount { get; } = block.TransactionsCount;
 
-    public double MintedBitcoins { set; get; }
-    public double TxFees { set; get; }
+    public long MintedBitcoins { set; get; }
+    public long TxFees { set; get; }
 
     public int CoinbaseOutputsCount { set; get; }
 
@@ -35,8 +35,8 @@ public class BlockStatistics(Block block)
     public int OutputsCount { get { return _outputsCounts.Sum(); } }
     private readonly ConcurrentBag<int> _outputsCounts = [];
 
-    private readonly ConcurrentBag<double> _inputValues = [];
-    private readonly ConcurrentBag<double> _outputValues = [];
+    private readonly ConcurrentBag<long> _inputValues = [];
+    private readonly ConcurrentBag<long> _outputValues = [];
 
     private readonly ConcurrentBag<int> _spentOutputsAge = [];
 
@@ -57,7 +57,7 @@ public class BlockStatistics(Block block)
     private readonly uint[] _edgeLabelCount =
         new uint[Enum.GetNames(typeof(EdgeLabel)).Length];
 
-    public Dictionary<EdgeLabel, double> EdgeLabelValueSum
+    public Dictionary<EdgeLabel, long> EdgeLabelValueSum
     {
         get
         {
@@ -68,8 +68,8 @@ public class BlockStatistics(Block block)
         }
     }
 
-    private readonly double[] _edgeLabelValueSum =
-        new double[Enum.GetNames(typeof(EdgeLabel)).Length];
+    private readonly long[] _edgeLabelValueSum =
+        new long[Enum.GetNames(typeof(EdgeLabel)).Length];
 
     private readonly ConcurrentDictionary<ScriptType, uint> _scriptTypeCount =
         new(Enum.GetValues(typeof(ScriptType))
@@ -87,7 +87,7 @@ public class BlockStatistics(Block block)
         _stopwatch.Stop();
     }
 
-    public void IncrementEdgeType(EdgeLabel label, double value)
+    public void IncrementEdgeType(EdgeLabel label, long value)
     {
         Interlocked.Increment(ref _edgeLabelCount[(int)label]);
         Helpers.ThreadsafeAdd(ref _edgeLabelValueSum[(int)label], value);
@@ -102,11 +102,11 @@ public class BlockStatistics(Block block)
         _outputsCounts.Add(value);
     }
 
-    public void AddInputValue(double value)
+    public void AddInputValue(long value)
     {
         _inputValues.Add(value);
     }
-    public void AddOutputValue(double value)
+    public void AddOutputValue(long value)
     {
         _outputValues.Add(value);
     }
@@ -216,8 +216,8 @@ public class BlockStatistics(Block block)
                 Weight.ToString(),
                 Retries.ToString(),
                 TransactionsCount.ToString(),
-                MintedBitcoins.ToString(),
-                TxFees.ToString(),
+                Helpers.Satoshi2BTC(MintedBitcoins).ToString(),
+                Helpers.Satoshi2BTC(TxFees).ToString(),
                 
                 CoinbaseOutputsCount.ToString(),
 
@@ -235,19 +235,19 @@ public class BlockStatistics(Block block)
                 Helpers.GetMedian(outsCounts).ToString(),
                 Helpers.GetVariance(outsCounts).ToString(),
 
-                inValues.Sum().ToString(),
-                inValues.Max().ToString(),
-                inValues.Min().ToString(),
-                inValues.Average().ToString(),
-                Helpers.GetMedian(inValues).ToString(),
-                Helpers.GetVariance(inValues).ToString(),
+                Helpers.Satoshi2BTC(inValues.Sum()).ToString(),
+                Helpers.Satoshi2BTC(inValues.Max()).ToString(),
+                Helpers.Satoshi2BTC(inValues.Min()).ToString(),
+                Helpers.Satoshi2BTC(Helpers.Round(inValues.Average())).ToString(),
+                Helpers.Satoshi2BTC(Helpers.Round(Helpers.GetMedian(inValues))).ToString(),
+                Helpers.Satoshi2BTC(Helpers.Round(Helpers.GetVariance(inValues))).ToString(),
 
-                outValues.Sum().ToString(),
-                outValues.Max().ToString(),
-                outValues.Min().ToString(),
-                outValues.Average().ToString(),
-                Helpers.GetMedian(outValues).ToString(),
-                Helpers.GetVariance(outValues).ToString(),
+                Helpers.Satoshi2BTC(outValues.Sum()).ToString(),
+                Helpers.Satoshi2BTC(outValues.Max()).ToString(),
+                Helpers.Satoshi2BTC(outValues.Min()).ToString(),
+                Helpers.Satoshi2BTC(Helpers.Round(outValues.Average())).ToString(),
+                Helpers.Satoshi2BTC(Helpers.Round(Helpers.GetMedian(outValues))).ToString(),
+                Helpers.Satoshi2BTC(Helpers.Round(Helpers.GetVariance(outValues))).ToString(),
 
                 string.Join(
                     _delimiter,
@@ -259,13 +259,13 @@ public class BlockStatistics(Block block)
 
                 string.Join(
                     _delimiter,
-                    _edgeLabelValueSum.Select((v, i) => v.ToString()).ToArray()),
+                    _edgeLabelValueSum.Select((v, i) => Helpers.Satoshi2BTC(v).ToString()).ToArray()),
 
-                spentTxo.Max().ToString(),
-                spentTxo.Min().ToString(),
-                spentTxo.Average().ToString(),
-                Helpers.GetMedian(spentTxo).ToString(),
-                Helpers.GetVariance(spentTxo).ToString(),
+                Helpers.Satoshi2BTC(spentTxo.Max()).ToString(),
+                Helpers.Satoshi2BTC(spentTxo.Min()).ToString(),
+                Helpers.Satoshi2BTC(Helpers.Round(spentTxo.Average())).ToString(),
+                Helpers.Satoshi2BTC(Helpers.Round(Helpers.GetMedian(spentTxo))).ToString(),
+                Helpers.Satoshi2BTC(Helpers.Round(Helpers.GetVariance(spentTxo))).ToString(),
             ]);
     }
 

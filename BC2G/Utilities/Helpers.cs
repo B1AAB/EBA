@@ -36,11 +36,25 @@ internal class Helpers
         return result.ToString();
     }
 
-    public static double Round(double input)
+    public static long BTC2Satoshi(double btc)
+    {
+        return Round(BitcoinAgent.Coin * btc);
+    }
+
+    public static double Satoshi2BTC(long satoshi)
+    {
+        return satoshi / (double)BitcoinAgent.Coin;
+    }
+
+    public static long Round(double input)
     {
         // Read the following post on the motivation behind this rounding.
         // https://stackoverflow.com/q/588004/947889
-        return Math.Round(input, digits: FractionalDigitsCount);
+        //
+        // The "round half way from zero" method is chose to match 
+        // the behavior of the Bitcoin client.
+
+        return (long)Math.Round(input, MidpointRounding.AwayFromZero);
     }
 
     public static double ThreadsafeAdd(ref double location, double value)
@@ -60,7 +74,7 @@ internal class Helpers
         while (true)
         {
             double currentValue = newCurrentValue;
-            double newValue = Round(currentValue + value);
+            double newValue = currentValue + value;
             newCurrentValue = Interlocked.CompareExchange(ref location, newValue, currentValue);
             if (newCurrentValue == currentValue)
                 return newValue;
@@ -77,6 +91,22 @@ internal class Helpers
         {
             uint currentValue = newCurrentValue;
             uint newValue = currentValue + value;
+            newCurrentValue = Interlocked.CompareExchange(ref location, newValue, currentValue);
+            if (newCurrentValue == currentValue)
+                return newValue;
+        }
+    }
+
+    public static long ThreadsafeAdd(ref long location, long value)
+    {
+        // This is implemented based on the following Stackoverflow answer.
+        // https://stackoverflow.com/a/16893641/947889
+
+        long newCurrentValue = location; // non-volatile read, so may be stale
+        while (true)
+        {
+            long currentValue = newCurrentValue;
+            long newValue = currentValue + value;
             newCurrentValue = Interlocked.CompareExchange(ref location, newValue, currentValue);
             if (newCurrentValue == currentValue)
                 return newValue;
@@ -171,6 +201,25 @@ internal class Helpers
         }
     }
 
+    public static double GetMedian(IEnumerable<long> data)
+    {
+        if (!data.Any())
+            return double.NaN;
+
+        var count = data.Count();
+        var sortedData = data.OrderBy(x => x);
+
+        if (count % 2 == 0)
+        {
+            var middle = count / 2;
+            return (sortedData.ElementAt(middle - 1) + sortedData.ElementAt(middle)) / 2.0;
+        }
+        else
+        {
+            return sortedData.ElementAt(count / 2);
+        }
+    }
+
     // TODO: merge this and the above overload to a single method.
     public static double GetMedian(IEnumerable<double> data)
     {
@@ -189,6 +238,16 @@ internal class Helpers
         {
             return sortedData.ElementAt(count / 2);
         }
+    }
+
+    public static double GetVariance(IEnumerable<long> data)
+    {
+        if (data.Count() < 2)
+            return double.NaN;
+
+        var mean = data.Average();
+        var sumOfSquares = data.Sum(x => Math.Pow(x - mean, 2));
+        return sumOfSquares / (data.Count() - 1);
     }
 
     public static double GetVariance(IEnumerable<int> data)

@@ -8,7 +8,7 @@ public interface IEdge<out TSource, out TTarget> : IGraphComponent
     public TSource Source { get; }
     public TTarget Target { get; }
     public EdgeType Type { get; }
-    public double Value { get; }
+    public long Value { get; }
 
     public double[] GetFeatures();
     public string GetHashCode(bool ignoreValue);

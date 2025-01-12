@@ -1,4 +1,6 @@
-﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
+﻿using BC2G.Utilities;
+
+namespace BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
 
 public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
 {
@@ -34,7 +36,7 @@ public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
             edge.Source.Txid,
             edge.Target.Txid,
             edge.Type.ToString(),
-            edge.Value.ToString(),
+            Helpers.Satoshi2BTC(edge.Value).ToString(),
             edge.BlockHeight.ToString()
         ]);
     }

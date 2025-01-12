@@ -1,4 +1,6 @@
-﻿namespace BC2G.Blockchains.Bitcoin.Model;
+﻿using BC2G.Utilities;
+
+namespace BC2G.Blockchains.Bitcoin.Model;
 
 public class PrevOut
 {
@@ -9,7 +11,18 @@ public class PrevOut
     public int Height { set; get; }
 
     [JsonPropertyName("value")]
-    public double Value { set; get; }
+    public double RawValue
+    {
+        get { return _valueBTC; }
+        set
+        {
+            _valueBTC = value;
+            Value = Helpers.BTC2Satoshi(value);
+        }
+    }
+    private double _valueBTC;
+
+    public long Value { get; private set; }
 
     [JsonPropertyName("scriptPubKey")]
     public ScriptPubKey? ScriptPubKey { set; get; }
@@ -18,11 +31,7 @@ public class PrevOut
     {
         get
         {
-            return new Output()
-            {
-                Value = Value,
-                ScriptPubKey = ScriptPubKey
-            };
+            return new Output(Value, ScriptPubKey);
         }
     }
 }

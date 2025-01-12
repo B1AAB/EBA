@@ -1,4 +1,6 @@
-﻿namespace BC2G.Graph.Model;
+﻿using BC2G.Utilities;
+
+namespace BC2G.Graph.Model;
 
 public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
     where TSource : notnull, INode
@@ -10,7 +12,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
     public string Id { get; }
     public TSource Source { get; }
     public TTarget Target { get; }
-    public double Value { get; }
+    public long Value { get; }
     public EdgeType Type { get; }
     public uint Timestamp { get; }
     public long BlockHeight { get; }
@@ -35,7 +37,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
 
     public Edge(
         TSource source, TTarget target,
-        double value, EdgeType type,
+        long value, EdgeType type,
         uint timestamp, long blockHeight)
     {
         Source = source;
@@ -55,7 +57,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
         Source = source;
         Target = target;
         Id = relationship.ElementId;
-        Value = (double)relationship.Properties[Props.EdgeValue.Name];
+        Value = Helpers.BTC2Satoshi((double)relationship.Properties[Props.EdgeValue.Name]);
         Type = Enum.Parse<EdgeType>(relationship.Type);
         BlockHeight = (long)relationship.Properties[Props.Height.Name];
     }

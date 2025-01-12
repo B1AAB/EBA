@@ -10,7 +10,7 @@ public class Utxo
 
     public string Address { set; get; } = string.Empty;
 
-    public double Value { set; get; }
+    public long Value { set; get; }
 
     public ScriptType ScriptType { set; get; }
 
@@ -39,7 +39,7 @@ public class Utxo
     }
 
     public Utxo(
-        string id, string? address, double value, ScriptType scriptType, bool isGenerated,
+        string id, string? address, long value, ScriptType scriptType, bool isGenerated,
         List<long>? createdInBlockHeights = null,
         List<long>? spentInBlockHeights = null)
     {
@@ -61,13 +61,13 @@ public class Utxo
     }
 
     public Utxo(
-        string txid, int voutN, string? address, double value, ScriptType scriptType, bool isGenerated,
+        string txid, int voutN, string? address, long value, ScriptType scriptType, bool isGenerated,
         List<long>? createdInHeights = null, List<long>? spentInHeights = null) :
         this(GetId(txid, voutN), address, value, scriptType, isGenerated, createdInHeights, spentInHeights)
     { }
 
     public Utxo(
-        string id, string? address, double value, ScriptType scriptType, bool isGenerated,
+        string id, string? address, long value, ScriptType scriptType, bool isGenerated,
         long? createdInHeight = null, long? spentInHeight = null)
     {
         Id = id;
@@ -84,7 +84,7 @@ public class Utxo
     }
 
     public Utxo(
-        string txid, int voutN, string? address, double value, ScriptType scriptType, bool isGenerated,
+        string txid, int voutN, string? address, long value, ScriptType scriptType, bool isGenerated,
         long? createdInHeight = null, long? spentInHeight = null) :
         this(GetId(txid, voutN), address, value, scriptType, isGenerated, createdInHeight, spentInHeight)
     { }

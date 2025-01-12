@@ -12,7 +12,7 @@ public class S2SEdge : Edge<ScriptNode, ScriptNode>
 
     public S2SEdge(
         ScriptNode source, ScriptNode target,
-        double value, EdgeType type,
+        long value, EdgeType type,
         uint timestamp, long blockHeight) :
         base(source, target, value, type, timestamp, blockHeight)
     {
@@ -27,7 +27,7 @@ public class S2SEdge : Edge<ScriptNode, ScriptNode>
         _label = Type == EdgeType.Transfers ? EdgeLabel.S2STransfer : EdgeLabel.S2SFee;
     }
 
-    public S2SEdge Update(double value)
+    public S2SEdge Update(long value)
     {
         return new S2SEdge(Source, Target, Value + value, Type, Timestamp, BlockHeight);
     }

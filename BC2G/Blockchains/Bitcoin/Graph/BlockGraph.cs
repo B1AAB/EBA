@@ -13,8 +13,8 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     /// <summary>
     /// Is the sum of all the tranactions fee.
     /// </summary>
-    public double TotalFee { get { return _totalFee; } }
-    private double _totalFee;
+    public long TotalFee { get { return _totalFee; } }
+    private long _totalFee;
 
     private readonly TransactionGraph _coinbaseTxGraph;
 
@@ -44,8 +44,8 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 
     public void MergeQueuedTxGraphs(CancellationToken ct)
     {
-        double miningReward = _coinbaseTxGraph.TargetScripts.Sum(x => x.Value);
-        double mintedBitcoins = miningReward - TotalFee;
+        var miningReward = _coinbaseTxGraph.TargetScripts.Sum(x => x.Value);
+        var mintedBitcoins = miningReward - TotalFee;
 
         Stats.MintedBitcoins = mintedBitcoins;
         Stats.TxFees = TotalFee;
@@ -77,7 +77,8 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         {
             AddOrUpdateEdge(new C2SEdge(
                 item.Key,
-                Helpers.Round((item.Value * mintedBitcoins) / miningReward),
+                //Helpers.Round(item.Value * (mintedBitcoins / (double)miningReward)),
+                Helpers.Round(mintedBitcoins * (item.Value / (double)miningReward)),
                 Timestamp,
                 Block.Height));
         }
@@ -86,7 +87,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     private void Merge(
         TransactionGraph txGraph,
         TransactionGraph coinbaseTxG,
-        double totalPaidToMiner,
+        long totalPaidToMiner,
         CancellationToken ct)
     {
         // TODO: all the AddOrUpdateEdge methods in the following are all hotspots.
@@ -110,56 +111,78 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         var fee = txGraph.Fee;
         if (fee > 0.0)
         {
-            // You cannot modify a collection that you're iterating over;
-            // therefore, you need to iterate over a copy of the keys of 
-            // the dictionary. There are different ways of implementing it, 
-            // but probably the following requires least accesses to the
-            // collection. 
             foreach (var s in txGraph.SourceScripts)
-                txGraph.SourceScripts.AddOrUpdate(
-                    s.Key, s.Value,
-                    (_, oldValue) => Helpers.Round(
-                        oldValue - Helpers.Round(
-                            oldValue * Helpers.Round(
-                                fee / txGraph.TotalInputValue))));
+            {
+                var sourceFeeShare = Helpers.Round(fee * (s.Value / (double)(txGraph.TotalInputValue == 0 ? 1 : txGraph.TotalInputValue)));
+
+                foreach (var minerScript in coinbaseTxG.TargetScripts)
+                {
+                    AddOrUpdateEdge(new S2SEdge(s.Key, minerScript.Key,
+                        Helpers.Round(sourceFeeShare * (minerScript.Value / (double)totalPaidToMiner)),
+                        EdgeType.Fee, Timestamp, Block.Height));
+                }
+
+                txGraph.SourceScripts.AddOrUpdate(s.Key, s.Value, (_, preV) => preV - sourceFeeShare);
+            }
 
             AddOrUpdateEdge(new T2TEdge(txGraph.TxNode, coinbaseTxG.TxNode, fee, EdgeType.Fee, Timestamp, Block.Height));
         }
 
         var sumInputWithoutFee = txGraph.TotalInputValue - fee;
 
+        /*
+         * TODO: currently we do not skip the self-transfer transactions.
+         * If you want to skip these, a code like the following should be 
+         * implemented, additionally, a similar modification on the Tx 
+         * should also implemented where it subtracts the values of 
+         * script-to-script transfers to be skipped from the total value 
+         * of Tx-to-Tx transfers. 
+         * Note that it can be tricky, since if you subtract the self-transfer 
+         * from a Tx, then, for the source Tx of the Tx with self-transfer,
+         * it will seem as if the received value of a Tx is more than the value it spent.
+         * 
         foreach (var s in txGraph.SourceScripts)
-        {
-            if (ct.IsCancellationRequested)
-                return;
-
-            var d = txGraph.TotalInputValue - fee;
             foreach (var t in txGraph.TargetScripts)
+                if (s.Key.Address == t.Key.Address)
+                {
+                    txGraph.SourceScripts.AddOrUpdate(s.Key, s.Value, (_, preV) => preV - t.Value);
+                    sumInputWithoutFee -= t.Value;
+                }
+        */
+
+        if (sumInputWithoutFee == 0)
+        {
+            _logger.LogInformation(
+                "Sum of input without fee is zero, skipping all the script-to-script transfers. " +
+                "Tx ID: {txid}", txGraph.TxNode.Txid);
+        }
+        else
+        {
+            foreach (var s in txGraph.SourceScripts)
             {
-                // It means the transaction is a "change" transfer 
-                // (i.e., return the remainder of a transfer to target
-                // to self), we avoid these transactions to simplify 
-                // graph representation. 
-                if (s.Key == t.Key)
-                    continue;
+                if (ct.IsCancellationRequested)
+                    return;
 
-                var v = 0.0;
-                if (d != 0)
-                    v = Helpers.Round(t.Value * Helpers.Round(s.Value / d));
+                foreach (var t in txGraph.TargetScripts)
+                {
+                    /* 
+                     * See above comment for context.
+                     * 
+                     * It means the transaction is a "change" transfer 
+                     * (i.e., return the remainder of a transfer to self),
+                     * we avoid these transactions to simplify graph representation. 
+                     * 
+                    if (s.Key.Address == t.Key.Address)
+                        continue;
+                    */
 
-                AddOrUpdateEdge(new S2SEdge(
-                    s.Key, t.Key, v,
-                    EdgeType.Transfers,
-                    Timestamp,
-                    Block.Height));
+                    AddOrUpdateEdge(new S2SEdge(
+                        s.Key, t.Key, Helpers.Round(t.Value * (s.Value / (double)sumInputWithoutFee)),
+                        EdgeType.Transfers,
+                        Timestamp,
+                        Block.Height));
+                }
             }
-
-            var x = fee * Helpers.Round(s.Value / sumInputWithoutFee == 0 ? 1 : sumInputWithoutFee);
-            if (fee > 0)
-                foreach (var m in coinbaseTxG.TargetScripts)
-                    AddOrUpdateEdge(new S2SEdge(s.Key, m.Key,
-                        Helpers.Round(x * Helpers.Round(m.Value / totalPaidToMiner)),
-                        EdgeType.Fee, Timestamp, Block.Height));
         }
 
         if (ct.IsCancellationRequested)
@@ -167,8 +190,16 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 
         foreach (var tx in txGraph.SourceTxes)
         {
-            if (tx.Key == txGraph.TxNode.Id) // TODO: check when/if this can happen.
+            if (tx.Key == txGraph.TxNode.Id)
+            {
+                // TODO: Not sure if this condition ever happens.
+                _logger.LogWarning(
+                    "Skipping creating a T2T edge since the source and target Tx IDs are identical." +
+                    "Source Tx ID={source_txid}, Target Tx ID={target_txid}",
+                    txGraph.TxNode.Id, tx.Key);
+
                 continue;
+            }
 
             AddOrUpdateEdge(new T2TEdge(
                 new TxNode(tx.Key), txGraph.TxNode, tx.Value, EdgeType.Transfers, Timestamp, Block.Height));

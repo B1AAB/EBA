@@ -7,6 +7,12 @@ public class BitcoinAgent : IDisposable
     public const string Coinbase = "Coinbase";
     public const uint GenesisTimestamp = 1231006505;
 
+    /// <summary>
+    /// The amount of satoshis in one BTC.
+    /// Based-on: https://github.com/bitcoin/bitcoin/blob/35bf426e02210c1bbb04926f4ca2e0285fbfcd11/src/consensus/amount.h#L15
+    /// </summary>
+    public const ulong Coin = 100000000;
+
     private readonly HttpClient _client;
     private readonly ILogger<BitcoinAgent> _logger;
 

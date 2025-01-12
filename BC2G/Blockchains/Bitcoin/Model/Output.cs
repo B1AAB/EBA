@@ -1,24 +1,35 @@
-﻿// In bitcoin instead of "sending money to an address", 
-// you lock a value behind a script, who ever can satisfy 
-// that script, can redeem that money.
-// Locking mechanism is a generic Forth-like, stack-based script
-// that is processed from left to right, not Turing-complete with no loops. 
-// A transaction is valid if nothing in the combined script triggers
-// failure and the top stack item is True (non-zero) when the script exits.
-// See: https://en.bitcoin.it/wiki/Script
+﻿using BC2G.Utilities;
 
 namespace BC2G.Blockchains.Bitcoin.Model;
 
 public class Output : IBase64Serializable
 {
     [JsonPropertyName("value")]
-    public double Value { set; get; }
+    public double ValueBTC
+    {
+        get { return _valueBTC; }
+        set
+        {
+            _valueBTC = value;
+            Value = Helpers.BTC2Satoshi(value);
+        }
+    }
+    private double _valueBTC;
+
+    public long Value { get; private set; }
 
     [JsonPropertyName("n")]
     public int Index { set; get; }
 
     [JsonPropertyName("scriptPubKey")]
     public ScriptPubKey? ScriptPubKey { set; get; }
+
+    public Output() { }
+    public Output(long value, ScriptPubKey? scriptPubKey)
+    {
+        Value = value;
+        ScriptPubKey = scriptPubKey;
+    }
 
     public bool TryGetAddress(out string? address)
     {

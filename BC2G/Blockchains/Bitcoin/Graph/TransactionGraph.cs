@@ -11,17 +11,17 @@ public class TransactionGraph : GraphBase
 
     public TxNode TxNode { get; }
 
-    public double TotalInputValue { get { return _totalInputValue; } }
-    private double _totalInputValue;
+    public long TotalInputValue { get { return _totalInputValue; } }
+    private long _totalInputValue;
 
-    public double TotalOutputValue { get { return _totalOutputValue; } }
-    private double _totalOutputValue;
+    public long TotalOutputValue { get { return _totalOutputValue; } }
+    private long _totalOutputValue;
 
-    public double Fee { set; get; }
+    public long Fee { set; get; }
 
-    public ConcurrentDictionary<string, double> SourceTxes { set; get; } = new();
-    public ConcurrentDictionary<ScriptNode, double> SourceScripts { set; get; } = new();
-    public ConcurrentDictionary<ScriptNode, double> TargetScripts { set; get; } = new();
+    public ConcurrentDictionary<string, long> SourceTxes { set; get; } = new();
+    public ConcurrentDictionary<ScriptNode, long> SourceScripts { set; get; } = new();
+    public ConcurrentDictionary<ScriptNode, long> TargetScripts { set; get; } = new();
 
     public TransactionGraph(Transaction tx) : base()
     {
@@ -31,30 +31,32 @@ public class TransactionGraph : GraphBase
     public ScriptNode AddSource(string txid, Utxo utxo)
     {
         SourceTxes.AddOrUpdate(txid, utxo.Value, (_, oldValue) => oldValue + utxo.Value);
-        RoundedIncrement(ref _totalInputValue, utxo.Value);
+        //RoundedIncrement(ref _totalInputValue, utxo.Value);
+        //_totalInputValue += utxo.Value;
+        Helpers.ThreadsafeAdd(ref _totalInputValue, utxo.Value);
         return AddOrUpdate(SourceScripts, new ScriptNode(utxo), utxo.Value);
     }
 
     public ScriptNode AddTarget(Utxo utxo)
     {
-        RoundedIncrement(ref _totalOutputValue, utxo.Value);
+        //RoundedIncrement(ref _totalOutputValue, utxo.Value);
+        //_totalOutputValue += utxo.Value;
+        Helpers.ThreadsafeAdd(ref _totalOutputValue, utxo.Value);
         return AddOrUpdate(TargetScripts, new ScriptNode(utxo), utxo.Value);
     }
 
+    /*
     private static void RoundedIncrement(ref double value, double increment)
     {
         value = Helpers.Round(value + increment);
-    }
+    }*/
 
     private static ScriptNode AddOrUpdate(
-        ConcurrentDictionary<ScriptNode, double> collection,
+        ConcurrentDictionary<ScriptNode, long> collection,
         ScriptNode node,
-        double value)
+        long value)
     {
-        collection.AddOrUpdate(
-            node, Helpers.Round(value),
-            (_, oldValue) => Helpers.Round(oldValue + value));
-
+        collection.AddOrUpdate(node, value, (_, oldValue) => oldValue + value);
         return node;
     }
 }

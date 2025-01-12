@@ -1,4 +1,6 @@
-﻿namespace BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
+﻿using BC2G.Utilities;
+
+namespace BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
 
 public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(serializeCompressed)
 {
@@ -31,7 +33,7 @@ public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(seriali
         [
             edge.Target.Address,
             edge.Type.ToString(),
-            edge.Value.ToString(),
+            Helpers.Satoshi2BTC(edge.Value).ToString(),
             edge.BlockHeight.ToString()
         ]);
     }
