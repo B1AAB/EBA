@@ -1,11 +1,15 @@
 ﻿namespace BC2G.PersistentObject;
 
-/// TODO
+/// TODO 1
 /// If an exception is occurred in this class, the exception will not
 /// be propogated to the caller, because the caller does not wait for
 /// this taks to finish, which is correct, because this task only exits
 /// when the application exists. So, it will never finish until the
 /// program exits.
+/// 
+/// TODO 2
+/// This needs a max buffer size, and a method or a mechanism to 
+/// wait for buffer to empty before enqueueing more objects.
 
 /// <summary>
 /// Persists enqueued objects on disk in 
@@ -84,8 +88,7 @@ public abstract class PersistentObjectBase<T> : IDisposable
                 //      Exception occurred persisting an instance of type
                 //      `BC2G.Blockchains.Bitcoin.Graph.BlockGraph`.
                 //      The requested operation could not be completed due
-                //      to a file system limitation :
-                //      'E:\run18\session_1735761967\bitcoin_txo.tsv'
+                //      to a file system limitation : 'bitcoin_txo.tsv'
                 Environment.Exit(1);
             }
             _isFree = true;

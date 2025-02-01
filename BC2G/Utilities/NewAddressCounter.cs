@@ -80,8 +80,10 @@ internal class NewAddressCounter(ILogger logger)
 
     private void ExtractAddressStats(string addressesFilename, string outFilename, CancellationToken ct)
     {
-        var addresses = new HashSet<string>();
+        //var addresses = new HashSet<string>();
         var blocks = new Dictionary<string, string>();
+        //var blocks = new Dictionary<string, string>();
+        var blocks = new HashSet<string>();
 
         const int BufferSize = 4096;
         using var inFileStream = File.OpenRead(addressesFilename);
@@ -116,10 +118,15 @@ internal class NewAddressCounter(ILogger logger)
             // when the processes is stopped and resumed and the processed block addresses
             // is not removed for the staged list.
             // TODO: fix this.
+            // 
+            // --- the following implementation handles duplicates, but it requires a lot of memory,
+            // --- hence the second method is implemented that is a simplified implications with minimal
+            // --- memory usage, but it will require manual intervention if duplicates is found.
+
+            /* 
             Array.Sort(blockAddresses);
             var joinedSortedAddresses = string.Join(';', blockAddresses);
-            var byteArray = Encoding.UTF8.GetBytes(joinedSortedAddresses);
-            var hashBytes = SHA256.HashData(byteArray);
+            var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(joinedSortedAddresses));
             var hashString = new StringBuilder();
             foreach (byte b in hashBytes)
                 hashString.Append(b.ToString("x2"));
@@ -143,6 +150,15 @@ internal class NewAddressCounter(ILogger logger)
                         addressessHash,
                         previousHash);
                 }
+            }
+            */
+            // the following is a simplified alternative to the above.
+            if (!blocks.Add(blockHeight))
+            {
+                _logger.LogWarning(
+                    "Duplicate block {b} found, manually check the files if the duplicated " +
+                    "entries have the same addresses. This process considers the addresses in the first entry.", blockHeight);
+                continue;
             }
 
             var blockSpecificAddresses = new HashSet<string>();
