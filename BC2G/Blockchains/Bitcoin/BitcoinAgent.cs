@@ -315,7 +315,7 @@ public class BitcoinAgent : IDisposable
                         return oldValue;
                     });
 
-                g.Stats.AddSpentOutputsAge((int)(g.Block.Height - input.PrevOut.Height));
+                g.Stats.AddSpentOutputsAge(g.Block.Height - input.PrevOut.Height);
             }
             else
             {

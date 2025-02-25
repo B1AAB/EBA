@@ -38,7 +38,7 @@ public class BlockStatistics(Block block)
     private readonly ConcurrentBag<long> _inputValues = [];
     private readonly ConcurrentBag<long> _outputValues = [];
 
-    private readonly ConcurrentBag<int> _spentOutputsAge = [];
+    private readonly ConcurrentBag<long> _spentOutputsAge = [];
 
     public List<string> OutputAddresses { get { return [.. _outputAddresses]; } }
     private readonly ConcurrentBag<string> _outputAddresses = [];
@@ -111,7 +111,7 @@ public class BlockStatistics(Block block)
         _outputValues.Add(value);
     }
 
-    public void AddSpentOutputsAge(int age)
+    public void AddSpentOutputsAge(long age)
     {
         _spentOutputsAge.Add(age);
     }
@@ -266,11 +266,11 @@ public class BlockStatistics(Block block)
                     _delimiter,
                     _edgeLabelValueSum.Select((v, i) => Helpers.Satoshi2BTC(v).ToString()).ToArray()),
 
-                Helpers.Satoshi2BTC(spentTxo.Max()).ToString(),
-                Helpers.Satoshi2BTC(spentTxo.Min()).ToString(),
-                Helpers.Satoshi2BTC(Helpers.Round(spentTxo.Average())).ToString(),
-                Helpers.Satoshi2BTC(Helpers.Round(Helpers.GetMedian(spentTxo))).ToString(),
-                Helpers.Satoshi2BTC(Helpers.Round(Helpers.GetVariance(spentTxo))).ToString(),
+                spentTxo.Max().ToString(),
+                spentTxo.Min().ToString(),
+                spentTxo.Average().ToString(),
+                Helpers.GetMedian(spentTxo).ToString(),
+                Helpers.GetVariance(spentTxo).ToString(),
             ]);
     }
 

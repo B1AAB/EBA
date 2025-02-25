@@ -8,7 +8,7 @@ public class PrevOut
     public bool Generated { set; get; }
 
     [JsonPropertyName("height")]
-    public int Height { set; get; }
+    public long Height { set; get; }
 
     [JsonPropertyName("value")]
     public double RawValue
