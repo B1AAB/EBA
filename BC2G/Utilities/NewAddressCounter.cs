@@ -80,8 +80,8 @@ internal class NewAddressCounter(ILogger logger)
 
     private void ExtractAddressStats(string addressesFilename, string outFilename, CancellationToken ct)
     {
-        //var addresses = new HashSet<string>();
-        var blocks = new Dictionary<string, string>();
+        var addresses = new HashSet<string>();
+        //var blocks = new Dictionary<string, string>();
         //var blocks = new Dictionary<string, string>();
         var blocks = new HashSet<string>();
 

@@ -1,6 +1,4 @@
-﻿using BC2G.Blockchains.Bitcoin.Model;
-
-namespace BC2G.Blockchains.Bitcoin;
+﻿namespace BC2G.Blockchains.Bitcoin;
 
 public class BitcoinAgent : IDisposable
 {
@@ -227,8 +225,15 @@ public class BitcoinAgent : IDisposable
         var g = new BlockGraph(block, mintingTxGraph, _logger);
 
         var rewardAddresses = new List<ScriptNode>();
-        foreach (var output in coinbaseTx.Outputs.Where(x => x.IsValueTransfer))
+        foreach (var output in coinbaseTx.Outputs)
         {
+            if (!output.IsValueTransfer)
+            {
+                // This is added for script type statistics only
+                g.Stats.AddNonTransferOutputStatistics(output.GetScriptType());
+                continue;
+            }
+
             output.TryGetAddress(out string? address);
 
             g.Stats.AddOutputStatistics(address, output.GetScriptType());
@@ -343,9 +348,16 @@ public class BitcoinAgent : IDisposable
         }
 
         var transferOutputsCount = 0;
-        foreach (var output in tx.Outputs.Where(x => x.IsValueTransfer))
+        foreach (var output in tx.Outputs)
         {
             cT.ThrowIfCancellationRequested();
+
+            if (!output.IsValueTransfer)
+            {
+                // This is added for script type statistics only
+                g.Stats.AddNonTransferOutputStatistics(output.GetScriptType());
+                continue;
+            }
 
             transferOutputsCount++;
 

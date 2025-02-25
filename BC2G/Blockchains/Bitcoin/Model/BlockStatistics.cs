@@ -124,6 +124,11 @@ public class BlockStatistics(Block block)
         _scriptTypeCount.AddOrUpdate(scriptType, 0, (k, v) => v + 1);
     }
 
+    public void AddNonTransferOutputStatistics(ScriptType scriptType)
+    {
+        _scriptTypeCount.AddOrUpdate(scriptType, 0, (k, v) => v + 1);
+    }
+
     public static string GetHeader()
     {
         return string.Join(
