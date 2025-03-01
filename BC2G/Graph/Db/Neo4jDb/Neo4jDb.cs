@@ -117,6 +117,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         // TODO: this is a bitcoin-specific logic and should not be here.
         if (Options.GraphSample.CoinbaseMode != CoinbaseSelectionMode.ExcludeCoinbase)
         {
+            Logger.LogInformation("Sampling neighbors of the coinbase node.");
             var coinbaseDir = Path.Join(baseOutputDir, BitcoinAgent.Coinbase);
             var tmpSolutionCoinbase = new ScriptNode(BitcoinAgent.Coinbase, BitcoinAgent.Coinbase, ScriptType.Coinbase);
             if (await TrySampleNeighborsAsync(driver, tmpSolutionCoinbase, baseOutputDir, coinbaseDir))
@@ -126,17 +127,22 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                     "Finished writting sampled graph of coinbase neighbors to {a}.",
                     coinbaseDir);
             }
+            else
+            {
+                Logger.LogError("Failed sampling neighbors of the coinbase node.");
+            }
         }
 
         if (Options.GraphSample.CoinbaseMode != CoinbaseSelectionMode.CoinbaseOnly)
         {
+            Logger.LogInformation("Sampling {n} graphs.", Options.GraphSample.Count - sampledGraphsCounter);
+
             while (
                 sampledGraphsCounter < Options.GraphSample.Count &&
                 ++attempts <= Options.GraphSample.MaxAttempts)
             {
                 Logger.LogInformation(
-                    "Sampling {n} graphs; remaining {r}; attempt {a}/{m}.",
-                    Options.GraphSample.Count,
+                    "Getting {n} random root nodes; attempt {a}/{m}.",
                     Options.GraphSample.Count - sampledGraphsCounter,
                     attempts, Options.GraphSample.MaxAttempts);
 
@@ -145,17 +151,18 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                     Options.GraphSample.Count - sampledGraphsCounter,
                     Options.GraphSample.RootNodeSelectProb);
 
+                Logger.LogInformation("Selected {n} random root nodes.", rndRootNodes.Count);
+
+                int counter = 0;
                 foreach (var rootNode in rndRootNodes)
                 {
+                    Logger.LogInformation("Sampling neighbors of the random root node {n}/{t}.", ++counter, rndRootNodes.Count);
+
                     var baseDir = Path.Join(baseOutputDir, sampledGraphsCounter.ToString());
                     if (await TrySampleNeighborsAsync(driver, rootNode, baseOutputDir, baseDir))
                     {
                         sampledGraphsCounter++;
-                        Logger.LogInformation(
-                            "Finished writting sampled graph {n}/{t} features to {b}.",
-                            sampledGraphsCounter,
-                            Options.GraphSample.Count,
-                            baseDir);
+                        Logger.LogInformation("Finished writting sampled graph features to {b}.", baseDir);
                     }
                 }
             }

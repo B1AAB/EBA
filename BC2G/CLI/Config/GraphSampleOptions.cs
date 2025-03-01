@@ -27,13 +27,13 @@ public class GraphSampleOptions
     public int Count { init; get; }
     public int Hops { init; get; }
     public GraphSampleMode Mode { init; get; } = GraphSampleMode.SubGraphOnly;
-    public CoinbaseSelectionMode CoinbaseMode { init; get; } = CoinbaseSelectionMode.CoinbaseOnly;
+    public CoinbaseSelectionMode CoinbaseMode { init; get; } = CoinbaseSelectionMode.IncludeCoinbase;
     public PathSearchAlgorith PathSearchAlgorith { init; get; } = PathSearchAlgorith.DFS;
     public int MinNodeCount { init; get; } = 3;
     public int MaxNodeCount { init; get; } = 500;
     public int MinEdgeCount { init; get; } = 3;
     public int MaxEdgeCount { init; get; } = 10000;
-    public int MaxAttempts { init; get; } = 5;
+    public int MaxAttempts { init; get; } = 25;
     public int MaxNodeFetchFromNeighbor { init; get; } = 500;
     public int MaxEdgesFetchFromNeighbor { init; get; } = 10000;
 
@@ -49,5 +49,5 @@ public class GraphSampleOptions
         }
         get { return _rootNodeSelectProb; }
     }
-    private double _rootNodeSelectProb = 0.1;
+    private double _rootNodeSelectProb = 0.3;
 }
