@@ -192,6 +192,11 @@ internal class Cli
             description: "if provided, it skips writting per-block graphs to files. " +
             "This option is used when other stats are intended to be collected from traverse (e.g., per-block summary stats)");
 
+        var skipSerializingAddresses = new Option<bool>(
+            name: "--skip-address-serialization",
+            description: "Addresses are serialized on per-block basis so that they can be used to determine address-level stats " +
+            "per block (requires additional storage and a down-stream process). You may skp serializing them if address-level stats is not needed.");
+
         var statsFilenameOption = new Option<string>(
             name: "--stats-filename",
             description: "Sets the filename to store statistics collected during the traverse.");
@@ -231,7 +236,8 @@ internal class Cli
             txoFilenameOption,
             skipGraphSerialization,
             trackTxoOption,
-            maxEntriesPerBatch
+            maxEntriesPerBatch,
+            skipSerializingAddresses
         };
 
         cmd.SetHandler(async (options) =>
@@ -250,7 +256,8 @@ internal class Cli
             maxBlocksInBufferOption: maxBlocksInBufferOption,
             trackTxoOption: trackTxoOption,
             txoFilenameOption: txoFilenameOption,
-            skipGraphSerialization: skipGraphSerialization,
+            skipGraphSerializationOption: skipGraphSerialization,
+            skipSerializingAddressesOption: skipSerializingAddresses,
             maxEntriesPerBatch: maxEntriesPerBatch));
 
         return cmd;

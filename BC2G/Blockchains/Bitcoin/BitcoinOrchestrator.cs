@@ -106,6 +106,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             maxCount: options.Bitcoin.MaxBlocksInBuffer);
 
         // TODO: pass the bitcoin option to the following method instead of passing null values depending on the set options.
+        // TODO: refactor the following so that only options is passed to the buffer
 
         using var gBuffer = new PersistentGraphBuffer(
             graphDb: options.Bitcoin.SkipGraphSerialization ? null : _host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>(),
@@ -118,6 +119,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             txoLifeCycleFilename: options.Bitcoin.TrackTxo ? options.Bitcoin.TxoFilename : null,
             maxTxoPerFile: options.Bitcoin.MaxTxoPerFile,
             maxAddressesPerFile: options.Bitcoin.MaxBlockAddressesPerFile,
+            options: options,
             semaphore: pgbSemaphore,
             ct: cT);
 

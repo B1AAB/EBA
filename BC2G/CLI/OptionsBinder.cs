@@ -22,7 +22,8 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<int>? _maxBlocksInBufferOption;
     private readonly Option<string>? _txoFilenameOption;
     private readonly Option<bool>? _trackTxoOption;
-    private readonly Option<bool>? _skipGraphSerialization;
+    private readonly Option<bool>? _skipGraphSerializationOption;
+    private readonly Option<bool>? _skipSerializingAddressesOption;
     private readonly Option<int>? _maxEntriesPerBatch;
 
     public OptionsBinder(
@@ -46,7 +47,8 @@ internal class OptionsBinder : BinderBase<Options>
         Option<int>? maxBlocksInBufferOption = null,
         Option<string>? txoFilenameOption = null,
         Option<bool>? trackTxoOption = null,
-        Option<bool>? skipGraphSerialization = null,
+        Option<bool>? skipGraphSerializationOption = null,
+        Option<bool>? skipSerializingAddressesOption = null,
         Option<int>? maxEntriesPerBatch = null)
     {
         _fromOption = fromOption;
@@ -69,7 +71,8 @@ internal class OptionsBinder : BinderBase<Options>
         _maxBlocksInBufferOption = maxBlocksInBufferOption;
         _txoFilenameOption = txoFilenameOption;
         _trackTxoOption = trackTxoOption;
-        _skipGraphSerialization = skipGraphSerialization;
+        _skipGraphSerializationOption = skipGraphSerializationOption;
+        _skipSerializingAddressesOption = skipSerializingAddressesOption;
         _maxEntriesPerBatch = maxEntriesPerBatch;
     }
 
@@ -101,7 +104,8 @@ internal class OptionsBinder : BinderBase<Options>
             MaxBlocksInBuffer = GetValue(defs.Bitcoin.MaxBlocksInBuffer, _maxBlocksInBufferOption, c),
             TxoFilename = GetValue(defs.Bitcoin.TxoFilename, _txoFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
             TrackTxo = GetValue(defs.Bitcoin.TrackTxo, _trackTxoOption, c),
-            SkipGraphSerialization = GetValue(defs.Bitcoin.SkipGraphSerialization, _skipGraphSerialization, c)
+            SkipGraphSerialization = GetValue(defs.Bitcoin.SkipGraphSerialization, _skipGraphSerializationOption, c),
+            SkipSerializingAddresses = GetValue(defs.Bitcoin.SkipSerializingAddresses, _skipSerializingAddressesOption, c)
         };
 
         // TODO: add a warning hen txofilename is set hwile txoPeristenceStrategy is not set to persist to text file.

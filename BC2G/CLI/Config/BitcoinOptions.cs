@@ -88,6 +88,8 @@ public class BitcoinOptions
 
     public bool SkipGraphSerialization { init; get; } = false;
 
+    public bool SkipSerializingAddresses {  init; get; } = false;
+
     public ResilienceStrategyOptions HttpClientResilienceStrategy { init; get; } = new();
 
     public ResilienceStrategyOptions BitcoinAgentResilienceStrategy { init; get; } = new()
