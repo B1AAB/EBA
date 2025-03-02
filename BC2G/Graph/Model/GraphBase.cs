@@ -189,6 +189,7 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
         Directory.CreateDirectory(baseOutputDir);
         var header = new[] { "SourceId", "TargetId", "SourceNodeType", "TargetNodeType", "EdgeValue", "EdgeType" };
 
+        /*
         var edges = _edges.Values.SelectMany(ids => ids.Values).Select(
             edges => new[]
             {
@@ -199,6 +200,19 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
                 edges.Value.ToString(),
                 edges.Type.ToString()
             });
+        */
+
+        var edges = _edges.Values.SelectMany(ids => ids.Values).Select(
+            edges => new[]
+            {
+                edges.Source.GetUniqueLabel(),
+                edges.Target.GetUniqueLabel(),
+                edges.Source.GetGraphComponentType().ToString(),
+                edges.Target.GetGraphComponentType().ToString(),
+                edges.Value.ToString(),
+                edges.Type.ToString()
+            });
+
 
         Helpers.CsvSerialize(edges, Path.Combine(workingDir, edgesFilename), header, append: true);
         Helpers.CsvSerialize(edges, Path.Combine(baseOutputDir, edgesFilename), header);
