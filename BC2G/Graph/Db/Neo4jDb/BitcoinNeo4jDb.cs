@@ -1,6 +1,8 @@
 ﻿using BC2G.Blockchains.Bitcoin.Graph;
 using BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
 
+using Microsoft.Extensions.Primitives;
+
 namespace BC2G.Graph.Db.Neo4jDb;
 
 public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
@@ -125,7 +127,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
     public override async Task<bool> TrySampleNeighborsAsync(
         IDriver driver, ScriptNode rootNode, string workingDir, string baseOutputDir)
     {
-        var graph = await GetNeighborsAsync(driver, rootNode.Address, Options.GraphSample.Hops);
+        var graph = await GetNeighborsAsync(driver, rootNode.Address, Options.GraphSample);
 
         if (!CanUseGraph(
             graph, tolerance: 0,
@@ -134,7 +136,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             minEdgeCount: Options.GraphSample.MinEdgeCount,
             maxEdgeCount: Options.GraphSample.MaxEdgeCount))
         {
-            Logger.LogInformation(
+            Logger.LogError(
                 "The sampled graph does not match required charactersitics: " +
                 "MinNodeCount: {a}, MaxNodeCount: {b}, MinEdgeCount: {c}, MaxEdgeCount: {d}",
                 Options.GraphSample.MinNodeCount,
@@ -169,12 +171,12 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
     }
 
     public override async Task<GraphBase> GetNeighborsAsync(
-        IDriver driver, string rootScriptAddress, int maxHops)
+        IDriver driver, string rootScriptAddress, GraphSampleOptions options)
     {
-        // TODO: the whole method of using 'Coinbase' to alter the functionality if this method seems "hacky"
+        // TODO: the whole method of using 'Coinbase' to alter the functionality seems hacky
         // need to find a better solution.
 
-        Logger.LogInformation("Getting neighbors of random node {node}, at {hop} hop distance.", rootScriptAddress, maxHops);
+        Logger.LogInformation("Getting neighbors of random node {node}, at {hop} hop distance.", rootScriptAddress, options.Hops);
 
         using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
 
@@ -185,7 +187,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             qBuilder.Append($"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{rootScriptAddress}\" }}) ");
 
         qBuilder.Append($"CALL apoc.path.spanningTree(root, {{");
-        qBuilder.Append($"maxLevel: {maxHops}, ");
+        qBuilder.Append($"maxLevel: {options.Hops}, ");
         qBuilder.Append($"limit: {Options.GraphSample.MaxEdgesFetchFromNeighbor}, ");
         
         if (Options.GraphSample.PathSearchAlgorith == PathSearchAlgorith.BFS)
@@ -200,6 +202,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         qBuilder.Append($"WITH root, ");
         qBuilder.Append($"nodes(path) AS pathNodes, ");
         qBuilder.Append($"relationships(path) AS pathRels ");
+        //qBuilder.Append($"WHERE size(pathNodes) <= {options.MaxNodeCount} AND size(pathRels) <= {options.MaxEdgeCount} ");
         qBuilder.Append($"LIMIT {Options.GraphSample.MaxNodeFetchFromNeighbor} ");
         qBuilder.Append($"RETURN [root] AS root, [n IN pathNodes WHERE n <> root] AS nodes, pathRels AS relationships");
 
@@ -238,14 +241,23 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         {
             Node root;
             if (rootScriptAddress == BitcoinAgent.Coinbase)
+            {
                 root = new CoinbaseNode(hop.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
+
+                if (root is null)
+                    continue;
+
+                g.GetOrAddNode(GraphComponentType.BitcoinCoinbaseNode, root);
+            }
             else
+            {
                 root = new ScriptNode(hop.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
 
-            if (root is null)
-                continue;
+                if (root is null)
+                    continue;
 
-            g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, root);
+                g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, root);
+            }
 
             // It is better to add nodes like this, and not just as part of 
             // adding edge, because `nodes` has all the node properties for each 

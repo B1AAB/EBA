@@ -164,6 +164,10 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                         sampledGraphsCounter++;
                         Logger.LogInformation("Finished writting sampled graph features to {b}.", baseDir);
                     }
+                    else
+                    {
+                        Logger.LogError("Failed sampling neighbors of the root node {r}.", rootNode.Address);
+                    }
                 }
             }
 
@@ -301,9 +305,9 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         // larger. There should be much better workarounds at
         // Tensorflow level, but for now, we limit the size of graphs.
         if (g.NodeCount < minNodeCount - (minNodeCount * tolerance) ||
-            g.NodeCount > maxNodeCount + (maxNodeCount * tolerance) ||
-            g.EdgeCount < minEdgeCount - (minEdgeCount * tolerance) ||
-            g.EdgeCount > maxEdgeCount + (maxEdgeCount * tolerance))
+            //g.NodeCount > maxNodeCount + (maxNodeCount * tolerance) ||
+            g.EdgeCount < minEdgeCount - (minEdgeCount * tolerance)) //||
+            //g.EdgeCount > maxEdgeCount + (maxEdgeCount * tolerance))
             return false;
 
         /*
@@ -319,7 +323,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         IDriver driver, int nodesCount, double rootNodesSelectProb = 0.1);
 
     public abstract Task<GraphBase> GetNeighborsAsync(
-        IDriver driver, string rootScriptAddress, int maxHops);
+        IDriver driver, string rootScriptAddress, GraphSampleOptions options);
 
     public abstract Task<GraphBase> GetRandomEdges(
         IDriver driver, int edgeCount, double edgeSelectProb = 0.2);
