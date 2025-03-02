@@ -8,6 +8,11 @@ public class CoinbaseNode : Node
     public CoinbaseNode(Neo4j.Driver.INode node) : base(node.ElementId)
     { }
 
+    public override string GetUniqueLabel()
+    {
+        return "Coinbase";
+    }
+
     public static new string[] GetFeaturesName()
     {
         return ["Coinbase"];

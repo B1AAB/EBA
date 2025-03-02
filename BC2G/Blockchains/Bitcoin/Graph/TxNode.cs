@@ -53,6 +53,11 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
             tx.Size, tx.VSize, tx.Weight, tx.LockTime)
     { }
 
+    public override string GetUniqueLabel()
+    {
+        return Txid;
+    }
+
     public static TxNode CreateTxNode(Neo4j.Driver.INode node)
     {
         // TODO: all the following double-casting is because of the type

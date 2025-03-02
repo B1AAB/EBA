@@ -35,6 +35,11 @@ public class Node : INode
         Id = id;
     }
 
+    public virtual string GetUniqueLabel()
+    {
+        return Id;
+    }
+
     public void AddIncomingEdge(IEdge<INode, INode> incomingEdge)
     {
         IncomingEdges.Add(incomingEdge);

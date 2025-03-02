@@ -11,7 +11,9 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         return GraphComponentType.BitcoinScriptNode;
     }
 
+    // TODO: since there is a CoinbaseNode type, this default should change
     public string Address { get; } = BitcoinAgent.Coinbase;
+    // TODO: since there is a CoinbaseNode type, this default should change
     public ScriptType ScriptType { get; } = ScriptType.Coinbase;
 
     public static new string Header
@@ -45,6 +47,11 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
             (string)node.Properties[Props.ScriptAddress.Name],
             Enum.Parse<ScriptType>((string)node.Properties[Props.ScriptType.Name]))
     { }
+
+    public override string GetUniqueLabel()
+    {
+        return Address;
+    }
 
     public static ScriptNode GetCoinbaseNode()
     {

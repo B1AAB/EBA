@@ -52,6 +52,11 @@ public class BlockNode(
             weight: (int)(long)node.Properties[Props.BlockWeight.Name])
     { }
 
+    public override string GetUniqueLabel()
+    {
+        return Height.ToString();
+    }
+
     public new static string[] GetFeaturesName()
     {
         return [

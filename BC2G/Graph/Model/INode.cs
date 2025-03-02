@@ -11,6 +11,14 @@ public interface INode : IGraphComponent
 
     public double[] GetFeatures();
 
+    /// <summary>
+    /// this can return ID, or any unique label (e.g., script address, or tx hash).
+    /// The goal of this method is to return unique label that would be more intuitive 
+    /// for the user than ID (such as Neo4j ID). 
+    /// </summary>
+    /// <returns></returns>
+    public string GetUniqueLabel();
+
     public void AddIncomingEdge(IEdge<INode, INode> incomingEdge);
     public void AddOutgoingEdge(IEdge<INode, INode> outgoingEdge);
 
