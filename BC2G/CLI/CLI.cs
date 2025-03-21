@@ -328,9 +328,7 @@ internal class Cli
         // TODO: rework this option.
         var modeOption = new Option<GraphSampleMode>(
             name: "--mode",
-            description: "Valid values are: " +
-            "`A` to generate graph and random edge pairs where the number of random edges equal the number of edges in the graph;" +
-            "`B` ",
+            description: "...",
             isDefault: true,
             parseArgument: x =>
             {

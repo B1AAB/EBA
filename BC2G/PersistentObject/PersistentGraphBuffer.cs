@@ -7,7 +7,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     private readonly IGraphDb<BitcoinGraph>? _graphDb;
     private readonly ILogger<PersistentGraphBuffer> _logger;
     private readonly PersistentGraphStatistics _pGraphStats;
-    private readonly PersistentBlockAddresses _pBlockAddresses;
+    private readonly PersistentBlockAddresses? _pBlockAddresses;
     private readonly PersistentTxoLifeCycleBuffer? _pTxoLifeCycleBuffer = null;
     private readonly SemaphoreSlim _semaphore;
     private bool _disposed = false;
@@ -44,7 +44,9 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         _options = options;
 
         _pGraphStats = new(graphStatsFilename, int.MaxValue, pgStatsLogger, ct);
-        _pBlockAddresses = new(perBlockAddressesFilename, maxAddressesPerFile, pgAddressesLogger, ct);
+
+        if (!_options.Bitcoin.SkipSerializingAddresses)
+            _pBlockAddresses = new(perBlockAddressesFilename, maxAddressesPerFile, pgAddressesLogger, ct);
 
         if (txoLifeCycleFilename != null && pTxoLifeCyccleLogger != null)
             _pTxoLifeCycleBuffer = new(txoLifeCycleFilename, maxTxoPerFile, pTxoLifeCyccleLogger, ct);
@@ -81,7 +83,8 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         if (_pTxoLifeCycleBuffer != null)
             tasks.Add(_pTxoLifeCycleBuffer.SerializeAsync(obj.Block.TxoLifecycle.Values, default));
 
-        if (!_options.Bitcoin.SkipSerializingAddresses)
+        //if (!_options.Bitcoin.SkipSerializingAddresses)
+        if (_pBlockAddresses != null)
             tasks.Add(_pBlockAddresses.SerializeAsync(obj.Stats.ToStringsAddresses(), default));
 
         await Task.WhenAll(tasks);

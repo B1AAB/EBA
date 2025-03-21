@@ -29,12 +29,19 @@ public class GraphSampleOptions
     public GraphSampleMode Mode { init; get; } = GraphSampleMode.SubGraphOnly;
     public CoinbaseSelectionMode CoinbaseMode { init; get; } = CoinbaseSelectionMode.IncludeCoinbase;
     public PathSearchAlgorith PathSearchAlgorith { init; get; } = PathSearchAlgorith.DFS;
-    public int MinNodeCount { init; get; } = 3;
-    public int MaxNodeCount { init; get; } = 500;
+    public int MinNodeCount { init; get; } = 2;
+    public int MaxNodeCount { init; get; } = 1000;
     public int MinEdgeCount { init; get; } = 3;
     public int MaxEdgeCount { init; get; } = 10000;
     public int MaxAttempts { init; get; } = 25;
-    public int MaxNodeFetchFromNeighbor { init; get; } = 500;
+
+    // TODO: the following two are confusing and not clear how they 
+    // support/match the above max/min node/edge counts. 
+    // Also the value of these configs should be far more than the 
+    // above (see where they are used in the queries).
+    // Try to consilidate the following and the above into more 
+    // intuitive settings. 
+    public int MaxNodeFetchFromNeighbor { init; get; } = 1000;
     public int MaxEdgesFetchFromNeighbor { init; get; } = 10000;
 
 
