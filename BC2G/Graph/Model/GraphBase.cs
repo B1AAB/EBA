@@ -259,7 +259,7 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
     }
 
 
-    public void Downsample(int maxNodesCount, int maxEdgesCount, int? seed = null)
+    public void DownSample(int maxNodesCount, int maxEdgesCount, int? seed = null)
     {
         // TODO: this sampling is not ideal;
         // (1) it is not the fastest;
@@ -310,6 +310,38 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
 
         foreach (var node in disconnectNodes)
             _nodes[(GraphComponentType)node[0]].Remove((string)node[1], out _);
+    }
+
+    public void DownSample(int maxEdgesCount, int? seed = null)
+    {
+        // TODO: this sampling is not ideal
+        // because it can be very slow
+        //
+        // For a better sampling algorithm, use "Reservoir sampling". Ref: 
+        // - https://stackoverflow.com/a/48089/947889
+        // - https://en.wikipedia.org/wiki/Reservoir_sampling
+        //
+
+        Random rnd = seed == null ? new Random() : new Random((int)seed);
+        var edgesToRemoveCount = EdgeCount - maxEdgesCount;
+
+        if (edgesToRemoveCount > 0)
+        {
+            var removedEdgesCounter = 0;
+            foreach(var edgeType in _edges)
+            {
+                foreach(var edge in edgeType.Value)
+                {
+
+                }
+            }
+
+            var allEdgesIds = _edges.SelectMany(x => x.Value.Select(y => new object[] { x.Key, y.Key })).ToList();
+            var edgesToRemove = allEdgesIds.OrderBy(x => rnd.Next()).Take(edgesToRemoveCount);
+
+            foreach (var edgeToRemove in edgesToRemove)
+                _edges[(GraphComponentType)edgeToRemove[0]].Remove((string)edgeToRemove[1], out _);
+        }
     }
 
     public bool Equals(GraphBase? other)
