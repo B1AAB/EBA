@@ -291,14 +291,18 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         return g;
     }
 
-    private async Task<GraphBase> GetNeighborsUsingForestFireSamplingAlgorithmAsync(IDriver driver, string rootScriptAddress, GraphSampleOptions options)
+    private async Task<GraphBase> GetNeighborsUsingForestFireSamplingAlgorithmAsync(
+        IDriver driver, 
+        string rootScriptAddress, 
+        GraphSampleOptions options)
     {
         // TODO: this method is experimental, need a thorough re-write.
 
-        var nodeSamplingCountAtRoot = 15;
+        var nodeSamplingCountAtRoot = 100;
         var rnd = new Random(31);
         var g = new BitcoinGraph();
         var maxHops = 4;
+        var queryLimit = 1000;
         var nodeCountReductionFactorByHop = 4.0;
         var allNodesAddedToGraph = new HashSet<string>();
         var allEdgesAddedToGraph = new HashSet<string>();
@@ -311,7 +315,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 
             qBuilder.Append($"CALL apoc.path.spanningTree(root, {{");
             qBuilder.Append($"maxLevel: 1, ");
-            qBuilder.Append($"limit: 10000, ");
+            qBuilder.Append($"limit: {queryLimit}, ");
             qBuilder.Append($"bfs: true, ");
             qBuilder.Append($"labelFilter: '{ScriptNodeStrategy.Labels}'");
             //$"    relationshipFilter: \">{EdgeType.Transfers}\"" +
@@ -320,7 +324,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             qBuilder.Append($"WITH root, ");
             qBuilder.Append($"nodes(path) AS pathNodes, ");
             qBuilder.Append($"relationships(path) AS pathRels ");
-            qBuilder.Append($"LIMIT 10000 ");
+            qBuilder.Append($"LIMIT {queryLimit} ");
             qBuilder.Append($"RETURN [root] AS root, [n IN pathNodes WHERE n <> root] AS nodes, pathRels AS relationships");
 
             return qBuilder.ToString();

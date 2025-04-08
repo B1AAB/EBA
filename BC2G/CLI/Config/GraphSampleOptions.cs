@@ -27,7 +27,7 @@ public class GraphSampleOptions
     public int Count { init; get; }
     public int Hops { init; get; }
     public GraphSampleMode Mode { init; get; } = GraphSampleMode.SubGraphOnly;
-    public CoinbaseSelectionMode CoinbaseMode { init; get; } = CoinbaseSelectionMode.IncludeCoinbase;
+    public CoinbaseSelectionMode CoinbaseMode { init; get; } = CoinbaseSelectionMode.CoinbaseOnly;
     public PathSearchAlgorith PathSearchAlgorith { init; get; } = PathSearchAlgorith.DFS;
     public int MinNodeCount { init; get; } = 2;
     public int MaxNodeCount { init; get; } = 1000;
