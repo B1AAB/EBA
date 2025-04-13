@@ -7,6 +7,11 @@ public class S2SEdge : Edge<ScriptNode, ScriptNode>
         get { return GraphComponentType.BitcoinS2S; }
     }
 
+    public override GraphComponentType GetGraphComponentType()
+    {
+        return GraphComponentType.BitcoinS2S;
+    }
+
     public EdgeLabel Label { get { return _label; } }
     private readonly EdgeLabel _label;
 
@@ -19,13 +24,14 @@ public class S2SEdge : Edge<ScriptNode, ScriptNode>
         _label = Type == EdgeType.Transfers ? EdgeLabel.S2STransfer : EdgeLabel.S2SFee;
     }
 
+    /*
     public S2SEdge(
         ScriptNode source, ScriptNode target,
         IRelationship relationship) :
         base(source, target, relationship)
     {
         _label = Type == EdgeType.Transfers ? EdgeLabel.S2STransfer : EdgeLabel.S2SFee;
-    }
+    }*/
 
     public S2SEdge Update(long value)
     {

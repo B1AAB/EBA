@@ -7,6 +7,11 @@ public class T2TEdge : Edge<TxNode, TxNode>
         get { return GraphComponentType.BitcoinT2T; }
     }
 
+    public override GraphComponentType GetGraphComponentType()
+    {
+        return GraphComponentType.BitcoinT2T;
+    }
+
     public EdgeLabel Label { get { return _label; } }
     private readonly EdgeLabel _label;
 

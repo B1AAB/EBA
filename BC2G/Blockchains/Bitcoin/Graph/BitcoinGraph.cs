@@ -93,12 +93,20 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
         }
     }
 
-    public Edge<INode, INode> GetOrAddEdge(IRelationship e)
+    public IEdge<INode, INode> GetOrAddEdge(IRelationship e)
     {
-        GetNode(e.StartNodeElementId, out var sourceNode, out var _);
-        GetNode(e.EndNodeElementId, out var targetNode, out var _);
+        GetNode(e.StartNodeElementId, out var sourceNode, out var sourceNodeComponentType);
+        GetNode(e.EndNodeElementId, out var targetNode, out var targetNodeComponentType);
 
-        var edge = GetOrAddEdge(GraphComponentType.Edge, new Edge<INode, INode>(sourceNode, targetNode, e));
+        var candidateEdge = EdgeFactory.CreateEdge(
+            sourceNode,
+            targetNode,
+            e,
+            sourceNodeComponentType,
+            targetNodeComponentType);
+
+        var edge = GetOrAddEdge(candidateEdge.GetGraphComponentType(), candidateEdge);
+
         sourceNode.AddOutgoingEdge(edge);
         targetNode.AddIncomingEdge(edge);
 

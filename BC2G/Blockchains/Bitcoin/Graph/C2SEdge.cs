@@ -13,6 +13,11 @@ public class C2SEdge : S2SEdge
         get { return GraphComponentType.BitcoinC2S; }
     }
 
+    public override GraphComponentType GetGraphComponentType()
+    {
+        return GraphComponentType.BitcoinC2S;
+    }
+
     public new EdgeLabel Label { get; } = EdgeLabel.C2SMinting;
 
     public C2SEdge(
