@@ -67,17 +67,17 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
         return [
             nameof(Value),
             nameof(Type),
-            nameof(Timestamp),
             nameof(BlockHeight) ];
     }
 
     public virtual double[] GetFeatures()
     {
-        return [
-            Value,
+        return
+        [
+            Helpers.Satoshi2BTC(Value),
             (double)Type,
-            Timestamp - BitcoinAgent.GenesisTimestamp,
-            BlockHeight ];
+            BlockHeight
+        ];
     }
 
     public string GetHashCode(bool ignoreValue)

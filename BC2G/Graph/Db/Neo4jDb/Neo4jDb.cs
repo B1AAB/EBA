@@ -321,7 +321,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     public abstract Task<GraphBase> GetNeighborsAsync(
         IDriver driver, string rootScriptAddress, GraphSampleOptions options);
 
-    public abstract Task<GraphBase> GetRandomEdges(
+    public abstract Task<GraphBase> GetDisjointGraphs(
         IDriver driver, int edgeCount, double edgeSelectProb = 0.2);
 
     public abstract Task<bool> TrySampleNeighborsAsync(

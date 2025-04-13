@@ -333,7 +333,7 @@ internal class Cli
             parseArgument: x =>
             {
                 if (x.Tokens.Count == 0)
-                    return default;
+                    return new Options().GraphSample.Mode;
 
                 var valid = Enum.TryParse(x.Tokens.Single().Value, out GraphSampleMode value);
                 if (!valid)

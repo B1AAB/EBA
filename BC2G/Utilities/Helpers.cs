@@ -138,7 +138,7 @@ internal class Helpers
             addHeader = false;
 
         using var writter = new StreamWriter(filename, append: append);
-        if (addHeader)
+        if (addHeader && header != null)
             writter.WriteLine(string.Join(delimiter, header));
         foreach (var item in data)
             writter.WriteLine(string.Join(delimiter, item));
@@ -167,9 +167,13 @@ internal class Helpers
             return filename;
     }
 
-    public static string GetTimestamp()
+    public static string GetTimestamp(bool inBase64 = false)
     {
-        return $"{DateTime.Now:yyyyMMddHHmmssffff}";
+        var dtime = $"{DateTime.Now:yyyyMMddHHmmssffff}";
+        if (inBase64)
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(dtime));
+        else
+            return dtime;
     }
 
     public static string GetUnixTimeSeconds()

@@ -62,7 +62,7 @@ public class Node : INode
 
     public static string[] GetFeaturesName()
     {
-        return [nameof(ScriptType), nameof(InDegree), nameof(OutDegree)];
+        return [nameof(InDegree), nameof(OutDegree)];
     }
 
     public virtual double[] GetFeatures()

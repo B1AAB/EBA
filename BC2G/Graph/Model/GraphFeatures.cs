@@ -31,10 +31,11 @@ public class GraphFeatures
 
         // TODO: extend to support all types of edges in the graph db. 
         EdgeFeaturesHeader = [];
-        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinC2T, C2TEdge.GetFeaturesName());
-        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinC2S, C2SEdge.GetFeaturesName());
-        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinT2T, T2TEdge.GetFeaturesName());
-        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinS2S, S2SEdge.GetFeaturesName());
+        var sourceAndTarget = new[] { "Source", "Target" };
+        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinC2T, [.. sourceAndTarget, .. C2TEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinC2S, [.. sourceAndTarget, .. C2SEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinT2T, [.. sourceAndTarget, .. T2TEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinS2S, [.. sourceAndTarget, .. S2SEdge.GetFeaturesName()]);
 
         var nodeFeatures = new Dictionary<GraphComponentType, List<double[]>>();
         var nodeIdToIdx = new Dictionary<GraphComponentType, Dictionary<string, int>>();

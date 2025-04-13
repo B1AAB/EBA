@@ -128,7 +128,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         IDriver driver, ScriptNode rootNode, string workingDir)
     {
         var graph = await GetNeighborsAsync(driver, rootNode.Address, Options.GraphSample);
-        var perBatchLabelsFilename = Path.Join(workingDir, "labels.tsv");
+        var perBatchLabelsFilename = Path.Join(workingDir, "Labels.tsv");
 
         if (!CanUseGraph(
             graph, tolerance: 0,
@@ -147,21 +147,21 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             return false;
         }
 
-        if (Options.GraphSample.Mode == GraphSampleMode.GraphRndEdgePair)
+        if (Options.GraphSample.Mode == GraphSampleMode.ConnectedGraphAndForest)
         {
-            var rndGraph = await GetRandomEdges(driver, graph.EdgeCount);
+            var disjointGraphs = await GetDisjointGraphs(driver, graph.EdgeCount);
 
             if (!CanUseGraph(
-                rndGraph,
+                disjointGraphs,
                 minNodeCount: Options.GraphSample.MinNodeCount,
                 maxNodeCount: graph.GetNodeCount(GraphComponentType.BitcoinScriptNode),
                 minEdgeCount: Options.GraphSample.MinEdgeCount,
                 maxEdgeCount: graph.EdgeCount))
                 return false;
 
-            rndGraph.AddLabel(1);
-            rndGraph.Serialize(
-                Path.Join(workingDir, rndGraph.Id),
+            disjointGraphs.AddLabel(1);
+            disjointGraphs.Serialize(
+                Path.Join(workingDir, disjointGraphs.Id),
                 perBatchLabelsFilename,
                 serializeFeatureVectors: Options.GraphSample.SerializeFeatureVectors,
                 serializeEdges: Options.GraphSample.SerializeEdges);
@@ -208,12 +208,12 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         qBuilder.Append($"maxLevel: {options.Hops}, ");
         qBuilder.Append($"limit: {Options.GraphSample.MaxEdgesFetchFromNeighbor}, ");
 
-        if (Options.GraphSample.PathSearchAlgorith == PathSearchAlgorith.BFS)
+        if (Options.GraphSample.Algorithm == SamplingAlgorithm.BFS)
             qBuilder.Append($"bfs: true, ");
         else
             qBuilder.Append($"bfs: false, ");
 
-        qBuilder.Append($"labelFilter: '{ScriptNodeStrategy.Labels}'");
+        qBuilder.Append($"labelFilter: '{options.LabelFilters}'");
         //$"    relationshipFilter: \">{EdgeType.Transfers}\"" +
         qBuilder.Append($"}}) ");
         qBuilder.Append($"YIELD path ");
@@ -451,7 +451,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 
 
 
-    public override async Task<GraphBase> GetRandomEdges(
+    public override async Task<GraphBase> GetDisjointGraphs(
         IDriver driver, int edgeCount, double edgeSelectProb = 0.2)
     {
         using var session = driver.AsyncSession(

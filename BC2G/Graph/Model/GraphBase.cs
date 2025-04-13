@@ -6,7 +6,7 @@ namespace BC2G.Graph.Model;
 
 public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphComponent, IDisposable
 {
-    public string Id { get; } = id == null ? Helpers.GetTimestamp() : id.Trim();
+    public string Id { get; } = id == null ?  Helpers.GetTimestamp() : id.Trim();
 
     private bool _disposed = false;
 
@@ -214,7 +214,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
     public void SerializeFeatures(
         string workingDir,
         string perBatchLabelsFilename,
-        string perGraphLabelsFilename = "labels.tsv")
+        string perGraphLabelsFilename = "Labels.tsv")
     {
         var gFeatures = GetFeatures();
 

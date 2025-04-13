@@ -95,22 +95,25 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 
     public static new string[] GetFeaturesName()
     {
-        return
-            new string[] { nameof(Size), nameof(Weight), nameof(LockTime) }
-            .Concat(Node.GetFeaturesName()).ToArray();
+        return 
+        [
+            nameof(Size),
+            nameof(Weight),
+            nameof(LockTime),
+            .. Node.GetFeaturesName()
+        ];
     }
 
     public override double[] GetFeatures()
     {
         // TODO: fix null values and avoid casting
         return
-            new double[]
-            {
-                Size == null ? double.NaN : (double)Size,
-                Weight == null ? double.NaN :(double)Weight,
-                LockTime == null ? double.NaN : (double)LockTime
-            }
-            .Concat(base.GetFeatures()).ToArray();
+        [
+            Size == null ? double.NaN : (double)Size,
+            Weight == null ? double.NaN :(double)Weight,
+            LockTime == null ? double.NaN : (double)LockTime,
+            .. base.GetFeatures(),
+        ];
     }
 
     public int CompareTo(TxNode? other)
