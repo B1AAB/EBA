@@ -4,8 +4,10 @@ using System.Collections.Immutable;
 
 namespace BC2G.Graph.Model;
 
-public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
+public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphComponent, IDisposable
 {
+    public string Id { get; } = id == null ? Helpers.GetTimestamp() : id.Trim();
+
     private bool _disposed = false;
 
     public static GraphComponentType ComponentType { get { return GraphComponentType.Graph; } }
@@ -171,36 +173,23 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
     }
 
     public void Serialize(
-        string workingDir,
-        string baseOutputDir,
-        string outputDir, 
-        string edgesFilename = "edges.tsv",
-        string nodeFeaturesFilename = "node_features.tsv",
-        string edgeFeaturesFilename = "edge_features.tsv",
-        string pairIndicesFilename = "pair_indices.tsv",
-        string labelsFilename = "labels.tsv")
+        string workingDir, 
+        string perBatchLabelsFilename, 
+        bool serializeFeatureVectors = true, 
+        bool serializeEdges = false)
     {
-        SerializeFeatures(outputDir, nodeFeaturesFilename, edgeFeaturesFilename, pairIndicesFilename, labelsFilename);
-        SerializeEdges(workingDir, baseOutputDir, edgesFilename);
+        Directory.CreateDirectory(workingDir);
+
+        if (serializeFeatureVectors)
+            SerializeFeatures(workingDir, perBatchLabelsFilename);
+
+        if (serializeEdges)
+            SerializeEdges(workingDir);
     }
 
-    public void SerializeEdges(string workingDir, string baseOutputDir, string edgesFilename = "edges.tsv")
+    public void SerializeEdges(string workingDir, string edgesFilename = "edges.tsv")
     {
-        Directory.CreateDirectory(baseOutputDir);
         var header = new[] { "SourceId", "TargetId", "SourceNodeType", "TargetNodeType", "EdgeValue", "EdgeType" };
-
-        /*
-        var edges = _edges.Values.SelectMany(ids => ids.Values).Select(
-            edges => new[]
-            {
-                edges.Source.Id,
-                edges.Target.Id,
-                edges.Source.GetGraphComponentType().ToString(),
-                edges.Target.GetGraphComponentType().ToString(),
-                edges.Value.ToString(),
-                edges.Type.ToString()
-            });
-        */
 
         var edges = _edges.Values.SelectMany(ids => ids.Values).Select(
             edges => new[]
@@ -213,9 +202,8 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
                 edges.Type.ToString()
             });
 
-
         Helpers.CsvSerialize(edges, Path.Combine(workingDir, edgesFilename), header, append: true);
-        Helpers.CsvSerialize(edges, Path.Combine(baseOutputDir, edgesFilename), header);
+        Helpers.CsvSerialize(edges, Path.Combine(workingDir, edgesFilename), header);
     }
 
     public GraphFeatures GetFeatures()
@@ -224,37 +212,43 @@ public class GraphBase : IEquatable<GraphBase>, IGraphComponent, IDisposable
     }
 
     public void SerializeFeatures(
-        string outputDir,
-        string nodeFeaturesFilename = "node_features.tsv",
-        string edgeFeaturesFilename = "edge_features.tsv",
-        string pairIndicesFilename = "pair_indices.tsv",
-        string labelsFilename = "labels.tsv")
+        string workingDir,
+        string perBatchLabelsFilename,
+        string perGraphLabelsFilename = "labels.tsv")
     {
-        Directory.CreateDirectory(outputDir);
-
         var gFeatures = GetFeatures();
 
         foreach (var nodeType in gFeatures.NodeFeatures)
         {
+            if (nodeType.Value.Count == 0)
+                continue;
+
             Helpers.CsvSerialize(
                 nodeType.Value,
-                Path.Join(outputDir, nodeType.Key + nodeFeaturesFilename),
+                Path.Join(workingDir, nodeType.Key + ".tsv"),
                 gFeatures.NodeFeaturesHeader[nodeType.Key]);
         }
 
-        Helpers.CsvSerialize(
-            gFeatures.EdgeFeatures,
-            Path.Join(outputDir, edgeFeaturesFilename),
-            gFeatures.EdgeFeaturesHeader);
+        foreach (var edgeType in gFeatures.EdgeFeatures)
+        {
+            if (edgeType.Value.Count == 0)
+                continue;
+
+            Helpers.CsvSerialize(
+                edgeType.Value,
+                Path.Join(workingDir, edgeType.Key + ".tsv"),
+                gFeatures.EdgeFeaturesHeader[edgeType.Key]);
+        }
 
         Helpers.CsvSerialize(
-            gFeatures.PairIndices,
-            Path.Join(outputDir, pairIndicesFilename),
-            gFeatures.PairIndicesHeader);
+            [gFeatures.Labels.ToArray()],
+            Path.Combine(workingDir, perBatchLabelsFilename),
+            gFeatures.LabelsHeader,
+            append: true);
 
         Helpers.CsvSerialize(
-            gFeatures.Labels,
-            Path.Combine(outputDir, labelsFilename),
+            [gFeatures.Labels.ToArray()],
+            Path.Combine(workingDir, perGraphLabelsFilename),
             gFeatures.LabelsHeader);
     }
 

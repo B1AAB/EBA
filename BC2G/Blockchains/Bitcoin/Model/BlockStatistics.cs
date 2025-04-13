@@ -66,7 +66,7 @@ public class BlockStatistics(Block block)
                 .Select((v, i) => new { Key = (EdgeLabel)i, Value = v })
                 .ToDictionary(x => x.Key, x => x.Value);
         }
-    }
+    } 
 
     private readonly long[] _edgeLabelValueSum =
         new long[Enum.GetNames(typeof(EdgeLabel)).Length];

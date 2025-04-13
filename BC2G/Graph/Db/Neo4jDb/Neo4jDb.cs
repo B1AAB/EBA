@@ -118,14 +118,11 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         if (Options.GraphSample.CoinbaseMode != CoinbaseSelectionMode.ExcludeCoinbase)
         {
             Logger.LogInformation("Sampling neighbors of the coinbase node.");
-            var coinbaseDir = Path.Join(baseOutputDir, BitcoinAgent.Coinbase);
             var tmpSolutionCoinbase = new ScriptNode(BitcoinAgent.Coinbase, BitcoinAgent.Coinbase, ScriptType.Coinbase);
-            if (await TrySampleNeighborsAsync(driver, tmpSolutionCoinbase, baseOutputDir, coinbaseDir))
+            if (await TrySampleNeighborsAsync(driver, tmpSolutionCoinbase, baseOutputDir))
             {
                 sampledGraphsCounter++;
-                Logger.LogInformation(
-                    "Finished writting sampled graph of coinbase neighbors to {a}.",
-                    coinbaseDir);
+                Logger.LogInformation("Finished writting sampled graph of coinbase neighbors.");
             }
             else
             {
@@ -158,11 +155,10 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 {
                     Logger.LogInformation("Sampling neighbors of the random root node {n}/{t}.", ++counter, rndRootNodes.Count);
 
-                    var baseDir = Path.Join(baseOutputDir, sampledGraphsCounter.ToString());
-                    if (await TrySampleNeighborsAsync(driver, rootNode, baseOutputDir, baseDir))
+                    if (await TrySampleNeighborsAsync(driver, rootNode, baseOutputDir))
                     {
                         sampledGraphsCounter++;
-                        Logger.LogInformation("Finished writting sampled graph features to {b}.", baseDir);
+                        Logger.LogInformation("Finished writting sampled graph features.");
                     }
                     else
                     {
@@ -329,7 +325,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         IDriver driver, int edgeCount, double edgeSelectProb = 0.2);
 
     public abstract Task<bool> TrySampleNeighborsAsync(
-        IDriver driver, ScriptNode rootNode, string workingDir, string baseOutputDir);
+        IDriver driver, ScriptNode rootNode, string workingDir);
 
     public void Dispose()
     {

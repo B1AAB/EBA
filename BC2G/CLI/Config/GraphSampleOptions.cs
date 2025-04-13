@@ -44,6 +44,9 @@ public class GraphSampleOptions
     public int MaxNodeFetchFromNeighbor { init; get; } = 1000;
     public int MaxEdgesFetchFromNeighbor { init; get; } = 10000;
 
+    public bool SerializeEdges { init; get; } = false;
+    public bool SerializeFeatureVectors { init; get; } = true;
+
 
     public double RootNodeSelectProb
     {

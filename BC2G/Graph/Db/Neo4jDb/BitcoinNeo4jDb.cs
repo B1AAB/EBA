@@ -1,12 +1,6 @@
-﻿using BC2G.Blockchains.Bitcoin.Graph;
-using BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
+﻿using BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
 
 using Microsoft.Extensions.Primitives;
-
-using NBitcoin.RPC;
-
-using System.Collections.Generic;
-using System.Linq;
 
 
 namespace BC2G.Graph.Db.Neo4jDb;
@@ -131,11 +125,10 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
     }
 
     public override async Task<bool> TrySampleNeighborsAsync(
-        IDriver driver, ScriptNode rootNode, string workingDir, string baseOutputDir)
+        IDriver driver, ScriptNode rootNode, string workingDir)
     {
         var graph = await GetNeighborsAsync(driver, rootNode.Address, Options.GraphSample);
-
-        //graph.DownSample(200, 50000);
+        var perBatchLabelsFilename = Path.Join(workingDir, "labels.tsv");
 
         if (!CanUseGraph(
             graph, tolerance: 0,
@@ -167,11 +160,19 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 return false;
 
             rndGraph.AddLabel(1);
-            rndGraph.Serialize(workingDir: workingDir, baseOutputDir: baseOutputDir, outputDir: Path.Join(baseOutputDir, "random_edges"));
+            rndGraph.Serialize(
+                Path.Join(workingDir, rndGraph.Id),
+                perBatchLabelsFilename,
+                serializeFeatureVectors: Options.GraphSample.SerializeFeatureVectors,
+                serializeEdges: Options.GraphSample.SerializeEdges);
         }
 
         graph.AddLabel(0);
-        graph.Serialize(workingDir: workingDir, baseOutputDir: baseOutputDir, outputDir: Path.Join(baseOutputDir, "graph"));
+        graph.Serialize(
+            Path.Join(workingDir, graph.Id),
+            perBatchLabelsFilename,
+            serializeFeatureVectors: Options.GraphSample.SerializeFeatureVectors,
+            serializeEdges: Options.GraphSample.SerializeEdges);
 
         Logger.LogInformation("Serialized the graph.");
 
@@ -182,7 +183,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         IDriver driver, string rootScriptAddress, GraphSampleOptions options)
     {
         // BFS or DFS algorithms
-        //return await GetNeighborsUsingSpanningTreeAsync(driver, rootScriptAddress, options);
+        return await GetNeighborsUsingGraphTraversalAlgorithmAsync(driver, rootScriptAddress, options);
 
         // forest fire sampling.
         return await GetNeighborsUsingForestFireSamplingAlgorithmAsync(driver, rootScriptAddress, options);
