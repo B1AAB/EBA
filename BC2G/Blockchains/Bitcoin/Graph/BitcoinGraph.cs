@@ -69,23 +69,23 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
             S2SEdge.ComponentType);
     }
 
-    public INode GetOrAddNode(Neo4j.Driver.INode node)
+    public INode GetOrAddNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null)
     {
         if (node.Labels.Contains(ScriptNodeStrategy.Labels))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(node));
+            return GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree));
         }
         else if (node.Labels.Contains(TxNodeStrategy.Labels))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinTxNode, TxNode.CreateTxNode(node));
+            return GetOrAddNode(GraphComponentType.BitcoinTxNode, TxNode.CreateTxNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree));
         }
         else if (node.Labels.Contains(BlockNodeStrategy.Labels))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinBlockNode, new BlockNode(node));
+            return GetOrAddNode(GraphComponentType.BitcoinBlockNode, new BlockNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree));
         }
         else if (node.Labels.Contains(BitcoinAgent.Coinbase))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinCoinbaseNode, new CoinbaseNode(node));
+            return GetOrAddNode(GraphComponentType.BitcoinCoinbaseNode, new CoinbaseNode(node, originalOutdegree: originalOutdegree));
         }
         else
         {

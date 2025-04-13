@@ -36,8 +36,10 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         string txid, 
         ulong? version,
         int? size, int? vSize, int? weight,
-        long? lockTime) :
-        base(txid)
+        long? lockTime, 
+        double? originalIndegree = null,
+        double? originalOutdegree = null) :
+        base(txid, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree)
     {
         Txid = txid;
         Version = version;
@@ -58,7 +60,10 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         return Txid;
     }
 
-    public static TxNode CreateTxNode(Neo4j.Driver.INode node)
+    public static TxNode CreateTxNode(
+        Neo4j.Driver.INode node,
+        double? originalIndegree = null,
+        double? originalOutdegree = null)
     {
         // TODO: all the following double-casting is because of the type
         // normalization happens when bulk-loading data into neo4j.
@@ -85,7 +90,9 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
             size: size,
             vSize: vSize,
             weight: weight,
-            lockTime: lockTime);
+            lockTime: lockTime,
+            originalIndegree: originalIndegree,
+            originalOutdegree: originalOutdegree);
     }
 
     public static TxNode GetCoinbaseNode()

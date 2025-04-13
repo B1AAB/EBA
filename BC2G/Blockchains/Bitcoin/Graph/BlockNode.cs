@@ -13,7 +13,11 @@ public class BlockNode(
     int size,
     int strippedSize,
     int confirmations,
-    int weight) : Node(id), IComparable<BlockNode>, IEquatable<BlockNode>
+    int weight, 
+    double? originalIndegree = null,
+    double? originalOutdegree = null) : 
+    Node(id, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree), 
+    IComparable<BlockNode>, IEquatable<BlockNode>
 {
     public static new GraphComponentType ComponentType
     {
@@ -39,7 +43,7 @@ public class BlockNode(
     // normalization happens when bulk-loading data into neo4j.
     // Find a better solution.
 
-    public BlockNode(Neo4j.Driver.INode node) :
+    public BlockNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null) :
         this(
             id: node.ElementId,
             height: long.Parse((string)node.Properties[Props.Height.Name]),
@@ -49,7 +53,9 @@ public class BlockNode(
             size: (int)(long)node.Properties[Props.BlockSize.Name],
             strippedSize: (int)(long)node.Properties[Props.BlockStrippedSize.Name],
             confirmations: (int)(long)node.Properties[Props.BlockConfirmations.Name],
-            weight: (int)(long)node.Properties[Props.BlockWeight.Name])
+            weight: (int)(long)node.Properties[Props.BlockWeight.Name],
+            originalIndegree: originalIndegree,
+            originalOutdegree: originalOutdegree)
     { }
 
     public override string GetUniqueLabel()
@@ -60,12 +66,12 @@ public class BlockNode(
     public new static string[] GetFeaturesName()
     {
         return [
-            nameof(Height), 
-            nameof(MedianTime), 
-            nameof(TransactionsCount), 
-            nameof(Difficulty), 
-            nameof(Size), 
-            nameof(StrippedSize), 
+            nameof(Height),
+            nameof(MedianTime),
+            nameof(TransactionsCount),
+            nameof(Difficulty),
+            nameof(Size),
+            nameof(StrippedSize),
             nameof(Confirmations),
             nameof(Weight)];
     }
