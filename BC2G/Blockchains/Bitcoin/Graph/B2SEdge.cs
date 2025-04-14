@@ -1,31 +1,31 @@
 ﻿namespace BC2G.Blockchains.Bitcoin.Graph;
 
-public class S2SEdge : Edge<ScriptNode, ScriptNode>
+public class B2SEdge : Edge<BlockNode, ScriptNode>
 {
     public new static GraphComponentType ComponentType
     {
-        get { return GraphComponentType.BitcoinS2S; }
+        get { return GraphComponentType.BitcoinB2S; }
     }
 
     public override GraphComponentType GetGraphComponentType()
     {
-        return GraphComponentType.BitcoinS2S;
+        return GraphComponentType.BitcoinB2S;
     }
 
     public EdgeLabel Label { get { return _label; } }
     private readonly EdgeLabel _label;
 
-    public S2SEdge(
-        ScriptNode source, ScriptNode target,
+    public B2SEdge(
+        BlockNode source, ScriptNode target,
         long value, EdgeType type,
         uint timestamp, long blockHeight) :
         base(source, target, value, type, timestamp, blockHeight)
     {
-        _label = Type == EdgeType.Transfers ? EdgeLabel.S2STransfer : EdgeLabel.S2SFee;
+        _label = EdgeLabel.B2SCredits;
     }
 
-    public S2SEdge Update(long value)
+    public B2SEdge Update(long value)
     {
-        return new S2SEdge(Source, Target, Value + value, Type, Timestamp, BlockHeight);
+        return new B2SEdge(Source, Target, Value + value, Type, Timestamp, BlockHeight);
     }
 }

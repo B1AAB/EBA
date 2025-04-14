@@ -1,7 +1,7 @@
 ﻿namespace BC2G.Blockchains.Bitcoin.Graph;
 
 
-// TODO: it class seems redundant given Bitcoin.Model.Block
+// TODO: this class seems redundant given Bitcoin.Model.Block
 // can these two, and other similar classes merged?
 
 public class BlockNode(
@@ -65,7 +65,8 @@ public class BlockNode(
 
     public new static string[] GetFeaturesName()
     {
-        return [
+        return 
+        [
             nameof(Height),
             nameof(MedianTime),
             nameof(TransactionsCount),
@@ -73,12 +74,25 @@ public class BlockNode(
             nameof(Size),
             nameof(StrippedSize),
             nameof(Confirmations),
-            nameof(Weight)];
+            nameof(Weight),
+            .. Node.GetFeaturesName()
+        ];
     }
 
     public override double[] GetFeatures()
     {
-        return [Height, MedianTime, TransactionsCount, Difficulty, Size, StrippedSize, Confirmations, Weight];
+        return 
+        [
+            Height, 
+            MedianTime, 
+            TransactionsCount, 
+            Difficulty, 
+            Size, 
+            StrippedSize, 
+            Confirmations, 
+            Weight,
+            .. base.GetFeatures()
+        ];
     }
 
     public int CompareTo(BlockNode? other)

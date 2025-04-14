@@ -76,6 +76,11 @@ public class GraphSampleOptions
     public bool SerializeEdges { init; get; } = false;
     public bool SerializeFeatureVectors { init; get; } = true;
 
+    public int ForestFireNodeSamplingCountAtRoot { init; get; } = 100;
+    public int ForestFireMaxHops { init; get; } = 4;
+    public int ForestFireQueryLimit { init; get; } = 1000;
+    public double ForestFireNodeCountReductionFactorByHop { init; get; } = 4.0;
+
 
     public double RootNodeSelectProb
     {
@@ -97,5 +102,5 @@ public class GraphSampleOptions
     // > end node filter
     // +ScriptNodeStrategy.Labels|-TxNodeStrategy.Labels|>BlockNodeStrategy.Labels
     // more details: https://neo4j.com/labs/apoc/4.1/overview/apoc.path/apoc.path.spanningTree/#expand-spanning-tree-label-filters
-    public string LabelFilters { init; get; } = ScriptNodeStrategy.Labels;
+    public string LabelFilters { init; get; } = $"{ScriptNodeStrategy.Labels}|{BlockNodeStrategy.Labels}"; //ScriptNodeStrategy.Labels;
 }

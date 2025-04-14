@@ -36,6 +36,10 @@ public class GraphFeatures
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinC2S, [.. sourceAndTarget, .. C2SEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinT2T, [.. sourceAndTarget, .. T2TEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinS2S, [.. sourceAndTarget, .. S2SEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinS2B, [.. sourceAndTarget, .. S2BEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinB2S, [.. sourceAndTarget, .. B2SEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinT2B, [.. sourceAndTarget, .. T2BEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinB2T, [.. sourceAndTarget, .. B2TEdge.GetFeaturesName()]);
 
         var nodeFeatures = new Dictionary<GraphComponentType, List<double[]>>();
         var nodeIdToIdx = new Dictionary<GraphComponentType, Dictionary<string, int>>();
@@ -59,7 +63,11 @@ public class GraphFeatures
             GraphComponentType.BitcoinC2T,
             GraphComponentType.BitcoinC2S,
             GraphComponentType.BitcoinT2T,
-            GraphComponentType.BitcoinS2S
+            GraphComponentType.BitcoinS2S,
+            GraphComponentType.BitcoinS2B,
+            GraphComponentType.BitcoinB2S,
+            GraphComponentType.BitcoinT2B,
+            GraphComponentType.BitcoinB2T,
         };
         foreach (var edgeType in edgeGraphComponentTypes)
         {

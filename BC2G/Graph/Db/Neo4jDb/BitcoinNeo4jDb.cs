@@ -352,12 +352,12 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             return (node, inDegree, outDegree);
         }
 
-        var nodeSamplingCountAtRoot = 100;
+        var nodeSamplingCountAtRoot = options.ForestFireNodeSamplingCountAtRoot;
         var rnd = new Random(31);
         var g = new BitcoinGraph();
-        var maxHops = 2;
-        var queryLimit = 1000;
-        var nodeCountReductionFactorByHop = 4.0;
+        var maxHops = options.ForestFireMaxHops;
+        var queryLimit = options.ForestFireQueryLimit;
+        var nodeCountReductionFactorByHop = options.ForestFireNodeCountReductionFactorByHop;
         var allNodesAddedToGraph = new HashSet<string>();
         var allEdgesAddedToGraph = new HashSet<string>();
         using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));

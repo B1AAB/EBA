@@ -34,10 +34,35 @@ public class EdgeFactory
         {
             return new T2TEdge((TxNode)source, (TxNode)target, value, type, timestamp, blockHeight);
         }
-        else if (sourceNodeGraphComponentType == GraphComponentType.BitcoinScriptNode &&
-                 targetNodeGraphComponentType == GraphComponentType.BitcoinScriptNode)
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinScriptNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinScriptNode)
         {
             return new S2SEdge((ScriptNode)source, (ScriptNode)target, value, type, timestamp, blockHeight);
+        }
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinScriptNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinBlockNode)
+        {
+            return new S2BEdge((ScriptNode)source, (BlockNode)target, value, type, timestamp, blockHeight);
+        }
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinBlockNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinScriptNode)
+        {
+            return new B2SEdge((BlockNode)source, (ScriptNode)target, value, type, timestamp, blockHeight);
+        }
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinTxNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinBlockNode)
+        {
+            return new T2BEdge((TxNode)source, (BlockNode)target, value, type, timestamp, blockHeight);
+        }
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinBlockNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinTxNode)
+        {
+            return new B2TEdge((BlockNode)source, (TxNode)target, value, type, timestamp, blockHeight);
         }
         else
         {
