@@ -2,6 +2,8 @@
 
 using Microsoft.Extensions.Primitives;
 
+using System.Diagnostics.Tracing;
+
 
 namespace BC2G.Graph.Db.Neo4jDb;
 
@@ -126,7 +128,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 
     public override async Task<bool> TrySampleNeighborsAsync(
         IDriver driver, ScriptNode rootNode, string workingDir)
-    {
+   {
         var graph = await GetNeighborsAsync(driver, rootNode.Address, Options.GraphSample);
         var perBatchLabelsFilename = Path.Join(workingDir, "Labels.tsv");
 
@@ -149,7 +151,8 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 
         if (Options.GraphSample.Mode == GraphSampleMode.ConnectedGraphAndForest)
         {
-            var disjointGraphs = await GetDisjointGraphs(driver, graph.EdgeCount);
+            //var disjointGraphs = await GetDisjointGraphsRandomEdges(driver, graph.EdgeCount);
+            var disjointGraphs = await GetDisjointGraphsRandomNeighborhoods(driver, graph.EdgeCount, Options.GraphSample);
 
             if (!CanUseGraph(
                 disjointGraphs,
@@ -186,7 +189,14 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 
         if (options.Algorithm == SamplingAlgorithm.BFS || options.Algorithm == SamplingAlgorithm.DFS)
             return await GetNeighborsUsingGraphTraversalAlgorithmAsync(driver, rootScriptAddress, options);
-        return await GetNeighborsUsingForestFireSamplingAlgorithmAsync(driver, rootScriptAddress, options);
+        return await GetNeighborsUsingForestFireSamplingAlgorithmAsync(
+            driver: driver,
+            rootScriptAddress: rootScriptAddress,
+            labelFilters: options.LabelFilters,
+            nodeSamplingCountAtRoot: options.ForestFireNodeSamplingCountAtRoot,
+            maxHops: options.ForestFireMaxHops,
+            queryLimit: options.ForestFireQueryLimit,
+            nodeCountReductionFactorByHop: options.ForestFireNodeCountReductionFactorByHop);
     }
 
     private async Task<GraphBase> GetNeighborsUsingGraphTraversalAlgorithmAsync(IDriver driver, string rootScriptAddress, GraphSampleOptions options)
@@ -340,7 +350,11 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
     private async Task<GraphBase> GetNeighborsUsingForestFireSamplingAlgorithmAsync(
         IDriver driver, 
         string rootScriptAddress, 
-        GraphSampleOptions options)
+        int nodeSamplingCountAtRoot,
+        int maxHops,
+        int queryLimit,
+        double nodeCountReductionFactorByHop,
+        string labelFilters)
     {
         // TODO: this method is experimental, need a thorough re-write.
 
@@ -352,12 +366,8 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             return (node, inDegree, outDegree);
         }
 
-        var nodeSamplingCountAtRoot = options.ForestFireNodeSamplingCountAtRoot;
         var rnd = new Random(31);
         var g = new BitcoinGraph();
-        var maxHops = options.ForestFireMaxHops;
-        var queryLimit = options.ForestFireQueryLimit;
-        var nodeCountReductionFactorByHop = options.ForestFireNodeCountReductionFactorByHop;
         var allNodesAddedToGraph = new HashSet<string>();
         var allEdgesAddedToGraph = new HashSet<string>();
         using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
@@ -371,7 +381,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             qBuilder.Append($"maxLevel: 1, ");
             qBuilder.Append($"limit: {queryLimit}, ");
             qBuilder.Append($"bfs: true, ");
-            qBuilder.Append($"labelFilter: '{options.LabelFilters}'");
+            qBuilder.Append($"labelFilter: '{labelFilters}'");
             //$"    relationshipFilter: \">{EdgeType.Transfers}\"" +
             qBuilder.Append($"}}) ");
             qBuilder.Append($"YIELD path ");
@@ -416,10 +426,11 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                     //root = new CoinbaseNode(r.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
                     var rootList = r["root"].As<List<object>>();
                     (Neo4j.Driver.INode rootNode, double inDegree, double outDegree) = UnpackDict(rootList[0].As<IDictionary<string, object>>());
-                    root = new ScriptNode(rootNode, originalIndegree: inDegree, originalOutdegree: outDegree);
 
-                    if (root is null)
+                    if (rootNode is null)
                         continue;
+
+                    root = new CoinbaseNode(rootNode, originalOutdegree: outDegree);
 
                     if (!allNodesAddedToGraph.Contains(root.Id))
                     {
@@ -437,9 +448,11 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                     if (rootB is null)
                         continue;
 
+                    root = new ScriptNode(rootB, originalIndegree: inDegree, originalOutdegree: outDegree);
+
                     if (!allNodesAddedToGraph.Contains(rootB.ElementId))
                     {
-                        g.GetOrAddNode(rootB);
+                        g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, root);
                         allNodesAddedToGraph.Add(rootB.ElementId);
                     }
                 }
@@ -517,7 +530,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         // TODO: the whole method of using 'Coinbase' to alter the functionality seems hacky
         // need to find a better solution.
 
-        Logger.LogInformation("Getting neighbors of random node {node}, at {hop} hop distance.", rootScriptAddress, options.Hops);
+        Logger.LogInformation("Getting neighbors of random node {node}, at {hop} hop distance.", rootScriptAddress, maxHops);
 
 
         var queries = new List<string>()
@@ -538,9 +551,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         return g;
     }
 
-
-
-    public override async Task<GraphBase> GetDisjointGraphs(
+    public override async Task<GraphBase> GetDisjointGraphsRandomEdges(
         IDriver driver, int edgeCount, double edgeSelectProb = 0.2)
     {
         using var session = driver.AsyncSession(
@@ -564,6 +575,35 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(n.Values["target"].As<Neo4j.Driver.INode>()));
             g.GetOrAddEdge(n.Values["edge"].As<IRelationship>());
         }
+        return g;
+    }
+
+    public override async Task<GraphBase> GetDisjointGraphsRandomNeighborhoods(
+        IDriver driver, int edgeCount, GraphSampleOptions options)
+    {
+        var g = new BitcoinGraph();
+
+        Logger.LogInformation("Getting random root nodes.");
+        var rndRootNodes = await GetRandomNodes(driver, 100);
+        Logger.LogInformation("Got {count} random root nodes.", rndRootNodes.Count);
+
+        foreach (var rndRootNode in rndRootNodes)
+        {
+            // other formats are not supported yet, do not change this label filter options.LabelFilters);
+            var gB = await GetNeighborsUsingForestFireSamplingAlgorithmAsync(driver, rndRootNode.Address, 6, 3, 100, 2, $"{ScriptNodeStrategy.Labels}");
+
+            foreach (var node in gB.GetNodes())
+                foreach (var n in node.Value)
+                    g.GetOrAddNode(node.Key, n);
+
+            foreach (var edge in gB.GetEdges())
+                foreach (var e in edge.Value)
+                    g.GetOrAddEdge(edge.Key, e);
+
+            if (g.EdgeCount + (g.EdgeCount * 0.2) >= options.MaxEdgeCount || g.NodeCount + (g.NodeCount * 0.2) >= options.MaxNodeCount)
+                break;
+        }
+
         return g;
     }
 

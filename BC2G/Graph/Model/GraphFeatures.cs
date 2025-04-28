@@ -21,6 +21,9 @@ public class GraphFeatures
 
     public GraphFeatures(GraphBase graph)
     {
+        // TODO: add a check to this method to make sure no NaN feature is returned.
+        // or maybe in the node or graph methods to ensure none of the feature get NaN or null value.
+
         LabelsHeader = new ReadOnlyCollection<string>(["GraphID", "ConnectedGraph_or_Forest"]);
 
         NodeFeaturesHeader = [];

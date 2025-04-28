@@ -69,6 +69,8 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
             S2SEdge.ComponentType);
     }
 
+    // TODO: this method or any other methods must definately not accept nullable values.
+    // These values will turn into features and nullable features are problematic downstream
     public INode GetOrAddNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null)
     {
         if (node.Labels.Contains(ScriptNodeStrategy.Labels))
