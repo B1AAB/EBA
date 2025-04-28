@@ -58,9 +58,9 @@ public class GraphSampleOptions
     public CoinbaseSelectionMode CoinbaseMode { init; get; } = CoinbaseSelectionMode.ExcludeCoinbase;
     public SamplingAlgorithm Algorithm { init; get; } = SamplingAlgorithm.DFS;
     public EdgeTypes[] IncludeEdgeTypes { init; get; } = [EdgeTypes.S2S];
-    public int MinNodeCount { init; get; } = 2;
+    public int MinNodeCount { init; get; } = 500;
     public int MaxNodeCount { init; get; } = 1000;
-    public int MinEdgeCount { init; get; } = 3;
+    public int MinEdgeCount { init; get; } = 499;
     public int MaxEdgeCount { init; get; } = 10000;
     public int MaxAttempts { init; get; } = 25;
 
@@ -70,8 +70,8 @@ public class GraphSampleOptions
     // above (see where they are used in the queries).
     // Try to consilidate the following and the above into more 
     // intuitive settings. 
-    public int MaxNodeFetchFromNeighbor { init; get; } = 1000;
-    public int MaxEdgesFetchFromNeighbor { init; get; } = 10000;
+    public int MaxNodeFetchFromNeighbor { init; get; } = 10000;
+    public int MaxEdgesFetchFromNeighbor { init; get; } = 500000;
 
     public bool SerializeEdges { init; get; } = false;
     public bool SerializeFeatureVectors { init; get; } = true;
@@ -102,5 +102,5 @@ public class GraphSampleOptions
     // > end node filter
     // +ScriptNodeStrategy.Labels|-TxNodeStrategy.Labels|>BlockNodeStrategy.Labels
     // more details: https://neo4j.com/labs/apoc/4.1/overview/apoc.path/apoc.path.spanningTree/#expand-spanning-tree-label-filters
-    public string LabelFilters { init; get; } = $"{ScriptNodeStrategy.Labels}|{BlockNodeStrategy.Labels}"; //ScriptNodeStrategy.Labels;
+    public string LabelFilters { init; get; } = ScriptNodeStrategy.Labels; //$"{ScriptNodeStrategy.Labels}|{BlockNodeStrategy.Labels}"; //
 }
