@@ -136,7 +136,7 @@ internal class Cli
     {
         var cmd = new Command(
             name: "bitcoin",
-            description: ""); // TODO add some description
+            description: "Implements methods for working with the Bitcoin blockchain.");
         cmd.AddCommand(GetTraverseCmd(defaultOptions, traverseHandlerAsync));
         cmd.AddCommand(GetImportCmd(defaultOptions, importHandlerAsync));
         cmd.AddCommand(GetImportCypherQueriesCmd(defaultOptions, importCypherQueriesAsync));
@@ -224,7 +224,7 @@ internal class Cli
 
         var cmd = new Command(
             name: "traverse",
-            description: "") // TODO: add description
+            description: "Traverses the blockchain in the defined range collecting the set metrics.")
         {
             fromOption,
             toOption,
@@ -328,7 +328,9 @@ internal class Cli
         // TODO: rework this option.
         var modeOption = new Option<GraphSampleMode>(
             name: "--mode",
-            description: "...",
+            description: "Sets sampling mode, supported options are: " +
+                         "ConnectedGraph (Graph is a single connected component) and  " +
+                         "ConnectedGraphAndForest (Graph is a forest of connected components, i.e., a collection of disjoint graphs).",
             isDefault: true,
             parseArgument: x =>
             {
@@ -366,7 +368,7 @@ internal class Cli
 
         var cmd = new Command(
             name: "sample",
-            description: "") // TODO: add description
+            description: "Methods for sampling from the graph.")
         {
             countOption,
             hopsOption,
