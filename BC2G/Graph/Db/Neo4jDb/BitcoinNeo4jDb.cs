@@ -140,8 +140,10 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             maxEdgeCount: Options.GraphSample.MaxEdgeCount))
         {
             Logger.LogError(
-                "The sampled graph does not match required charactersitics: " +
-                "MinNodeCount: {a}, MaxNodeCount: {b}, MinEdgeCount: {c}, MaxEdgeCount: {d}",
+                "The sampled graph with {a} nodes and {b} edges does not match required charactersitics: " +
+                "MinNodeCount: {c}, MaxNodeCount: {d}, MinEdgeCount: {e}, MaxEdgeCount: {f}",
+                graph.NodeCount,
+                graph.EdgeCount,
                 Options.GraphSample.MinNodeCount,
                 Options.GraphSample.MaxNodeCount,
                 Options.GraphSample.MinEdgeCount,
@@ -160,7 +162,19 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 maxNodeCount: graph.GetNodeCount(GraphComponentType.BitcoinScriptNode),
                 minEdgeCount: Options.GraphSample.MinEdgeCount,
                 maxEdgeCount: graph.EdgeCount))
+            {
+                Logger.LogError(
+                    "The sampled disjoint graph with {a} nodes and {b} edges does not match required charactersitics: " +
+                    "MinNodeCount: {c}, MaxNodeCount: {d}, MinEdgeCount: {e}, MaxEdgeCount: {f}",
+                    graph.NodeCount,
+                    graph.EdgeCount,
+                    Options.GraphSample.MinNodeCount,
+                    Options.GraphSample.MaxNodeCount,
+                    Options.GraphSample.MinEdgeCount,
+                    Options.GraphSample.MaxEdgeCount);
+
                 return false;
+            }
 
             disjointGraphs.AddLabel(1);
             disjointGraphs.Serialize(
@@ -520,9 +534,8 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 {
                     var qs = new List<string>();
                     foreach (var node in selectedNodes)
-                        qs.Add(GetQuery($"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{((ScriptNode)node).Address}\" }}) "));
-
-                    await ProcessHops(qs, hop + 1);
+                        if (node.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode) // TODO: this is currently a limitation since we currently do not support root nodes of other types.
+                            qs.Add(GetQuery($"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{((ScriptNode)node).Address}\" }}) "));
                 }
             }
         }
@@ -590,7 +603,14 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         foreach (var rndRootNode in rndRootNodes)
         {
             // other formats are not supported yet, do not change this label filter options.LabelFilters);
-            var gB = await GetNeighborsUsingForestFireSamplingAlgorithmAsync(driver, rndRootNode.Address, 6, 3, 100, 2, $"{ScriptNodeStrategy.Labels}");
+            var gB = await GetNeighborsUsingForestFireSamplingAlgorithmAsync(
+                driver: driver,
+                rootScriptAddress: rndRootNode.Address,
+                nodeSamplingCountAtRoot: options.DisjointGraph_ForestFireNodeSamplingCountAtRoot,
+                maxHops: options.DisjointGraph_ForestFireMaxHops,
+                queryLimit: options.DisjointGraph_ForestFireQueryLimit,
+                nodeCountReductionFactorByHop: options.DisjointGraph_ForestFireNodeCountReductionFactorByHop,
+                labelFilters: options.DisjointGraph_LabelFilters);
 
             foreach (var node in gB.GetNodes())
                 foreach (var n in node.Value)

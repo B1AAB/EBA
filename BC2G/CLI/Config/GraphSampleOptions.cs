@@ -1,4 +1,4 @@
-﻿using BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
+using BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
 
 namespace BC2G.CLI.Config;
 
@@ -56,7 +56,7 @@ public class GraphSampleOptions
     public int Hops { init; get; }
     public GraphSampleMode Mode { init; get; } = GraphSampleMode.ConnectedGraphAndForest;
     public CoinbaseSelectionMode CoinbaseMode { init; get; } = CoinbaseSelectionMode.ExcludeCoinbase;
-    public SamplingAlgorithm Algorithm { init; get; } = SamplingAlgorithm.DFS;
+    public SamplingAlgorithm Algorithm { init; get; } = SamplingAlgorithm.BFS;
     public EdgeTypes[] IncludeEdgeTypes { init; get; } = [EdgeTypes.S2S];
     public int MinNodeCount { init; get; } = 500;
     public int MaxNodeCount { init; get; } = 1000;
@@ -81,6 +81,12 @@ public class GraphSampleOptions
     public int ForestFireQueryLimit { init; get; } = 1000;
     public double ForestFireNodeCountReductionFactorByHop { init; get; } = 4.0;
 
+    public int DisjointGraph_ForestFireNodeSamplingCountAtRoot { init; get; } = 20;
+    public int DisjointGraph_ForestFireMaxHops { init; get; } = 3;
+    public int DisjointGraph_ForestFireQueryLimit { init; get; } = 100;
+    public double DisjointGraph_ForestFireNodeCountReductionFactorByHop { init; get; } = 3.0;
+    public string DisjointGraph_LabelFilters { init; get; } = $"{ScriptNodeStrategy.Labels}|{BlockNodeStrategy.Labels}"; //ScriptNodeStrategy.Labels;
+
 
     public double RootNodeSelectProb
     {
@@ -102,5 +108,5 @@ public class GraphSampleOptions
     // > end node filter
     // +ScriptNodeStrategy.Labels|-TxNodeStrategy.Labels|>BlockNodeStrategy.Labels
     // more details: https://neo4j.com/labs/apoc/4.1/overview/apoc.path/apoc.path.spanningTree/#expand-spanning-tree-label-filters
-    public string LabelFilters { init; get; } = ScriptNodeStrategy.Labels; //$"{ScriptNodeStrategy.Labels}|{BlockNodeStrategy.Labels}"; //
+    public string LabelFilters { init; get; } = $"{ScriptNodeStrategy.Labels}|{BlockNodeStrategy.Labels}"; //ScriptNodeStrategy.Labels;
 }
