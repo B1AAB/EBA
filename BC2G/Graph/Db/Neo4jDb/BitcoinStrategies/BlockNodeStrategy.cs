@@ -27,24 +27,24 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
 
     public override string GetCsv(IGraphComponent component)
     {
-        return GetCsv((BlockGraph)component);
+        return GetCsv((BlockNode)component);
     }
 
-    public static string GetCsv(BlockGraph g)
+    public static string GetCsv(BlockNode node)
     {
-        /// Note that the ordre of the items in this array should 
+        /// Note that the order of the items in this array should 
         /// match those in the `_properties`. 
         return string.Join(
             Neo4jDb.csvDelimiter,
             [
-                g.Block.Height.ToString(),
-                g.Block.MedianTime.ToString(),
-                g.Block.Confirmations.ToString(),
-                g.Block.Difficulty.ToString(),
-                g.Block.TransactionsCount.ToString(),
-                g.Block.Size.ToString(),
-                g.Block.StrippedSize.ToString(),
-                g.Block.Weight.ToString(),
+                node.Height.ToString(),
+                node.MedianTime.ToString(),
+                node.Confirmations.ToString(),
+                node.Difficulty.ToString(),
+                node.TransactionsCount.ToString(),
+                node.Size.ToString(),
+                node.StrippedSize.ToString(),
+                node.Weight.ToString(),
             ]);
     }
 

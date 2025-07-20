@@ -2,8 +2,6 @@
 
 using Microsoft.Extensions.Primitives;
 
-using System.Diagnostics.Tracing;
-
 
 namespace BC2G.Graph.Db.Neo4jDb;
 
@@ -26,34 +24,28 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
     {
         var nodes = g.GetNodes();
         var edges = g.GetEdges();
-        var graphType = BitcoinGraph.ComponentType;
-        var batchInfo = await GetBatchAsync(
-            nodes.Keys.Concat(edges.Keys).Append(graphType).ToList());
+        var batchInfo = await GetBatchAsync([.. nodes.Keys, .. edges.Keys]);
 
         var tasks = new List<Task>();
 
-        batchInfo.AddOrUpdate(graphType, 1);
-        var graphStrategy = StrategyFactory.GetStrategy(graphType);
-        tasks.Add(graphStrategy.ToCsvAsync(g, batchInfo.GetFilename(graphType)));
-
-        foreach (var type in nodes)
+        foreach (var nodeType in nodes)
         {
-            batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != BitcoinAgent.Coinbase));
-            var _strategy = StrategyFactory.GetStrategy(type.Key);
+            batchInfo.AddOrUpdate(nodeType.Key, nodeType.Value.Count(x => x.Id != BitcoinAgent.Coinbase));
+            var _strategy = StrategyFactory.GetStrategy(nodeType.Key);
             tasks.Add(
                 _strategy.ToCsvAsync(
-                    type.Value.Where(x => x.Id != BitcoinAgent.Coinbase), 
-                    batchInfo.GetFilename(type.Key)));
+                    nodeType.Value.Where(x => x.Id != BitcoinAgent.Coinbase), 
+                    batchInfo.GetFilename(nodeType.Key)));
         }
 
-        foreach (var type in edges)
+        foreach (var edgeType in edges)
         {
-            batchInfo.AddOrUpdate(type.Key, type.Value.Count);
-            var _strategy = StrategyFactory.GetStrategy(type.Key);
+            batchInfo.AddOrUpdate(edgeType.Key, edgeType.Value.Count);
+            var _strategy = StrategyFactory.GetStrategy(edgeType.Key);
             tasks.Add(
                 _strategy.ToCsvAsync(
-                    type.Value,
-                    batchInfo.GetFilename(type.Key)));
+                    edgeType.Value,
+                    batchInfo.GetFilename(edgeType.Key)));
         }
 
         await Task.WhenAll(tasks);

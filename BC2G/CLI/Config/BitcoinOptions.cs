@@ -90,6 +90,8 @@ public class BitcoinOptions
 
     public bool SkipSerializingAddresses {  init; get; } = false;
 
+    public ChainToGraphModel ChainToGraphModel { init; get; } = ChainToGraphModel.Native;
+
     public ResilienceStrategyOptions HttpClientResilienceStrategy { init; get; } = new();
 
     public ResilienceStrategyOptions BitcoinAgentResilienceStrategy { init; get; } = new()

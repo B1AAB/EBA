@@ -38,6 +38,18 @@ public class BlockNode(
     public int Confirmations { get; } = confirmations;
     public int Weight { get; } = weight;
 
+    public BlockNode(Block block) : this(
+        id: block.Height.ToString(),
+        height: block.Height,
+        medianTime: block.MedianTime,
+        transactionsCount: block.TransactionsCount,
+        difficulty: block.Difficulty,
+        size: block.Size,
+        strippedSize: block.StrippedSize,
+        confirmations: block.Confirmations,
+        weight: block.Weight)
+    { }
+
 
     // TODO: all the following double-casting is because of the type
     // normalization happens when bulk-loading data into neo4j.

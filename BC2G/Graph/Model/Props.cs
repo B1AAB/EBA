@@ -36,4 +36,8 @@ public static class Props
     public static Property EdgeValue { get; } = new("Value", FieldType.Float);
     public static Property T2TEdgeSourceTxid { get; } = new Property(_txNodeTxid, csvHeader: "SourceId");
     public static Property T2TEdgeTargetTxid { get; } = new Property(_txNodeTxid, csvHeader: "TargetId");
+    public static Property S2TEdgeSourceTxid { get; } = new Property(_addressProperty, csvHeader: "SourceId");
+    public static Property S2TEdgeTargetTxid { get; } = new Property(_txNodeTxid, csvHeader: "TargetId");
+    public static Property T2SEdgeSourceTxid { get; } = new Property(_txNodeTxid, csvHeader: "SourceId");
+    public static Property T2SEdgeTargetTxid { get; } = new Property(_addressProperty, csvHeader: "TargetId");
 }

@@ -69,6 +69,46 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
             S2SEdge.ComponentType);
     }
 
+    public void AddOrUpdateEdge(S2TEdge edge)
+    {
+        if (edge.Value == 0)
+            return;
+
+        AddOrUpdateEdge(
+            edge,
+            (_, oldValue) => edge.Update(oldValue.Value),
+            ScriptNode.ComponentType,
+            TxNode.ComponentType,
+            S2TEdge.ComponentType);
+    }
+
+    public void AddOrUpdateEdge(T2SEdge edge)
+    {
+        if (edge.Value == 0)
+            return;
+
+        AddOrUpdateEdge(
+            edge,
+            (_, oldValue) => edge.Update(oldValue.Value),
+            TxNode.ComponentType,
+            ScriptNode.ComponentType,
+            T2SEdge.ComponentType);
+    }
+
+    public void AddOrUpdateEdge(B2TEdge edge)
+    {
+        if (edge.Value == 0)
+            return;
+
+        AddOrUpdateEdge(
+            edge,
+            (_, oldValue) => edge.Update(oldValue.Value),
+            BlockNode.ComponentType,
+            TxNode.ComponentType,
+            B2TEdge.ComponentType);
+    }
+
+
     // TODO: this method or any other methods must definately not accept nullable values.
     // These values will turn into features and nullable features are problematic downstream
     public INode GetOrAddNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null)
