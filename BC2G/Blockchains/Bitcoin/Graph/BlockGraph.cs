@@ -74,11 +74,11 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     {
         switch(_chainToGraphModel)
         {
-            case ChainToGraphModel.EventModel:
+            case ChainToGraphModel.UTxOModel:
                 BuildGraphNativeModel(ct);
                 break;
 
-            case ChainToGraphModel.StatefulModel:
+            case ChainToGraphModel.AccountModel:
                 BuildGraphExpandedModel(ct);
                 break;
         }
