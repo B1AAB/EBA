@@ -203,8 +203,6 @@ public class BitcoinAgent : IDisposable
 
         var graph = await ProcessBlockAsync(block, options, cT);
 
-        graph.MergeQueuedTxGraphs(cT);
-
         graph.Stats.StopStopwatch();
 
         return graph;
@@ -215,16 +213,15 @@ public class BitcoinAgent : IDisposable
         BitcoinOptions options,
         CancellationToken cT)
     {
+        var g = new BlockGraph(block, options.ChainToGraphModel, _logger);
+
         // By definition, each block has a generative block that is the
         // reward of the miner. Hence, this should never raise an 
         // exception if the block is not corrupt.
-        var coinbaseTx = block.Transactions.First(x => x.IsCoinbase);
-
-        var mintingTxGraph = new TransactionGraph(coinbaseTx);
-
-        var g = new BlockGraph(block, mintingTxGraph, _logger);
+        var coinbaseTx = block.Transactions.First(x => x.IsCoinbase);        
 
         var rewardAddresses = new List<ScriptNode>();
+        var mintingTxGraph = new TransactionGraph(coinbaseTx);
         foreach (var output in coinbaseTx.Outputs)
         {
             if (!output.IsValueTransfer)
@@ -254,6 +251,7 @@ public class BitcoinAgent : IDisposable
             rewardAddresses.Add(node);
         }
 
+        g.SetCoinbaseTx(mintingTxGraph);
         g.Stats.CoinbaseOutputsCount = rewardAddresses.Count;
 
         cT.ThrowIfCancellationRequested();
@@ -277,6 +275,8 @@ public class BitcoinAgent : IDisposable
             });
 
         cT.ThrowIfCancellationRequested();
+
+        g.BuildGraph(cT);
 
         return g;
     }

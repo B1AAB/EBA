@@ -13,7 +13,10 @@ public enum EdgeLabel
     S2BRedeems = 6,
     B2SCredits = 7,
     T2BRedeems = 8,
-    B2TConfirms = 9
+    B2TConfirms = 9,
+    S2TTransfer = 10,
+    T2STransfer = 11,
+    T2SReward = 12
 }
 
 public enum EdgeType
@@ -23,5 +26,13 @@ public enum EdgeType
     Fee = 2,
     Redeems = 3,
     Confirms = 4,
-    Credits = 5
+    Credits = 5,
+
+    /// <summary>
+    /// The difference between this and Mints is that, 
+    /// this includes both fee and minted coins.
+    /// </summary>
+    Rewards = 6,
+
+    Contains = 7
 }

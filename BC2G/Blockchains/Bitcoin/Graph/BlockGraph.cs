@@ -6,6 +6,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 {
     public uint Timestamp { get; }
     public Block Block { get; }
+    public BlockNode BlockNode { get; }
     public BlockStatistics Stats { set; get; }
 
     public List<ScriptNode> RewardsAddresses { set; get; } = [];
@@ -16,39 +17,162 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     public long TotalFee { get { return _totalFee; } }
     private long _totalFee;
 
-    private readonly TransactionGraph _coinbaseTxGraph;
+    public long MiningReward { private set; get; }
+    public long MintedCoins { private set; get; }
+
+    private TransactionGraph _coinbaseTxGraph;
 
     private readonly ConcurrentQueue<TransactionGraph> _txGraphsQueue = new();
 
     private readonly ILogger<BitcoinAgent> _logger;
 
-    public BlockGraph(Block block, TransactionGraph coinbaseTxGraph, ILogger<BitcoinAgent> logger) : base()
+    private readonly Lock _feeLock = new();
+
+    private readonly ChainToGraphModel _chainToGraphModel;
+
+    public BlockGraph(Block block, ChainToGraphModel chainToGraphModel, ILogger<BitcoinAgent> logger) : base()
     {
         Block = block;
-        _coinbaseTxGraph = coinbaseTxGraph;
-        _logger = logger;
+        BlockNode = new BlockNode(block);
+        TryAddNode(BlockNode.ComponentType, BlockNode);
 
         // See the following BIP on using `mediantime` instead of `time`.
         // https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
         Timestamp = block.MedianTime;
 
+        _chainToGraphModel = chainToGraphModel;
+
+        _logger = logger;
+
         Stats = new BlockStatistics(block);
         Stats.StartStopwatch();
     }
 
+    public void SetCoinbaseTx(TransactionGraph coinbaseTx)
+    {
+        _coinbaseTxGraph = coinbaseTx;
+        MiningReward = _coinbaseTxGraph.TargetScripts.Sum(x => x.Value);
+
+        lock (_feeLock)
+        {
+            MintedCoins = MiningReward - _totalFee;
+        }
+    }
+
     public void Enqueue(TransactionGraph g)
     {
-        Helpers.ThreadsafeAdd(ref _totalFee, g.Fee);
+        lock (_feeLock)
+        {
+            _totalFee += g.Fee;
+            MintedCoins = MiningReward - _totalFee;
+        }
+
         _txGraphsQueue.Enqueue(g);
     }
 
-    public void MergeQueuedTxGraphs(CancellationToken ct)
+    public void BuildGraph(CancellationToken ct)
     {
+        switch(_chainToGraphModel)
+        {
+            case ChainToGraphModel.UTxOModel:
+                BuildGraphNativeModel(ct);
+                break;
+
+            case ChainToGraphModel.AccountModel:
+                BuildGraphExpandedModel(ct);
+                break;
+        }
+    }
+
+    private void BuildGraphNativeModel(CancellationToken ct)
+    {
+        foreach (var target in _coinbaseTxGraph.TargetScripts)
+        {
+            AddOrUpdateEdge(new T2SEdge(
+                _coinbaseTxGraph.TxNode,
+                target.Key,
+                target.Value,
+                EdgeType.Rewards,
+                Timestamp,
+                Block.Height));
+        }
+
+        AddOrUpdateEdge(new C2TEdge(_coinbaseTxGraph.TxNode, MintedCoins, Timestamp, Block.Height));
+        AddOrUpdateEdge(new B2TEdge(BlockNode, _coinbaseTxGraph.TxNode, MintedCoins, EdgeType.Contains, Timestamp, Block.Height));
+
+        Parallel.ForEach(_txGraphsQueue,
+            #if (DEBUG)
+            parallelOptions: new ParallelOptions() { MaxDegreeOfParallelism = 1 },
+            #endif
+        (txGraph, state) =>
+        {
+            if (ct.IsCancellationRequested)
+            { state.Stop(); return; }
+
+            AddTxGraphToBlockGraphUsingNativeModel(txGraph);
+
+            if (ct.IsCancellationRequested)
+            { state.Stop(); return; }
+        });
+    }
+
+    private void AddTxGraphToBlockGraphUsingNativeModel(TransactionGraph txGraph)
+    {
+        foreach (var source in txGraph.SourceScripts)
+        {
+            AddOrUpdateEdge(new S2TEdge(
+                source.Key,
+                txGraph.TxNode,
+                source.Value,
+                EdgeType.Redeems,
+                Timestamp,
+                Block.Height));
+        }
+
+        foreach (var sourceTx in txGraph.SourceTxes)
+        {
+            var txNode = new TxNode(sourceTx.Key);
+            AddOrUpdateEdge(new T2TEdge(
+                txNode,
+                txGraph.TxNode,
+                sourceTx.Value,
+                EdgeType.Transfers,
+                Timestamp,
+                Block.Height));
+
+            // AddOrUpdate(new B2TEdge(BlockNode, txNode, sourceTx.Value, EdgeType.Redeems, Timestamp, Block.Height));
+        }
+
+        foreach (var target in txGraph.TargetScripts)
+        {
+            AddOrUpdateEdge(new T2SEdge(
+                txGraph.TxNode,
+                target.Key,
+                target.Value,
+                EdgeType.Rewards,
+                Timestamp,
+                Block.Height));
+        }
+
+        AddOrUpdateEdge(new T2TEdge(
+            txGraph.TxNode,
+            _coinbaseTxGraph.TxNode,
+            txGraph.Fee,
+            EdgeType.Fee,
+            Timestamp,
+            Block.Height));
+
+        AddOrUpdateEdge(new B2TEdge(BlockNode, txGraph.TxNode, txGraph.TotalInputValue, EdgeType.Contains, Timestamp, Block.Height));
+    }
+
+    private void BuildGraphExpandedModel(CancellationToken ct)
+    {
+        // TODO: make sure this is addressed in the updated method
         var miningReward = _coinbaseTxGraph.TargetScripts.Sum(x => x.Value);
         var mintedBitcoins = miningReward - TotalFee;
-
         Stats.MintedBitcoins = mintedBitcoins;
         Stats.TxFees = TotalFee;
+
 
         AddOrUpdateEdge(new C2TEdge(_coinbaseTxGraph.TxNode, mintedBitcoins, Timestamp, Block.Height));
 
@@ -67,7 +191,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                 if (ct.IsCancellationRequested)
                 { state.Stop(); return; }
 
-                Merge(txGraph, _coinbaseTxGraph, miningReward, ct);
+                AddTxGraphToBlockGraphUsingExpandedModel(txGraph, _coinbaseTxGraph, miningReward, ct);
 
                 if (ct.IsCancellationRequested)
                 { state.Stop(); return; }
@@ -84,7 +208,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         }
     }
 
-    private void Merge(
+    private void AddTxGraphToBlockGraphUsingExpandedModel(
         TransactionGraph txGraph,
         TransactionGraph coinbaseTxG,
         long totalPaidToMiner,
@@ -126,8 +250,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
             }
 
             AddOrUpdateEdge(new T2TEdge(txGraph.TxNode, coinbaseTxG.TxNode, fee, EdgeType.Fee, Timestamp, Block.Height));
-        }
-
+        }        
         var sumInputWithoutFee = txGraph.TotalInputValue - fee;
 
         /*
@@ -225,6 +348,24 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     }
     
     public new void AddOrUpdateEdge(S2SEdge edge)
+    {
+        base.AddOrUpdateEdge(edge);
+        Stats.IncrementEdgeType(edge.Label, edge.Value);
+    }
+
+    public new void AddOrUpdate(S2TEdge edge)
+    {
+        base.AddOrUpdateEdge(edge);
+        Stats.IncrementEdgeType(edge.Label, edge.Value);
+    }
+
+    public new void AddOrUpdate(T2SEdge edge)
+    {
+        base.AddOrUpdateEdge(edge);
+        Stats.IncrementEdgeType(edge.Label, edge.Value);
+    }
+
+    public new void AddOrUpdate(B2TEdge edge)
     {
         base.AddOrUpdateEdge(edge);
         Stats.IncrementEdgeType(edge.Label, edge.Value);

@@ -47,14 +47,16 @@ public enum GraphComponentType
     BitcoinC2S = 7,
     BitcoinT2T = 8,
     BitcoinS2S = 9,
-    BitcoinS2B = 10,
-    BitcoinB2S = 11,
-    BitcoinT2B = 12,
-    BitcoinB2T = 13,
-    BitcoinTxNode = 14,
-    BitcoinScriptNode = 15,
-    BitcoinBlockNode = 16,
-    BitcoinCoinbaseNode = 17
+    BitcoinS2T = 10,
+    BitcoinS2B = 11,
+    BitcoinB2S = 12,
+    BitcoinT2B = 13,
+    BitcoinT2S = 14,
+    BitcoinB2T = 15,
+    BitcoinTxNode = 16,
+    BitcoinScriptNode = 17,
+    BitcoinBlockNode = 18,
+    BitcoinCoinbaseNode = 19
 }
 
 // TODO: change the following such that it enforces all the types to implement it
