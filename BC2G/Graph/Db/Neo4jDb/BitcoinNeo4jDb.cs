@@ -24,28 +24,34 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
     {
         var nodes = g.GetNodes();
         var edges = g.GetEdges();
-        var batchInfo = await GetBatchAsync([.. nodes.Keys, .. edges.Keys]);
+        var graphType = BitcoinGraph.ComponentType;
+        var batchInfo = await GetBatchAsync(
+            nodes.Keys.Concat(edges.Keys).Append(graphType).ToList());
 
         var tasks = new List<Task>();
 
-        foreach (var nodeType in nodes)
+        batchInfo.AddOrUpdate(graphType, 1);
+        var graphStrategy = StrategyFactory.GetStrategy(graphType);
+        tasks.Add(graphStrategy.ToCsvAsync(g, batchInfo.GetFilename(graphType)));
+
+        foreach (var type in nodes)
         {
-            batchInfo.AddOrUpdate(nodeType.Key, nodeType.Value.Count(x => x.Id != BitcoinAgent.Coinbase));
-            var _strategy = StrategyFactory.GetStrategy(nodeType.Key);
+            batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != BitcoinAgent.Coinbase));
+            var _strategy = StrategyFactory.GetStrategy(type.Key);
             tasks.Add(
                 _strategy.ToCsvAsync(
-                    nodeType.Value.Where(x => x.Id != BitcoinAgent.Coinbase), 
-                    batchInfo.GetFilename(nodeType.Key)));
+                    type.Value.Where(x => x.Id != BitcoinAgent.Coinbase),
+                    batchInfo.GetFilename(type.Key)));
         }
 
-        foreach (var edgeType in edges)
+        foreach (var type in edges)
         {
-            batchInfo.AddOrUpdate(edgeType.Key, edgeType.Value.Count);
-            var _strategy = StrategyFactory.GetStrategy(edgeType.Key);
+            batchInfo.AddOrUpdate(type.Key, type.Value.Count);
+            var _strategy = StrategyFactory.GetStrategy(type.Key);
             tasks.Add(
                 _strategy.ToCsvAsync(
-                    edgeType.Value,
-                    batchInfo.GetFilename(edgeType.Key)));
+                    type.Value,
+                    batchInfo.GetFilename(type.Key)));
         }
 
         await Task.WhenAll(tasks);
@@ -120,7 +126,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 
     public override async Task<bool> TrySampleNeighborsAsync(
         IDriver driver, ScriptNode rootNode, string workingDir)
-   {
+    {
         var graph = await GetNeighborsAsync(driver, rootNode.Address, Options.GraphSample);
         var perBatchLabelsFilename = Path.Join(workingDir, "Labels.tsv");
 
@@ -354,8 +360,8 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
     }
 
     private async Task<GraphBase> GetNeighborsUsingForestFireSamplingAlgorithmAsync(
-        IDriver driver, 
-        string rootScriptAddress, 
+        IDriver driver,
+        string rootScriptAddress,
         int nodeSamplingCountAtRoot,
         int maxHops,
         int queryLimit,
@@ -378,7 +384,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         var allEdgesAddedToGraph = new HashSet<string>();
         using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
 
-        string GetQuery(string rootNode)
+        string GetNeighborsQuery(string rootNode)
         {
             var qBuilder = new StringBuilder();
             qBuilder.Append(rootNode);
@@ -510,9 +516,9 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             return addedNodes;
         }
 
-        async Task ProcessHops(List<string> queries, int hop = 0)
+        async Task ProcessHops(List<string> getNeighborsQueries, int hop = 0)
         {
-            foreach (var q in queries)
+            foreach (var q in getNeighborsQueries)
             {
                 var samplingResult = await session.ExecuteReadAsync(async x =>
                 {
@@ -524,10 +530,12 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 
                 if (hop < maxHops)
                 {
-                    var qs = new List<string>();
+                    var queries = new List<string>();
                     foreach (var node in selectedNodes)
                         if (node.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode) // TODO: this is currently a limitation since we currently do not support root nodes of other types.
-                            qs.Add(GetQuery($"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{((ScriptNode)node).Address}\" }}) "));
+                            queries.Add(GetNeighborsQuery($"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{((ScriptNode)node).Address}\" }}) "));
+
+                    await ProcessHops(queries, hop + 1);
                 }
             }
         }
@@ -538,15 +546,15 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         Logger.LogInformation("Getting neighbors of random node {node}, at {hop} hop distance.", rootScriptAddress, maxHops);
 
 
-        var queries = new List<string>()
+        var getRootNodeNeighborsQuery = new List<string>()
         {
-            GetQuery(
+            GetNeighborsQuery(
                 rootScriptAddress == BitcoinAgent.Coinbase ?
                 $"MATCH (root:{BitcoinAgent.Coinbase}) " :
                 $"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{rootScriptAddress}\" }}) ")
         };
 
-        await ProcessHops(queries);
+        await ProcessHops(getRootNodeNeighborsQuery);
 
         Logger.LogInformation("Retrieved neighbors.");
         Logger.LogInformation("Building a graph from the neighbors.");
@@ -681,7 +689,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 $"FOR (block:{BlockNodeStrategy.Labels}) " +
                 $"ON (block.{Props.Height.Name})");
         });
-        
+
         await session.ExecuteWriteAsync(async x =>
         {
             var result = await x.RunAsync(
@@ -690,7 +698,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 $"FOR ()-[r:{EdgeType.Mints}]->()" +
                 $"on (r.{Props.Height.Name})");
         });
-        
+
         await session.ExecuteWriteAsync(async x =>
         {
             var result = await x.RunAsync(
@@ -699,7 +707,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 $"FOR ()-[r:{EdgeType.Transfers}]->()" +
                 $"on (r.{Props.Height.Name})");
         });
-        
+
         await session.ExecuteWriteAsync(async x =>
         {
             var result = await x.RunAsync(
