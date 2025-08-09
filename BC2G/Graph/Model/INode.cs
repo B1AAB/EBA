@@ -9,7 +9,7 @@ public interface INode : IGraphComponent
     public List<IEdge<INode, INode>> IncomingEdges { get; }
     public List<IEdge<INode, INode>> OutgoingEdges { get; }
 
-    public double[] GetFeatures();
+    public string[] GetFeatures();
 
     /// <summary>
     /// this can return ID, or any unique label (e.g., script address, or tx hash).

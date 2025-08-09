@@ -86,14 +86,14 @@ public class Node : INode
         ];
     }
 
-    public virtual double[] GetFeatures()
+    public virtual string[] GetFeatures()
     {
         return
         [
-            InDegree,
-            OutDegree,
-            OriginalIndegree == null ? double.NaN : (double)OriginalIndegree,
-            OriginalOutdegree == null ? double.NaN : (double)OriginalOutdegree
+            InDegree.ToString(),
+            OutDegree.ToString(),
+            (OriginalIndegree == null ? double.NaN : (double)OriginalIndegree).ToString(),
+            (OriginalOutdegree == null ? double.NaN :(double) OriginalOutdegree).ToString()
         ];
     }
 

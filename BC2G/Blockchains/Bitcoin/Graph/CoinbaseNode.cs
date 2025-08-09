@@ -18,8 +18,8 @@ public class CoinbaseNode : Node
         return ["Coinbase"];
     }
 
-    public override double[] GetFeatures()
+    public override string[] GetFeatures()
     {
-        return [0];
+        return ["0"];
     }
 }

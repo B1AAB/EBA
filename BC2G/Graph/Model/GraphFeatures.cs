@@ -4,7 +4,7 @@ public class GraphFeatures
 {
     // TODO: make sure all the public types in the following are immutable.
 
-    public Dictionary<GraphComponentType, List<double[]>> NodeFeatures { get; }
+    public Dictionary<GraphComponentType, List<string[]>> NodeFeatures { get; }
     public Dictionary<GraphComponentType, string[]> NodeFeaturesHeader { get; }
 
     public Dictionary<GraphComponentType, List<double[]>> EdgeFeatures { get; }
@@ -44,7 +44,7 @@ public class GraphFeatures
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinT2B, [.. sourceAndTarget, .. T2BEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinB2T, [.. sourceAndTarget, .. B2TEdge.GetFeaturesName()]);
 
-        var nodeFeatures = new Dictionary<GraphComponentType, List<double[]>>();
+        var nodeFeatures = new Dictionary<GraphComponentType, List<string[]>>();
         var nodeIdToIdx = new Dictionary<GraphComponentType, Dictionary<string, int>>();
         var nodeGraphComponentTypes = new[]
         {

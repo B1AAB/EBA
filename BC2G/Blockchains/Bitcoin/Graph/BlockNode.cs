@@ -91,18 +91,18 @@ public class BlockNode(
         ];
     }
 
-    public override double[] GetFeatures()
+    public override string[] GetFeatures()
     {
         return 
         [
-            Height, 
-            MedianTime, 
-            TransactionsCount, 
-            Difficulty, 
-            Size, 
-            StrippedSize, 
-            Confirmations, 
-            Weight,
+            Height.ToString(), 
+            MedianTime.ToString(), 
+            TransactionsCount.ToString(), 
+            Difficulty.ToString(), 
+            Size.ToString(), 
+            StrippedSize.ToString(), 
+            Confirmations.ToString(), 
+            Weight.ToString(),
             .. base.GetFeatures()
         ];
     }

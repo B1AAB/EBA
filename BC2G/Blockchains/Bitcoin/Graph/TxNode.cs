@@ -111,14 +111,14 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         ];
     }
 
-    public override double[] GetFeatures()
+    public override string[] GetFeatures()
     {
         // TODO: fix null values and avoid casting
         return
         [
-            Size == null ? double.NaN : (double)Size,
-            Weight == null ? double.NaN :(double)Weight,
-            LockTime == null ? double.NaN : (double)LockTime,
+            (Size == null ? double.NaN : (double)Size).ToString(),
+            (Weight == null ? double.NaN :(double)Weight).ToString(),
+            (LockTime == null ? double.NaN :(double) LockTime).ToString(),
             .. base.GetFeatures(),
         ];
     }
