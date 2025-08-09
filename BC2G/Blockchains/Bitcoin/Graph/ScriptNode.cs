@@ -70,12 +70,12 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
 
     public static new string[] GetFeaturesName()
     {
-        return [nameof(ScriptType), .. Node.GetFeaturesName()];
+        return [nameof(Address), nameof(ScriptType), .. Node.GetFeaturesName()];
     }
 
     public override string[] GetFeatures()
     {
-        return [((double)ScriptType).ToString(), .. base.GetFeatures()];
+        return [Address, ((double)ScriptType).ToString(), .. base.GetFeatures()];
     }
 
     public override int GetHashCode()
