@@ -42,11 +42,11 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
     private readonly ConcurrentDictionary<GraphComponentType, ConcurrentDictionary<string, INode>> _nodes = new();
     private readonly ConcurrentDictionary<GraphComponentType, ConcurrentDictionary<string, IEdge<INode, INode>>> _edges = new();
 
-    public ReadOnlyCollection<double> Labels
+    public ReadOnlyDictionary<string, string> Labels
     {
-        get { return new ReadOnlyCollection<double>(_labels); }
+        get { return new ReadOnlyDictionary<string, string>(_labels); }
     }
-    private readonly List<double> _labels = [];
+    private readonly Dictionary<string, string> _labels = [];
 
     public int GetNodeCount(GraphComponentType type)
     {
@@ -167,9 +167,9 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
         return _edges[type].Cast<T>().ToList();
     }
 
-    public void AddLabel(double label)
+    public void AddLabel(string key, string value)
     {
-        _labels.Add(label);
+        _labels[key] = value;
     }
 
     public void Serialize(

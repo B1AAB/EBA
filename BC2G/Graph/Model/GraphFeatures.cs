@@ -24,7 +24,7 @@ public class GraphFeatures
         // TODO: add a check to this method to make sure no NaN feature is returned.
         // or maybe in the node or graph methods to ensure none of the feature get NaN or null value.
 
-        LabelsHeader = new ReadOnlyCollection<string>(["GraphID", "ConnectedGraph_or_Forest"]);
+        LabelsHeader = new ReadOnlyCollection<string>(["GraphID", "ConnectedGraph_or_Forest", "RootNodeId", "RootNodeIdx"]);
 
         NodeFeaturesHeader = [];
         NodeFeaturesHeader.Add(GraphComponentType.BitcoinBlockNode, BlockNode.GetFeaturesName());
@@ -106,7 +106,17 @@ public class GraphFeatures
         NodeFeatures = nodeFeatures;
         EdgeFeatures = edgeFeatures;
 
+        /*
         Labels = new ReadOnlyCollection<string>(
-            [graph.Id, .. graph.Labels.Select(t => t.ToString())]);
+            [graph.Id, .. graph.Labels.Select(t => t.ToString())]);*/
+        // TODO: the following is a hack; root node type should not be hardcored.
+        var gLabels = graph.Labels;
+        Labels = new ReadOnlyCollection<string>(
+            [
+                graph.Id, 
+                gLabels["ConnectedGraph_or_Forest"], 
+                gLabels["RootNodeId"], 
+                nodeIdToIdx[GraphComponentType.BitcoinScriptNode][gLabels["RootNodeId"]].ToString()
+            ]);
     }
 }

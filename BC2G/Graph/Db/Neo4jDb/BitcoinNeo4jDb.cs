@@ -174,7 +174,6 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 return false;
             }
 
-            disjointGraphs.AddLabel(1);
             disjointGraphs.Serialize(
                 Path.Join(workingDir, disjointGraphs.Id),
                 perBatchLabelsFilename,
@@ -182,7 +181,6 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 serializeEdges: Options.GraphSample.SerializeEdges);
         }
 
-        graph.AddLabel(0);
         graph.Serialize(
             Path.Join(workingDir, graph.Id),
             perBatchLabelsFilename,
@@ -309,6 +307,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         }
 
         var g = new BitcoinGraph();
+        var rootNodeId = "";
 
         foreach (var hop in samplingResult)
         {
@@ -324,6 +323,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                     continue;
 
                 g.GetOrAddNode(GraphComponentType.BitcoinCoinbaseNode, root);
+                rootNodeId = root.Id;
             }
             else
             {
@@ -336,6 +336,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                     continue;
 
                 g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, root);
+                rootNodeId = root.Id;
             }
 
             // It is better to add nodes like this, and not just as part of 
@@ -355,6 +356,9 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         }
 
         Logger.LogInformation("Build graph from the neighbors; {nodeCount} nodes and {edgeCount} edges.", g.NodeCount, g.EdgeCount);
+
+        g.AddLabel("ConnectedGraph_or_Forest", "1");
+        g.AddLabel("RootNodeId", rootNodeId);
 
         return g;
     }
@@ -380,6 +384,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 
         var rnd = new Random(31);
         var g = new BitcoinGraph();
+        var rootNodeId = "";
         var allNodesAddedToGraph = new HashSet<string>();
         var allEdgesAddedToGraph = new HashSet<string>();
         using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
@@ -449,6 +454,8 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                         g.GetOrAddNode(GraphComponentType.BitcoinCoinbaseNode, root);
                         allNodesAddedToGraph.Add(root.Id);
                     }
+
+                    rootNodeId = root.Id;
                 }
                 else
                 {
@@ -467,6 +474,8 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                         g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, root);
                         allNodesAddedToGraph.Add(rootB.ElementId);
                     }
+
+                    rootNodeId = root.Id;
                 }
 
                 // ********
@@ -561,6 +570,9 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 
         Logger.LogInformation("Build graph from the neighbors; {nodeCount} nodes and {edgeCount} edges.", g.NodeCount, g.EdgeCount);
 
+        g.AddLabel("ConnectedGraph_or_Forest", "1");
+        g.AddLabel("RootNodeId", rootNodeId);
+
         return g;
     }
 
@@ -588,6 +600,9 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(n.Values["target"].As<Neo4j.Driver.INode>()));
             g.GetOrAddEdge(n.Values["edge"].As<IRelationship>());
         }
+
+        g.AddLabel("ConnectedGraph_or_Forest", "0");
+
         return g;
     }
 
@@ -623,6 +638,8 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             if (g.EdgeCount + (g.EdgeCount * 0.2) >= options.MaxEdgeCount || g.NodeCount + (g.NodeCount * 0.2) >= options.MaxNodeCount)
                 break;
         }
+
+        g.AddLabel("ConnectedGraph_or_Forest", "0");
 
         return g;
     }
