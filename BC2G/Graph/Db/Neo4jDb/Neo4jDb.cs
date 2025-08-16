@@ -118,7 +118,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         if (Options.GraphSample.CoinbaseMode != CoinbaseSelectionMode.ExcludeCoinbase)
         {
             Logger.LogInformation("Sampling neighbors of the coinbase node.");
-            var tmpSolutionCoinbase = new ScriptNode(BitcoinAgent.Coinbase, BitcoinAgent.Coinbase, ScriptType.Coinbase);
+            var tmpSolutionCoinbase = new ScriptNode<SampledNodeContextBase>(BitcoinAgent.Coinbase, BitcoinAgent.Coinbase, ScriptType.Coinbase, new SampledNodeContextBase(0, 0));
             if (await TrySampleNeighborsAsync(driver, tmpSolutionCoinbase, baseOutputDir))
             {
                 sampledGraphsCounter++;
@@ -315,7 +315,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
 
     // TODO: Make the following methods more generic, e.g., replace ScriptNode with INode
-    public abstract Task<List<ScriptNode>> GetRandomNodes(
+    public abstract Task<List<ScriptNode<SampledNodeContextBase>>> GetRandomNodes(
         IDriver driver, int nodesCount, double rootNodesSelectProb = 0.1);
 
     public abstract Task<GraphBase> GetNeighborsAsync(
@@ -328,7 +328,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         IDriver driver, int edgeCount, GraphSampleOptions options);
 
     public abstract Task<bool> TrySampleNeighborsAsync(
-        IDriver driver, ScriptNode rootNode, string workingDir);
+        IDriver driver, ScriptNode<SampledNodeContextBase> rootNode, string workingDir);
 
     public void Dispose()
     {

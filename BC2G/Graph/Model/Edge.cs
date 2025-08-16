@@ -2,9 +2,10 @@
 
 namespace BC2G.Graph.Model;
 
-public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
-    where TSource : notnull, INode
-    where TTarget : notnull, INode
+public class Edge<TSource, TTarget, TContext> : IEdge<TSource, TTarget, TContext>
+    where TSource : notnull, INode<TContext>
+    where TTarget : notnull, INode<TContext>
+    where TContext: IContext
 {
     public static GraphComponentType ComponentType { get { return GraphComponentType.Edge; } }
     public virtual GraphComponentType GetGraphComponentType() => ComponentType;

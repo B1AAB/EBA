@@ -1,6 +1,39 @@
 ﻿namespace BC2G.Blockchains.Bitcoin.Graph;
 
-public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
+public class TxNode : TxNode<ContextBase>,
+    IComparable<TxNode<ContextBase>>,
+    IEquatable<TxNode<ContextBase>>
+{
+    public TxNode(string txid) : base(txid, new ContextBase()) { }
+
+    public TxNode(
+        string id,
+        string txid,
+        ulong? version,
+        int? size,
+        int? vSize,
+        int? weight,
+        long? lockTime) : base(
+            id: id,
+            txid: txid,
+            version: version,
+            size: size,
+            vSize: vSize,
+            weight: weight,
+            lockTime: lockTime,
+            context: new ContextBase())
+    { }
+
+    public TxNode(Transaction tx) : base(tx, new ContextBase()) { }
+
+    public static TxNode GetCoinbaseNode()
+    {
+        return new TxNode(BitcoinAgent.Coinbase);
+    }
+}
+
+public class TxNode<T> : Node<T>, IComparable<TxNode<T>>, IEquatable<TxNode<T>>
+    where T: IContext
 {
     public new static GraphComponentType ComponentType { get { return GraphComponentType.BitcoinTxNode; } }
     public override GraphComponentType GetGraphComponentType() { return ComponentType; }
@@ -14,32 +47,19 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 
     public Transaction? Tx { get; }
 
-    public TxNode(string txid) : base(txid)
+    public TxNode(string txid, T context) : base(txid, context)
     {
         Txid = txid;
     }
 
-    public TxNode(
-        string id, string txid, ulong? version,
-        int? size, int? vSize, int? weight,
-        long? lockTime) : base(id)
-    {
-        Txid = txid;
-        Version = version;
-        Size = size;
-        VSize = vSize;
-        Weight = weight;
-        LockTime = lockTime;
-    }
-
-    public TxNode(
-        string txid, 
+    public TxNode(string id,
+        string txid,
         ulong? version,
-        int? size, int? vSize, int? weight,
-        long? lockTime, 
-        double? originalIndegree = null,
-        double? originalOutdegree = null) :
-        base(txid, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree)
+        int? size,
+        int? vSize,
+        int? weight,
+        long? lockTime,
+        T context) : base(id, context)
     {
         Txid = txid;
         Version = version;
@@ -49,10 +69,26 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         LockTime = lockTime;
     }
 
-    public TxNode(Transaction tx) :
-        this(tx.Txid, 
-            tx.Version, 
-            tx.Size, tx.VSize, tx.Weight, tx.LockTime)
+    public TxNode(
+        string txid,
+        ulong? version,
+        int? size,
+        int? vSize,
+        int? weight,
+        long? lockTime,
+        T context) :
+        base(txid, context)
+    {
+        Txid = txid;
+        Version = version;
+        Size = size;
+        VSize = vSize;
+        Weight = weight;
+        LockTime = lockTime;
+    }
+
+    public TxNode(Transaction tx, T context) :
+        this(tx.Txid, tx.Version, tx.Size, tx.VSize, tx.Weight, tx.LockTime, context)
     { }
 
     public override string GetUniqueLabel()
@@ -60,10 +96,12 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         return Txid;
     }
 
-    public static TxNode CreateTxNode(
-        Neo4j.Driver.INode node,
-        double? originalIndegree = null,
-        double? originalOutdegree = null)
+    public static TxNode<T> GetCoinbaseNode()
+    {
+        return new TxNode<T>(BitcoinAgent.Coinbase, new T());
+    }
+
+    public static TxNode<T> CreateTxNode(Neo4j.Driver.INode node, T context)
     {
         // TODO: all the following double-casting is because of the type
         // normalization happens when bulk-loading data into neo4j.
@@ -84,20 +122,14 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         node.Properties.TryGetValue(Props.TxLockTime.Name, out var t);
         long? lockTime = t == null ? null : (long)t;
 
-        return new TxNode(
+        return new TxNode<T>(
             txid: node.ElementId,
             version: version,
             size: size,
             vSize: vSize,
             weight: weight,
             lockTime: lockTime,
-            originalIndegree: originalIndegree,
-            originalOutdegree: originalOutdegree);
-    }
-
-    public static TxNode GetCoinbaseNode()
-    {
-        return new TxNode(BitcoinAgent.Coinbase);
+            context: context);
     }
 
     public static new string[] GetFeaturesName()
@@ -107,7 +139,8 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
             nameof(Size),
             nameof(Weight),
             nameof(LockTime),
-            .. Node.GetFeaturesName()
+            .. 
+            Node<T>.GetFeaturesName()
         ];
     }
 
@@ -123,12 +156,12 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         ];
     }
 
-    public int CompareTo(TxNode? other)
+    public int CompareTo(TxNode<T>? other)
     {
         throw new NotImplementedException();
     }
 
-    public bool Equals(TxNode? other)
+    public bool Equals(TxNode<T>? other)
     {
         throw new NotImplementedException();
     }

@@ -4,12 +4,12 @@ namespace BC2G.Graph.Model;
 
 public class EdgeFactory
 {
-    public static IEdge<INode, INode> CreateEdge(
+    public static IEdge<INode, INode> CreateEdge<T>(
         INode source,
         INode target,
         IRelationship relationship,
         GraphComponentType sourceNodeGraphComponentType,
-        GraphComponentType targetNodeGraphComponentType)
+        GraphComponentType targetNodeGraphComponentType) where T : IContext
     {
         //var id = relationship.ElementId;
         var value = Helpers.BTC2Satoshi((double)relationship.Properties[Props.EdgeValue.Name]);
@@ -38,7 +38,7 @@ public class EdgeFactory
             sourceNodeGraphComponentType == GraphComponentType.BitcoinScriptNode &&
             targetNodeGraphComponentType == GraphComponentType.BitcoinScriptNode)
         {
-            return new S2SEdge((ScriptNode)source, (ScriptNode)target, value, type, timestamp, blockHeight);
+            return new S2SEdge((ScriptNode<T>)source, (ScriptNode<T>)target, value, type, timestamp, blockHeight);
         }
         else if (
             sourceNodeGraphComponentType == GraphComponentType.BitcoinScriptNode &&

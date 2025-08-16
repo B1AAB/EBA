@@ -1,6 +1,25 @@
 ﻿namespace BC2G.Blockchains.Bitcoin.Graph;
 
-public class S2SEdge : Edge<ScriptNode, ScriptNode>
+public class S2SEdge : S2SEdge<ContextBase>
+{
+    public S2SEdge(
+        ScriptNode<ContextBase> source,
+        ScriptNode<ContextBase> target,
+        long value,
+        EdgeType type,
+        uint timestamp,
+        long blockHeight) : base(
+            source,
+            target,
+            value,
+            type,
+            timestamp,
+            blockHeight)
+    { }
+}
+
+public class S2SEdge<T> : Edge<ScriptNode<T>, ScriptNode<T>, T>
+    where T : IContext
 {
     public new static GraphComponentType ComponentType
     {
@@ -16,7 +35,7 @@ public class S2SEdge : Edge<ScriptNode, ScriptNode>
     private readonly EdgeLabel _label;
 
     public S2SEdge(
-        ScriptNode source, ScriptNode target,
+        ScriptNode<T> source, ScriptNode<T> target,
         long value, EdgeType type,
         uint timestamp, long blockHeight) :
         base(source, target, value, type, timestamp, blockHeight)
@@ -24,8 +43,8 @@ public class S2SEdge : Edge<ScriptNode, ScriptNode>
         _label = Type == EdgeType.Transfers ? EdgeLabel.S2STransfer : EdgeLabel.S2SFee;
     }
 
-    public S2SEdge Update(long value)
+    public S2SEdge<T> Update(long value)
     {
-        return new S2SEdge(Source, Target, Value + value, Type, Timestamp, BlockHeight);
+        return new S2SEdge<T>(Source, Target, Value + value, Type, Timestamp, BlockHeight);
     }
 }

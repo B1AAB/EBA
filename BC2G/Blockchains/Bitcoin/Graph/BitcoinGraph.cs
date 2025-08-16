@@ -6,7 +6,8 @@ namespace BC2G.Blockchains.Bitcoin.Graph;
 
 // TODO: can the following AddOrUpdateEdge methods made generic and simplified?!
 
-public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
+public class BitcoinGraph<T> : GraphBase<T>, IEquatable<BitcoinGraph<T>>
+    where T:IContext
 {
     public new static GraphComponentType ComponentType
     {
@@ -111,23 +112,23 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
 
     // TODO: this method or any other methods must definately not accept nullable values.
     // These values will turn into features and nullable features are problematic downstream
-    public INode GetOrAddNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null)
+    public INode GetOrAddNode<T>(Neo4j.Driver.INode node, T context) where T : IContext
     {
         if (node.Labels.Contains(ScriptNodeStrategy.Labels))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree));
+            return GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode<T>(node, context));
         }
         else if (node.Labels.Contains(TxNodeStrategy.Labels))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinTxNode, TxNode.CreateTxNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree));
+            return GetOrAddNode(GraphComponentType.BitcoinTxNode, TxNode<T>.CreateTxNode(node, context));
         }
         else if (node.Labels.Contains(BlockNodeStrategy.Labels))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinBlockNode, new BlockNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree));
+            return GetOrAddNode(GraphComponentType.BitcoinBlockNode, new BlockNode<T>(node, context));
         }
         else if (node.Labels.Contains(BitcoinAgent.Coinbase))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinCoinbaseNode, new CoinbaseNode(node, originalOutdegree: originalOutdegree));
+            return GetOrAddNode(GraphComponentType.BitcoinCoinbaseNode, new CoinbaseNode<T>(node, context));
         }
         else
         {

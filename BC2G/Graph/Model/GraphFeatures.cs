@@ -1,6 +1,6 @@
 ﻿namespace BC2G.Graph.Model;
 
-public class GraphFeatures
+public class GraphFeatures<T> where T : IContext
 {
     // TODO: make sure all the public types in the following are immutable.
 
@@ -19,7 +19,7 @@ public class GraphFeatures
     public ReadOnlyCollection<string> Labels { get; }
     public ReadOnlyCollection<string> LabelsHeader { get; }
 
-    public GraphFeatures(GraphBase graph)
+    public GraphFeatures(GraphBase<T> graph)
     {
         // TODO: add a check to this method to make sure no NaN feature is returned.
         // or maybe in the node or graph methods to ensure none of the feature get NaN or null value.

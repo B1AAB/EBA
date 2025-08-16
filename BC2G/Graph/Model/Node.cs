@@ -1,6 +1,12 @@
 ﻿namespace BC2G.Graph.Model;
 
-public class Node : INode
+
+public class Node(string id) : Node<ContextBase>(id, new ContextBase())
+{ }
+
+
+public class Node<T> : INode<T>
+    where T : IContext
 {
     public static GraphComponentType ComponentType
     {
@@ -14,21 +20,10 @@ public class Node : INode
     public int InDegree { get { return IncomingEdges.Count; } }
     public int OutDegree { get { return OutgoingEdges.Count; } }
 
-    /// <summary>
-    /// This is the degree of the node in the entire graph 
-    /// (e.g., the one in the database), where the Indegree and Outdegree 
-    /// are the degrees in the graph where they are located (e.g., the sampled graph).
-    /// </summary>
-    public double? OriginalIndegree { get; }
-    /// <summary>
-    /// This is the degree of the node in the entire graph 
-    /// (e.g., the one in the database), where the Indegree and Outdegree 
-    /// are the degrees in the graph where they are located (e.g., the sampled graph).
-    /// </summary>
-    public double? OriginalOutdegree { get; }
+    public T Context { get; }
 
-    public List<IEdge<INode, INode>> IncomingEdges { get; } = [];
-    public List<IEdge<INode, INode>> OutgoingEdges { get; } = [];
+    public List<IEdge<INode, INode, T>> IncomingEdges { get; } = [];
+    public List<IEdge<INode, INode, T>> OutgoingEdges { get; } = [];
 
     public static string Header
     {
@@ -43,11 +38,10 @@ public class Node : INode
 
     public const char Delimiter = '\t';
 
-    public Node(string id, double? originalIndegree = null, double? originalOutdegree = null)
+    public Node(string id, T context)
     {
         Id = id;
-        OriginalIndegree = originalIndegree;
-        OriginalOutdegree = originalOutdegree;
+        Context = context;
     }
 
     public virtual string GetUniqueLabel()
@@ -80,9 +74,9 @@ public class Node : INode
         return
         [
             nameof(InDegree),
-            nameof(OutDegree),
-            nameof(OriginalIndegree),
-            nameof(OriginalOutdegree)
+            nameof(OutDegree), 
+            ..
+            T.GetFeatureNames()
         ];
     }
 
@@ -91,9 +85,9 @@ public class Node : INode
         return
         [
             InDegree.ToString(),
-            OutDegree.ToString(),
-            (OriginalIndegree == null ? double.NaN : (double)OriginalIndegree).ToString(),
-            (OriginalOutdegree == null ? double.NaN :(double) OriginalOutdegree).ToString()
+            OutDegree.ToString(), 
+            ..
+            Context.GetFeatures()
         ];
     }
 

@@ -1,6 +1,23 @@
 ﻿namespace BC2G.Blockchains.Bitcoin.Graph;
 
-public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
+public class ScriptNode : ScriptNode<ContextBase>,
+    IComparable<ScriptNode<ContextBase>>,
+    IEquatable<ScriptNode<ContextBase>>
+{
+    public ScriptNode(string id) : base(id, new ContextBase()) 
+    { }
+
+    public ScriptNode(Utxo utxo) : base(utxo, new ContextBase())
+    { }
+
+    public static ScriptNode GetCoinbaseNode()
+    {
+        return new ScriptNode(BitcoinAgent.Coinbase);
+    }
+}
+
+public class ScriptNode<T> : Node<T>, IComparable<ScriptNode<T>>, IEquatable<ScriptNode<T>>
+    where T: IContext
 {
     public static GraphComponentType ComponentType
     {
@@ -28,34 +45,26 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         }
     }
 
-    public ScriptNode(
-        string id, double? originalIndegree = null, double? originalOutdegree = null) :
-        base(id, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree)
+    public ScriptNode(string id, T context) : base(id, context)
     { }
 
-    public ScriptNode(Utxo utxo) : base(utxo.Id)
+    public ScriptNode(Utxo utxo, T context) : base(utxo.Id, context)
     {
         Address = utxo.Address;
         ScriptType = utxo.ScriptType;
     }
 
-    public ScriptNode(
-        string id,
-        string address,
-        ScriptType scriptType,
-        double? originalIndegree = null,
-        double? originalOutdegree = null) :
-        this(id, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree)
+    public ScriptNode(string id, string address, ScriptType scriptType, T context) : this(id, context)
     {
         Address = address;
         ScriptType = scriptType;
     }
 
-    public ScriptNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null) :
+    public ScriptNode(Neo4j.Driver.INode node, T context) :
         this(node.ElementId,
             (string)node.Properties[Props.ScriptAddress.Name],
             Enum.Parse<ScriptType>((string)node.Properties[Props.ScriptType.Name]),
-            originalIndegree: originalIndegree, originalOutdegree: originalOutdegree)
+            context)
     { }
 
     public override string GetUniqueLabel()
@@ -63,14 +72,19 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         return Address;
     }
 
-    public static ScriptNode GetCoinbaseNode()
+    public static ScriptNode<T> GetCoinbaseNode(T context)
     {
-        return new ScriptNode(BitcoinAgent.Coinbase);
+        return new ScriptNode<T>(BitcoinAgent.Coinbase, context);
+    }
+
+    public static ScriptNode<T> GetCoinbaseNode()
+    {
+        return new ScriptNode<T>(BitcoinAgent.Coinbase, new T());
     }
 
     public static new string[] GetFeaturesName()
     {
-        return [nameof(Address), nameof(ScriptType), .. Node.GetFeaturesName()];
+        return [nameof(Address), nameof(ScriptType), .. Node<T>.GetFeaturesName()];
     }
 
     public override string[] GetFeatures()
@@ -86,7 +100,7 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         return HashCode.Combine(Address, ScriptType);
     }
 
-    public int CompareTo(ScriptNode? other)
+    public int CompareTo(ScriptNode<T>? other)
     {
         if (other == null) return -1;
         var r = Address.CompareTo(other.Address);
@@ -94,7 +108,7 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         return ScriptType.CompareTo(other.ScriptType);
     }
 
-    public bool Equals(ScriptNode? other)
+    public bool Equals(ScriptNode<T>? other)
     {
         if (other == null)
             return false;

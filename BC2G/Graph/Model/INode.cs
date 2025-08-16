@@ -1,13 +1,28 @@
 ﻿namespace BC2G.Graph.Model;
 
-public interface INode : IGraphComponent
+public interface INode<T> : IGraphComponent
+    where T: IContext
 {
     public string Id { get; }
     public int InDegree { get; }
     public int OutDegree { get; }
 
-    public List<IEdge<INode, INode>> IncomingEdges { get; }
-    public List<IEdge<INode, INode>> OutgoingEdges { get; }
+    /// <summary>
+    /// This holds a context-specific state of a node, 
+    /// which is a set of additional properties the 
+    /// node can have given the context it is used in.
+    /// 
+    /// Implementation note: this implement policy pattern,
+    /// the alternative is the decorator pattern where the 
+    /// list of properties are held in a dictionary. 
+    /// The downside of that is that the list of properties
+    /// is unknow at compile time, which limits implementing
+    /// property-specificc logic.
+    /// </summary>
+    public T Context { get; }
+
+    public List<IEdge<INode<T>, INode<T>, T>> IncomingEdges { get; }
+    public List<IEdge<INode<T>, INode<T>, T>> OutgoingEdges { get; }
 
     public string[] GetFeatures();
 
@@ -19,9 +34,9 @@ public interface INode : IGraphComponent
     /// <returns></returns>
     public string GetUniqueLabel();
 
-    public void AddIncomingEdge(IEdge<INode, INode> incomingEdge);
-    public void AddOutgoingEdge(IEdge<INode, INode> outgoingEdge);
+    public void AddIncomingEdge(IEdge<INode<T>, INode<T>, T> incomingEdge);
+    public void AddOutgoingEdge(IEdge<INode<T>, INode<T>, T> outgoingEdge);
 
-    public void AddIncomingEdges(List<IEdge<INode, INode>> incomingEdges);
-    public void AddOutgoingEdges(List<IEdge<INode, INode>> outgoingEdges);
+    public void AddIncomingEdges(List<IEdge<INode<T>, INode<T>, T>> incomingEdges);
+    public void AddOutgoingEdges(List<IEdge<INode<T>, INode<T>, T>> outgoingEdges);
 }

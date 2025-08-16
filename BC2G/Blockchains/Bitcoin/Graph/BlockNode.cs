@@ -1,23 +1,13 @@
 ﻿namespace BC2G.Blockchains.Bitcoin.Graph;
 
+public class BlockNode(Block block) :
+    BlockNode<ContextBase>(block, new ContextBase()),
+    IComparable<BlockNode<ContextBase>>,
+    IEquatable<BlockNode<ContextBase>>
+{ }
 
-// TODO: this class seems redundant given Bitcoin.Model.Block
-// can these two, and other similar classes merged?
-
-public class BlockNode(
-    string id,
-    long height,
-    uint medianTime,
-    int transactionsCount,
-    double difficulty,
-    int size,
-    int strippedSize,
-    int confirmations,
-    int weight, 
-    double? originalIndegree = null,
-    double? originalOutdegree = null) : 
-    Node(id, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree), 
-    IComparable<BlockNode>, IEquatable<BlockNode>
+public class BlockNode<T> : Node<T>, IComparable<BlockNode<T>>, IEquatable<BlockNode<T>>
+    where T : IContext
 {
     public static new GraphComponentType ComponentType
     {
@@ -29,16 +19,16 @@ public class BlockNode(
         return ComponentType;
     }
 
-    public long Height { get; } = height;
-    public uint MedianTime { get; } = medianTime;
-    public int TransactionsCount { get; } = transactionsCount;
-    public double Difficulty { get; } = difficulty;
-    public int Size { get; } = size;
-    public int StrippedSize { get; } = strippedSize;
-    public int Confirmations { get; } = confirmations;
-    public int Weight { get; } = weight;
+    public long Height { get; }
+    public uint MedianTime { get; }
+    public int TransactionsCount { get; }
+    public double Difficulty { get; }
+    public int Size { get; }
+    public int StrippedSize { get; }
+    public int Confirmations { get; }
+    public int Weight { get; }
 
-    public BlockNode(Block block) : this(
+    public BlockNode(Block block, T context) : this(
         id: block.Height.ToString(),
         height: block.Height,
         medianTime: block.MedianTime,
@@ -47,15 +37,38 @@ public class BlockNode(
         size: block.Size,
         strippedSize: block.StrippedSize,
         confirmations: block.Confirmations,
-        weight: block.Weight)
+        weight: block.Weight,
+        context: context)
     { }
+
+    public BlockNode(
+        string id,
+        long height,
+        uint medianTime,
+        int transactionsCount,
+        double difficulty,
+        int size,
+        int strippedSize,
+        int confirmations,
+        int weight,
+        T context) : base(id, context)
+    {
+        Height = height;
+        MedianTime = medianTime;
+        TransactionsCount = transactionsCount;
+        Difficulty = difficulty;
+        Size = size;
+        StrippedSize = strippedSize;
+        Confirmations = confirmations;
+        Weight = weight;
+    }
 
 
     // TODO: all the following double-casting is because of the type
     // normalization happens when bulk-loading data into neo4j.
     // Find a better solution.
 
-    public BlockNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null) :
+    public BlockNode(Neo4j.Driver.INode node, T context) :
         this(
             id: node.ElementId,
             height: long.Parse((string)node.Properties[Props.Height.Name]),
@@ -66,8 +79,7 @@ public class BlockNode(
             strippedSize: (int)(long)node.Properties[Props.BlockStrippedSize.Name],
             confirmations: (int)(long)node.Properties[Props.BlockConfirmations.Name],
             weight: (int)(long)node.Properties[Props.BlockWeight.Name],
-            originalIndegree: originalIndegree,
-            originalOutdegree: originalOutdegree)
+            context: context)
     { }
 
     public override string GetUniqueLabel()
@@ -75,7 +87,7 @@ public class BlockNode(
         return Height.ToString();
     }
 
-    public new static string[] GetFeaturesName()
+    public static new string[] GetFeaturesName()
     {
         return 
         [
@@ -87,7 +99,7 @@ public class BlockNode(
             nameof(StrippedSize),
             nameof(Confirmations),
             nameof(Weight),
-            .. Node.GetFeaturesName()
+            .. Node<T>.GetFeaturesName()
         ];
     }
 
@@ -107,12 +119,12 @@ public class BlockNode(
         ];
     }
 
-    public int CompareTo(BlockNode? other)
+    public int CompareTo(BlockNode<T>? other)
     {
         throw new NotImplementedException();
     }
 
-    public bool Equals(BlockNode? other)
+    public bool Equals(BlockNode<T>? other)
     {
         throw new NotImplementedException();
     }

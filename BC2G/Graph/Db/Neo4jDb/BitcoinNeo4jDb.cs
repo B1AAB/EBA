@@ -98,7 +98,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         Logger.LogInformation("Finished serializing all cypher queries for Bitcoin graph.");
     }
 
-    public override async Task<List<ScriptNode>> GetRandomNodes(
+    public override async Task<List<ScriptNode<SampledNodeContextBase>>> GetRandomNodes(
         IDriver driver, int nodesCount, double rootNodesSelectProb = 0.1)
     {
         using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
@@ -117,15 +117,15 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             return await result.ToListAsync();
         });
 
-        var rndNodes = new List<ScriptNode>();
+        var rndNodes = new List<ScriptNode<SampledNodeContextBase>>();
         foreach (var n in rndRecords)
-            rndNodes.Add(new ScriptNode(n.Values[rndNodeVar].As<Neo4j.Driver.INode>()));
+            rndNodes.Add(new ScriptNode<SampledNodeContextBase>(n.Values[rndNodeVar].As<Neo4j.Driver.INode>(), new SampledNodeContextBase(originalInDegree: 0, originalOutDegree: 0)));
 
         return rndNodes;
     }
 
     public override async Task<bool> TrySampleNeighborsAsync(
-        IDriver driver, ScriptNode rootNode, string workingDir)
+        IDriver driver, ScriptNode<SampledNodeContextBase> rootNode, string workingDir)
     {
         var graph = await GetNeighborsAsync(driver, rootNode.Address, Options.GraphSample);
         var perBatchLabelsFilename = Path.Join(workingDir, "Labels.tsv");
@@ -311,14 +311,14 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 
         foreach (var hop in samplingResult)
         {
-            Node root;
+            Node<SampledNodeContextBase> root;
             if (rootScriptAddress == BitcoinAgent.Coinbase)
             {
                 // ********
                 //root = new CoinbaseNode(hop.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
                 var rootList = hop["root"].As<List<object>>();
                 (Neo4j.Driver.INode rootNode, double inDegree, double outDegree) = UnpackDict(rootList[0].As<IDictionary<string, object>>());
-                root = new CoinbaseNode(rootNode, originalOutdegree: outDegree);
+                root = new CoinbaseNode<SampledNodeContextBase>(rootNode, new SampledNodeContextBase(originalInDegree: 0, originalOutDegree: outDegree));
                 if (root is null)
                     continue;
 
@@ -331,7 +331,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 //root = new ScriptNode(hop.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
                 var rootList = hop["root"].As<List<object>>();
                 (Neo4j.Driver.INode rootNode, double inDegree, double outDegree) = UnpackDict(rootList[0].As<IDictionary<string, object>>());
-                root = new ScriptNode(rootNode, originalIndegree: inDegree, originalOutdegree: outDegree);
+                root = new ScriptNode<SampledNodeContextBase>(rootNode, new SampledNodeContextBase(originalInDegree: inDegree, originalOutDegree: outDegree));
                 if (root is null)
                     continue;
 
@@ -348,7 +348,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             foreach (var nodeObject in hop["nodes"].As<List<object>>())
             {
                 (Neo4j.Driver.INode node, double inDegree, double outDegree) = UnpackDict(nodeObject.As<IDictionary<string, object>>());
-                g.GetOrAddNode(node, originalIndegree: inDegree, originalOutdegree: outDegree);
+                g.GetOrAddNode(node, new SampledNodeContextBase(inDegree, outDegree));
             }
 
             foreach (var relationship in hop.Values["relationships"].As<List<IRelationship>>())
@@ -430,7 +430,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 
         List<Model.INode> ProcessSamplingResult(List<IRecord> samplingResult, int hop)
         {
-            Node root;
+            Node<SampledNodeContextBase> root;
             var nodes = new Dictionary<string, (Neo4j.Driver.INode, double, double)>();
             var edges = new Dictionary<string, IRelationship>();
 
@@ -447,7 +447,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                     if (rootNode is null)
                         continue;
 
-                    root = new CoinbaseNode(rootNode, originalOutdegree: outDegree);
+                    root = new CoinbaseNode<SampledNodeContextBase>(rootNode, new SampledNodeContextBase(originalInDegree: 0, originalOutDegree: outDegree));
 
                     if (!allNodesAddedToGraph.Contains(root.Id))
                     {
@@ -467,7 +467,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                     if (rootB is null)
                         continue;
 
-                    root = new ScriptNode(rootB, originalIndegree: inDegree, originalOutdegree: outDegree);
+                    root = new ScriptNode<SampledNodeContextBase>(rootB, new SampledNodeContextBase(originalInDegree: inDegree, originalOutDegree: outDegree));
 
                     if (!allNodesAddedToGraph.Contains(rootB.ElementId))
                     {
@@ -514,7 +514,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                     // so only the "connected" nodes are added.
                     // also, this order is important where 1st the node is added, then the edge.
                     (var ccNode, var indegree, var outdegree) = nodes[targetNodeId];
-                    addedNodes.Add(g.GetOrAddNode(ccNode, originalIndegree: indegree, originalOutdegree: outdegree));
+                    addedNodes.Add(g.GetOrAddNode(ccNode, new SampledNodeContextBase(originalInDegree: indegree, originalOutDegree: outdegree)));
                     allNodesAddedToGraph.Add(targetNodeId);
 
                     g.GetOrAddEdge(edge.Value);
@@ -596,8 +596,8 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 
         foreach (var n in randomNodes)
         {
-            g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(n.Values["source"].As<Neo4j.Driver.INode>()));
-            g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(n.Values["target"].As<Neo4j.Driver.INode>()));
+            g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode<SampledNodeContextBase>(n.Values["source"].As<Neo4j.Driver.INode>(), new SampledNodeContextBase(0, 0)));
+            g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode<SampledNodeContextBase>(n.Values["target"].As<Neo4j.Driver.INode>(), new SampledNodeContextBase(0, 0)));
             g.GetOrAddEdge(n.Values["edge"].As<IRelationship>());
         }
 

@@ -1,8 +1,9 @@
 ﻿namespace BC2G.Graph.Model;
 
-public interface IEdge<out TSource, out TTarget> : IGraphComponent
-    where TSource : INode
-    where TTarget : INode
+public interface IEdge<out TSource, out TTarget, TNodeContext> : IGraphComponent
+    where TSource : Model.INode<TNodeContext>
+    where TTarget : Model.INode<TNodeContext>
+    where TNodeContext: IContext
 {
     public string Id { get; }
     public TSource Source { get; }
