@@ -27,6 +27,8 @@ public class Node : INode
     /// </summary>
     public double? OriginalOutdegree { get; }
 
+    public double? HopsFromRoot { get; }
+
     public List<IEdge<INode, INode>> IncomingEdges { get; } = [];
     public List<IEdge<INode, INode>> OutgoingEdges { get; } = [];
 
@@ -43,11 +45,12 @@ public class Node : INode
 
     public const char Delimiter = '\t';
 
-    public Node(string id, double? originalIndegree = null, double? originalOutdegree = null)
+    public Node(string id, double? originalIndegree = null, double? originalOutdegree = null, double? hopsFromRoot = null)
     {
         Id = id;
         OriginalIndegree = originalIndegree;
         OriginalOutdegree = originalOutdegree;
+        HopsFromRoot = hopsFromRoot;
     }
 
     public virtual string GetUniqueLabel()
@@ -82,7 +85,8 @@ public class Node : INode
             nameof(InDegree),
             nameof(OutDegree),
             nameof(OriginalIndegree),
-            nameof(OriginalOutdegree)
+            nameof(OriginalOutdegree),
+            nameof(HopsFromRoot),
         ];
     }
 
@@ -93,7 +97,8 @@ public class Node : INode
             InDegree.ToString(),
             OutDegree.ToString(),
             (OriginalIndegree == null ? double.NaN : (double)OriginalIndegree).ToString(),
-            (OriginalOutdegree == null ? double.NaN :(double) OriginalOutdegree).ToString()
+            (OriginalOutdegree == null ? double.NaN :(double) OriginalOutdegree).ToString(),
+            (HopsFromRoot == null ? double.NaN : (double) HopsFromRoot).ToString(),
         ];
     }
 

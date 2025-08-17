@@ -5,7 +5,7 @@ public class CoinbaseNode : Node
     public new static GraphComponentType ComponentType { get { return GraphComponentType.BitcoinCoinbaseNode; } }
     public override GraphComponentType GetGraphComponentType() { return ComponentType; }
 
-    public CoinbaseNode(Neo4j.Driver.INode node, double? originalOutdegree = null) : base(node.ElementId, originalOutdegree: originalOutdegree)
+    public CoinbaseNode(Neo4j.Driver.INode node, double? originalOutdegree = null, double? hopsFromRoot = null) : base(node.ElementId, originalOutdegree: originalOutdegree, hopsFromRoot: hopsFromRoot)
     { }
 
     public override string GetUniqueLabel()

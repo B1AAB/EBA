@@ -374,12 +374,12 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
     {
         // TODO: this method is experimental, need a thorough re-write.
 
-        static (Neo4j.Driver.INode, double, double) UnpackDict(IDictionary<string, object> dict)
+        static (Neo4j.Driver.INode, double, double, double) UnpackDict(IDictionary<string, object> dict, double hop)
         {
             var node = dict["node"].As<Neo4j.Driver.INode>();
             var inDegree = Convert.ToDouble(dict["inDegree"]);
             var outDegree = Convert.ToDouble(dict["outDegree"]);
-            return (node, inDegree, outDegree);
+            return (node, inDegree, outDegree, hop);
         }
 
         var rnd = new Random(31);
@@ -431,7 +431,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         List<Model.INode> ProcessSamplingResult(List<IRecord> samplingResult, int hop)
         {
             Node root;
-            var nodes = new Dictionary<string, (Neo4j.Driver.INode, double, double)>();
+            var nodes = new Dictionary<string, (Neo4j.Driver.INode, double, double, double)>();
             var edges = new Dictionary<string, IRelationship>();
 
             // TODO: this iteration needs to be improved, maybe I have a list like this because of the query?!
@@ -442,12 +442,12 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                     // ********
                     //root = new CoinbaseNode(r.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
                     var rootList = r["root"].As<List<object>>();
-                    (Neo4j.Driver.INode rootNode, double inDegree, double outDegree) = UnpackDict(rootList[0].As<IDictionary<string, object>>());
+                    (Neo4j.Driver.INode rootNode, double inDegree, double outDegree, double hopsFromRoot) = UnpackDict(rootList[0].As<IDictionary<string, object>>(), hop);
 
                     if (rootNode is null)
                         continue;
 
-                    root = new CoinbaseNode(rootNode, originalOutdegree: outDegree);
+                    root = new CoinbaseNode(rootNode, originalOutdegree: outDegree, hopsFromRoot: hopsFromRoot);
 
                     if (!allNodesAddedToGraph.Contains(root.Id))
                     {
@@ -462,12 +462,12 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                     // ********
                     //var rootB = r.Values["root"].As<List<Neo4j.Driver.INode>>()[0];
                     var rootList = r["root"].As<List<object>>();
-                    (Neo4j.Driver.INode rootB, double inDegree, double outDegree) = UnpackDict(rootList[0].As<IDictionary<string, object>>());
+                    (Neo4j.Driver.INode rootB, double inDegree, double outDegree, double hopsFromRoot) = UnpackDict(rootList[0].As<IDictionary<string, object>>(), hop);
 
                     if (rootB is null)
                         continue;
 
-                    root = new ScriptNode(rootB, originalIndegree: inDegree, originalOutdegree: outDegree);
+                    root = new ScriptNode(rootB, originalIndegree: inDegree, originalOutdegree: outDegree, hopsFromRoot: hopsFromRoot);
 
                     if (!allNodesAddedToGraph.Contains(rootB.ElementId))
                     {
@@ -486,11 +486,11 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 
                 foreach (var nodeObject in r["nodes"].As<List<object>>())
                 {
-                    (Neo4j.Driver.INode node, double inDegree, double outDegree) = UnpackDict(nodeObject.As<IDictionary<string, object>>());
+                    (Neo4j.Driver.INode node, double inDegree, double outDegree, double hopsFromRoot) = UnpackDict(nodeObject.As<IDictionary<string, object>>(), hop);
                     //g.GetOrAddNode(node, originalIndegree: inDegree, originalOutdegree: outDegree);
 
                     if (!allNodesAddedToGraph.Contains(node.ElementId))
-                        nodes.TryAdd(node.ElementId, (node, inDegree, outDegree));
+                        nodes.TryAdd(node.ElementId, (node, inDegree, outDegree, hopsFromRoot));
                 }
 
                 foreach (var edge in r.Values["relationships"].As<List<IRelationship>>())
@@ -513,8 +513,8 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 {
                     // so only the "connected" nodes are added.
                     // also, this order is important where 1st the node is added, then the edge.
-                    (var ccNode, var indegree, var outdegree) = nodes[targetNodeId];
-                    addedNodes.Add(g.GetOrAddNode(ccNode, originalIndegree: indegree, originalOutdegree: outdegree));
+                    (var ccNode, var indegree, var outdegree, var hopsFromRoot) = nodes[targetNodeId];
+                    addedNodes.Add(g.GetOrAddNode(ccNode, originalIndegree: indegree, originalOutdegree: outdegree, hopsFromRoot: hopsFromRoot));
                     allNodesAddedToGraph.Add(targetNodeId);
 
                     g.GetOrAddEdge(edge.Value);

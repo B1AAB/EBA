@@ -29,8 +29,8 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
     }
 
     public ScriptNode(
-        string id, double? originalIndegree = null, double? originalOutdegree = null) :
-        base(id, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree)
+        string id, double? originalIndegree = null, double? originalOutdegree = null, double? hopsFromRoot = null) :
+        base(id, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, hopsFromRoot: hopsFromRoot)
     { }
 
     public ScriptNode(Utxo utxo) : base(utxo.Id)
@@ -44,18 +44,19 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         string address,
         ScriptType scriptType,
         double? originalIndegree = null,
-        double? originalOutdegree = null) :
-        this(id, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree)
+        double? originalOutdegree = null, 
+        double? hopsFromRoot = null) :
+        this(id, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, hopsFromRoot: hopsFromRoot)
     {
         Address = address;
         ScriptType = scriptType;
     }
 
-    public ScriptNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null) :
+    public ScriptNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null, double? hopsFromRoot = null) :
         this(node.ElementId,
             (string)node.Properties[Props.ScriptAddress.Name],
             Enum.Parse<ScriptType>((string)node.Properties[Props.ScriptType.Name]),
-            originalIndegree: originalIndegree, originalOutdegree: originalOutdegree)
+            originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, hopsFromRoot: hopsFromRoot)
     { }
 
     public override string GetUniqueLabel()

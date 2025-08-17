@@ -15,8 +15,9 @@ public class BlockNode(
     int confirmations,
     int weight, 
     double? originalIndegree = null,
-    double? originalOutdegree = null) : 
-    Node(id, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree), 
+    double? originalOutdegree = null, 
+    double? hopsFromRoot = null) : 
+    Node(id, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, hopsFromRoot: hopsFromRoot), 
     IComparable<BlockNode>, IEquatable<BlockNode>
 {
     public static new GraphComponentType ComponentType
@@ -55,7 +56,7 @@ public class BlockNode(
     // normalization happens when bulk-loading data into neo4j.
     // Find a better solution.
 
-    public BlockNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null) :
+    public BlockNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null, double? hopsFromRoot = null) :
         this(
             id: node.ElementId,
             height: long.Parse((string)node.Properties[Props.Height.Name]),
@@ -67,7 +68,8 @@ public class BlockNode(
             confirmations: (int)(long)node.Properties[Props.BlockConfirmations.Name],
             weight: (int)(long)node.Properties[Props.BlockWeight.Name],
             originalIndegree: originalIndegree,
-            originalOutdegree: originalOutdegree)
+            originalOutdegree: originalOutdegree,
+            hopsFromRoot: hopsFromRoot)
     { }
 
     public override string GetUniqueLabel()
