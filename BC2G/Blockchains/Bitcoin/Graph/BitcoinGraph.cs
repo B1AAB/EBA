@@ -111,23 +111,23 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
 
     // TODO: this method or any other methods must definately not accept nullable values.
     // These values will turn into features and nullable features are problematic downstream
-    public INode GetOrAddNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null, double? hopsFromRoot = null)
+    public INode GetOrAddNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null, double? outHopsFromRoot = null)
     {
         if (node.Labels.Contains(ScriptNodeStrategy.Labels))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, hopsFromRoot: hopsFromRoot));
+            return GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, outHopsFromRoot: outHopsFromRoot));
         }
         else if (node.Labels.Contains(TxNodeStrategy.Labels))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinTxNode, TxNode.CreateTxNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, hopsFromRoot: hopsFromRoot));
+            return GetOrAddNode(GraphComponentType.BitcoinTxNode, TxNode.CreateTxNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, hopsFromRoot: outHopsFromRoot));
         }
         else if (node.Labels.Contains(BlockNodeStrategy.Labels))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinBlockNode, new BlockNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, hopsFromRoot: hopsFromRoot));
+            return GetOrAddNode(GraphComponentType.BitcoinBlockNode, new BlockNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, outHopsFromRoot: outHopsFromRoot));
         }
         else if (node.Labels.Contains(BitcoinAgent.Coinbase))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinCoinbaseNode, new CoinbaseNode(node, originalOutdegree: originalOutdegree, hopsFromRoot: hopsFromRoot));
+            return GetOrAddNode(GraphComponentType.BitcoinCoinbaseNode, new CoinbaseNode(node, originalOutdegree: originalOutdegree, hopsFromRoot: outHopsFromRoot));
         }
         else
         {

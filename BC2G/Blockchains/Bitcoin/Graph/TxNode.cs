@@ -40,7 +40,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         double? originalIndegree = null,
         double? originalOutdegree = null, 
         double? hopsFromRoot = null) :
-        base(txid, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, hopsFromRoot: hopsFromRoot)
+        base(txid, originalInDegree: originalIndegree, originalOutDegree: originalOutdegree, outHopsFromRoot: hopsFromRoot)
     {
         Txid = txid;
         Version = version;

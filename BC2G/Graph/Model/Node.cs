@@ -19,15 +19,15 @@ public class Node : INode
     /// (e.g., the one in the database), where the Indegree and Outdegree 
     /// are the degrees in the graph where they are located (e.g., the sampled graph).
     /// </summary>
-    public double? OriginalIndegree { get; }
+    public double? OriginalInDegree { get; }
     /// <summary>
     /// This is the degree of the node in the entire graph 
     /// (e.g., the one in the database), where the Indegree and Outdegree 
     /// are the degrees in the graph where they are located (e.g., the sampled graph).
     /// </summary>
-    public double? OriginalOutdegree { get; }
+    public double? OriginalOutDegree { get; }
 
-    public double? HopsFromRoot { get; }
+    public double? OutHopsFromRoot { get; }
 
     public List<IEdge<INode, INode>> IncomingEdges { get; } = [];
     public List<IEdge<INode, INode>> OutgoingEdges { get; } = [];
@@ -45,12 +45,12 @@ public class Node : INode
 
     public const char Delimiter = '\t';
 
-    public Node(string id, double? originalIndegree = null, double? originalOutdegree = null, double? hopsFromRoot = null)
+    public Node(string id, double? originalInDegree = null, double? originalOutDegree = null, double? outHopsFromRoot = null)
     {
         Id = id;
-        OriginalIndegree = originalIndegree;
-        OriginalOutdegree = originalOutdegree;
-        HopsFromRoot = hopsFromRoot;
+        OriginalInDegree = originalInDegree;
+        OriginalOutDegree = originalOutDegree;
+        OutHopsFromRoot = outHopsFromRoot;
     }
 
     public virtual string GetUniqueLabel()
@@ -84,9 +84,9 @@ public class Node : INode
         [
             nameof(InDegree),
             nameof(OutDegree),
-            nameof(OriginalIndegree),
-            nameof(OriginalOutdegree),
-            nameof(HopsFromRoot),
+            nameof(OriginalInDegree),
+            nameof(OriginalOutDegree),
+            nameof(OutHopsFromRoot),
         ];
     }
 
@@ -96,9 +96,9 @@ public class Node : INode
         [
             InDegree.ToString(),
             OutDegree.ToString(),
-            (OriginalIndegree == null ? double.NaN : (double)OriginalIndegree).ToString(),
-            (OriginalOutdegree == null ? double.NaN :(double) OriginalOutdegree).ToString(),
-            (HopsFromRoot == null ? double.NaN : (double) HopsFromRoot).ToString(),
+            (OriginalInDegree == null ? double.NaN : (double)OriginalInDegree).ToString(),
+            (OriginalOutDegree == null ? double.NaN :(double) OriginalOutDegree).ToString(),
+            (OutHopsFromRoot == null ? double.NaN : (double) OutHopsFromRoot).ToString(),
         ];
     }
 

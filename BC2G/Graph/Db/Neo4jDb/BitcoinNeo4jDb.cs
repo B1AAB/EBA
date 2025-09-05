@@ -462,12 +462,12 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                     // ********
                     //var rootB = r.Values["root"].As<List<Neo4j.Driver.INode>>()[0];
                     var rootList = r["root"].As<List<object>>();
-                    (Neo4j.Driver.INode rootB, double inDegree, double outDegree, double hopsFromRoot) = UnpackDict(rootList[0].As<IDictionary<string, object>>(), hop);
+                    (Neo4j.Driver.INode rootB, double inDegree, double outDegree, double outHopsFromRoot) = UnpackDict(rootList[0].As<IDictionary<string, object>>(), hop);
 
                     if (rootB is null)
                         continue;
 
-                    root = new ScriptNode(rootB, originalIndegree: inDegree, originalOutdegree: outDegree, hopsFromRoot: hopsFromRoot);
+                    root = new ScriptNode(rootB, originalIndegree: inDegree, originalOutdegree: outDegree, outHopsFromRoot: outHopsFromRoot);
 
                     if (!allNodesAddedToGraph.Contains(rootB.ElementId))
                     {
@@ -513,8 +513,8 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 {
                     // so only the "connected" nodes are added.
                     // also, this order is important where 1st the node is added, then the edge.
-                    (var ccNode, var indegree, var outdegree, var hopsFromRoot) = nodes[targetNodeId];
-                    addedNodes.Add(g.GetOrAddNode(ccNode, originalIndegree: indegree, originalOutdegree: outdegree, hopsFromRoot: hopsFromRoot));
+                    (var ccNode, var indegree, var outdegree, var outHopsFromRoot) = nodes[targetNodeId];
+                    addedNodes.Add(g.GetOrAddNode(ccNode, originalIndegree: indegree, originalOutdegree: outdegree, outHopsFromRoot: outHopsFromRoot));
                     allNodesAddedToGraph.Add(targetNodeId);
 
                     g.GetOrAddEdge(edge.Value);
