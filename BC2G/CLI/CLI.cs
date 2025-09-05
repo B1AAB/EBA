@@ -71,7 +71,7 @@ internal class Cli
             "the options set in the command line.",
             getDefaultValue: () => defOps.StatusFile);
 
-        _rootCmd = new RootCommand(description: "TODO: some description ...");
+        _rootCmd = new RootCommand(description: "Runs the graph ETL pipeline on cryptocurrencies.");
         _rootCmd.AddGlobalOption(_workingDirOption);
         _rootCmd.AddGlobalOption(_statusFilenameOption);
         // This is required to allow using options without specifying any of the subcommands. 
@@ -267,7 +267,7 @@ internal class Cli
     {
         var batchFilenameOption = new Option<string>(
             name: "--batch-filename",
-            description: "") // TODO: add description
+            description: "Sets the batch filename path.")
         {
             IsRequired = true
         };
