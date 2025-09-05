@@ -104,7 +104,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         Logger.LogInformation("Successfully finished import in {et}.", importRuntime);
     }
 
-    public async Task<bool> TrySampleAsync()
+    public async Task<bool> SampleAsync(CancellationToken ct)
     {
         var driver = await GetDriver(Options.Neo4j);
 

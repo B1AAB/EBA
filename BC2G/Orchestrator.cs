@@ -77,7 +77,7 @@ public class Orchestrator : IDisposable
         var host = await SetupAndGetHostAsync(options);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
         var graphDb = host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>();
-        var successfull = await graphDb.TrySampleAsync();
+        var successfull = await graphDb.SampleAsync(_cT);
         if (successfull)
             _logger?.LogInformation("Successfully completed sampling graphs.");
         else
