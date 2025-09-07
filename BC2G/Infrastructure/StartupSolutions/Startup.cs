@@ -1,4 +1,5 @@
 ﻿using BC2G.Graph.Db.Neo4jDb;
+using BC2G.Graph.Db.Neo4jDb.Bitcoin;
 
 namespace BC2G.Infrastructure.StartupSolutions;
 
@@ -72,6 +73,8 @@ public class Startup
         services.AddSingleton(options);
         services.AddSingleton<IGraphDb<BitcoinGraph>, BitcoinNeo4jDb>();
         services.AddSingleton<BitcoinOrchestrator>();
+        services.AddSingleton<IGraphDb<BitcoinGraph>, Neo4jDb<BitcoinGraph>>();
+        services.AddSingleton<Graph.Bitcoin.GraphAgent>();
 
         // Passing BitcoinAgent type as the generic argument
         // to AddHttpClient will cause registering it 

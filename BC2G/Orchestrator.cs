@@ -1,4 +1,5 @@
 using BC2G.CLI;
+using BC2G.Graph.Bitcoin;
 using BC2G.Utilities;
 
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -76,12 +77,18 @@ public class Orchestrator : IDisposable
     {
         var host = await SetupAndGetHostAsync(options);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
-        var graphDb = host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>();
-        var successfull = await graphDb.SampleAsync(_cT);
-        if (successfull)
-            _logger?.LogInformation("Successfully completed sampling graphs.");
+
+        if (options.Bitcoin.ChainToGraphModel == ChainToGraphModel.AccountModel)
+        {
+            // TODO: this is the legacy approach, & will be removed when AccountModel is deprecated.
+            var graphDb = host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>();
+            await graphDb.SampleAsync(_cT);
+        }
         else
-            _logger?.LogError("Faild sampling graphs with the given parameters.");
+        {
+            var bitcoinGraphAgent = host.Services.GetRequiredService<GraphAgent>();
+            await bitcoinGraphAgent.SampleAsync(_cT);
+        }
     }
 
     private async Task AddressStatsAsync(Options options)
