@@ -1,4 +1,4 @@
-﻿using BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
+﻿using BC2G.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 using INode = BC2G.Graph.Model.INode;
 

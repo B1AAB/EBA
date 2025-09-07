@@ -1,6 +1,6 @@
 ﻿using BC2G.Utilities;
 
-namespace BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
+namespace BC2G.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class T2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
 {
@@ -18,7 +18,7 @@ public class T2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
     public override string GetCsvHeader()
     {
         return string.Join(
-            Neo4jDb.csvDelimiter,
+            Neo4jDbLegacy.csvDelimiter,
             from x in _properties select x.CsvHeader);
     }
 
@@ -29,7 +29,7 @@ public class T2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
     public static string GetCsv(T2SEdge edge)
     {
-        return string.Join(Neo4jDb.csvDelimiter,
+        return string.Join(Neo4jDbLegacy.csvDelimiter,
         [
             edge.Source.Txid,
             edge.Target.Address,

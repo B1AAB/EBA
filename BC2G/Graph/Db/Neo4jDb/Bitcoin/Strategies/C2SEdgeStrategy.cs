@@ -1,6 +1,6 @@
 ﻿using BC2G.Utilities;
 
-namespace BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
+namespace BC2G.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(serializeCompressed)
 {
@@ -16,7 +16,7 @@ public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(seriali
 
     public override string GetCsvHeader()
     {
-        return string.Join(Neo4jDb.csvDelimiter,
+        return string.Join(Neo4jDbLegacy.csvDelimiter,
             from x in _properties select x.CsvHeader);
     }
 
@@ -29,7 +29,7 @@ public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(seriali
     {
         /// Note that the ordre of the items in this array should 
         /// match those in the `_properties`. 
-        return string.Join(Neo4jDb.csvDelimiter,
+        return string.Join(Neo4jDbLegacy.csvDelimiter,
         [
             edge.Target.Address,
             edge.Type.ToString(),
@@ -72,7 +72,7 @@ public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(seriali
 
         var builder = new StringBuilder(
             $"LOAD CSV WITH HEADERS FROM '{csvFilename}' AS {l} " +
-            $"FIELDTERMINATOR '{Neo4jDb.csvDelimiter}' ");
+            $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' ");
 
         builder.Append(
             $"MATCH ({s}:{BitcoinAgent.Coinbase}) " +

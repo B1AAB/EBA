@@ -1,11 +1,12 @@
-﻿using BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
+﻿using BC2G.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+using BC2G.Utilities;
 
 using Microsoft.Extensions.Primitives;
 
 
-namespace BC2G.Graph.Db.Neo4jDb;
+namespace BC2G.Graph.Db.Neo4jDb.Bitcoin;
 
-public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
+public class BitcoinNeo4jDb : Neo4jDbLegacy<BitcoinGraph>
 {
     public BitcoinNeo4jDb(Options options, ILogger<BitcoinNeo4jDb> logger) :
         base(options, logger, new BitcoinStrategyFactory(options))
@@ -70,6 +71,98 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             GraphComponentType.BitcoinT2T
         };
         return base.ImportAsync(ct, batchName, importOrder);
+    }
+
+    public override async Task SampleAsync(CancellationToken ct)
+    {
+        var driver = await GetDriver(Options.Neo4j);
+
+        var sampledGraphsCounter = 0;
+        var attempts = 0;
+        var baseOutputDir = Path.Join(Options.WorkingDir, $"sampled_graphs_{Helpers.GetUnixTimeSeconds()}");
+
+        // creating a script node like the following just to ask for coinbase node is not ideal
+        // TODO: find a better solution.
+        // TODO: this is a bitcoin-specific logic and should not be here.
+        if (Options.GraphSample.CoinbaseMode != CoinbaseSelectionMode.ExcludeCoinbase)
+        {
+            Logger.LogInformation("Sampling neighbors of the coinbase node.");
+            var tmpSolutionCoinbase = new ScriptNode(BitcoinAgent.Coinbase, BitcoinAgent.Coinbase, ScriptType.Coinbase);
+            if (await TrySampleNeighborsAsync(driver, tmpSolutionCoinbase, baseOutputDir))
+            {
+                sampledGraphsCounter++;
+                Logger.LogInformation("Finished writting sampled graph of coinbase neighbors.");
+            }
+            else
+            {
+                Logger.LogError("Failed sampling neighbors of the coinbase node.");
+            }
+        }
+
+        if (Options.GraphSample.CoinbaseMode != CoinbaseSelectionMode.CoinbaseOnly)
+        {
+            Logger.LogInformation("Sampling {n} graphs.", Options.GraphSample.Count - sampledGraphsCounter);
+
+            while (
+                sampledGraphsCounter < Options.GraphSample.Count &&
+                ++attempts <= Options.GraphSample.MaxAttempts)
+            {
+                Logger.LogInformation(
+                    "Getting {n} random root nodes; attempt {a}/{m}.",
+                    Options.GraphSample.Count - sampledGraphsCounter,
+                    attempts, Options.GraphSample.MaxAttempts);
+
+                var rndRootNodes = await GetRandomNodes(
+                    driver,
+                    Options.GraphSample.Count - sampledGraphsCounter,
+                    Options.GraphSample.RootNodeSelectProb);
+
+                Logger.LogInformation("Selected {n} random root nodes.", rndRootNodes.Count);
+
+                int counter = 0;
+                foreach (var rootNode in rndRootNodes)
+                {
+                    Logger.LogInformation("Sampling neighbors of the random root node {n}/{t}.", ++counter, rndRootNodes.Count);
+
+                    if (await TrySampleNeighborsAsync(driver, rootNode, baseOutputDir))
+                    {
+                        sampledGraphsCounter++;
+                        Logger.LogInformation("Finished writting sampled graph features.");
+                    }
+                    else
+                    {
+                        Logger.LogError("Failed sampling neighbors of the root node {r}.", rootNode.Address);
+                    }
+                }
+            }
+
+            if (attempts > Options.GraphSample.MaxAttempts)
+            {
+                Logger.LogError(
+                    "Failed creating {g} {g_msg} after {a} {a_msg}; created {c} {c_msg}. " +
+                    "You may retry, and if the error persists, try adjusting the values of " +
+                    "{minN}={minNV}, {maxN}={maxNV}, {minE}={minEV}, and {maxE}={maxEV}.",
+                    Options.GraphSample.Count,
+                    Options.GraphSample.Count > 1 ? "graphs" : "graph",
+                    attempts - 1,
+                    attempts > 1 ? "attempts" : "attempt",
+                    sampledGraphsCounter,
+                    sampledGraphsCounter > 1 ? "graphs" : "graph",
+                    nameof(Options.GraphSample.MinNodeCount), Options.GraphSample.MinNodeCount,
+                    nameof(Options.GraphSample.MaxNodeCount), Options.GraphSample.MaxNodeCount,
+                    nameof(Options.GraphSample.MinEdgeCount), Options.GraphSample.MinEdgeCount,
+                    nameof(Options.GraphSample.MaxEdgeCount), Options.GraphSample.MaxEdgeCount);
+                return;
+            }
+            else
+            {
+                return;
+            }
+        }
+        else
+        {
+            return;
+        }
     }
 
     public override void ReportQueries()
@@ -498,7 +591,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                         edges.TryAdd(edge.ElementId, edge);
             }
 
-            var nodesToKeep = nodes.Keys.OrderBy(x => rnd.Next()).Take((int)Math.Floor(nodeSamplingCountAtRoot - (hop * nodeCountReductionFactorByHop))).ToList();
+            var nodesToKeep = nodes.Keys.OrderBy(x => rnd.Next()).Take((int)Math.Floor(nodeSamplingCountAtRoot - hop * nodeCountReductionFactorByHop)).ToList();
             var nodesToKeepIds = new HashSet<string>();
             foreach (var nodeId in nodesToKeep)
                 if (!allNodesAddedToGraph.Contains(nodeId))
@@ -635,7 +728,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 foreach (var e in edge.Value)
                     g.GetOrAddEdge(edge.Key, e);
 
-            if (g.EdgeCount + (g.EdgeCount * 0.2) >= options.MaxEdgeCount || g.NodeCount + (g.NodeCount * 0.2) >= options.MaxNodeCount)
+            if (g.EdgeCount + g.EdgeCount * 0.2 >= options.MaxEdgeCount || g.NodeCount + g.NodeCount * 0.2 >= options.MaxNodeCount)
                 break;
         }
 
