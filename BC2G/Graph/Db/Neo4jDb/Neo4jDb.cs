@@ -84,4 +84,70 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         return rndNodes;
     }
+
+    public async Task<List<IRecord>> GetNeighbors(
+        string rootNodeLabel,
+        string propKey,
+        string propValue,
+        int queryLimit,
+        string labelFilters,
+        int maxLevel,
+        SamplingAlgorithm traversalAlgorithm)
+    {
+        var builder = new StringBuilder();
+        builder.Append($"MATCH (root:{rootNodeLabel} {{ {propKey}: \"{propValue}\" }}) ");
+
+        builder.Append($"CALL apoc.path.spanningTree(root, {{");
+        builder.Append($"maxLevel: {maxLevel}, ");
+        builder.Append($"limit: {queryLimit}, ");
+
+        switch (traversalAlgorithm)
+        {
+            case SamplingAlgorithm.BFS:
+                builder.Append($"bfs: true, ");
+                break;
+            case SamplingAlgorithm.DFS:
+                builder.Append($"bfs: false, ");
+                break;
+            default:
+                throw new NotImplementedException();
+        }
+
+        builder.Append($"labelFilter: '{labelFilters}'");
+        //$"    relationshipFilter: \">{EdgeType.Transfers}\"" +
+        builder.Append($"}}) ");
+        builder.Append($"YIELD path ");
+        builder.Append($"WITH root, ");
+        builder.Append($"nodes(path) AS pathNodes, ");
+        builder.Append($"relationships(path) AS pathRels ");
+        builder.Append($"LIMIT {queryLimit} ");
+        //qBuilder.Append($"RETURN [root] AS root, [n IN pathNodes WHERE n <> root] AS nodes, pathRels AS relationships");
+        // ******** 
+        builder.Append($"RETURN ");
+        builder.Append($"[ {{");
+        builder.Append($"node: root, ");
+        builder.Append($"inDegree: COUNT {{ (root)<--() }}, ");
+        builder.Append($"outDegree: COUNT {{ (root)-->() }} ");
+        builder.Append($"}}] AS root, ");
+        builder.Append($"[ ");
+        builder.Append($"n IN pathNodes WHERE n <> root ");
+        builder.Append($"| ");
+        builder.Append($"{{ ");
+        builder.Append($"node: n, ");
+        builder.Append($"inDegree: COUNT {{ (n)<--() }}, ");
+        builder.Append($"outDegree: COUNT {{ (n)-->() }} ");
+        builder.Append($"}} ");
+        builder.Append($"] AS nodes, ");
+        builder.Append($"pathRels AS relationships");
+
+        var query = builder.ToString();
+
+        using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+
+        return await session.ExecuteReadAsync(async x =>
+        {
+            var result = await x.RunAsync(query);
+            return await result.ToListAsync();
+        });
+    }
 }

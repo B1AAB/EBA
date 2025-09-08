@@ -9,4 +9,13 @@ public interface IGraphDb<T> : IDisposable where T : GraphBase
 
     // TODO: instead of a string, nodeType should be an enum.
     public Task<List<Model.INode>> GetRandomNodes(string nodeType, int count, double nodeSelectProbability = 0.1);
+
+    public Task<List<IRecord>> GetNeighbors(
+        string rootNodeLabel, 
+        string propKey, 
+        string propValue, 
+        int queryLimit, 
+        string labelFilters,
+        int maxLevel,
+        SamplingAlgorithm traversalAlgorithm);
 }

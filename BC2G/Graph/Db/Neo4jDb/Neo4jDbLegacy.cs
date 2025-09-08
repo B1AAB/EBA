@@ -264,4 +264,9 @@ public abstract class Neo4jDbLegacy<T> : IGraphDb<T> where T : GraphBase
     {
         throw new NotImplementedException();
     }
+
+    public Task<List<IRecord>> GetNeighbors(string rootNodeLabel, string propKey, string propValue, int queryLimit, string labelFilters, int maxLevel, SamplingAlgorithm traversalAlgorithm)
+    {
+        throw new NotImplementedException();
+    }
 }
