@@ -214,7 +214,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
     public void SerializeFeatures(
         string workingDir,
         string perBatchLabelsFilename,
-        string perGraphLabelsFilename = "Labels.tsv")
+        string perGraphLabelsFilename = "metadata.tsv")
     {
         var gFeatures = GetFeatures();
 

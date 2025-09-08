@@ -24,7 +24,7 @@ public class GraphFeatures
         // TODO: add a check to this method to make sure no NaN feature is returned.
         // or maybe in the node or graph methods to ensure none of the feature get NaN or null value.
 
-        LabelsHeader = new ReadOnlyCollection<string>(["GraphID", "ConnectedGraph_or_Forest", "RootNodeId", "RootNodeIdx"]);
+        LabelsHeader = new ReadOnlyCollection<string>(["GraphID", "RootNodeId", "RootNodeIdx", "NodeCount", "EdgeCount"]);
 
         NodeFeaturesHeader = [];
         NodeFeaturesHeader.Add(GraphComponentType.BitcoinBlockNode, BlockNode.GetFeaturesName());
@@ -114,9 +114,11 @@ public class GraphFeatures
         Labels = new ReadOnlyCollection<string>(
             [
                 graph.Id, 
-                gLabels["ConnectedGraph_or_Forest"], 
+                //gLabels["ConnectedGraph_or_Forest"], 
                 gLabels["RootNodeId"], 
-                nodeIdToIdx[GraphComponentType.BitcoinScriptNode][gLabels["RootNodeId"]].ToString()
+                nodeIdToIdx[GraphComponentType.BitcoinScriptNode][gLabels["RootNodeId"]].ToString(),
+                graph.Nodes.Count.ToString(),
+                graph.Edges.Count.ToString()
             ]);
     }
 }
