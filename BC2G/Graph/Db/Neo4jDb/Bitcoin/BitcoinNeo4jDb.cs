@@ -221,7 +221,7 @@ public class BitcoinNeo4jDb : Neo4jDbLegacy<BitcoinGraph>
         IDriver driver, ScriptNode rootNode, string workingDir)
     {
         var graph = await GetNeighborsAsync(driver, rootNode.Address, Options.GraphSample);
-        var perBatchLabelsFilename = Path.Join(workingDir, "Labels.tsv");
+        var perBatchLabelsFilename = Path.Join(workingDir, "metadata.tsv");
 
         if (!CanUseGraph(
             graph, tolerance: 0,
