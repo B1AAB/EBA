@@ -85,7 +85,7 @@ public class Startup
             {
                 client.BaseAddress = options.Bitcoin.ClientUri;
                 client.DefaultRequestHeaders.UserAgent.Clear();
-                client.DefaultRequestHeaders.Add("User-Agent", "BC2G");
+                client.DefaultRequestHeaders.Add("User-Agent", "EBA");
                 client.Timeout = options.Bitcoin.HttpClientTimeout;
             })
             .AddPolicyHandler((provider, _) =>

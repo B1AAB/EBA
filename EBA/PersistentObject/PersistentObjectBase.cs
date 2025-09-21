@@ -86,7 +86,7 @@ public abstract class PersistentObjectBase<T> : IDisposable
                 // when you this method will throw the following exception:
                 //
                 //      Exception occurred persisting an instance of type
-                //      `BC2G.Blockchains.Bitcoin.Graph.BlockGraph`.
+                //      `EBA.Blockchains.Bitcoin.Graph.BlockGraph`.
                 //      The requested operation could not be completed due
                 //      to a file system limitation : 'bitcoin_txo.tsv'
                 Environment.Exit(1);

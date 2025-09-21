@@ -64,8 +64,8 @@ public class BitcoinOptions
     }
     private int _granularity = 1;
 
-    public string BlocksToProcessListFilename { init; get; } = "bitcoin_blocks_to_process.bc2g";
-    public string BlocksFailedToProcessListFilename { init; get; } = "bitcoin_blocks_failed_to_process.bc2g";
+    public string BlocksToProcessListFilename { init; get; } = "bitcoin_blocks_to_process.eba";
+    public string BlocksFailedToProcessListFilename { init; get; } = "bitcoin_blocks_failed_to_process.eba";
 
     public string StatsFilename { init; get; } = "bitcoin_blocks_stats.tsv";
 
