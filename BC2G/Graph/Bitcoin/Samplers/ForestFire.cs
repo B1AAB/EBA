@@ -93,45 +93,6 @@ public class ForestFire
         }
     }
 
-    private static string GetNeighborsQuery(string rootNode, int queryLimit, string labelFilters)
-    {
-        var qBuilder = new StringBuilder();
-        qBuilder.Append(rootNode);
-
-        qBuilder.Append($"CALL apoc.path.spanningTree(root, {{");
-        qBuilder.Append($"maxLevel: 1, ");
-        qBuilder.Append($"limit: {queryLimit}, ");
-        qBuilder.Append($"bfs: true, ");
-        qBuilder.Append($"labelFilter: '{labelFilters}'");
-        //$"    relationshipFilter: \">{EdgeType.Transfers}\"" +
-        qBuilder.Append($"}}) ");
-        qBuilder.Append($"YIELD path ");
-        qBuilder.Append($"WITH root, ");
-        qBuilder.Append($"nodes(path) AS pathNodes, ");
-        qBuilder.Append($"relationships(path) AS pathRels ");
-        qBuilder.Append($"LIMIT {queryLimit} ");
-        //qBuilder.Append($"RETURN [root] AS root, [n IN pathNodes WHERE n <> root] AS nodes, pathRels AS relationships");
-        // ******** 
-        qBuilder.Append($"RETURN ");
-        qBuilder.Append($"[ {{");
-        qBuilder.Append($"node: root, ");
-        qBuilder.Append($"inDegree: COUNT {{ (root)<--() }}, ");
-        qBuilder.Append($"outDegree: COUNT {{ (root)-->() }} ");
-        qBuilder.Append($"}}] AS root, ");
-        qBuilder.Append($"[ ");
-        qBuilder.Append($"n IN pathNodes WHERE n <> root ");
-        qBuilder.Append($"| ");
-        qBuilder.Append($"{{ ");
-        qBuilder.Append($"node: n, ");
-        qBuilder.Append($"inDegree: COUNT {{ (n)<--() }}, ");
-        qBuilder.Append($"outDegree: COUNT {{ (n)-->() }} ");
-        qBuilder.Append($"}} ");
-        qBuilder.Append($"] AS nodes, ");
-        qBuilder.Append($"pathRels AS relationships");
-
-        return qBuilder.ToString();
-    }
-
     private List<Model.INode> ProcessSamplingResult(List<IRecord> samplingResult, int hop, string rootScriptAddress, HashSet<string> allNodesAddedToGraph, HashSet<string> allEdgesAddedToGraph, string rootNodeId, int nodeSamplingCountAtRoot, double nodeCountReductionFactorByHop, BitcoinGraph g)
     {
         static (Neo4j.Driver.INode, double, double, double) UnpackDict(IDictionary<string, object> dict, double hop)
@@ -244,7 +205,6 @@ public class ForestFire
     {
         var samplingResult = await _graphDb.GetNeighbors(rootNodeLabel, propKey, propValue, queryLimit, labelFilters, 1, SamplingAlgorithm.BFS);
 
-
         var selectedNodes = ProcessSamplingResult(
             samplingResult, hop,
             rootScriptAddress: rootScriptAddress,
@@ -261,7 +221,6 @@ public class ForestFire
                 if (node.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode) // TODO: this is currently a limitation since we currently do not support root nodes of other types.
                     await ProcessHops(rootNodeLabel: ScriptNodeStrategy.Labels, propKey: "Address", propValue: ((ScriptNode)node).Address, hop: hop + 1, maxHops: maxHops, rootScriptAddress: rootScriptAddress, queryLimit: queryLimit, labelFilters: labelFilters, allNodesAddedToGraph: allNodesAddedToGraph, allEdgesAddedToGraph: allEdgesAddedToGraph, rootNodeId: rootNodeId, nodeSamplingCountAtRoot: nodeSamplingCountAtRoot, nodeCountReductionFactorByHop: nodeCountReductionFactorByHop, g: g);
         }
-
     }
 
     private async Task<GraphBase> GetNeighbors(
