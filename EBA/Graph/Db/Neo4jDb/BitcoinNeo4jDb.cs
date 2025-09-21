@@ -24,16 +24,9 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
     {
         var nodes = g.GetNodes();
         var edges = g.GetEdges();
-        var graphType = BitcoinGraph.ComponentType;
-        var batchInfo = await GetBatchAsync(
-            nodes.Keys.Concat(edges.Keys).Append(graphType).ToList());
+        var batchInfo = await GetBatchAsync([.. nodes.Keys, .. edges.Keys]);
 
         var tasks = new List<Task>();
-
-        batchInfo.AddOrUpdate(graphType, 1);
-        var graphStrategy = StrategyFactory.GetStrategy(graphType);
-        tasks.Add(graphStrategy.ToCsvAsync(g, batchInfo.GetFilename(graphType)));
-
         foreach (var type in nodes)
         {
             batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != BitcoinAgent.Coinbase));
