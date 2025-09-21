@@ -1,4 +1,4 @@
-﻿namespace BC2G.Graph.Model;
+﻿namespace EBA.Graph.Model;
 
 public interface IEdge<out TSource, out TTarget> : IGraphComponent
     where TSource : INode

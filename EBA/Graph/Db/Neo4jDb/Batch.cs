@@ -1,8 +1,8 @@
-﻿using BC2G.Utilities;
+﻿using EBA.Utilities;
 
 using System.Collections.Immutable;
 
-namespace BC2G.Graph.Db.Neo4jDb;
+namespace EBA.Graph.Db.Neo4jDb;
 
 public class Batch
 {

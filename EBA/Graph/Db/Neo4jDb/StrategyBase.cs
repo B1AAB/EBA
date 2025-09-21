@@ -1,6 +1,6 @@
 ﻿using System.IO.Compression;
 
-namespace BC2G.Graph.Db.Neo4jDb;
+namespace EBA.Graph.Db.Neo4jDb;
 
 public abstract class StrategyBase(bool serializeCompressed) : IDisposable
 {

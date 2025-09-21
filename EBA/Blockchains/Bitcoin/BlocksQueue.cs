@@ -1,4 +1,4 @@
-﻿namespace BC2G.Blockchains.Bitcoin;
+﻿namespace EBA.Blockchains.Bitcoin;
 
 internal class PersistentConcurrentQueue : PersistentConcurrentQueue<long>
 {

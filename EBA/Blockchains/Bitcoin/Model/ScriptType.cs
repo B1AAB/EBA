@@ -1,4 +1,4 @@
-﻿namespace BC2G.Blockchains.Bitcoin.Model;
+﻿namespace EBA.Blockchains.Bitcoin.Model;
 
 // DO NOT RENAME THESE, EXCEPT FOR UNKNOWN, SINCE 
 // ALL THE KEYS CORRESPOND TO THE `type` ATTRIBUTE

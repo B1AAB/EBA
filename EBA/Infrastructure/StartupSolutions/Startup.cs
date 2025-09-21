@@ -1,6 +1,6 @@
-﻿using BC2G.Graph.Db.Neo4jDb;
+﻿using EBA.Graph.Db.Neo4jDb;
 
-namespace BC2G.Infrastructure.StartupSolutions;
+namespace EBA.Infrastructure.StartupSolutions;
 
 public class Startup
 {

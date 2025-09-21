@@ -1,4 +1,4 @@
-﻿namespace BC2G.Graph.Model;
+﻿namespace EBA.Graph.Model;
 
 // TODO: try merging the following two types, separated seems redundant. 
 

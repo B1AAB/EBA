@@ -1,6 +1,6 @@
-﻿using BC2G.Utilities;
+﻿using EBA.Utilities;
 
-namespace BC2G.PersistentObject;
+namespace EBA.PersistentObject;
 
 public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposable
 {

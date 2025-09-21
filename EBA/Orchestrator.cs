@@ -1,9 +1,9 @@
-using BC2G.CLI;
-using BC2G.Utilities;
+using EBA.CLI;
+using EBA.Utilities;
 
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace BC2G;
+namespace EBA;
 
 public class Orchestrator : IDisposable
 {

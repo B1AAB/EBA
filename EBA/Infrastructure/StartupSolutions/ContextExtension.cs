@@ -1,6 +1,6 @@
 ﻿using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace BC2G.Infrastructure.StartupSolutions;
+namespace EBA.Infrastructure.StartupSolutions;
 
 internal static class ContextExtension
 {

@@ -1,4 +1,4 @@
-﻿namespace BC2G.Logging;
+﻿namespace EBA.Logging;
 
 public abstract class BlockTraversalLoggingBase
 {

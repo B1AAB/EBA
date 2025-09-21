@@ -1,4 +1,4 @@
-﻿namespace BC2G.Blockchains.Bitcoin.Graph;
+﻿namespace EBA.Blockchains.Bitcoin.Graph;
 
 public class T2TEdge : Edge<TxNode, TxNode>
 {

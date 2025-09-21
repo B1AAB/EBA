@@ -1,6 +1,6 @@
-﻿using BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
+﻿using EBA.Graph.Db.Neo4jDb.BitcoinStrategies;
 
-namespace BC2G.Graph.Model;
+namespace EBA.Graph.Model;
 
 public static class Props
 {

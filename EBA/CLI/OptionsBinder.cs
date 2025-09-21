@@ -1,4 +1,4 @@
-﻿namespace BC2G.CLI;
+﻿namespace EBA.CLI;
 
 internal class OptionsBinder : BinderBase<Options>
 {

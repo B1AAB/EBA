@@ -1,6 +1,6 @@
 ﻿using System.Data;
 
-namespace BC2G.Blockchains.Bitcoin.Model;
+namespace EBA.Blockchains.Bitcoin.Model;
 
 public class Utxo
 {

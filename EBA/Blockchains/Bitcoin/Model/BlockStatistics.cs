@@ -1,8 +1,8 @@
-﻿using BC2G.Utilities;
+﻿using EBA.Utilities;
 
 using System;
 
-namespace BC2G.Blockchains.Bitcoin.Model;
+namespace EBA.Blockchains.Bitcoin.Model;
 
 public class BlockStatistics(Block block)
 {

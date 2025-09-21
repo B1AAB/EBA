@@ -1,4 +1,4 @@
-﻿namespace BC2G;
+﻿namespace EBA;
 
 internal class Program
 {

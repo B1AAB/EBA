@@ -1,6 +1,6 @@
-﻿using BC2G.Utilities;
+﻿using EBA.Utilities;
 
-namespace BC2G.Graph.Db.Neo4jDb;
+namespace EBA.Graph.Db.Neo4jDb;
 
 public static class Neo4jDb
 {

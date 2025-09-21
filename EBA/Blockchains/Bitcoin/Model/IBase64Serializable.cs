@@ -1,4 +1,4 @@
-﻿namespace BC2G.Blockchains.Bitcoin.Model;
+﻿namespace EBA.Blockchains.Bitcoin.Model;
 
 internal interface IBase64Serializable
 {

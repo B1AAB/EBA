@@ -1,8 +1,8 @@
-﻿using BC2G.Utilities;
+﻿using EBA.Utilities;
 
 using System.Collections.Immutable;
 
-namespace BC2G.Graph.Model;
+namespace EBA.Graph.Model;
 
 public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphComponent, IDisposable
 {

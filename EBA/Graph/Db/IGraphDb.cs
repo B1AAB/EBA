@@ -1,4 +1,4 @@
-﻿namespace BC2G.Graph.Db;
+﻿namespace EBA.Graph.Db;
 
 public interface IGraphDb<T> : IDisposable where T : GraphBase
 {

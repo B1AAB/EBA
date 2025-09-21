@@ -1,4 +1,4 @@
-﻿namespace BC2G.CLI;
+﻿namespace EBA.CLI;
 
 public static class Utilities
 {

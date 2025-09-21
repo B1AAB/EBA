@@ -1,6 +1,6 @@
-using BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
+using EBA.Graph.Db.Neo4jDb.BitcoinStrategies;
 
-namespace BC2G.CLI.Config;
+namespace EBA.CLI.Config;
 
 public enum GraphSampleMode
 {

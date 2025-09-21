@@ -1,4 +1,4 @@
-﻿namespace BC2G.PersistentObject;
+﻿namespace EBA.PersistentObject;
 
 public class PersistentBlockAddresses(
     string filename,

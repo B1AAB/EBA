@@ -1,4 +1,4 @@
-﻿namespace BC2G.Blockchains;
+﻿namespace EBA.Blockchains;
 
 public interface IBlockchainOrchestrator
 {

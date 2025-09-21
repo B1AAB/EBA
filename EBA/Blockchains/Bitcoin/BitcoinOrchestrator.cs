@@ -1,8 +1,8 @@
-﻿using BC2G.Graph.Db;
+﻿using EBA.Graph.Db;
 
 using System;
 
-namespace BC2G.Blockchains.Bitcoin;
+namespace EBA.Blockchains.Bitcoin;
 
 public class BitcoinOrchestrator : IBlockchainOrchestrator
 {

@@ -1,13 +1,13 @@
-﻿global using BC2G.Blockchains.Bitcoin;
-global using BC2G.Blockchains.Bitcoin.Graph;
-global using BC2G.Blockchains.Bitcoin.Model;
-global using BC2G.CLI.Config;
-global using BC2G.Graph.Db;
-global using BC2G.Graph.Model;
-global using BC2G.Infrastructure;
-global using BC2G.Infrastructure.StartupSolutions;
-global using BC2G.PersistentObject;
-global using BC2G.Serializers;
+﻿global using EBA.Blockchains.Bitcoin;
+global using EBA.Blockchains.Bitcoin.Graph;
+global using EBA.Blockchains.Bitcoin.Model;
+global using EBA.CLI.Config;
+global using EBA.Graph.Db;
+global using EBA.Graph.Model;
+global using EBA.Infrastructure;
+global using EBA.Infrastructure.StartupSolutions;
+global using EBA.PersistentObject;
+global using EBA.Serializers;
 
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.Extensions.Configuration;

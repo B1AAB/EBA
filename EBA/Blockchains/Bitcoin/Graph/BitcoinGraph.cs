@@ -1,8 +1,8 @@
-﻿using BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
+﻿using EBA.Graph.Db.Neo4jDb.BitcoinStrategies;
 
-using INode = BC2G.Graph.Model.INode;
+using INode = EBA.Graph.Model.INode;
 
-namespace BC2G.Blockchains.Bitcoin.Graph;
+namespace EBA.Blockchains.Bitcoin.Graph;
 
 // TODO: can the following AddOrUpdateEdge methods made generic and simplified?!
 

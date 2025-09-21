@@ -1,4 +1,4 @@
-﻿namespace BC2G.PersistentObject;
+﻿namespace EBA.PersistentObject;
 
 /// TODO 1
 /// If an exception is occurred in this class, the exception will not

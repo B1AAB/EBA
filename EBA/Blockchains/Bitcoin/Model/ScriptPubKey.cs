@@ -1,6 +1,6 @@
 ﻿using NBitcoin;
 
-namespace BC2G.Blockchains.Bitcoin.Model;
+namespace EBA.Blockchains.Bitcoin.Model;
 
 public class ScriptPubKey : BasePaymentType, IBase64Serializable
 {

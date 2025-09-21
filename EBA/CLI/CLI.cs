@@ -5,7 +5,7 @@ using System.CommandLine.Help;
 using Color = Spectre.Console.Color;
 using SecurityException = System.Security.SecurityException;
 
-namespace BC2G.CLI;
+namespace EBA.CLI;
 
 internal class Cli
 {

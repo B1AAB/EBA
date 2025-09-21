@@ -1,6 +1,6 @@
-﻿using BC2G.Utilities;
+﻿using EBA.Utilities;
 
-namespace BC2G.PersistentObject;
+namespace EBA.PersistentObject;
 
 public class PersistentObject<T> : PersistentObjectBase<T>, IDisposable
     where T : notnull

@@ -1,4 +1,4 @@
-﻿namespace BC2G.Graph.Model;
+﻿namespace EBA.Graph.Model;
 
 public class Node : INode
 {

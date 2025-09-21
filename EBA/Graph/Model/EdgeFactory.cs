@@ -1,6 +1,6 @@
-﻿using BC2G.Utilities;
+﻿using EBA.Utilities;
 
-namespace BC2G.Graph.Model;
+namespace EBA.Graph.Model;
 
 public class EdgeFactory
 {

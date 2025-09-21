@@ -1,4 +1,4 @@
-﻿namespace BC2G.Serializers;
+﻿namespace EBA.Serializers;
 
 public class JsonSerializer<T> where T : new()
 {

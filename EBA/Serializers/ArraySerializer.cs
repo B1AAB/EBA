@@ -1,7 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace BC2G.Serializers;
+namespace EBA.Serializers;
 
 public static class ArraySerializer
 {

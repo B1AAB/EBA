@@ -1,4 +1,4 @@
-﻿namespace BC2G.Utilities;
+﻿namespace EBA.Utilities;
 
 internal class Helpers
 {

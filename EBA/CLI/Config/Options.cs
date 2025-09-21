@@ -1,4 +1,4 @@
-﻿namespace BC2G.CLI.Config;
+﻿namespace EBA.CLI.Config;
 
 public class Options
 {

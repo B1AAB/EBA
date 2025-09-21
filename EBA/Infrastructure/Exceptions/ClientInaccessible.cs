@@ -1,4 +1,4 @@
-﻿namespace BC2G.Exceptions;
+﻿namespace EBA.Exceptions;
 
 internal class ClientInaccessible : Exception
 {

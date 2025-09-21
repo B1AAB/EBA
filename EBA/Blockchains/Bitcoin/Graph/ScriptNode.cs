@@ -1,4 +1,4 @@
-﻿namespace BC2G.Blockchains.Bitcoin.Graph;
+﻿namespace EBA.Blockchains.Bitcoin.Graph;
 
 public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
 {

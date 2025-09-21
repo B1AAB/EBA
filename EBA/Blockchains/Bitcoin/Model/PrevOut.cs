@@ -1,6 +1,6 @@
-﻿using BC2G.Utilities;
+﻿using EBA.Utilities;
 
-namespace BC2G.Blockchains.Bitcoin.Model;
+namespace EBA.Blockchains.Bitcoin.Model;
 
 public class PrevOut
 {

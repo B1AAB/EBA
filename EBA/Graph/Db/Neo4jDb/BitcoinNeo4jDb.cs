@@ -1,9 +1,9 @@
-﻿using BC2G.Graph.Db.Neo4jDb.BitcoinStrategies;
+﻿using EBA.Graph.Db.Neo4jDb.BitcoinStrategies;
 
 using Microsoft.Extensions.Primitives;
 
 
-namespace BC2G.Graph.Db.Neo4jDb;
+namespace EBA.Graph.Db.Neo4jDb;
 
 public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 {

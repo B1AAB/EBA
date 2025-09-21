@@ -1,6 +1,6 @@
 ﻿using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace BC2G.Utilities.Utilities;
+namespace EBA.Utilities;
 
 internal class NewAddressCounter(ILogger logger)
 {
