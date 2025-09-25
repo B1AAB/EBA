@@ -1,0 +1,8 @@
+{
+  "label": "ETL Pipeline",
+  "position": 1,
+  "link": {
+    "type": "doc",
+    "id": "bitcoin/etl/overview"
+  }
+}

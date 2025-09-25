@@ -1,0 +1,46 @@
+---
+sidebar_position: 0
+---
+
+# Welcome
+
+We provide large-scale temporal graphs of blockchain data 
+that enable you to develop ML applications across the vibrant cryptocurrency ecosystem, 
+including:
+
+* Exploring economic evolution and temporal behaviors.
+* Analyzing network dynamics and trading patterns.
+* Identifying suspicious or illicit activities.
+* Benchmarking large-scale, graph-based machine learning models.
+
+
+EBA interfaces with the Bitcoin network and 
+creates a graph of the full history of 
+transactions recorded on-chain, 
+encompassing the complete trading details of 
+over `8.72` billion BTC. 
+The temporal heterogeneous graph consists of 
+over `2.4` billion nodes 
+and `39.72` billion time-stamped edges 
+spanning more than a decade, 
+making it a complete resource for developing 
+models on Bitcoin and a large-scale resource 
+for benchmarking graph neural networks.
+
+
+We share the complete ETL pipeline and all 
+the data it generates. To simplify working with the 
+pipeline and its resources, we have split them into 
+separate repositories. 
+The following is the list of resources we provide for Bitcoin:
+
+- [Datasets](/docs/bitcoin/datasets):
+    - [Block Statistics](/docs/bitcoin/datasets/stats)
+    - [Bitcoin Graph in neo4j format](/docs/bitcoin/datasets/neo4j-format)
+    - [Bitcoin Graph in TSV format](/docs/bitcoin/datasets/tsv-format)
+- Tools:
+    - [Extract, Transform, and Load (ETL) pipeline](/docs/bitcoin/etl/overview)
+    - [Community Sampling](/docs/bitcoin/sampling/overview)
+- ML:
+    - Example models: [Graph Studio](https://github.com/b1aab/graphstudio)
+    - [External and off-chain labels](https://github.com/B1AAB/GraphStudio/tree/main/off_chain_resources/)

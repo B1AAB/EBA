@@ -1,0 +1,33 @@
+---
+id: overview
+title: Sampling
+sidebar_label: Overview
+---
+
+The graph-based machine learning community has developed 
+various strategies for training and using models on large graphs. 
+One of the most common approaches is training on sampled subgraphs. 
+Accordingly, the ML dataset consists of subgraphs (aka _communities_) 
+pseudorandomly sampled from the larger graph.
+
+
+In general, the specifics of the sampling strategy 
+depend on the graph and the intended application. 
+This is even more pronounced for the provided Bitcoin graph, 
+given its scale, the heterogeneity of its nodes and edges, 
+and its extensive longitudinal nature, as it spans many years.
+
+
+We provide customizable community sampling strategies 
+that can be adjusted to fit the data requirements 
+of a wide spectrum of application areas. 
+The strategies we currently provide are:
+
+- [Random Neighborhood Sampling](./rns)
+
+
+Additionally, we provide the following ready-to-use sampled communities:
+
+- Script to Script
+    * Dataset TODO Link
+    * Tutorial TODO Link

@@ -1,0 +1,216 @@
+---
+id: overview
+title: ETL Pipeline
+sidebar_label: Overview
+---
+
+import DocCardList from '@theme/DocCardList';
+import {useCurrentSidebarCategory} from '@docusaurus/theme-common';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+
+:::tip When do I need to run the ETL pipeline?
+
+You only need to run the ETL pipeline if you would like to 
+reproduce results, 
+collect information beyond the resources we have shared 
+(such as data from blocks created after our cutoff point), 
+or host your own solution.
+
+You do **not** need to run the ETL pipeline if you only intend to 
+sample new graphs (TODO see this page) or 
+develop models on the sampled communities we provide (TODO see this page).
+:::
+
+
+
+This section details the Extract, Transform, and Load (ETL) pipeline for 
+collecting Bitcoin data, formatting it as a graph, and importing it into a Neo4j graph database.
+
+
+Given the dataset's scale, this process is highly I/O-intensive. 
+Running the full pipeline on a high-end machine 
+(e.g., 128GB RAM, 6TB NVMe, 6TB HDD) 
+can take approximately one month. 
+To accommodate users with varying resources and needs, 
+we've designed the pipeline with two key principles:
+
+    *   **Accessibility**: The entire process can be run on a single machine. 
+        All methods are implemented to minimize CPU and memory requirements, 
+        relying on on-disk processes for resource-heavy operations. 
+        In the trade-off between the performance of distributed cloud-native solutions 
+        and accessibility, we chose accessibility. 
+        However, the methods are designed to be horizontally scalable 
+        if a user has access to cloud resources 
+        (we do not currently provide Dockerized methods or Kubernetes deployment configurations).
+
+    *   **Modularity**: The ETL pipeline is broken into distinct steps, 
+        and we provide the output for each one. 
+        This allows you to start at any point in the process, 
+        depending on your specific application needs.
+
+
+
+Please use the following guide to select the right entry point into the pipeline 
+based on your specific goals and available resources.
+
+    * [**Step 1**: Sync a Bitcoin Node](./node-sync)
+
+        <Tabs
+            groupId="operating-systems"
+            defaultValue="when"
+            values={[
+                { label: 'When to Run', value: 'when', },
+                { label: 'Output', value: 'output', },
+                { label: 'Estimated Resources', value: 'resources', },
+            ]
+        }>
+        <TabItem value="when">
+
+            If you need to reproduce the entire pipeline, 
+            include historical data not in our current graph, 
+            or add new blocks created after our cutoff date.
+
+        </TabItem>
+        <TabItem value="output">
+
+            A fully synchronized and indexed Bitcoin client. 
+            Note: As this step involves syncing with the Bitcoin network, 
+            this data cannot be provided directly and must be retrieved 
+            by running the client.
+
+        </TabItem>
+        <TabItem value="resources">
+
+            ~1 week runtime, ~900GB storage, ~800GB internet traffic.
+
+        </TabItem>
+        </Tabs>
+
+
+
+    * [**Step 2**: Extract Block Data](./traverse)
+
+        <Tabs
+            groupId="operating-systems"
+            defaultValue="when"
+            values={[
+                { label: 'When to Run', value: 'when', },
+                { label: 'Output', value: 'output', },
+                { label: 'Estimated Resources', value: 'resources', },
+            ]
+        }>
+        <TabItem value="when">
+
+            After completing Step 1, to generate the core graph files in TSV format.
+
+        </TabItem>
+        <TabItem value="output">
+
+            Graph nodes and edges in TSV format, along with block metadata and script statistics. The output is available at:
+
+        </TabItem>
+        <TabItem value="resources">
+
+            2-3 days runtime, ~1.5TB storage.
+
+        </TabItem>
+        </Tabs>
+
+
+
+
+    * [**Step 3**: Address Statistics](./address-stats)
+
+        <Tabs
+            groupId="operating-systems"
+            defaultValue="when"
+            values={[
+                { label: 'When to Run', value: 'when', },
+                { label: 'Output', value: 'output', },
+                { label: 'Estimated Resources', value: 'resources', },
+            ]
+        }>
+        <TabItem value="when">
+
+            If you need detailed summary statistics about script addresses.
+
+        </TabItem>
+        <TabItem value="output">
+
+            Summary statistics files. The output is available at: TODO LINK
+
+        </TabItem>
+        <TabItem value="resources">
+
+            ~1 day runtime, ~200GB storage.
+
+        </TabItem>
+        </Tabs>
+
+
+
+    * [**Step 4**: TXO Lifecycle](./txo-lifecycle)
+
+        <Tabs
+            groupId="operating-systems"
+            defaultValue="when"
+            values={[
+                { label: 'When to Run', value: 'when', },
+                { label: 'Output', value: 'output', },
+                { label: 'Estimated Resources', value: 'resources', },
+            ]
+        }>
+        <TabItem value="when">
+
+            If you need summary statistics on transaction output (TXO) lifecycles, such as coin dormancy.
+
+        </TabItem>
+        <TabItem value="output">
+
+            Summary statistics files. The output is available at: TODO LINK
+
+        </TabItem>
+        <TabItem value="resources">
+
+            ~1 day runtime, ~200GB storage.
+
+        </TabItem>
+        </Tabs>
+
+
+
+    * [**Step 5**: Import Data into Neo4j](./import)
+
+        <Tabs
+            groupId="operating-systems"
+            defaultValue="when"
+            values={[
+                { label: 'When to Run', value: 'when', },
+                { label: 'Output', value: 'output', },
+                { label: 'Estimated Resources', value: 'resources', },
+            ]
+        }>
+        <TabItem value="when">
+
+            After generating the TSV files in Step 2, if you require efficient graph exploration and sampling capabilities, or if you need to run our sampling methods on your updated graph.
+
+        </TabItem>
+        <TabItem value="output">
+
+            A fully functional Neo4j database. We provide a database dump for direct import at: TODO LINK
+
+        </TabItem>
+        <TabItem value="resources">
+
+            ~2-3 weeks runtime, ~6TB storage.
+
+        </TabItem>
+        </Tabs>
+
+
+
+<!-- this shows the cards, but it does not seem they are needed given the above tabs -->
+<!-- <DocCardList items={useCurrentSidebarCategory().items} /> -->
+

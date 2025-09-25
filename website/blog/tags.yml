@@ -1,0 +1,13 @@
+data-releases:
+  label: 'Data Releases'
+  permalink: '/data-releases'
+  description: 'Content related to data releases.'
+
+code-releases:
+  label: 'Code Releases'
+  permalink: '/code-releases'
+  description: 'Content related to code releases.'
+
+# A partial tag definition is also valid
+announcements:
+  label: 'Announcements'

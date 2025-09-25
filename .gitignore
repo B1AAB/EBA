@@ -417,3 +417,5 @@ FodyWeavers.xsd
 *.msm
 *.msp
 /EBA/Properties/launchSettings.json
+publish/
+build/

@@ -1,0 +1,29 @@
+---
+id: rns
+title: Random Neighborhood
+sidebar_label: Random Neighborhood
+sidebar_position: 1
+slug: /bitcoin/sampling/rns
+---
+
+This method samples a community by starting from a randomly selected root node, then wallking on its neighborhood using either of BFS, DFS, or customized Forest Fire algorithm. You may customize this algorithm by adjusting the community size in terms of nodes and edges, max hop distance from the root node, types of nodes and edges to include.
+This section we discuss the alggorithm, and the steps to run it. 
+
+
+The _random neighborhood sampling_ method samples a community 
+by starting from a randomly selected root node and then 
+pseudorandomly traversing its neighborhood using 
+Breadth-First Search (BFS), 
+Depth-First Search (DFS), or a customized Forest Fire algorithm.
+
+You can customize this algorithm by adjusting parameters such as 
+the community size (in terms of nodes and edges), 
+the maximum hop distance from the root node, 
+and the specific types of nodes and edges to include.
+
+In this section, we will discuss the algorithm and the steps required to run it.
+
+### Prerequisite 
+
+- [Install and connect](/docs/gs/installation#neo4j) to a Neo4j solution.
+- [Import](/docs/bitcoin/etl/import) the database into the Neo4j solution.
