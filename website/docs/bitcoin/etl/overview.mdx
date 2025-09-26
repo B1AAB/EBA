@@ -19,96 +19,97 @@ collect information beyond the resources we have shared
 or host your own solution.
 
 You do **not** need to run the ETL pipeline if you only intend to 
-sample new graphs (TODO see this page) or 
-develop models on the sampled communities we provide (TODO see this page).
+[sample new graphs](/docs/bitcoin/sampling/overview) or 
+[develop models](https://github.com/B1AAB/GraphStudio) on 
+the [sampled communities we provide](https://www.kaggle.com/datasets/vjalili/bitcoin-graph-sampled-communities).
 :::
 
 
-
 This section details the Extract, Transform, and Load (ETL) pipeline for 
-collecting Bitcoin data, formatting it as a graph, and importing it into a Neo4j graph database.
+collecting Bitcoin data, 
+formatting it as a graph, and 
+importing it into a Neo4j graph database.
 
 
-Given the dataset's scale, this process is highly I/O-intensive. 
-Running the full pipeline on a high-end machine 
-(e.g., 128GB RAM, 6TB NVMe, 6TB HDD) 
-can take approximately one month. 
-To accommodate users with varying resources and needs, 
-we've designed the pipeline with two key principles:
-
-    *   **Accessibility**: The entire process can be run on a single machine. 
-        All methods are implemented to minimize CPU and memory requirements, 
-        relying on on-disk processes for resource-heavy operations. 
-        In the trade-off between the performance of distributed cloud-native solutions 
-        and accessibility, we chose accessibility. 
-        However, the methods are designed to be horizontally scalable 
-        if a user has access to cloud resources 
-        (we do not currently provide Dockerized methods or Kubernetes deployment configurations).
-
-    *   **Modularity**: The ETL pipeline is broken into distinct steps, 
-        and we provide the output for each one. 
-        This allows you to start at any point in the process, 
-        depending on your specific application needs.
+You can run the pipeline on the entire Bitcoin history or 
+on a subset of blocks. 
+Since running the pipeline end-to-end is highly resource-intensive, 
+we made two key [design decisions](/docs/gs/accessibility):
+first, we developed it from the ground up to 
+run on a single machine, 
+relying on on-disk processing for resource-heavy operations. 
+Second, given its weeks-long runtime on the entire Bitcoin history, 
+the pipeline is divided into distinct steps, 
+and we provide _checkpoint_ data for each one, 
+allowing you to start the process at any point depending on your application's needs.
 
 
 
 Please use the following guide to select the right entry point into the pipeline 
 based on your specific goals and available resources.
 
+    ---
     * [**Step 1**: Sync a Bitcoin Node](./node-sync)
 
         <Tabs
             groupId="operating-systems"
             defaultValue="when"
             values={[
-                { label: 'When to Run', value: 'when', },
-                { label: 'Output', value: 'output', },
-                { label: 'Estimated Resources', value: 'resources', },
+                { label: 'When to Run', value: 'when' },
+                { label: 'System Requirements', value: 'resources' },
+                { label: 'Checkpoint', value: 'checkpoint' }
             ]
         }>
         <TabItem value="when">
 
             If you need to reproduce the entire pipeline, 
             include historical data not in our current graph, 
-            or add new blocks created after our cutoff date.
+            or add data from the new blocks created after our cutoff date.
 
         </TabItem>
-        <TabItem value="output">
+        <TabItem value="checkpoint">
 
-            A fully synchronized and indexed Bitcoin client. 
-            Note: As this step involves syncing with the Bitcoin network, 
-            this data cannot be provided directly and must be retrieved 
-            by running the client.
+            This step performs the [Initial Block Download (IBD)](https://bitcoin.org/en/full-node#initial-block-downloadibd), 
+            a process where the Bitcoin Core client downloads 
+            the blockchain history directly from the Bitcoin network.
+            We cannot provide checkpoint data for this step. 
+            Upon completion, you will have a fully synchronized and indexed Bitcoin Core node.
+
 
         </TabItem>
         <TabItem value="resources">
 
-            ~1 week runtime, ~900GB storage, ~800GB internet traffic.
+            ~1 week runtime, ~900GB storage, ~800GB Internet traffic.
 
         </TabItem>
         </Tabs>
 
 
-
+    ---
     * [**Step 2**: Extract Block Data](./traverse)
 
         <Tabs
             groupId="operating-systems"
             defaultValue="when"
             values={[
-                { label: 'When to Run', value: 'when', },
-                { label: 'Output', value: 'output', },
-                { label: 'Estimated Resources', value: 'resources', },
+                { label: 'When to Run', value: 'when' },
+                { label: 'System Requirements', value: 'resources' },
+                { label: 'Checkpoint', value: 'checkpoint' }
             ]
         }>
         <TabItem value="when">
 
-            After completing Step 1, to generate the core graph files in TSV format.
+            After completing Step 1, 
+            to generate the Bitcoin graph in TSV files, 
+            block-level summary statistics, 
+            TXO lifecycle, 
+            or Bitcoin address statistics.
 
         </TabItem>
-        <TabItem value="output">
+        <TabItem value="checkpoint">
 
-            Graph nodes and edges in TSV format, along with block metadata and script statistics. The output is available at:
+            * [Noe4j format files](https://drive.google.com/drive/folders/11X6QiVvWSOzxvDIAD0OWu3g2Sa0as3UQ?usp=sharing)
+            * [Block summary statistics](https://www.kaggle.com/datasets/vjalili/bitcoin-block-metadata)
 
         </TabItem>
         <TabItem value="resources">
@@ -120,86 +121,92 @@ based on your specific goals and available resources.
 
 
 
-
+    ---
     * [**Step 3**: Address Statistics](./address-stats)
 
         <Tabs
             groupId="operating-systems"
             defaultValue="when"
             values={[
-                { label: 'When to Run', value: 'when', },
-                { label: 'Output', value: 'output', },
-                { label: 'Estimated Resources', value: 'resources', },
+                { label: 'When to Run', value: 'when' },
+                { label: 'System Requirements', value: 'resources' },
+                { label: 'Checkpoint', value: 'checkpoint' }
             ]
         }>
         <TabItem value="when">
 
-            If you need detailed summary statistics about script addresses.
+            You may run this optional step if 
+            you need detailed summary statistics about script addresses. 
+            This step runs on the raw address statistics generated in step 2.
+
 
         </TabItem>
-        <TabItem value="output">
+        <TabItem value="checkpoint">
 
-            Summary statistics files. The output is available at: TODO LINK
+            * [Block summary statistics](https://www.kaggle.com/datasets/vjalili/bitcoin-block-metadata)
 
         </TabItem>
         <TabItem value="resources">
 
-            ~1 day runtime, ~200GB storage.
+            ~1 day runtime, ~300GB storage.
 
         </TabItem>
         </Tabs>
 
 
 
+    ---
     * [**Step 4**: TXO Lifecycle](./txo-lifecycle)
 
         <Tabs
             groupId="operating-systems"
             defaultValue="when"
             values={[
-                { label: 'When to Run', value: 'when', },
-                { label: 'Output', value: 'output', },
-                { label: 'Estimated Resources', value: 'resources', },
+                { label: 'When to Run', value: 'when' },
+                { label: 'System Requirements', value: 'resources' },
+                { label: 'Checkpoint', value: 'checkpoint' }
             ]
         }>
         <TabItem value="when">
 
-            If you need summary statistics on transaction output (TXO) lifecycles, such as coin dormancy.
+            You may run this optional step if 
+            you need summary statistics on transaction output (TXO) lifecycles, such as coin dormancy.
+            This step runs on the raw TXO lifecycle data generated in step 2. 
 
         </TabItem>
-        <TabItem value="output">
+        <TabItem value="checkpoint">
 
-            Summary statistics files. The output is available at: TODO LINK
+            * [Block summary statistics](https://www.kaggle.com/datasets/vjalili/bitcoin-block-metadata)
 
         </TabItem>
         <TabItem value="resources">
 
-            ~1 day runtime, ~200GB storage.
+            ~1 day runtime, ~300GB storage.
 
         </TabItem>
         </Tabs>
+    
 
-
-
+    ---
     * [**Step 5**: Import Data into Neo4j](./import)
 
         <Tabs
             groupId="operating-systems"
             defaultValue="when"
             values={[
-                { label: 'When to Run', value: 'when', },
-                { label: 'Output', value: 'output', },
-                { label: 'Estimated Resources', value: 'resources', },
+                { label: 'When to Run', value: 'when' },
+                { label: 'System Requirements', value: 'resources' },
+                { label: 'Checkpoint', value: 'checkpoint' }
             ]
         }>
         <TabItem value="when">
 
-            After generating the TSV files in Step 2, if you require efficient graph exploration and sampling capabilities, or if you need to run our sampling methods on your updated graph.
+            This step imports the formatted TSV files from Step 5 into a Neo4j database to enable efficient graph exploration and custom graph sampling.
 
         </TabItem>
-        <TabItem value="output">
+        <TabItem value="checkpoint">
 
-            A fully functional Neo4j database. We provide a database dump for direct import at: TODO LINK
+            * [Neo4j database dump](https://drive.google.com/drive/folders/1bAsjgVaIQrG2TDGkMtIEDPX8xKoiHJUf?usp=sharing)
 
         </TabItem>
         <TabItem value="resources">
@@ -208,6 +215,7 @@ based on your specific goals and available resources.
 
         </TabItem>
         </Tabs>
+    ---
 
 
 

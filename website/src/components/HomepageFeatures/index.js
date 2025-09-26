@@ -84,7 +84,7 @@ const largestDatasetFeatures = [
     ),
     buttons: [
       {
-        buttonLink: '/docs/bitcoin/datasets/raw',
+        buttonLink: '/docs/bitcoin/datasets/overview',
         buttonText: 'Download Graph Dataset'
       }
     ],

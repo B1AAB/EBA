@@ -15,11 +15,9 @@ and available computational resources.
 
 The standard approach for training machine learning models 
 on a graph of this scale (tens of billions of nodes) 
-is to work with representative subgraphs called 
+is to work with representative subgraphs, aka 
 [sampled communities](/docs/bitcoin/sampling/overview). 
-The following options guide you through using the communities 
-we've pre-sampled, sampling your own, 
-or running the full data pipeline from scratch.
+The following diagram can help you choose the right starting point for your application.
 
 
 ```mermaid
@@ -49,14 +47,13 @@ graph LR
 
 ### Start with a Pre-built Model {#opt1}
 This is the fastest way to see the data in action. 
-We provide "hello-world" models as Jupyter Notebooks 
-that include data loading, training, and evaluation 
+We provide "hello-world" solutions 
+that include data loading, model training and evaluation 
 on pre-sampled communities.
 
     * **Use Case**: 
-        A quick introduction, exploring the dataset, 
-        or finding a reference for building your own models.
-    * Documentation TODO LINK
+        A quick introduction and exploring the dataset.
+    * [Quick-start Bitcoin script node classification](https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification)
 
 
 ### Build on Pre-sampled Graphs {#opt2}
@@ -68,7 +65,7 @@ running the sampling process yourself.
     * **Use Case**: 
         Exploring various model architectures or 
         conceptualizing a new study or application.
-    * Documentation TODO LINK
+    * [Example models and general guidelines for developing your own model](https://github.com/B1AAB/GraphStudio/)
 
 
 ### Sample Your Own Custom Graphs {#opt3}
@@ -79,7 +76,7 @@ you can create more relevant datasets and develop more effective models.
 
     * **Use Case**: 
         Developing specialized ML applications, 
-        or benchmarking highly scalable graph-based models.
+        or benchmarking graph-based models.
     * **Requirements**: 
         This is a resource-intensive step. 
         You'll need to host a Neo4j database, 
@@ -87,7 +84,7 @@ you can create more relevant datasets and develop more effective models.
         requires ~3TB of total storage. 
         The sampling process itself can take hours to days 
         on machines with limited resources.
-    * Documentation TODO LINK
+    * [Sampling Documentation](/docs/bitcoin/sampling/overview)
 
 
 ### Run the Full ETL Pipeline from Scratch {#opt4}
@@ -102,7 +99,6 @@ graph dataset and block metadata.
         or host your own solution that stays current with new blocks.
     * **Requirements**: 
         This process is extremely resource-intensive, 
-        requiring terabytes of storage and weeks of runtime on a powerful machine.
-    * Documentation TODO LINK
-    * If you're interested in getting the data without running the pipeline, we provide the most recent output: please use this link for the graph and this link for the metadata.
-
+        requiring over 6TB terabytes of storage and 4-5 weeks of runtime 
+        on a single machine.
+    * [ETL pipeline documentation](/docs/bitcoin/etl/overview)

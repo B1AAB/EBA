@@ -5,14 +5,30 @@ sidebar_position: 1
 slug: quickstart
 ---
 
-This quick start provides a hands-on guide to training and evaluating 
-a Bitcoin script classification model using pre-sampled communities.
+
+For a quick start, 
+we train and evaluate a model to generate node embeddings for 
+a Bitcoin script based on its 3-hop neighborhood. 
+We experiment with an unsupervised contrastive learning model and 
+then use the resulting embeddings to cluster the nodes. 
+We then compare these clusters with external annotations that 
+identify the wallet to which a script belongs and 
+classify wallets as belonging to exchanges, 
+mining pools, or gambling services.
+For model development, we use this dataset, 
+which contains `200k` randomly selected script nodes with 
+their neighborhoods sampled using the [Forest-Fire method](/docs/bitcoin/sampling/forest-fire). 
+More details on the model and instructions for this quick start 
+are available at [this page](https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification).
+
 
 As the following diagram illustrates, 
-this guide bypasses the ETL pipeline to focus directly on the machine learning application. 
-We skip the ETL pipeline because it requires weeks of processing and 
-significant computational resources, which is beyond the scope of a quick start. 
-The complete ETL pipeline is [documented separately](/docs/bitcoin/etl/overview).
+this quick start bypasses the ETL pipeline to focus directly on the machine learning application. 
+We skip the ETL pipeline because it requires 
+weeks of processing and significant computational resources, 
+which is beyond the scope of a quick start. 
+The complete ETL pipeline is [documented in this section](/docs/bitcoin/etl/overview).
+
 
 ```mermaid
 %%{ 
@@ -34,15 +50,7 @@ gitGraph:
     commit id: "Sample Communities"
     branch Bitcoin-Quick-Start
     checkout Bitcoin-Quick-Start
-    commit id: "Hello-world Model" 
+    commit id: "Hello-world Script Classification" 
     checkout Bitcoin-Regular
     merge Bitcoin-Quick-Start
 ```
-
-
-## Bitcoin Script Classification
-
-Please follow 
-[this documentation](https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification)
-for a "hello world" example on using the sampled Bitcoin communities 
-for training and evaluating a script classification model.
