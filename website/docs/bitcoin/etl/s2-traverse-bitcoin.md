@@ -5,12 +5,11 @@ sidebar_position: 1
 slug: /bitcoin/etl/traverse
 ---
 
-In this step, `eba` is used to iterate through a set of blocks and extract relevant data. 
-While various data types can be extracted (e.g., tracking UTXOs, identifying newly created addresses), 
-the primary focus is on encoding transaction data found within these blocks. 
+EBA connects to a [fully synchronized Bitcoin Core](./s1-sync-bitcoin.mdx) 
+node and iterates through a set of blocks, 
+extracts transaction data, and encodes them as temporal heterogeneous graph. 
 
-The following steps describe how to run the `eba traverse` command.
-
+For this task, you may take the following steps.
 
 - [Install the program](/gs/installation.md), if you have not installed already.
 
@@ -34,39 +33,30 @@ The following steps describe how to run the `eba traverse` command.
     .\eba.exe bitcoin traverse --help
     ```
 
-Collecting data from the Bitcoin network for all blocks can take a considerable amount of time. 
-This code heavily leverages multi-threading, and all the time-consuming operations are implemented non-blocking;
-however, there are only so much concurrent requests the Bitcoin client can process optimally. 
-EBA is implemented so that it minimizes the latency between submitting API calls and processing the returned data, 
-such that the returned data is processed in parallel threads without the application 
-waiting for their results to be persisted. However, still, if both EBA and the Bitcoin agent are 
-running the same machine, they are bound by the I/O limit of your machine. 
-One improvement would be deploying the Bitcoin client on a Kubernetes cluster 
-(it will need dockerizing the client) with a load balancer. 
-In this setup, you will have multiple instances of the client processing API calls with the 
-load balancer directing any new call to appropriate VMs. 
-Such a horizontal scale will improve the performance, however, since it requires a k8s cluster setup and VMs on 
-the Cloud or on premises HPC, the specifics of this setup are beyond the score of EBA, and are not covered here.
+
+### Performance and Scalability
+
+Traversing Bitcoin blocks can take a considerable amount of time. 
+To accelerate this, 
+EBA heavily leverages multi-threading, 
+and all time-consuming operations are implemented to be non-blocking. 
+It also minimizes the latency between submitting API calls and 
+processing the returned data, 
+which allows data to be handled in parallel threads, 
+so it doesn't wait to encode and persist a block's graph elements before processing the next block.
+However, there is a limit to how many concurrent requests EBA and Bitcoin Core can process optimally. 
+Therefore, despite these optimizations, 
+if both applications are running on the same machine, 
+their performance is ultimately bound by its I/O limits, 
+primarily the random read/write performance of the storage.
 
 
-
-## Optimizing Data Collection Speed
-
-Collecting data from the Bitcoin network, especially across all blocks, can be time-consuming. 
-The EBA code leverages multi-threading extensively, and time-consuming operations are implemented 
-using non-blocking I/O. However, the Bitcoin client itself can only process a limited number of 
-concurrent requests optimally, which can become a bottleneck.
-
-EBA is designed to minimize latency. It processes the data returned from Bitcoin client API calls in parallel threads, 
-allowing it to issue new requests without waiting for the results of previous ones to be fully processed and persisted.
-
-Despite these optimizations, if both EBA and the Bitcoin client are running on the same machine, 
-performance will still be constrained by the shared hardware resources, particularly I/O limits (disk speed and network bandwidth).
-
-One potential performance improvement involves deploying the Bitcoin client across a Kubernetes (k8s) cluster. 
-This requires containerizing the client (e.g., using Docker) and utilizing a load balancer. 
-In such a setup, multiple instances of the client handle API calls concurrently, with the load balancer 
-distributing requests among them. This horizontal scaling can significantly improve throughput.
-
-However, detailing the specifics of setting up and managing a Kubernetes cluster (whether cloud-based or on-premises) 
-is beyond the scope of this EBA documentation and is therefore not covered here.
+Since EBA processes each block independently, 
+one potential improvement is to deploy the application on a Kubernetes (k8s) cluster 
+(requires dockerizing both EBA and Bitcoin Core).
+In this setup, each instance of EBA service could process a subset of blocks 
+while a load balancer directs its API calls to replicas of the Bitcoin Core services. 
+This horizontal scaling would significantly improve performance; 
+however, because this requires a k8s cluster and cloud or on-premises HPC resources 
+that may not be [widely accessible](/docs/gs/accessibility), 
+the specifics of such a deployment are not currently covered.

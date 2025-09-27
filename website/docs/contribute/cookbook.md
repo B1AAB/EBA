@@ -23,7 +23,7 @@ with value `0`.
 
 
 
-### Making Bitcoin Core Accessible from Another Computer on the LAN
+### Making Bitcoin Core Accessible from Another Computer on the LAN {#bitcoin-core-lan}
 
 Set the `bitcoin.conf` file as the following
 

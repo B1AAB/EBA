@@ -17,14 +17,12 @@ The initial synchronization downloads the entire blockchain history.
 Depending on your hardware (CPU performance, disk read/write speed) and network connection,
 this process can take a significant amount of time, potentially a week.
 Then, we need to index the transactions, which takes an additional day or two to complete.
-As of block height `875,000`, syncing a full node requires approximately `850` GB of storage space 
-(which continuously increases as new blocks are added to the chain).
+As of block height `875,000`, syncing a full node requires approximately `850` GB of storage space.
 
 Bitcoin Core offers a _prune_ option, which reduces disk space usage by discarding older block data. 
-However, for our data collection process, we need a full transaction index (`txindex=1` setting in Bitcoin Core). 
-Transaction indexing is incompatible with pruning. 
-Therefore, you **must run a non-pruned node** to ensure all necessary transaction data 
-can be indexed and retrieved by subsequent steps.
+However, since we need a full transaction index (`txindex=1` setting in Bitcoin Core),
+and given that indexing is incompatible with pruning, 
+therefore, we **must run a non-pruned node**.
 
 
 You may take the following steps. 
@@ -47,10 +45,12 @@ You may take the following steps.
   and `bitcoin-qt` will not respond (properly) to API calls before this process finishes. 
   You may "monitor" the indexing progress by monitoring the `\indexes\txindex` directory for changed/added files.
 
-  EBA is optimized for concurrency and may send many API requests to `bitcoin-qt`, 
-  whose degree of parallelization is dynamically adjusted based on the bandwidth and prior response times. 
-  Hence, without setting the `rpcworkqueue`, you may get a `503` error when EBA creates many concurrent requests 
-  (e.g., see [this error](https://github.com/bitcoin/bitcoin/blob/767ee2e3a1082468b4e2248bac3ef8bd54bb2ddb/src/httpserver.cpp#L269)).
+  **Why setting `-rpcworkqueue=100`?**
+  EBA is optimized for concurrency and sends many API requests to `bitcoin-qt`, 
+  with a dynamically adjusted degree of parallelization. 
+  However, Bitcoin Core's default worker queue size is small and you get a `503` error when EBA creates many concurrent requests 
+  (e.g., see [this error](https://github.com/bitcoin/bitcoin/blob/767ee2e3a1082468b4e2248bac3ef8bd54bb2ddb/src/httpserver.cpp#L269));
+  hence, we increase the RPC queue size.
 
 
 
@@ -60,13 +60,15 @@ You may take the following steps.
     GET localhost:8332/rest/chaininfo.json
     ```
 
+- **[Optional]** Please see [this page](/docs/contribute/cookbook#bitcoin-core-lan)
+  for running Bitcoin Core in a local network.
 
-## Privacy best practices
+
+### Privacy Best Practices
 
 Do **NOT** define your real Wallet on this `bitcoin-qt` instance 
 (i.e., the Wallet you may have used on any Bitcoin exchange service for Bitcoin trading). 
-EBA does **NOT** try to access Wallets defined in `bitcoin-qt` or 
-make any attempts at malicious action. 
+EBA does **NOT** try to access Wallets defined in `bitcoin-qt`. 
 Regardless, there are some known privacy concerns when running `bitcoin-qt` 
 with a defined wallet while the REST API is enabled. 
 See [Bitcoin docs](https://github.com/bitcoin/bitcoin/blob/master/doc/REST-interface.md#risks).
