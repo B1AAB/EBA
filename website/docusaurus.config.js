@@ -13,7 +13,7 @@ import rehypeKatex from 'rehype-katex';
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'EBA',
-  tagline: "The complete graph of Bitcoin's on-chain economy, built for machine learning.",
+  tagline: "The complete graph of Bitcoin's on-chain economy, built from the ground up for machine learning.",
   //favicon: 'img/favicon.ico',
 
   url: 'https://eba.b1aab.ai',

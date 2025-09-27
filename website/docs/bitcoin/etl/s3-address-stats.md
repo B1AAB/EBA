@@ -5,34 +5,38 @@ sidebar_position: 2
 slug: /bitcoin/etl/address-stats
 ---
 
-_This is an optional section, and it details a process that requires address tracking to have been enabled during the initial blockchain traversal command._
-_You may skip this step if you do not intent to get per-block statistics (summary statistics about bitcoin network in general)._
+:::info
+This is an optional step, 
+and it details a process that requires address tracking to have been enabled during `eba bitcoin traverse`.
+
+You may skip this step if you do not intent to get per-block statistics.
+:::
+
 
 The goal is to calculate various block-level address statistics, 
 such as identifying new vs. previously seen addresses, 
 and counting unique and total addresses per block. 
-Generating these stats involves efficient uniqueness 
-checking across potentially vast amounts of data. 
-While in-memory checks work for small ranges, 
-they don't scale to the full blockchain range. 
-We also found that using a database for real-time tracking 
-introduced significant overhead that slowed the main traversal, 
-even when performed asynchronously.
 
 
-To ensure scalability without impacting traversal performance, 
-we utilize a two-step post-processing approach:
+Generating these statistics requires efficient uniqueness checking 
+across vast amounts of data. 
+While in-memory checks are effective for small data, 
+they don't scale to a large list of Bitcoin addresses. 
+We also found that using a database (e.g., PostgreSQL) 
+to track address uniqueness during the traversal process 
+introduced significant overhead.
 
-* Address Logging (During Traversal): 
-    All observed addresses are simply appended to plain text files 
-    as they are encountered during the block traversal. 
+
+Therefore, we utilize a two-step post-processing approach:
+
+* Step 1: Address Logging During Traversal: 
+    During the `traverse` command, all addresses are simply 
+    appended to plain text files. 
     No costly indexing or uniqueness checks are performed at this stage.
 
-* Offline Analysis (Post-Traversal):
-    First, the large address log files are sorted using scalable external 
-    sorting methods (which efficiently utilize both disk and memory).
-    Then, a custom tool processes the resulting sorted list
-    and the calculation of all necessary statistics.
+* Step 2: Disk-based Post-Traversal Uniqueness Check:
+    First, the large addresses text file from step 1 are sorted using a disk-based sorting method.
+    Then, a custom tool processes the sorted list and the calculation of all necessary statistics.
 
 
 The specific steps are outlined below .

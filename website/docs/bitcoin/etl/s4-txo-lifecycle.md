@@ -5,8 +5,13 @@ sidebar_position: 3
 slug: /bitcoin/etl/txo-lifecycle
 ---
 
-_This is an optional step, and you may run this step only if you included the `--track-txo` flag when running the `traverse` command._
 
+:::info
+This is an optional step, 
+and you may run this step only if you included the `--track-txo` flag [when running the `traverse` command.](/docs/bitcoin/etl/traverse)
+
+You may skip this step if you do not intent to get TXO lifecycle statistics.
+:::
 
 
 1. Merge all the files (you may skip this if you have only one file): 

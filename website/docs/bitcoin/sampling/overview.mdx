@@ -6,16 +6,16 @@ sidebar_label: Overview
 
 The graph-based machine learning community has developed 
 various strategies for training and using models on large graphs. 
-One of the most common approaches is training on sampled subgraphs. 
-Accordingly, the ML dataset consists of subgraphs (aka _communities_) 
+One of the most common approaches is training on sampled subgraphs 
+(aka _communities_) 
 pseudorandomly sampled from the larger graph.
 
 
 In general, the specifics of the sampling strategy 
 depend on the graph and the intended application. 
-This is even more pronounced for the provided Bitcoin graph, 
+This is even more pronounced for the Bitcoin Graph, 
 given its scale, the heterogeneity of its nodes and edges, 
-and its extensive longitudinal nature, as it spans many years.
+and its extensive longitudinal nature, as it spans over a decade.
 
 
 We provide customizable community sampling strategies 
@@ -28,6 +28,6 @@ The strategies we currently provide are:
 
 Additionally, we provide the following ready-to-use sampled communities:
 
-- Script to Script
-    * Dataset TODO Link
-    * Tutorial TODO Link
+- `200k` communities sampled using [Forest Fire method](./forest-fire) containing only _Script-to-Script_ edges.
+    * [Dataset](https://www.kaggle.com/datasets/vjalili/bitcoin-graph-sampled-communities/data)
+    * [Tutorial](https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification)
