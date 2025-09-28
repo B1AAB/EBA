@@ -4,3 +4,15 @@ title: Graph in Neo4j
 sidebar_label: Graph in Neo4j
 sidebar_position: 2
 ---
+
+The dataset is organized into separate TSV files 
+for nodes and edges based on their schema. 
+The files do not contain a header line, 
+instead, a corresponding `*_header.tsv.gz` 
+file provides the column names for each node or edge type.
+All files are grouped into batches and 
+pre-formatted for Neo4j's bulk import tool. 
+
+
+The dataset consists of `1966` files (`1.17 TB`) 
+and is available for [download at this link.](https://drive.google.com/drive/folders/11X6QiVvWSOzxvDIAD0OWu3g2Sa0as3UQ?usp=drive_link)
