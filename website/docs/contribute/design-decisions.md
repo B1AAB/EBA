@@ -2,6 +2,7 @@
 title: Design decisions
 description: Design decisions
 sidebar_position: 0
+slug: design-decisions
 ---
 
 
@@ -27,17 +28,17 @@ on Bitcoin Core to resolve the technical details of
 reading transactions.
 
 
-### Why Neo4j and CSV?
+### Why Neo4j and TSV?
 
 Our choice of data representation was driven by two key requirements: 
-portability for easy community sharing and scalability to handle a massive graph. 
-After experimenting with several formats, we selected a combination of batched CSV 
+**portability** for easy community sharing and **scalability** to handle a massive graph. 
+After experimenting with several formats, we selected a combination of batched TSV 
 files and the Neo4j graph database to achieve the right balance.
 
 
-- **Batched CSV Files for Portability**
-  While a single, massive CSV file is impractical for this dataset, 
-  CSVs remain highly portable. To solve the scaling issue, 
+- **Batched TSV Files for Portability**
+  While a single, massive TSV file is impractical for this dataset, 
+  TSVs remain highly portable. To solve the scaling issue, 
   we adopted a batching strategy: we store different node and edge types 
   in separate, homogeneous files and enforce a size limit on each. 
   This results in multiple, smaller batches of reasonably-sized 
