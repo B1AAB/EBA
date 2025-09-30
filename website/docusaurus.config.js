@@ -48,6 +48,7 @@ const config = {
           rehypePlugins: [rehypeKatex],
         },
         blog: {
+          blogSidebarTitle: 'Releases',
           showReadingTime: true,
           feedOptions: {
             type: ['rss', 'atom'],

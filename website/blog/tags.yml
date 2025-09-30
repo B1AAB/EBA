@@ -8,6 +8,5 @@ code-releases:
   permalink: '/code-releases'
   description: 'Content related to code releases.'
 
-# A partial tag definition is also valid
 announcements:
   label: 'Announcements'
