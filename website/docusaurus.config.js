@@ -60,6 +60,8 @@ const config = {
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
           onUntruncatedBlogPosts: 'warn',
+          path: './releases',
+          routeBasePath: '/releases'
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -102,7 +104,7 @@ const config = {
             position: 'right',
           },
           {
-            to: '/blog', 
+            to: '/releases', 
             label: 'Releases', 
             position: 'left'
           },
