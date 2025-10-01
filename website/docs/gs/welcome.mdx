@@ -1,0 +1,50 @@
+---
+sidebar_position: 0
+---
+
+# Welcome
+
+We provide large-scale temporal graphs of blockchain data 
+that enable you to develop ML applications across the vibrant cryptocurrency ecosystem, 
+including:
+
+* Exploring economic evolution and temporal behaviors.
+* Analyzing network dynamics and trading patterns.
+* Identifying suspicious or illicit activities.
+* Benchmarking large-scale, graph-based machine learning models.
+
+
+EBA interfaces with the Bitcoin network and 
+creates a graph of the full history of 
+transactions recorded on-chain, 
+encompassing the complete trading details of 
+over `8.72` billion BTC. 
+The temporal heterogeneous graph consists of 
+over `2.4` billion nodes 
+and `39.72` billion time-stamped edges 
+spanning more than a decade, 
+making it a complete resource for developing 
+models on Bitcoin and a large-scale resource 
+for benchmarking graph neural networks.
+
+
+We share the complete ETL pipeline and all 
+the data it generates. To simplify working with the 
+pipeline and its resources, we have split them into 
+separate repositories. 
+The following is the list of resources we provide for Bitcoin:
+
+- Datasets:
+    -   [Dataset Releases](http://localhost:3000/releases/tags/data-releases)
+    -   [Documentation](/docs/bitcoin/datasets/overview)
+    -   [Bitcoin Graph in neo4j format](/docs/bitcoin/datasets/neo4j-format)
+    -   [Block Statistics](/docs/bitcoin/datasets/stats)
+- Tools:
+    -   [Extract, Transform, and Load (ETL) pipeline](/docs/bitcoin/etl/overview)
+    -   [Community Sampling](/docs/bitcoin/sampling/overview)
+- ML:
+    -   [Quick-Start Example model](https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification): 
+        Trains a model on sampled communities that learns to generate node embeddings 
+        by aggregating neighborhood features through message passing, 
+        then uses these embeddings for script node clustering.
+    -   [External and off-chain resources](https://github.com/B1AAB/GraphStudio/tree/main/off_chain_resources/)

@@ -1,0 +1,139 @@
+---
+id: stats
+title: Block Statistics
+slug: stats
+sidebar_position: 1
+---
+
+
+
+As part of traversing the Bitcoin blockchain, 
+we collect summary statistics for each block. 
+You may download the summary statistics for 
+blocks up to block `863 000` from 
+[this link](https://www.kaggle.com/datasets/vjalili/bitcoin-block-metadata).
+
+
+The statistics are provided in a tabular format 
+and contain the following columns.
+
+
+### Features parsed from block header
+
+* `BlockHeight`: The block height.
+* `Confirmations`: The number of blocks confirmed in the chain after this block ([block confirmation](https://en.bitcoin.it/wiki/Confirmation)).
+* `MedianTime`: The Median Time-Past of the block ([Median time-past](https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki)).
+* `Bits`: The compact representation of the hashing target ([compact representation of hashing target](https://learnmeabitcoin.com/technical/block/bits)).
+* `Difficulty`: The block mining difficulty ([block mining difficulty](https://learnmeabitcoin.com/beginners/guide/difficulty)).
+* `Size`: The block's data size in bytes.
+* `StrippedSize`: The block's data size without its SegWit witness data.
+* `Weight`: The block's weight ([block's weight](https://learnmeabitcoin.com/technical/transaction/size)).
+* `TxCount`: The number of transactions in the block.
+
+### Parser Log
+
+*   `Runtime(seconds)`: The time it took to parse the block.
+*   `Retries`: A debugging-level log that counts the number of 
+    attempts it took to parse the block. 
+    This will be mostly $1$ unless the parser has run 
+    into throttle-related issues.
+
+
+### Block's transaction and script summary stats
+
+*   `MintedBitcoins`: 
+    Amount of new coins generated in the block.
+
+*   `TransactionFees`: 
+    Sum of transaction fees paid.
+
+*   `CoinbaseOutputsCount`: 
+    Number of output scripts in the coinbase transaction.
+
+*   `InputsCounts[Sum, Max, Min, Avg, Median, Variance]`: 
+    For the set of input counts per transaction across all 
+    transactions in the block, this reports their sum, max, 
+    min, average, median, and variance.
+
+*   `OutputsCounts[Sum, Max, Min, Avg, Median, Variance]`: 
+    For the set of output counts per transaction across all 
+    transactions in the block, this reports their sum, max, 
+    min, average, median, and variance.
+
+*   `InputsValues[Sum, Max, Min, Avg, Median, Variance]`: 
+    For the set of BTC values of inputs per transaction 
+    across all transactions in the block, this reports 
+    their sum, max, min, average, median, and variance.
+
+*   `OutputValues[Sum, Max, Min, Avg, Median, Variance]`: 
+    For the set of BTC values of outputs per transaction 
+    across all transactions in the block, this reports 
+    their sum, max, min, average, median, and variance.
+
+*   `ScriptType[*]`: 
+    Reports the count of each script type observed across 
+    all transactions in the block, where the recorded script types are:
+    `PubKey`, `PubKeyHash`, `ScriptHash`, `witness_v0_keyhash`, 
+    `witness_v0_scripthash`, `witness_v1_taproot`, 
+    `witness_unknown`, `multisig`, `nonstandard`, 
+    `NullData`, `Coinbase`, `Unknown`.
+
+*   `SpentOutputAge[Max, Min, Avg, Median, Variance]`:
+    For all transaction outputs (Txo) spent in this block, 
+    this reports the max, min, average, median, and variance 
+    of their age. 
+    Age is defined as the difference between the current 
+    block height and the block height where Txo was created. 
+
+
+### Block's graph summary stats
+
+    * `BlockGraph[*]EdgeCount`: Counts the number of edge types 
+    created for the transactions of this block. 
+    The `*` is one of the following:
+
+        *   `C2TMinting`: 
+            $\text{Coinbase}_u \xrightarrow{\text{Minting}} \text{Tx}_v$
+
+        *   `C2SMinting`: 
+            $\text{Coinbase}_u \xrightarrow{\text{Minting}} \text{Script}_v$
+
+        *   `T2TTransfer`: 
+            $\text{Tx}_u \xrightarrow{\text{Transfer}} \text{Tx}_v$
+
+        *   `T2TFee`: 
+            $\text{Tx}_u \xrightarrow{\text{Fee}} \text{Tx}_v$
+
+        *   `S2STransfer`: 
+            $\text{Script}_u \xrightarrow{\text{Transfer}} \text{Script}_v$
+
+        *   `S2SFee`: 
+            $\text{Script}_u \xrightarrow{\text{Fee}} \text{Script}_v$
+
+        *   `C2TMinting`: 
+            $\text{Coinbase}_u \xrightarrow{\text{Minting}} \text{Tx}_v$
+
+        *   `C2SMinting`: 
+            $\text{Coinbase}_u \xrightarrow{\text{Minting}} \text{Script}_v$
+
+        *   `T2TTransfer`: 
+            $\text{Tx}_u \xrightarrow{\text{Transfer}} \text{Tx}_v$
+
+        *   `T2TFee`: 
+            $\text{Tx}_u \xrightarrow{\text{Fee}} \text{Tx}_v$
+
+        *   `S2STransfer`: 
+            $\text{Script}_u \xrightarrow{\text{Transfer}} \text{Script}_v$
+
+        *   `S2SFee`: 
+            $\text{Script}_u \xrightarrow{\text{Fee}} \text{Script}_v$
+
+
+### Script address stats
+
+
+*   `TotalAddressesInBlock`: The total count of all script addresses in the block, including duplicates.
+
+*   `UniqueAddressesInBlock`: The count of unique script addresses in the block.
+
+*   `CumulativeUniqueAddresses`: The count of unique script addresses that appear for the first time in this block.
