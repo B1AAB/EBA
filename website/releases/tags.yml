@@ -3,10 +3,18 @@ data-releases:
   permalink: '/data-releases'
   description: 'Content related to data releases.'
 
+complete-run-etl:
+  label: 'Complete Run of ETL'
+  description: 'Content related to the end-to-end runs of ETL processes.'
+
 code-releases:
   label: 'Code Releases'
   permalink: '/code-releases'
   description: 'Content related to code releases.'
+
+latest:
+  label: 'Latest'
+  description: 'The latest resource release.'
 
 announcements:
   label: 'Announcements'

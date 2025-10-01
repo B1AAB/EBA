@@ -49,23 +49,21 @@ files and the Neo4j graph database to achieve the right balance.
   Graph databases are purpose-built for the complex queries this dataset requires, 
   such as efficiently retrieving _n_-hop neighbors of a given node. 
   We chose Neo4j specifically because of its wide adoption, 
-  and flexible licensing, offering both a free community edition 
+  and flexible licensing that offers both a free community edition 
   and scalable production-grade solutions. 
-  It is ideal for a wide spectrum of applications, 
-  which is why we provide Neo4j-based solutions.
 
 - **Other Formats We Considered**
   - **[np.memmap](https://numpy.org/doc/stable/reference/generated/numpy.memmap.html):** 
     We tested this disk-based binary format, 
     which is designed to minimize RAM usage. 
     While promising, it was too slow for the random-access queries 
-    required by our graph sampling algorithms, 
-    a critical part of our workflow.
+    required by our graph sampling algorithms
+    (e.g., fetch neighbors of a given root at _n_-hop distance).
 
   - **Relational Databases (e.g., PostgreSQL):** 
     Relational databases were efficient for indexed lookups 
     (e.g., retrieving a script's details by its address); 
     however, their performance degraded significantly on graph traversal 
     queries, which are generally implemented using nested INNER JOINs. 
-    This approach was not scalable for our primary use case: 
-    sampling hundreds of thousands of multi-hop communities.
+    Similar to `np.memmap`, this approach did not scale for sampling neighbors of 
+    hundreds of thousands of root nodes. 

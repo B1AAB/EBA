@@ -34,12 +34,17 @@ pipeline and its resources, we have split them into
 separate repositories. 
 The following is the list of resources we provide for Bitcoin:
 
-- [Datasets](/docs/bitcoin/datasets/overview):
-    - [Block Statistics](/docs/bitcoin/datasets/stats)
-    - [Bitcoin Graph in neo4j format](/docs/bitcoin/datasets/neo4j-format)
+- Datasets:
+    -   [Dataset Releases](http://localhost:3000/releases/tags/data-releases)
+    -   [Documentation](/docs/bitcoin/datasets/overview)
+    -   [Bitcoin Graph in neo4j format](/docs/bitcoin/datasets/neo4j-format)
+    -   [Block Statistics](/docs/bitcoin/datasets/stats)
 - Tools:
-    - [Extract, Transform, and Load (ETL) pipeline](/docs/bitcoin/etl/overview)
-    - [Community Sampling](/docs/bitcoin/sampling/overview)
+    -   [Extract, Transform, and Load (ETL) pipeline](/docs/bitcoin/etl/overview)
+    -   [Community Sampling](/docs/bitcoin/sampling/overview)
 - ML:
-    - Example models: [Graph Studio](https://github.com/b1aab/graphstudio)
-    - [External and off-chain labels](https://github.com/B1AAB/GraphStudio/tree/main/off_chain_resources/)
+    -   [Quick-Start Example model](https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification): 
+        Trains a model on sampled communities that learns to generate node embeddings 
+        by aggregating neighborhood features through message passing, 
+        then uses these embeddings for script node clustering.
+    -   [External and off-chain resources](https://github.com/B1AAB/GraphStudio/tree/main/off_chain_resources/)

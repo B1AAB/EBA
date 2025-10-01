@@ -11,9 +11,14 @@ import TabItem from '@theme/TabItem';
 
 
 :::tip Do I need to install EBA?
-**Yes**, if you want to reproduce or update the data, or sample custom communities from the graph.
+**Yes**, if you want to 
+[reproduce or update the data](/docs/bitcoin/etl/overview), or 
+[sample custom communities](/docs/bitcoin/sampling/overview) 
+from the graph.
 
-**No**, if you only want to use the communities or the [sample models](https://github.com/B1AAB/GraphStudio) we provide.
+**No**, if you only want to use the 
+[communities](https://www.kaggle.com/datasets/vjalili/bitcoin-graph-sampled-communities), or 
+the [sample models](https://github.com/B1AAB/GraphStudio) we provide.
 ::::
 
 ## Build from source code
