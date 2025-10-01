@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?><?xml-stylesheet type="text/xsl" href="rss.xsl"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+    <channel>
+        <title>EBA Blog</title>
+        <link>https://eba.b1aab.ai/releases</link>
+        <description>EBA Blog</description>
+        <lastBuildDate>Wed, 01 Oct 2025 23:49:22 GMT</lastBuildDate>
+        <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+        <generator>https://github.com/jpmonette/feed</generator>
+        <language>en</language>
+        <item>
+            <title><![CDATA[Bitcoin Graph v1]]></title>
+            <link>https://eba.b1aab.ai/releases/data-release/v1</link>
+            <guid>https://eba.b1aab.ai/releases/data-release/v1</guid>
+            <pubDate>Wed, 01 Oct 2025 23:49:22 GMT</pubDate>
+            <description><![CDATA[Initial data release.]]></description>
+            <content:encoded><![CDATA[<p>This data release provides the full output of the ETL pipeline,
+covering the Bitcoin blockchain up to block height <code>863 000</code>.
+The release includes the complete Bitcoin Graph,
+consisting of <code>&gt;2.4B</code> nodes, <code>&gt;39.7B</code> edges,
+provided in both Neo4j-compatible TSV and database dump formats,
+alongside pre-sampled communities and per-block summary statistics.</p>
+<p>The release contains the following resources:</p>
+<hr>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="bitcoin-graph">Bitcoin Graph<a href="https://eba.b1aab.ai/releases/data-release/v1#bitcoin-graph" class="hash-link" aria-label="Direct link to Bitcoin Graph" title="Direct link to Bitcoin Graph">​</a></h4>
+<div class="tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Use Cases</li><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">Downloads</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
+<li>Developing specialized cryptocurrency ML models;</li>
+<li>Sampling application-specific communities;</li>
+<li>Exploring the graph.</li>
+</ul></div><div role="tabpanel" class="tabItem_Ymn6"><ul>
+<li>Download <a href="https://drive.google.com/drive/folders/11X6QiVvWSOzxvDIAD0OWu3g2Sa0as3UQ?usp=drive_link" target="_blank" rel="noopener noreferrer">Neo4j format (1.17TB)</a></li>
+<li>Download <a href="https://drive.google.com/drive/folders/1bAsjgVaIQrG2TDGkMtIEDPX8xKoiHJUf?usp=drive_link" target="_blank" rel="noopener noreferrer">Neo4j database dump (731GB)</a></li>
+<li><a href="https://eba.b1aab.ai/docs/bitcoin/datasets/neo4j-format">Documentation</a></li>
+</ul></div></div></div>
+<hr>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="sampled-hello-world-communities">Sampled <em>Hello-World</em> Communities<a href="https://eba.b1aab.ai/releases/data-release/v1#sampled-hello-world-communities" class="hash-link" aria-label="Direct link to sampled-hello-world-communities" title="Direct link to sampled-hello-world-communities">​</a></h4>
+<div class="tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Use Cases</li><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">Downloads</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
+<li>A quick introduction and exploring the dataset.</li>
+</ul></div><div role="tabpanel" class="tabItem_Ymn6"><ul>
+<li><a href="https://www.kaggle.com/datasets/vjalili/bitcoin-graph-sampled-communities" target="_blank" rel="noopener noreferrer">Download from Kaggle</a></li>
+<li>Use in a <a href="https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification" target="_blank" rel="noopener noreferrer"><em>Hello-World</em> script classification model</a></li>
+</ul></div></div></div>
+<hr>
+<h4 class="anchor anchorWithStickyNavbar_LWe7" id="block-summary-statistics">Block Summary Statistics<a href="https://eba.b1aab.ai/releases/data-release/v1#block-summary-statistics" class="hash-link" aria-label="Direct link to Block Summary Statistics" title="Direct link to Block Summary Statistics">​</a></h4>
+<div class="tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Use Cases</li><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">Downloads</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
+<li>Longitudinal analysis of on-chain dynamics and trends.</li>
+<li>Combine on-chain block statistics with external data (e.g., market trading values for use in market forecasting models).</li>
+</ul></div><div role="tabpanel" class="tabItem_Ymn6"><ul>
+<li><a href="https://www.kaggle.com/datasets/vjalili/bitcoin-block-metadata" target="_blank" rel="noopener noreferrer">Download from Kaggle</a></li>
+<li><a href="https://eba.b1aab.ai/docs/bitcoin/datasets/stats">Documentation</a></li>
+</ul></div></div></div>
+<hr>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="dataset-spec">Dataset Spec<a href="https://eba.b1aab.ai/releases/data-release/v1#dataset-spec" class="hash-link" aria-label="Direct link to Dataset Spec" title="Direct link to Dataset Spec">​</a></h2>
+<ul>
+<li>
+<p>Covers all blocks on the Bitcoin Mainnet up to block height <code>863 000</code>.</p>
+</li>
+<li>
+<p>Node count: <code>2 405 686 021</code> (<code>&gt;1.3B</code> Script nodes, <code>1.08B</code> Tx nodes, <code>863k</code> Block nodes, <code>1</code> Coinbase node).</p>
+</li>
+<li>
+<p>Edge count: <code>39 724 622 327</code> (<code>&gt;13.2B</code> Redeems, <code>&gt;9.6B</code> Credits, <code>&gt;8.85B</code> Transfers, <code>&gt;4.3B</code> Fee, <code>&gt;3.6B</code> Confirms, <code>&gt;3.3M</code> Mints).</p>
+</li>
+<li>
+<p>The following transactions are excluded:</p>
+<ul>
+<li>Transactions where the number of non-zero BTC
+input and output scripts is more than 20 each are excluded.</li>
+<li>Transactions and UTxO with 0 BTC are excluded.</li>
+</ul>
+</li>
+</ul>]]></content:encoded>
+            <category>Data Releases</category>
+            <category>Complete Run of ETL</category>
+            <category>Latest</category>
+        </item>
+    </channel>
+</rss>
