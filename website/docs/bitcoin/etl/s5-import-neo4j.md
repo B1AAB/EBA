@@ -144,11 +144,7 @@ initial population and incremental updates.
 We also provide a dump of the neo4j database containing the entire bitcoin graph.
 In order to use this, you may take the following steps:
 
-1. Download the dump from the following link:
-
-    ```shell
-    # LINK
-    ```
+1. [Download the dump](/releases/data-release/v1).
 
 2. Import into neo4j. You may follow the steps outlined 
 [on this page](https://neo4j.com/docs/operations-manual/current/backup-restore/restore-dump/)
