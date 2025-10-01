@@ -34,7 +34,7 @@ const ApplicationsList = [
       <>
         Utilize this massive, real-world graph as a challenging 
         benchmark dataset to evaluate the performance, scalability, 
-        and effectiveness of new large-scale graph machine learning models and algorithms.
+        and effectiveness of new large-scale graph machine learning models.
       </>
     ),
   },
@@ -42,10 +42,10 @@ const ApplicationsList = [
 
 const economicEvolutionFeatures = [
   {
-    title: <>Model the financial flows and network topology of Bitcoin's on-chain economy using our freely available temporal graph.</>,
+    title: <>Model the financial flows and network topology of Bitcoin's on-chain economy using Bitcoin Graph.</>,
     description: (
       <>
-        Trace 16 years of economic evolution with our complete temporal heterogeneous graph to reveal the on-chain dynamics and behavioral patterns that static datasets obscure.
+        Trace 16 years of economic evolution with a complete temporal heterogeneous graph to reveal the on-chain dynamics and behavioral patterns that static datasets obscure.
       </>
     ),
     buttons: [
@@ -75,11 +75,8 @@ const largestDatasetFeatures = [
     title: <>Largest Public Graph Dataset</>,
     description: (
       <>
-        Test the limits of your models on the largest publicly available
-        temporal graph of the Bitcoin blockchain.
-        With over 2.4 billion nodes and 39.7 billion edges,
-        this dataset provides a massive, real-world benchmark
-        to validate the performance and scalability of your models.
+        Benchmark the scalability and performance of your models on the largest publicly available temporal graph;
+        a heterogeneous graph of over 2.4 billion nodes and 39.7 billion time-stamped edges composed of various node and edge types.
       </>
     ),
     buttons: [
@@ -97,11 +94,17 @@ const mlReadyDesignFeatures = [
     title: <>ML-Ready Design</>,
     description: (
       <>
-        Our graph abstracts away the complexities of Bitcoin's UTXO ledger, 
+        Bitcoin Graph abstracts away the complexities of Bitcoin's UTxO ledger, 
         providing an intuitive representation of fund flows 
         so you can go straight to designing and training your models.
       </>
     ),
+    buttons: [
+      {
+        buttonLink: 'https://github.com/B1AAB/GraphStudio',
+        buttonText: 'Explore Models'
+      }
+    ],
     colSize: "col--12",
   }
 ];

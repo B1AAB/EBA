@@ -4,25 +4,6 @@ description: Advanced Usage & Troubleshooting
 sidebar_position: 9
 ---
 
-
-### Some blocks for debugging
-- There are many transactions where they create many outputs 
-with 0 value. For instance, the transaction with id 
-`ceb1a7fb57ef8b75ac59b56dd859d5cb3ab5c31168aa55eb3819cd5ddbd3d806`
-belonging to the block with height `123573`, contains `279` outputs
-with value `0`. 
-
-- Examples of some bad/strange transactions:
-    - 71036 (search for txes in this block)
-    - 268449
-    - 565912
-    - 706953
-    - 774532
-    - 710061 (some execution path related to this are currently not implemented)
-
-
-
-
 ### Making Bitcoin Core Accessible from Another Computer on the LAN {#bitcoin-core-lan}
 
 Set the `bitcoin.conf` file as the following
@@ -79,3 +60,19 @@ Connection to 192.168.1.2 port 8332 (tcp/*) succeeded!
 Read more about [networking](https://bitcoin.org/en/full-node#upgrading-bitcoin-core)
 or related [security details](https://github.com/bitcoin/bitcoin/blob/master/doc/JSON-RPC-interface.md#security).
 
+
+
+### Some blocks for debugging
+- There are many transactions where they create many outputs 
+with 0 value. For instance, the transaction with id 
+`ceb1a7fb57ef8b75ac59b56dd859d5cb3ab5c31168aa55eb3819cd5ddbd3d806`
+belonging to the block with height `123573`, contains `279` outputs
+with value `0`. 
+
+- Examples of some bad/strange transactions:
+    - 71036 (search for txes in this block)
+    - 268449
+    - 565912
+    - 706953
+    - 774532
+    - 710061 (some execution path related to this are currently not implemented)
