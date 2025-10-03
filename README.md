@@ -27,7 +27,7 @@ across the vibrant cryptocurrency ecosystem, including:
 
 
 
-The Bitcoin Graph EBA creates encompasses 
+The Bitcoin Graph that EBA creates encompasses 
 the complete trading details of over `8.72` billion BTC,
 and it consists of over `2.4` billion nodes and 
 `39.72` billion time-stamped edges spanning more than a decade.
