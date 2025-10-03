@@ -1,6 +1,6 @@
 **EBA addresses a long-standing issue that has hindered 
 the ML community from developing applications for Bitcoin: 
-a lack of usable on-chain data.** 
+a lack of ML-first data.** 
 EBA interfaces with the Bitcoin network and 
 creates a graph of the full history of transactions recorded on-chain. 
 On this graph, the nodes are Bitcoin _scripts_ (aka _addresses_), 

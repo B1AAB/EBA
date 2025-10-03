@@ -66,6 +66,8 @@
 
   --features-alt-background: #1e2022;
   ;*/
+  --ifm--highlight-color: #240046;
+  --ifm--highlight-background-color: #ff9e00;
 }
 
 .footer {
@@ -75,3 +77,13 @@
 .footer-dark {
   --ifm-footer-background-color: #181818;
 }
+
+
+.highlight--emphasis {
+  border-radius: 4px;
+  padding: 0.4rem 0.2rem;
+  background-color: var(--ifm--highlight-background-color);
+  color: var(--ifm--highlight-color);
+  font-weight: 600;
+}
+
