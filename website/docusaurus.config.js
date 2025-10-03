@@ -152,6 +152,24 @@ const config = {
         theme: prismThemes.github,
         darkTheme: prismThemes.dracula,
         additionalLanguages: ['csharp', 'powershell', 'python', 'bash', 'json', 'yaml', 'css', 'javascript', 'csv'],
+      },
+      algolia: {
+        appId: 'MZ8MD5Z0KJ',
+        apiKey: 'aefbece225ceaf3bbfecc3af8c7c64f4',
+        indexName: 'EBA Crawler',
+        contextualSearch: true,
+
+        // Optional: Specify domains where the navigation should occur through window.location instead on history.push. Useful when our Algolia config crawls multiple documentation sites and we want to navigate with window.location.href to them.
+        //externalUrlRegex: 'external\\.com|domain\\.com',
+
+        replaceSearchResultPathname: {
+          from: '/docs/', // or as RegExp: /\/docs\//
+          to: '/',
+        },
+        searchPagePath: 'search',
+
+        // Optional: whether the insights feature is enabled or not on Docsearch (`false` by default)
+        insights: false
       }
     }),
 
