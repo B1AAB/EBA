@@ -1,13 +1,66 @@
+**EBA addresses a long-standing issue that has hindered 
+the ML community from developing applications for Bitcoin: 
+a lack of usable on-chain data.** 
+The paradox of publicly accessible blockchain data is that 
+its cryptography-first design, 
+a necessity for a decentralized ledger, 
+has impeded its adoption by the ML community. 
+Accordingly, blockchains use models such as the 
+Unspent Transaction Output (UTxO) 
+that do not readily provide information from which 
+an ML model can learn the topology of financial flows 
+for predictive tasks like market forecasting or 
+classification tasks like anomaly detection.
+
+
+
+Specifically, the friction for ML from this cryptography-first design is twofold. 
+First, UTxO-like models provide only a static snapshot of 
+financial flows (i.e., the transaction); 
+reconstructing the actual flow of how funds are earned and spent 
+requires additional traversal of the blockchain. 
+Arguably, this flow provides more information for ML applications 
+than the snapshot. 
+Second, unlike the common perception of a transaction where 
+_`x` sends `Z` amount to `y`_, 
+the UTxO model encodes it as a complex process where 
+_cryptographic proof of ownership (from the set `{x}`) 
+unlocks a set of previously unspent atomic currency units, 
+and this sum (`Z`) is then 
+split and re-locked under a new cryptographic locking mechanism 
+where only the intended recipients can unlock (the set `{y}`). 
+This latter description is what is publicly recorded on the blockchain, 
+and it is not ML-friendly. 
+EBA addresses both of these issues.
+
+
+
 EBA interfaces with the Bitcoin network and 
-creates a graph of the full history of transactions recorded on-chain, 
-encompassing the complete trading details of over `8.72` billion BTC.
-The temporal heterogeneous graph consists of over `2.4` billion nodes and 
+creates a graph of the full history of transactions recorded on-chain. 
+On this graph, the nodes are Bitcoin _scripts_ (aka _addresses_), 
+and the edges between them represent transactions recorded on-chain via the UTxO model.
+Simply put, 
+the graph represents a transaction between `x` and `y` as 
+a time-stamped, directed edge between their corresponding nodes. 
+Consequently, the flow of how funds are earned and spent can be traced 
+by traversing these paths. 
+This graph is built for ML, Graph Neural Networks (GNNs) in particular, 
+allowing a graph-based model to aggregate information from neighbors 
+through message passing and learn the topology of fund flows for various applications. 
+
+
+
+The Bitcoin Graph EBA creates encompasses 
+the complete trading details of over `8.72` billion BTC,
+and it consists of over `2.4` billion nodes and 
 `39.72` billion time-stamped edges spanning more than a decade, 
 making it a complete resource for developing models on Bitcoin and 
 a large-scale resource for benchmarking graph neural networks. 
 
 
-We share the complete ETL pipeline and all the data it generates. 
+
+We share the complete ETL pipeline and all the data it generates (
+[Documentation](https://eba.b1aab.ai), [Data Releases](https://eba.b1aab.ai/releases/tags/data-releases))
 To simplify working with the pipeline and its resources, 
 we have split them into separate repositories. 
 The following resource map will help you navigate to the resources that suit your application. 
@@ -33,11 +86,11 @@ graph LR
     coms --> apps;    
 
     %% --- Link Definitions ---
-    click eba "https://github.com/B1AAB/EBA" "EBA"
+    click eba "https://eba.b1aab.ai" "EBA"
     click offchain "https://github.com/B1AAB/GraphStudio/blob/main/off_chain_resources/" "Off-chain resources"
     click apps "https://github.com/B1AAB/GraphStudio/blob/main/quickstart/" "Off-chain resources"
-    click neo4j "https://drive.google.com/drive/folders/11X6QiVvWSOzxvDIAD0OWu3g2Sa0as3UQ?usp=sharing" "Graph in Neo4j"
-    click neo4jDump "https://drive.google.com/drive/folders/1bAsjgVaIQrG2TDGkMtIEDPX8xKoiHJUf?usp=sharing" "Neo4j Dump"
+    click neo4j "https://eba.b1aab.ai/releases/tags/data-releases" "Graph in Neo4j"
+    click neo4jDump "https://eba.b1aab.ai/releases/tags/data-releases" "Neo4j Dump"
 
     %% --- Styling ---
     %%style eba fill:#ff9e00,stroke:#ff9e00,color:#000
