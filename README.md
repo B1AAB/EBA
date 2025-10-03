@@ -20,10 +20,10 @@ aggregate information from neighbors through message passing and
 learn the topology of fund flows for various applications 
 across the vibrant cryptocurrency ecosystem, including:
 
-    *   Exploring economic evolution and temporal behaviors.
-    *   Analyzing network dynamics and trading patterns.
-    *   Identifying suspicious or illicit activities.
-    *   Benchmarking large-scale, graph-based machine learning models.
+*   Exploring economic evolution and temporal behaviors.
+*   Analyzing network dynamics and trading patterns.
+*   Identifying suspicious or illicit activities.
+*   Benchmarking large-scale, graph-based machine learning models.
 
 
 
@@ -33,9 +33,9 @@ and it consists of over `2.4` billion nodes and
 `39.72` billion time-stamped edges spanning more than a decade.
 We share the complete ETL pipeline and all the data it generates:
 
-    *   [Documentation](https://eba.b1aab.ai)
-    *   [Data Releases](https://eba.b1aab.ai/releases/tags/data-releases)
-    *   [Sample Applications](https://github.com/B1AAB/GraphStudio)
+*   [Documentation](https://eba.b1aab.ai)
+*   [Data Releases](https://eba.b1aab.ai/releases/tags/data-releases)
+*   [Sample Applications](https://github.com/B1AAB/GraphStudio)
 
 
 
