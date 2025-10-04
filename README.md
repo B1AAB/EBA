@@ -6,7 +6,7 @@ creates a graph of the full history of transactions recorded on-chain.
 On this graph, the nodes are Bitcoin _scripts_ (aka _addresses_), 
 and the edges between them represent transactions recorded on-chain via the UTxO model.
 Simply put, 
-the graph represents a transaction between `x` and `y` as 
+the graph represents a transaction between _addresses_ `x` and `y` as 
 a time-stamped, directed edge between their corresponding nodes. 
 Consequently, the flow of how funds are earned and spent can be traced 
 by traversing these paths. [Read More](https://eba.b1aab.ai/docs/gs/welcome)
