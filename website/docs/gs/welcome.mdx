@@ -2,30 +2,77 @@
 sidebar_position: 0
 ---
 
+import Highlight from '@site/src/components/Highlight';
+
 # Welcome
 
-We provide large-scale temporal graphs of blockchain data 
-that enable you to develop ML applications across the vibrant cryptocurrency ecosystem, 
-including:
+<Highlight color="emphasis">EBA addresses a long-standing issue that has hindered 
+the ML community from developing applications for Bitcoin: 
+**a lack of ML-first data.**</Highlight>
 
-* Exploring economic evolution and temporal behaviors.
-* Analyzing network dynamics and trading patterns.
-* Identifying suspicious or illicit activities.
-* Benchmarking large-scale, graph-based machine learning models.
 
+
+### The Challenge
+
+The paradox of publicly accessible blockchain data is that 
+its cryptography-first design, 
+a necessity for a decentralized ledger, 
+has impeded its adoption by the ML community. 
+Accordingly, blockchains use models such as the 
+Unspent Transaction Output (UTxO) 
+that do not readily provide information from which 
+an ML model can learn the topology of financial flows 
+for predictive tasks like market forecasting or 
+classification tasks like anomaly detection.
+
+
+
+Specifically, the friction for ML from this cryptography-first design is twofold. 
+First, UTxO-like models provide only a static snapshot of 
+financial flows (i.e., the transaction), and 
+reconstructing the actual flow of how funds are earned and spent 
+requires additional traversal of the blockchain. 
+Arguably, this flow provides more information for ML applications 
+than the snapshot. 
+Second, unlike the common perception of a transaction where
+"$x$ sends $Z$ amount to $y$",
+the UTxO model encodes it as a complex process where 
+"cryptographic proof of ownership (from the set $\{x\}$) 
+unlocks a set of previously unspent atomic currency units, 
+and this sum ($Z$) is then 
+split and re-locked under a new cryptographic locking mechanism 
+where only the intended recipients can unlock (the set $\{y\}$)". 
+This latter description is what is publicly recorded on the blockchain, 
+and it is not ML-friendly. 
+EBA addresses both of these issues.
+
+
+
+
+### The Solution
 
 EBA interfaces with the Bitcoin network and 
-creates a graph of the full history of 
-transactions recorded on-chain, 
-encompassing the complete trading details of 
-over `8.72` billion BTC. 
-The temporal heterogeneous graph consists of 
-over `2.4` billion nodes 
-and `39.72` billion time-stamped edges 
-spanning more than a decade, 
-making it a complete resource for developing 
-models on Bitcoin and a large-scale resource 
-for benchmarking graph neural networks.
+creates a graph of the full history of transactions recorded on-chain. 
+On this graph, the nodes are Bitcoin _scripts_ (aka _addresses_), 
+and the edges between them represent transactions recorded on-chain via the UTxO model.
+Simply put, 
+the graph represents a transaction between $x$ and $y$ as 
+a time-stamped, directed edge between their corresponding nodes. 
+Consequently, the flow of how funds are earned and spent can be traced 
+by traversing these paths. 
+This graph is built for ML, Graph Neural Networks (GNNs) in particular, 
+allowing a graph-based model to aggregate information from neighbors 
+through message passing and learn the topology of fund flows for various applications. 
+
+
+
+The Bitcoin Graph that EBA creates encompasses 
+the complete trading details of over `8.72` billion BTC,
+and it consists of over `2.4` billion nodes and 
+`39.72` billion time-stamped edges spanning more than a decade, 
+making it a complete resource for developing models on Bitcoin and 
+a large-scale resource for benchmarking graph neural networks. 
+
 
 
 We share the complete ETL pipeline and all 
@@ -48,3 +95,19 @@ The following is the list of resources we provide for Bitcoin:
         by aggregating neighborhood features through message passing, 
         then uses these embeddings for script node clustering.
     -   [External and off-chain resources](https://github.com/B1AAB/GraphStudio/tree/main/off_chain_resources/)
+
+
+
+### The Application
+
+This graph is built for machine learning, 
+particularly Graph Neural Networks (GNNs),
+allowing a graph-based model to 
+aggregate information from neighbors through message passing and 
+learn the topology of fund flows for various applications 
+across the vibrant cryptocurrency ecosystem, including:
+
+*   Exploring economic evolution and temporal behaviors.
+*   Analyzing network dynamics and trading patterns.
+*   Identifying suspicious or illicit activities.
+*   Benchmarking large-scale, graph-based machine learning models.
