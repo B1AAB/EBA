@@ -1,4 +1,4 @@
-﻿namespace EBA.Graph.Db.Neo4jDb.BitcoinStrategies;
+﻿namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public abstract class BitcoinEdgeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
 {

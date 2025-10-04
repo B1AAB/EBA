@@ -1,4 +1,4 @@
-﻿using EBA.Graph.Db.Neo4jDb.BitcoinStrategies;
+﻿using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 using Microsoft.Extensions.Primitives;
 
