@@ -1,8 +1,8 @@
 {
-    "label": "Bitcoin",
-    "position": 1,
-    "link": {
-      "type": "doc",
-      "id": "bitcoin/overview"
-    }
+  "label": "Bitcoin",
+  "position": 1,
+  "link": {
+    "type": "doc",
+    "id": "bitcoin/overview"
   }
+}

@@ -1,6 +1,6 @@
 ---
 title: Current limitations
-description: current limitations
+description: Current limitations
 sidebar_position: 1
 ---
 

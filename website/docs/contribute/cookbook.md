@@ -1,6 +1,6 @@
 ---
 title: Hacker's Cookbook
-description: Advanced Usage & Troubleshooting
+description: Advanced usage & troubleshooting
 sidebar_position: 9
 ---
 
