@@ -9,7 +9,13 @@ Simply put,
 the graph represents a transaction between _addresses_ `x` and `y` as 
 a time-stamped, directed edge between their corresponding nodes. 
 Consequently, the flow of how funds are earned and spent can be traced 
-by traversing these paths. [Read More](https://eba.b1aab.ai/docs/gs/welcome)
+by traversing these paths.
+
+<p align="center">
+    |
+    <a href="https://eba.b1aab.ai/docs/gs/welcome">Read More</a> 
+    |
+</p>
 
 
 
@@ -25,17 +31,28 @@ across the vibrant cryptocurrency ecosystem, including:
 *   Identifying suspicious or illicit activities.
 *   Benchmarking large-scale, graph-based machine learning models.
 
+<p align="center">
+    |
+    <a href="https://github.com/B1AAB/GraphStudio">Explore Example Applications</a> 
+    |
+</p>
 
 
 The Bitcoin Graph that EBA creates encompasses 
 the complete trading details of over `8.72` billion BTC,
 and it consists of over `2.4` billion nodes and 
 `39.72` billion time-stamped edges spanning more than a decade.
-We share the complete ETL pipeline and all the data it generates:
+We share the complete ETL pipeline and all the data it generates.
 
-*   [Documentation](https://eba.b1aab.ai)
-*   [Data Releases](https://eba.b1aab.ai/releases/tags/data-releases)
-*   [Sample Applications](https://github.com/B1AAB/GraphStudio)
+<p align="center">
+    |
+    <a href="https://eba.b1aab.ai">Documentation</a> 
+    |
+    <a href="https://eba.b1aab.ai/docs/gs/quickstart">Quick Start</a> 
+    |
+    <a href="https://eba.b1aab.ai/releases/tags/data-releases">Data Releases</a> 
+    |
+</p>
 
 
 
