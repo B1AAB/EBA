@@ -416,4 +416,8 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
-/BC2G/Properties/launchSettings.json
+/EBA/Properties/launchSettings.json
+publish/
+build/
+
+!website/releases/

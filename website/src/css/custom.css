@@ -1,0 +1,89 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+  --ifm-color-primary: #5c0099;
+  --ifm-color-primary-dark: #53008a;
+  --ifm-color-primary-darker: #4e0082;
+  --ifm-color-primary-darkest: #40006b;
+  --ifm-color-primary-light: #6500a8;
+  --ifm-color-primary-lighter: #6a00b0;
+  --ifm-color-primary-lightest: #7800c7;
+  --ifm-background-color: #ffffff;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  /*--ifm-font-color-base: #000000;*/
+
+  --ifm-hero-background-color: #10002b;
+
+  --features-background: #7a78bd;
+  --features-text-title-color: #111e3c;
+  --features-text-description-color: #111e3c;
+
+  --features-alt-background: #dad6dd;
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  
+  --ifm-color-primary: #ff9e00;
+  --ifm-color-primary-dark: #e68e00;
+  --ifm-color-primary-darker: #d98600;
+  --ifm-color-primary-darkest: #b36f00;
+  --ifm-color-primary-light: #ffa81a;
+  --ifm-color-primary-lighter: #ffad26;
+  --ifm-color-primary-lightest: #ffbb4d;
+  --ifm-background-color: #0d0024;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  /*--ifm-font-color-base: #f5f6f7;*/
+  
+  --ifm-hero-background-color: #ff6d00;
+
+  --features-background: #15171f;
+  --features-text-title-color: rgb(219, 200, 169);
+  --features-text-description-color: #9a89aa;
+
+  --features-alt-background: #1f1e27;
+
+  /* Green color
+  --ifm-color-primary: #86c232;
+  --ifm-color-primary-dark: #79af2d;
+  --ifm-color-primary-darker: #72a52a;
+  --ifm-color-primary-darkest: #6b9b28;
+  --ifm-color-primary-light: #92cd3f;
+  --ifm-color-primary-lighter: #98d049;
+  --ifm-color-primary-lightest: #a8d766;
+  --ifm-hero-background-color: #61892F;
+
+  --features-background: #222629;
+  --features-text-title-color: #86C232;
+  --features-text-description-color: #6B6E70;
+
+  --features-alt-background: #1e2022;
+  ;*/
+  --ifm--highlight-color: #240046;
+  --ifm--highlight-background-color: #ff9e00;
+}
+
+.footer {
+  --ifm-footer-background-color: #181818;
+}
+
+.footer-dark {
+  --ifm-footer-background-color: #181818;
+}
+
+
+.highlight--emphasis {
+  border-radius: 4px;
+  padding: 0.4rem 0.2rem;
+  background-color: var(--ifm--highlight-background-color);
+  color: var(--ifm--highlight-color);
+  font-weight: 600;
+}
+
