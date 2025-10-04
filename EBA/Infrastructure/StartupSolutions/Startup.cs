@@ -1,4 +1,4 @@
-﻿using EBA.Graph.Db.Neo4jDb;
+﻿using EBA.Graph.Db.Neo4jDb.Bitcoin;
 
 namespace EBA.Infrastructure.StartupSolutions;
 

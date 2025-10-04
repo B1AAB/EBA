@@ -3,7 +3,7 @@
 using Microsoft.Extensions.Primitives;
 
 
-namespace EBA.Graph.Db.Neo4jDb;
+namespace EBA.Graph.Db.Neo4jDb.Bitcoin;
 
 public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
 {
@@ -491,7 +491,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                         edges.TryAdd(edge.ElementId, edge);
             }
 
-            var nodesToKeep = nodes.Keys.OrderBy(x => rnd.Next()).Take((int)Math.Floor(nodeSamplingCountAtRoot - (hop * nodeCountReductionFactorByHop))).ToList();
+            var nodesToKeep = nodes.Keys.OrderBy(x => rnd.Next()).Take((int)Math.Floor(nodeSamplingCountAtRoot - hop * nodeCountReductionFactorByHop)).ToList();
             var nodesToKeepIds = new HashSet<string>();
             foreach (var nodeId in nodesToKeep)
                 if (!allNodesAddedToGraph.Contains(nodeId))
@@ -628,7 +628,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 foreach (var e in edge.Value)
                     g.GetOrAddEdge(edge.Key, e);
 
-            if (g.EdgeCount + (g.EdgeCount * 0.2) >= options.MaxEdgeCount || g.NodeCount + (g.NodeCount * 0.2) >= options.MaxNodeCount)
+            if (g.EdgeCount + g.EdgeCount * 0.2 >= options.MaxEdgeCount || g.NodeCount + g.NodeCount * 0.2 >= options.MaxNodeCount)
                 break;
         }
 
