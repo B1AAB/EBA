@@ -11,10 +11,10 @@ public interface IGraphDb<T> : IDisposable where T : GraphBase
     public Task<List<Model.INode>> GetRandomNodes(string nodeType, int count, double nodeSelectProbability = 0.1);
 
     public Task<List<IRecord>> GetNeighbors(
-        string rootNodeLabel, 
-        string propKey, 
-        string propValue, 
-        int queryLimit, 
+        string rootNodeLabel,
+        string propKey,
+        string propValue,
+        int queryLimit,
         string labelFilters,
         int maxLevel,
         SamplingAlgorithm traversalAlgorithm);

@@ -1,5 +1,5 @@
 using EBA.Graph.Db.Neo4jDb;
-using BC2G.Graph.Db.Neo4jDb.Bitcoin;
+using EBA.Graph.Db.Neo4jDb.Bitcoin;
 
 namespace EBA.Infrastructure.StartupSolutions;
 
@@ -46,7 +46,7 @@ public class Startup
     }
 
     private static void ConfigureApp(
-        HostBuilderContext context, 
+        HostBuilderContext context,
         IConfigurationBuilder config,
         Options options)
     {
@@ -73,7 +73,7 @@ public class Startup
         services.AddSingleton(options);
         services.AddSingleton<IGraphDb<BitcoinGraph>, BitcoinNeo4jDb>();
         services.AddSingleton<BitcoinOrchestrator>();
-        services.AddSingleton<IGraphDb<BitcoinGraph>, Neo4jDb<BitcoinGraph>>();
+        services.AddSingleton<IGraphDb<BitcoinGraph>, Neo4jDbLegacy<BitcoinGraph>>();
         services.AddSingleton<Graph.Bitcoin.GraphAgent>();
 
         // Passing BitcoinAgent type as the generic argument

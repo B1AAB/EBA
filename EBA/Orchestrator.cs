@@ -1,5 +1,8 @@
 using EBA.CLI;
+using EBA.Graph.Bitcoin;
 using EBA.Utilities;
+
+using EBA.CLI;
 
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
