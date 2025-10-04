@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://eba.b1aab.ai/releases</id>
     <title>EBA Blog</title>
-    <updated>2025-10-01T23:49:22.000Z</updated>
+    <updated>2025-10-04T01:06:59.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://eba.b1aab.ai/releases"/>
     <subtitle>EBA Blog</subtitle>
@@ -10,7 +10,7 @@
         <title type="html"><![CDATA[Bitcoin Graph v1]]></title>
         <id>https://eba.b1aab.ai/releases/data-release/v1</id>
         <link href="https://eba.b1aab.ai/releases/data-release/v1"/>
-        <updated>2025-10-01T23:49:22.000Z</updated>
+        <updated>2025-10-04T01:06:59.000Z</updated>
         <summary type="html"><![CDATA[Initial data release.]]></summary>
         <content type="html"><![CDATA[<p>This data release provides the full output of the ETL pipeline,
 covering the Bitcoin blockchain up to block height <code>863 000</code>.
@@ -20,7 +20,7 @@ provided in both Neo4j-compatible TSV and database dump formats,
 alongside pre-sampled communities and per-block summary statistics.</p>
 <p>The release contains the following resources:</p>
 <hr>
-<h4 class="anchor anchorWithStickyNavbar_LWe7" id="bitcoin-graph">Bitcoin Graph<a href="https://eba.b1aab.ai/releases/data-release/v1#bitcoin-graph" class="hash-link" aria-label="Direct link to Bitcoin Graph" title="Direct link to Bitcoin Graph">​</a></h4>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="bitcoin-graph">Bitcoin Graph<a href="https://eba.b1aab.ai/releases/data-release/v1#bitcoin-graph" class="hash-link" aria-label="Direct link to Bitcoin Graph" title="Direct link to Bitcoin Graph">​</a></h3>
 <div class="tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Use Cases</li><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">Downloads</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
 <li>Developing specialized cryptocurrency ML models;</li>
 <li>Sampling application-specific communities;</li>
@@ -31,7 +31,7 @@ alongside pre-sampled communities and per-block summary statistics.</p>
 <li><a href="https://eba.b1aab.ai/docs/bitcoin/datasets/neo4j-format">Documentation</a></li>
 </ul></div></div></div>
 <hr>
-<h4 class="anchor anchorWithStickyNavbar_LWe7" id="sampled-hello-world-communities">Sampled <em>Hello-World</em> Communities<a href="https://eba.b1aab.ai/releases/data-release/v1#sampled-hello-world-communities" class="hash-link" aria-label="Direct link to sampled-hello-world-communities" title="Direct link to sampled-hello-world-communities">​</a></h4>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="sampled-communities">Sampled Communities<a href="https://eba.b1aab.ai/releases/data-release/v1#sampled-communities" class="hash-link" aria-label="Direct link to Sampled Communities" title="Direct link to Sampled Communities">​</a></h3>
 <div class="tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Use Cases</li><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">Downloads</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
 <li>A quick introduction and exploring the dataset.</li>
 </ul></div><div role="tabpanel" class="tabItem_Ymn6"><ul>
@@ -39,7 +39,7 @@ alongside pre-sampled communities and per-block summary statistics.</p>
 <li>Use in a <a href="https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification" target="_blank" rel="noopener noreferrer"><em>Hello-World</em> script classification model</a></li>
 </ul></div></div></div>
 <hr>
-<h4 class="anchor anchorWithStickyNavbar_LWe7" id="block-summary-statistics">Block Summary Statistics<a href="https://eba.b1aab.ai/releases/data-release/v1#block-summary-statistics" class="hash-link" aria-label="Direct link to Block Summary Statistics" title="Direct link to Block Summary Statistics">​</a></h4>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="block-summary-statistics">Block Summary Statistics<a href="https://eba.b1aab.ai/releases/data-release/v1#block-summary-statistics" class="hash-link" aria-label="Direct link to Block Summary Statistics" title="Direct link to Block Summary Statistics">​</a></h3>
 <div class="tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Use Cases</li><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">Downloads</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
 <li>Longitudinal analysis of on-chain dynamics and trends.</li>
 <li>Combine on-chain block statistics with external data (e.g., market trading values for use in market forecasting models).</li>
