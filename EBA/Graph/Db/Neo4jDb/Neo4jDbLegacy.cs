@@ -1,24 +1,27 @@
 ﻿using EBA.Utilities;
 
+using EBA.Graph.Db.Neo4jDb;
+using EBA.Utilities;
+
 namespace EBA.Graph.Db.Neo4jDb;
 
-public static class Neo4jDb
+public static class Neo4jDbLegacy
 {
     public const string csvDelimiter = "\t";
 }
 
-public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
+public abstract class Neo4jDbLegacy<T> : IGraphDb<T> where T : GraphBase
 {
     protected Options Options { get; }
     protected IStrategyFactory StrategyFactory { get; }
-    protected ILogger<Neo4jDb<T>> Logger { get; }
+    protected ILogger<Neo4jDbLegacy<T>> Logger { get; }
 
     private readonly int _maxEntitiesPerBatch;
     private List<Batch> _batches = [];
 
     private bool _disposed = false;
 
-    public Neo4jDb(Options options, ILogger<Neo4jDb<T>> logger, IStrategyFactory strategyFactory)
+    public Neo4jDbLegacy(Options options, ILogger<Neo4jDbLegacy<T>> logger, IStrategyFactory strategyFactory)
     {
         Options = options;
         Logger = logger;
@@ -96,7 +99,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 stopwatch.Stop();
                 importRuntime += stopwatch.Elapsed;
                 Logger.LogInformation(
-                    "Importing type {t} finished in {et} seconds.", 
+                    "Importing type {t} finished in {et} seconds.",
                     typeKey, Helpers.GetEtInSeconds(stopwatch.Elapsed));
             }
         }
@@ -104,97 +107,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         Logger.LogInformation("Successfully finished import in {et}.", importRuntime);
     }
 
-    public async Task<bool> TrySampleAsync()
-    {
-        var driver = await GetDriver(Options.Neo4j);
-
-        var sampledGraphsCounter = 0;
-        var attempts = 0;
-        var baseOutputDir = Path.Join(Options.WorkingDir, $"sampled_graphs_{Helpers.GetUnixTimeSeconds()}");
-
-        // creating a script node like the following just to ask for coinbase node is not ideal
-        // TODO: find a better solution.
-        // TODO: this is a bitcoin-specific logic and should not be here.
-        if (Options.GraphSample.CoinbaseMode != CoinbaseSelectionMode.ExcludeCoinbase)
-        {
-            Logger.LogInformation("Sampling neighbors of the coinbase node.");
-            var tmpSolutionCoinbase = new ScriptNode(BitcoinAgent.Coinbase, BitcoinAgent.Coinbase, ScriptType.Coinbase);
-            if (await TrySampleNeighborsAsync(driver, tmpSolutionCoinbase, baseOutputDir))
-            {
-                sampledGraphsCounter++;
-                Logger.LogInformation("Finished writting sampled graph of coinbase neighbors.");
-            }
-            else
-            {
-                Logger.LogError("Failed sampling neighbors of the coinbase node.");
-            }
-        }
-
-        if (Options.GraphSample.CoinbaseMode != CoinbaseSelectionMode.CoinbaseOnly)
-        {
-            Logger.LogInformation("Sampling {n} graphs.", Options.GraphSample.Count - sampledGraphsCounter);
-
-            while (
-                sampledGraphsCounter < Options.GraphSample.Count &&
-                ++attempts <= Options.GraphSample.MaxAttempts)
-            {
-                Logger.LogInformation(
-                    "Getting {n} random root nodes; attempt {a}/{m}.",
-                    Options.GraphSample.Count - sampledGraphsCounter,
-                    attempts, Options.GraphSample.MaxAttempts);
-
-                var rndRootNodes = await GetRandomNodes(
-                    driver,
-                    Options.GraphSample.Count - sampledGraphsCounter,
-                    Options.GraphSample.RootNodeSelectProb);
-
-                Logger.LogInformation("Selected {n} random root nodes.", rndRootNodes.Count);
-
-                int counter = 0;
-                foreach (var rootNode in rndRootNodes)
-                {
-                    Logger.LogInformation("Sampling neighbors of the random root node {n}/{t}.", ++counter, rndRootNodes.Count);
-
-                    if (await TrySampleNeighborsAsync(driver, rootNode, baseOutputDir))
-                    {
-                        sampledGraphsCounter++;
-                        Logger.LogInformation("Finished writting sampled graph features.");
-                    }
-                    else
-                    {
-                        Logger.LogError("Failed sampling neighbors of the root node {r}.", rootNode.Address);
-                    }
-                }
-            }
-
-            if (attempts > Options.GraphSample.MaxAttempts)
-            {
-                Logger.LogError(
-                    "Failed creating {g} {g_msg} after {a} {a_msg}; created {c} {c_msg}. " +
-                    "You may retry, and if the error persists, try adjusting the values of " +
-                    "{minN}={minNV}, {maxN}={maxNV}, {minE}={minEV}, and {maxE}={maxEV}.",
-                    Options.GraphSample.Count,
-                    Options.GraphSample.Count > 1 ? "graphs" : "graph",
-                    attempts - 1,
-                    attempts > 1 ? "attempts" : "attempt",
-                    sampledGraphsCounter,
-                    sampledGraphsCounter > 1 ? "graphs" : "graph",
-                    nameof(Options.GraphSample.MinNodeCount), Options.GraphSample.MinNodeCount,
-                    nameof(Options.GraphSample.MaxNodeCount), Options.GraphSample.MaxNodeCount,
-                    nameof(Options.GraphSample.MinEdgeCount), Options.GraphSample.MinEdgeCount,
-                    nameof(Options.GraphSample.MaxEdgeCount), Options.GraphSample.MaxEdgeCount);
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-        else
-        {
-            return true;
-        }
-    }
+    public abstract Task SampleAsync(CancellationToken ct);
 
     public virtual async Task<IDriver> GetDriver(Neo4jOptions options)
     {
@@ -242,7 +155,7 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 return await cursor.ToListAsync();
             });
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             Logger.LogCritical(
                 "The folloiwng exceptions occurred executing a Neo4j query. {e}",
@@ -347,5 +260,16 @@ public abstract class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         }
 
         _disposed = true;
+    }
+
+
+    public Task<List<Model.INode>> GetRandomNodes(string nodeType, int count, double nodeSelectProbability)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<List<IRecord>> GetNeighbors(string rootNodeLabel, string propKey, string propValue, int queryLimit, string labelFilters, int maxLevel, SamplingAlgorithm traversalAlgorithm)
+    {
+        throw new NotImplementedException();
     }
 }

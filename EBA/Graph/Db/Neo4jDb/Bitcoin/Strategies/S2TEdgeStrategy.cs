@@ -1,5 +1,8 @@
 ﻿using EBA.Utilities;
 
+using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+using EBA.Utilities;
+
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class S2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
@@ -18,7 +21,7 @@ public class S2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
     public override string GetCsvHeader()
     {
         return string.Join(
-            Neo4jDb.csvDelimiter,
+            Neo4jDbLegacy.csvDelimiter,
             from x in _properties select x.CsvHeader);
     }
 
@@ -29,7 +32,7 @@ public class S2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
     public static string GetCsv(S2TEdge edge)
     {
-        return string.Join(Neo4jDb.csvDelimiter,
+        return string.Join(Neo4jDbLegacy.csvDelimiter,
         [
             edge.Source.Address,
             edge.Target.Txid,

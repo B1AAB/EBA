@@ -1,5 +1,10 @@
 ﻿using EBA.Utilities;
 
+using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+using EBA.Utilities;
+
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class C2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
@@ -16,7 +21,7 @@ public class C2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
     public override string GetCsvHeader()
     {
-        return string.Join(Neo4jDb.csvDelimiter,
+        return string.Join(Neo4jDbLegacy.csvDelimiter,
             from x in _properties select x.CsvHeader);
     }
 
@@ -29,7 +34,7 @@ public class C2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
     {
         /// Note that the ordre of the items in this array should 
         /// match those in the `_properties`. 
-        return string.Join(Neo4jDb.csvDelimiter,
+        return string.Join(Neo4jDbLegacy.csvDelimiter,
         [
             edge.Target.Txid,
             edge.Type.ToString(),
@@ -69,10 +74,10 @@ public class C2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
         //
 
         string l = Property.lineVarName, s = "coinbase", t = "target", b = "block";
-        
+
         var builder = new StringBuilder(
             $"LOAD CSV WITH HEADERS FROM '{csvFilename}' AS {l} " +
-            $"FIELDTERMINATOR '{Neo4jDb.csvDelimiter}' ");
+            $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' ");
 
         builder.Append(
             $"MATCH ({s}:{BitcoinAgent.Coinbase}) " +
