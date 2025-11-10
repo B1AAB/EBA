@@ -71,9 +71,10 @@ public class Startup
     private static void ConfigureServices(IServiceCollection services, Options options)
     {
         services.AddSingleton(options);
-        services.AddSingleton<IGraphDb<BitcoinGraph>, BitcoinNeo4jDb>();
+        services.AddSingleton<IGraphDb<BitcoinGraph>, BitcoinNeo4jDbLegacy>(); // TODO: this is not correct because it is registring two implementations
+        services.AddSingleton<IGraphDb<BitcoinGraph>, Neo4jDb<BitcoinGraph>>();
         services.AddSingleton<BitcoinOrchestrator>();
-        services.AddSingleton<IGraphDb<BitcoinGraph>, Neo4jDbLegacy<BitcoinGraph>>();
+        //services.AddSingleton<IGraphDb<BitcoinGraph>, Neo4jDbLegacy<BitcoinGraph>>();
         services.AddSingleton<Graph.Bitcoin.GraphAgent>();
 
         // Passing BitcoinAgent type as the generic argument

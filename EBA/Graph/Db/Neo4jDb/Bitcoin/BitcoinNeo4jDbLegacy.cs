@@ -5,13 +5,14 @@ using EBA.Graph.Db.Neo4jDb;
 using EBA.Utilities;
 
 using Microsoft.Extensions.Primitives;
+using EBA.Graph.Bitcoin;
 
 
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin;
 
-public class BitcoinNeo4jDb : Neo4jDbLegacy<BitcoinGraph>
+public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
 {
-    public BitcoinNeo4jDb(Options options, ILogger<BitcoinNeo4jDb> logger) :
+    public BitcoinNeo4jDbLegacy(Options options, ILogger<BitcoinNeo4jDbLegacy> logger) :
         base(options, logger, new BitcoinStrategyFactory(options))
     { }
 
@@ -40,11 +41,11 @@ public class BitcoinNeo4jDb : Neo4jDbLegacy<BitcoinGraph>
 
         foreach (var type in nodes)
         {
-            batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != BitcoinAgent.Coinbase));
+            batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != NodeLabels.Coinbase.ToString()));
             var _strategy = StrategyFactory.GetStrategy(type.Key);
             tasks.Add(
                 _strategy.ToCsvAsync(
-                    type.Value.Where(x => x.Id != BitcoinAgent.Coinbase),
+                    type.Value.Where(x => x.Id != NodeLabels.Coinbase.ToString()),
                     batchInfo.GetFilename(type.Key)));
         }
 
@@ -90,7 +91,7 @@ public class BitcoinNeo4jDb : Neo4jDbLegacy<BitcoinGraph>
         if (Options.GraphSample.CoinbaseMode != CoinbaseSelectionMode.ExcludeCoinbase)
         {
             Logger.LogInformation("Sampling neighbors of the coinbase node.");
-            var tmpSolutionCoinbase = new ScriptNode(BitcoinAgent.Coinbase, BitcoinAgent.Coinbase, ScriptType.Coinbase);
+            var tmpSolutionCoinbase = new ScriptNode(NodeLabels.Coinbase.ToString(), NodeLabels.Coinbase.ToString(), ScriptType.Coinbase);
             if (await TrySampleNeighborsAsync(driver, tmpSolutionCoinbase, baseOutputDir))
             {
                 sampledGraphsCounter++;
@@ -293,7 +294,7 @@ public class BitcoinNeo4jDb : Neo4jDbLegacy<BitcoinGraph>
     {
         // TODO: both of the following methods need a rewrite, they could be merged with simpler interface.
 
-        if (options.Algorithm == SamplingAlgorithm.BFS || options.Algorithm == SamplingAlgorithm.DFS)
+        if (options.TraversalAlgorithm == GraphTraversal.BFS || options.TraversalAlgorithm == GraphTraversal.DFS)
             return await GetNeighborsUsingGraphTraversalAlgorithmAsync(driver, rootScriptAddress, options);
         return await GetNeighborsUsingForestFireSamplingAlgorithmAsync(
             driver: driver,
@@ -315,8 +316,8 @@ public class BitcoinNeo4jDb : Neo4jDbLegacy<BitcoinGraph>
         using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
 
         var qBuilder = new StringBuilder();
-        if (rootScriptAddress == BitcoinAgent.Coinbase)
-            qBuilder.Append($"MATCH (root:{BitcoinAgent.Coinbase}) ");
+        if (rootScriptAddress == NodeLabels.Coinbase.ToString())
+            qBuilder.Append($"MATCH (root:{NodeLabels.Coinbase.ToString()}) ");
         else
             qBuilder.Append($"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{rootScriptAddress}\" }}) ");
 
@@ -324,7 +325,7 @@ public class BitcoinNeo4jDb : Neo4jDbLegacy<BitcoinGraph>
         qBuilder.Append($"maxLevel: {options.Hops}, ");
         qBuilder.Append($"limit: {Options.GraphSample.MaxEdgesFetchFromNeighbor}, ");
 
-        if (Options.GraphSample.Algorithm == SamplingAlgorithm.BFS)
+        if (Options.GraphSample.TraversalAlgorithm == GraphTraversal.BFS)
             qBuilder.Append($"bfs: true, ");
         else
             qBuilder.Append($"bfs: false, ");
@@ -408,7 +409,7 @@ public class BitcoinNeo4jDb : Neo4jDbLegacy<BitcoinGraph>
         foreach (var hop in samplingResult)
         {
             Node root;
-            if (rootScriptAddress == BitcoinAgent.Coinbase)
+            if (rootScriptAddress == NodeLabels.Coinbase.ToString())
             {
                 // ********
                 //root = new CoinbaseNode(hop.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
@@ -533,7 +534,7 @@ public class BitcoinNeo4jDb : Neo4jDbLegacy<BitcoinGraph>
             // TODO: this iteration needs to be improved, maybe I have a list like this because of the query?!
             foreach (var r in samplingResult)
             {
-                if (rootScriptAddress == BitcoinAgent.Coinbase)
+                if (rootScriptAddress == NodeLabels.Coinbase.ToString())
                 {
                     // ********
                     //root = new CoinbaseNode(r.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
@@ -654,8 +655,8 @@ public class BitcoinNeo4jDb : Neo4jDbLegacy<BitcoinGraph>
         var getRootNodeNeighborsQuery = new List<string>()
         {
             GetNeighborsQuery(
-                rootScriptAddress == BitcoinAgent.Coinbase ?
-                $"MATCH (root:{BitcoinAgent.Coinbase}) " :
+                rootScriptAddress == NodeLabels.Coinbase.ToString() ?
+                $"MATCH (root:{NodeLabels.Coinbase.ToString()}) " :
                 $"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{rootScriptAddress}\" }}) ")
         };
 

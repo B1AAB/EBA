@@ -1,8 +1,7 @@
-﻿using EBA.Utilities;
-
+﻿using EBA.Graph.Bitcoin.TraversalAlgorithms;
+using EBA.Utilities;
 
 namespace EBA.Graph.Bitcoin;
-
 
 public class GraphAgent : IGraphAgent
 {
@@ -24,16 +23,14 @@ public class GraphAgent : IGraphAgent
 
     public async Task SampleAsync(CancellationToken ct)
     {
-        var baseOutputDir = Path.Join(_options.WorkingDir, $"sampled_graphs_{Helpers.GetUnixTimeSeconds()}");
+        var sampler = _options.GraphSample.TraversalAlgorithm switch
+        {
+            GraphTraversal.FFS => new ForestFire(_options, _db, _logger),
+            GraphTraversal.BFS => throw new NotImplementedException(),
+            GraphTraversal.DFS => throw new NotImplementedException(),
+            _ => throw new NotImplementedException(),
+        };
 
-
-        // TODO: if sampling method is forest fire:
-        var sampler = new Samplers.ForestFire(_options, _db, _logger);
         await sampler.SampleAsync(ct);
-
-
-
-
-        // TODO: maybe define a sampler factory.
     }
 }

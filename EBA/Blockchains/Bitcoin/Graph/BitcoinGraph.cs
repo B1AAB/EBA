@@ -113,19 +113,19 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
     // These values will turn into features and nullable features are problematic downstream
     public INode GetOrAddNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null, double? outHopsFromRoot = null)
     {
-        if (node.Labels.Contains(ScriptNodeStrategy.Labels))
+        if (node.Labels.Contains(ScriptNodeStrategy.Labels.ToString()))
         {
             return GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, outHopsFromRoot: outHopsFromRoot));
         }
-        else if (node.Labels.Contains(TxNodeStrategy.Labels))
+        else if (node.Labels.Contains(TxNodeStrategy.Labels.ToString()))
         {
             return GetOrAddNode(GraphComponentType.BitcoinTxNode, TxNode.CreateTxNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, hopsFromRoot: outHopsFromRoot));
         }
-        else if (node.Labels.Contains(BlockNodeStrategy.Labels))
+        else if (node.Labels.Contains(BlockNodeStrategy.Labels.ToString()))
         {
             return GetOrAddNode(GraphComponentType.BitcoinBlockNode, new BlockNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, outHopsFromRoot: outHopsFromRoot));
         }
-        else if (node.Labels.Contains(BitcoinAgent.Coinbase))
+        else if (node.Labels.Contains(BitcoinAgent.Coinbase.ToString()))
         {
             return GetOrAddNode(GraphComponentType.BitcoinCoinbaseNode, new CoinbaseNode(node, originalOutdegree: originalOutdegree, hopsFromRoot: outHopsFromRoot));
         }

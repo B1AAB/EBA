@@ -1,8 +1,10 @@
-﻿namespace EBA.Blockchains.Bitcoin;
+﻿using EBA.Graph.Bitcoin;
+
+namespace EBA.Blockchains.Bitcoin;
 
 public class BitcoinAgent : IDisposable
 {
-    public const string Coinbase = "Coinbase";
+    public const NodeLabels Coinbase = NodeLabels.Coinbase;
     public const uint GenesisTimestamp = 1231006505;
 
     /// <summary>
@@ -213,7 +215,7 @@ public class BitcoinAgent : IDisposable
         BitcoinOptions options,
         CancellationToken cT)
     {
-        var g = new BlockGraph(block, options.ChainToGraphModel, _logger);
+        var g = new BlockGraph(block, ChainToGraphModel.AccountModel, _logger);
 
         // By definition, each block has a generative block that is the
         // reward of the miner. Hence, this should never raise an 

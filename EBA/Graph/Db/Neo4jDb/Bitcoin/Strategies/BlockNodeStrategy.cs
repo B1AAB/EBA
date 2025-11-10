@@ -1,12 +1,10 @@
-﻿using EBA.Graph.Db.Neo4jDb;
-
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
+﻿using EBA.Graph.Bitcoin;
 
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
 {
-    public const string Labels = "Block";
+    public const NodeLabels Labels = NodeLabels.Block;
 
     /// Note that the ordre of the items in this array should 
     /// match those returned from the `GetCsv()` method.

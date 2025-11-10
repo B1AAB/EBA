@@ -1,10 +1,10 @@
-﻿using EBA.Graph.Db.Neo4jDb;
+﻿using EBA.Graph.Bitcoin;
 
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
 {
-    public const string Labels = "Tx";
+    public const NodeLabels Labels = NodeLabels.Tx;
     private readonly Property[] _properties =
     [
         Props.Txid,

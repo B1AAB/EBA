@@ -1,10 +1,10 @@
-﻿using EBA.Graph.Db.Neo4jDb;
+﻿using EBA.Graph.Bitcoin;
 
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
 {
-    public const string Labels = "Script";
+    public const NodeLabels Labels = NodeLabels.Script;
 
     private readonly Property[] _properties =
     [

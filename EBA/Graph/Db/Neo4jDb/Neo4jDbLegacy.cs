@@ -2,6 +2,7 @@
 
 using EBA.Graph.Db.Neo4jDb;
 using EBA.Utilities;
+using EBA.Graph.Bitcoin;
 
 namespace EBA.Graph.Db.Neo4jDb;
 
@@ -263,12 +264,17 @@ public abstract class Neo4jDbLegacy<T> : IGraphDb<T> where T : GraphBase
     }
 
 
-    public Task<List<Model.INode>> GetRandomNodes(string nodeType, int count, double nodeSelectProbability)
+    public Task<List<IRecord>> GetNeighborsAsync(NodeLabels rootNodeLabel, string propKey, string propValue, int queryLimit, string labelFilters, int maxLevel, GraphTraversal traversalAlgorithm, string relationshipFilter = "")
     {
         throw new NotImplementedException();
     }
 
-    public Task<List<IRecord>> GetNeighbors(string rootNodeLabel, string propKey, string propValue, int queryLimit, string labelFilters, int maxLevel, SamplingAlgorithm traversalAlgorithm)
+    public Task VerifyConnectivityAsync(CancellationToken ct)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<List<IRecord>> GetRandomNodesAsync(NodeLabels label, int count, CancellationToken ct, double rootNodeSelectProbability = 0.1, string nodeVariable = "randomNode")
     {
         throw new NotImplementedException();
     }
