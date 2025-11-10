@@ -90,7 +90,7 @@ public class BitcoinOptions
 
     public bool SkipSerializingAddresses {  init; get; } = false;
 
-    public ChainToGraphModel ChainToGraphModel { init; get; } = ChainToGraphModel.UTxOModel;
+    public bool UseLegacyGraphDbMethod { init; get; } = false;
 
     public ResilienceStrategyOptions HttpClientResilienceStrategy { init; get; } = new();
 

@@ -1,4 +1,4 @@
-using EBA.Graph.Db.Neo4jDb.BitcoinStrategies;
+using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 namespace EBA.CLI.Config;
 
@@ -22,7 +22,7 @@ public enum CoinbaseSelectionMode
     ExcludeCoinbase
 }
 
-public enum SamplingAlgorithm
+public enum GraphTraversal
 {
     // path search algorithm
     // traverse the graph using the given algorithm 
@@ -44,6 +44,11 @@ public enum SamplingAlgorithm
     FFS
 }
 
+public enum GraphProjection
+{
+    Bipartite
+}
+
 public enum EdgeTypes
 {
     S2S,
@@ -56,7 +61,8 @@ public class GraphSampleOptions
     public int Hops { init; get; }
     public GraphSampleMode Mode { init; get; } = GraphSampleMode.ConnectedGraphAndForest;
     public CoinbaseSelectionMode CoinbaseMode { init; get; } = CoinbaseSelectionMode.ExcludeCoinbase;
-    public SamplingAlgorithm Algorithm { init; get; } = SamplingAlgorithm.BFS;
+    public GraphTraversal TraversalAlgorithm { init; get; } = GraphTraversal.FFS;
+    public GraphProjection TargetSchema { init; get; } = GraphProjection.Bipartite;
     public EdgeTypes[] IncludeEdgeTypes { init; get; } = [EdgeTypes.S2S];
     public int MinNodeCount { init; get; } = 500;
     public int MaxNodeCount { init; get; } = 1000;
@@ -77,7 +83,7 @@ public class GraphSampleOptions
     public bool SerializeFeatureVectors { init; get; } = true;
 
     public int ForestFireNodeSamplingCountAtRoot { init; get; } = 100;
-    public int ForestFireMaxHops { init; get; } = 4;
+    public int ForestFireMaxHops { init; get; } = 2;
     public int ForestFireQueryLimit { init; get; } = 1000;
     public double ForestFireNodeCountReductionFactorByHop { init; get; } = 4.0;
 
@@ -108,5 +114,5 @@ public class GraphSampleOptions
     // > end node filter
     // +ScriptNodeStrategy.Labels|-TxNodeStrategy.Labels|>BlockNodeStrategy.Labels
     // more details: https://neo4j.com/labs/apoc/4.1/overview/apoc.path/apoc.path.spanningTree/#expand-spanning-tree-label-filters
-    public string LabelFilters { init; get; } = $"{ScriptNodeStrategy.Labels}|{BlockNodeStrategy.Labels}"; //ScriptNodeStrategy.Labels;
+    public string LabelFilters { init; get; } = $"{ScriptNodeStrategy.Labels}|{BlockNodeStrategy.Labels}";
 }

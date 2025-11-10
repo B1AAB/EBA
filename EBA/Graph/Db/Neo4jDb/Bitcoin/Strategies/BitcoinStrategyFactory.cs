@@ -1,4 +1,7 @@
-﻿namespace EBA.Graph.Db.Neo4jDb.BitcoinStrategies;
+﻿using EBA.Graph.Db.Neo4jDb;
+using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+
+namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class BitcoinStrategyFactory : IStrategyFactory
 {

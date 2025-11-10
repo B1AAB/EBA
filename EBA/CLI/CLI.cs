@@ -14,6 +14,8 @@ internal class Cli
     private readonly Option<string> _workingDirOption;
     private readonly Option<string> _statusFilenameOption;
 
+    private readonly Options _defOps;
+
     public Cli(
         Func<Options, Task> bitcoinTraverseCmdHandlerAsync,
         Func<Options, Task> sampleCmdHandlerAsync,
@@ -23,6 +25,7 @@ internal class Cli
         Action<Exception, InvocationContext> exceptionHandler)
     {
         var defOps = new Options();
+        _defOps = defOps;
 
         _workingDirOption = new(
             name: "--working-dir",
@@ -315,14 +318,12 @@ internal class Cli
     {
         var countOption = new Option<int>(
             name: "--count",
-            description: "The number of graphs to sample.")
-        { IsRequired = true };
+            description: "The number of graphs to sample.");
         countOption.AddAlias("-c");
 
         var hopsOption = new Option<int>(
             name: "--hops",
-            description: "The number of hops to reach for sampling.")
-        { IsRequired = true };
+            description: "The number of hops to reach for sampling.");
         hopsOption.AddAlias("-h");
 
         // TODO: rework this option.
@@ -379,6 +380,23 @@ internal class Cli
             rootNodeSelectProbOption,
             modeOption
         };
+
+        cmd.AddValidator(commandResult =>
+        {
+            var errors = new List<string>();
+
+            if (commandResult.GetValueForOption(_statusFilenameOption) == _defOps.StatusFile)
+            {
+                if (commandResult.FindResultFor(countOption) == null)
+                    errors.Add("Option '--count' is required when --status-filename is not used.");
+
+                if (commandResult.FindResultFor(hopsOption) == null)
+                    errors.Add("Option '--hops' is required when --status-filename is not used.");
+            }
+
+            if (errors.Count > 0)
+                commandResult.ErrorMessage = string.Join(Environment.NewLine, errors);
+        });
 
         cmd.SetHandler(async (options) =>
         {

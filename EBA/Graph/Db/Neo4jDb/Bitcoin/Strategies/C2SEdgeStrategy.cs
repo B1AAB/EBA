@@ -1,14 +1,19 @@
 ﻿using EBA.Utilities;
 
-namespace EBA.Graph.Db.Neo4jDb.BitcoinStrategies;
+using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+using EBA.Utilities;
 
-public class C2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+
+namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+
+public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(serializeCompressed)
 {
     /// Note that the ordre of the items in this array should 
     /// match those in the `ToCSV` method.
     private readonly Property[] _properties =
     [
-        Props.T2TEdgeTargetTxid,
+        Props.EdgeTargetAddress,
         Props.EdgeType,
         Props.EdgeValue,
         Props.Height
@@ -16,22 +21,22 @@ public class C2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
     public override string GetCsvHeader()
     {
-        return string.Join(Neo4jDb.csvDelimiter,
+        return string.Join(Neo4jDbLegacy.csvDelimiter,
             from x in _properties select x.CsvHeader);
     }
 
     public override string GetCsv(IGraphComponent edge)
     {
-        return GetCsv((C2TEdge)edge);
+        return GetCsv((C2SEdge)edge);
     }
 
-    public static string GetCsv(C2TEdge edge)
+    public static string GetCsv(C2SEdge edge)
     {
         /// Note that the ordre of the items in this array should 
         /// match those in the `_properties`. 
-        return string.Join(Neo4jDb.csvDelimiter,
+        return string.Join(Neo4jDbLegacy.csvDelimiter,
         [
-            edge.Target.Txid,
+            edge.Target.Address,
             edge.Type.ToString(),
             Helpers.Satoshi2BTC(edge.Value).ToString(),
             edge.BlockHeight.ToString()
@@ -41,15 +46,15 @@ public class C2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
     public override string GetQuery(string csvFilename)
     {
         // The following is an example of the query this method generates.
-        // Indentation and linebreaks are added for the readability and 
-        // not included in the gerated queries.
+        // Indentation and line breaks are added for the readiblity and 
+        // are not included in the generated query.
         //
         //
-        // LOAD CSV WITH HEADERS FROM 'file:///filename.csv' AS line
-        // FIELDTERMINATOR '	'
+        // LOAD CSV WITH HEADERS FROM 'file:///filename.csv'
+        // AS line FIELDTERMINATOR '	'
         //
         // MATCH (coinbase:Coinbase)
-        // MATCH (target:Tx {Txid:line.TargetId})
+        // MATCH (target:Script {Address:line.TargetAddress})
         // MATCH (block:Block {Height:toInteger(line.Height)})
         //
         // CREATE (block)-[:Creates {Height:toInteger(line.Height), Value:toFloat(line.Value)}]->(target)
@@ -68,15 +73,15 @@ public class C2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
         // RETURN distinct 'DONE'
         //
 
-        string l = Property.lineVarName, s = "coinbase", t = "target", b = "block";
-        
+        string l = Property.lineVarName, b = "block", s = "coinbase", t = "target";
+
         var builder = new StringBuilder(
             $"LOAD CSV WITH HEADERS FROM '{csvFilename}' AS {l} " +
-            $"FIELDTERMINATOR '{Neo4jDb.csvDelimiter}' ");
+            $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' ");
 
         builder.Append(
             $"MATCH ({s}:{BitcoinAgent.Coinbase}) " +
-            $"MATCH ({t}:{TxNodeStrategy.Labels} {{{Props.T2TEdgeTargetTxid.GetSetter()}}}) " +
+            $"MATCH ({t}:{ScriptNodeStrategy.Labels} {{{Props.EdgeTargetAddress.GetSetter()}}}) " +
             $"MATCH ({b}:{BlockNodeStrategy.Labels} {{{Props.Height.GetSetter()}}}) ");
 
         builder.Append(GetCreatesEdgeQuery(b, t) + " ");

@@ -1,4 +1,6 @@
-﻿namespace EBA.Blockchains.Bitcoin.Graph;
+﻿using EBA.Graph.Bitcoin;
+
+namespace EBA.Blockchains.Bitcoin.Graph;
 
 public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 {
@@ -100,7 +102,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 
     public static TxNode GetCoinbaseNode()
     {
-        return new TxNode(BitcoinAgent.Coinbase);
+        return new TxNode(NodeLabels.Coinbase.ToString());
     }
 
     public static new string[] GetFeaturesName()
