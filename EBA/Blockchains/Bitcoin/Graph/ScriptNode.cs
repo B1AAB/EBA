@@ -1,4 +1,6 @@
-﻿namespace EBA.Blockchains.Bitcoin.Graph;
+﻿using EBA.Graph.Bitcoin;
+
+namespace EBA.Blockchains.Bitcoin.Graph;
 
 public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
 {
@@ -12,7 +14,7 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
     }
 
     // TODO: since there is a CoinbaseNode type, this default should change
-    public string Address { get; } = BitcoinAgent.Coinbase;
+    public string Address { get; } = BitcoinAgent.Coinbase.ToString();
     // TODO: since there is a CoinbaseNode type, this default should change
     public ScriptType ScriptType { get; } = ScriptType.Coinbase;
 
@@ -66,7 +68,7 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
 
     public static ScriptNode GetCoinbaseNode()
     {
-        return new ScriptNode(BitcoinAgent.Coinbase);
+        return new ScriptNode(NodeLabels.Coinbase.ToString());
     }
 
     public static new string[] GetFeaturesName()

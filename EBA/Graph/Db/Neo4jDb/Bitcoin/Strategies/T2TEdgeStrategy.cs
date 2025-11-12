@@ -1,6 +1,9 @@
 ﻿using EBA.Utilities;
 
-namespace EBA.Graph.Db.Neo4jDb.BitcoinStrategies;
+using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+using EBA.Utilities;
+
+namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
 {
@@ -20,7 +23,7 @@ public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
     public override string GetCsvHeader()
     {
         return string.Join(
-            Neo4jDb.csvDelimiter,
+            Neo4jDbLegacy.csvDelimiter,
             from x in _properties select x.CsvHeader);
     }
 
@@ -31,7 +34,7 @@ public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
     public static string GetCsv(T2TEdge edge)
     {
-        return string.Join(Neo4jDb.csvDelimiter,
+        return string.Join(Neo4jDbLegacy.csvDelimiter,
         [
             edge.Source.Txid,
             edge.Target.Txid,
@@ -77,7 +80,7 @@ public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
         var builder = new StringBuilder(
             $"LOAD CSV WITH HEADERS FROM '{csvFilename}' AS {l} " +
-            $"FIELDTERMINATOR '{Neo4jDb.csvDelimiter}' ");
+            $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' ");
 
         builder.Append(
             $"MATCH " +

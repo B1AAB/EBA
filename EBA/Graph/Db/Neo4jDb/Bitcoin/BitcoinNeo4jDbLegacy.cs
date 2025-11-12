@@ -1,13 +1,18 @@
-﻿using EBA.Graph.Db.Neo4jDb.BitcoinStrategies;
+﻿using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+using EBA.Utilities;
+
+using EBA.Graph.Db.Neo4jDb;
+using EBA.Utilities;
 
 using Microsoft.Extensions.Primitives;
+using EBA.Graph.Bitcoin;
 
 
-namespace EBA.Graph.Db.Neo4jDb;
+namespace EBA.Graph.Db.Neo4jDb.Bitcoin;
 
-public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
+public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
 {
-    public BitcoinNeo4jDb(Options options, ILogger<BitcoinNeo4jDb> logger) :
+    public BitcoinNeo4jDbLegacy(Options options, ILogger<BitcoinNeo4jDbLegacy> logger) :
         base(options, logger, new BitcoinStrategyFactory(options))
     { }
 
@@ -24,16 +29,23 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
     {
         var nodes = g.GetNodes();
         var edges = g.GetEdges();
-        var batchInfo = await GetBatchAsync([.. nodes.Keys, .. edges.Keys]);
+        var graphType = BitcoinGraph.ComponentType;
+        var batchInfo = await GetBatchAsync(
+            nodes.Keys.Concat(edges.Keys).Append(graphType).ToList());
 
         var tasks = new List<Task>();
+
+        batchInfo.AddOrUpdate(graphType, 1);
+        var graphStrategy = StrategyFactory.GetStrategy(graphType);
+        tasks.Add(graphStrategy.ToCsvAsync(g, batchInfo.GetFilename(graphType)));
+
         foreach (var type in nodes)
         {
-            batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != BitcoinAgent.Coinbase));
+            batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != NodeLabels.Coinbase.ToString()));
             var _strategy = StrategyFactory.GetStrategy(type.Key);
             tasks.Add(
                 _strategy.ToCsvAsync(
-                    type.Value.Where(x => x.Id != BitcoinAgent.Coinbase),
+                    type.Value.Where(x => x.Id != NodeLabels.Coinbase.ToString()),
                     batchInfo.GetFilename(type.Key)));
         }
 
@@ -63,6 +75,98 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             GraphComponentType.BitcoinT2T
         };
         return base.ImportAsync(ct, batchName, importOrder);
+    }
+
+    public override async Task SampleAsync(CancellationToken ct)
+    {
+        var driver = await GetDriver(Options.Neo4j);
+
+        var sampledGraphsCounter = 0;
+        var attempts = 0;
+        var baseOutputDir = Path.Join(Options.WorkingDir, $"sampled_graphs_{Helpers.GetUnixTimeSeconds()}");
+
+        // creating a script node like the following just to ask for coinbase node is not ideal
+        // TODO: find a better solution.
+        // TODO: this is a bitcoin-specific logic and should not be here.
+        if (Options.GraphSample.CoinbaseMode != CoinbaseSelectionMode.ExcludeCoinbase)
+        {
+            Logger.LogInformation("Sampling neighbors of the coinbase node.");
+            var tmpSolutionCoinbase = new ScriptNode(NodeLabels.Coinbase.ToString(), NodeLabels.Coinbase.ToString(), ScriptType.Coinbase);
+            if (await TrySampleNeighborsAsync(driver, tmpSolutionCoinbase, baseOutputDir))
+            {
+                sampledGraphsCounter++;
+                Logger.LogInformation("Finished writting sampled graph of coinbase neighbors.");
+            }
+            else
+            {
+                Logger.LogError("Failed sampling neighbors of the coinbase node.");
+            }
+        }
+
+        if (Options.GraphSample.CoinbaseMode != CoinbaseSelectionMode.CoinbaseOnly)
+        {
+            Logger.LogInformation("Sampling {n} graphs.", Options.GraphSample.Count - sampledGraphsCounter);
+
+            while (
+                sampledGraphsCounter < Options.GraphSample.Count &&
+                ++attempts <= Options.GraphSample.MaxAttempts)
+            {
+                Logger.LogInformation(
+                    "Getting {n} random root nodes; attempt {a}/{m}.",
+                    Options.GraphSample.Count - sampledGraphsCounter,
+                    attempts, Options.GraphSample.MaxAttempts);
+
+                var rndRootNodes = await GetRandomNodes(
+                    driver,
+                    Options.GraphSample.Count - sampledGraphsCounter,
+                    Options.GraphSample.RootNodeSelectProb);
+
+                Logger.LogInformation("Selected {n} random root nodes.", rndRootNodes.Count);
+
+                int counter = 0;
+                foreach (var rootNode in rndRootNodes)
+                {
+                    Logger.LogInformation("Sampling neighbors of the random root node {n}/{t}.", ++counter, rndRootNodes.Count);
+
+                    if (await TrySampleNeighborsAsync(driver, rootNode, baseOutputDir))
+                    {
+                        sampledGraphsCounter++;
+                        Logger.LogInformation("Finished writting sampled graph features.");
+                    }
+                    else
+                    {
+                        Logger.LogError("Failed sampling neighbors of the root node {r}.", rootNode.Address);
+                    }
+                }
+            }
+
+            if (attempts > Options.GraphSample.MaxAttempts)
+            {
+                Logger.LogError(
+                    "Failed creating {g} {g_msg} after {a} {a_msg}; created {c} {c_msg}. " +
+                    "You may retry, and if the error persists, try adjusting the values of " +
+                    "{minN}={minNV}, {maxN}={maxNV}, {minE}={minEV}, and {maxE}={maxEV}.",
+                    Options.GraphSample.Count,
+                    Options.GraphSample.Count > 1 ? "graphs" : "graph",
+                    attempts - 1,
+                    attempts > 1 ? "attempts" : "attempt",
+                    sampledGraphsCounter,
+                    sampledGraphsCounter > 1 ? "graphs" : "graph",
+                    nameof(Options.GraphSample.MinNodeCount), Options.GraphSample.MinNodeCount,
+                    nameof(Options.GraphSample.MaxNodeCount), Options.GraphSample.MaxNodeCount,
+                    nameof(Options.GraphSample.MinEdgeCount), Options.GraphSample.MinEdgeCount,
+                    nameof(Options.GraphSample.MaxEdgeCount), Options.GraphSample.MaxEdgeCount);
+                return;
+            }
+            else
+            {
+                return;
+            }
+        }
+        else
+        {
+            return;
+        }
     }
 
     public override void ReportQueries()
@@ -190,7 +294,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
     {
         // TODO: both of the following methods need a rewrite, they could be merged with simpler interface.
 
-        if (options.Algorithm == SamplingAlgorithm.BFS || options.Algorithm == SamplingAlgorithm.DFS)
+        if (options.TraversalAlgorithm == GraphTraversal.BFS || options.TraversalAlgorithm == GraphTraversal.DFS)
             return await GetNeighborsUsingGraphTraversalAlgorithmAsync(driver, rootScriptAddress, options);
         return await GetNeighborsUsingForestFireSamplingAlgorithmAsync(
             driver: driver,
@@ -212,8 +316,8 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
 
         var qBuilder = new StringBuilder();
-        if (rootScriptAddress == BitcoinAgent.Coinbase)
-            qBuilder.Append($"MATCH (root:{BitcoinAgent.Coinbase}) ");
+        if (rootScriptAddress == NodeLabels.Coinbase.ToString())
+            qBuilder.Append($"MATCH (root:{NodeLabels.Coinbase.ToString()}) ");
         else
             qBuilder.Append($"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{rootScriptAddress}\" }}) ");
 
@@ -221,7 +325,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         qBuilder.Append($"maxLevel: {options.Hops}, ");
         qBuilder.Append($"limit: {Options.GraphSample.MaxEdgesFetchFromNeighbor}, ");
 
-        if (Options.GraphSample.Algorithm == SamplingAlgorithm.BFS)
+        if (Options.GraphSample.TraversalAlgorithm == GraphTraversal.BFS)
             qBuilder.Append($"bfs: true, ");
         else
             qBuilder.Append($"bfs: false, ");
@@ -305,7 +409,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         foreach (var hop in samplingResult)
         {
             Node root;
-            if (rootScriptAddress == BitcoinAgent.Coinbase)
+            if (rootScriptAddress == NodeLabels.Coinbase.ToString())
             {
                 // ********
                 //root = new CoinbaseNode(hop.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
@@ -430,7 +534,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
             // TODO: this iteration needs to be improved, maybe I have a list like this because of the query?!
             foreach (var r in samplingResult)
             {
-                if (rootScriptAddress == BitcoinAgent.Coinbase)
+                if (rootScriptAddress == NodeLabels.Coinbase.ToString())
                 {
                     // ********
                     //root = new CoinbaseNode(r.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
@@ -491,7 +595,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                         edges.TryAdd(edge.ElementId, edge);
             }
 
-            var nodesToKeep = nodes.Keys.OrderBy(x => rnd.Next()).Take((int)Math.Floor(nodeSamplingCountAtRoot - (hop * nodeCountReductionFactorByHop))).ToList();
+            var nodesToKeep = nodes.Keys.OrderBy(x => rnd.Next()).Take((int)Math.Floor(nodeSamplingCountAtRoot - hop * nodeCountReductionFactorByHop)).ToList();
             var nodesToKeepIds = new HashSet<string>();
             foreach (var nodeId in nodesToKeep)
                 if (!allNodesAddedToGraph.Contains(nodeId))
@@ -551,8 +655,8 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
         var getRootNodeNeighborsQuery = new List<string>()
         {
             GetNeighborsQuery(
-                rootScriptAddress == BitcoinAgent.Coinbase ?
-                $"MATCH (root:{BitcoinAgent.Coinbase}) " :
+                rootScriptAddress == NodeLabels.Coinbase.ToString() ?
+                $"MATCH (root:{NodeLabels.Coinbase.ToString()}) " :
                 $"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{rootScriptAddress}\" }}) ")
         };
 
@@ -628,7 +732,7 @@ public class BitcoinNeo4jDb : Neo4jDb<BitcoinGraph>
                 foreach (var e in edge.Value)
                     g.GetOrAddEdge(edge.Key, e);
 
-            if (g.EdgeCount + (g.EdgeCount * 0.2) >= options.MaxEdgeCount || g.NodeCount + (g.NodeCount * 0.2) >= options.MaxNodeCount)
+            if (g.EdgeCount + g.EdgeCount * 0.2 >= options.MaxEdgeCount || g.NodeCount + g.NodeCount * 0.2 >= options.MaxNodeCount)
                 break;
         }
 

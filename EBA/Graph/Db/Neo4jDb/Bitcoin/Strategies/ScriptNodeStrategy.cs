@@ -1,8 +1,10 @@
-﻿namespace EBA.Graph.Db.Neo4jDb.BitcoinStrategies;
+﻿using EBA.Graph.Bitcoin;
+
+namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
 {
-    public const string Labels = "Script";
+    public const NodeLabels Labels = NodeLabels.Script;
 
     private readonly Property[] _properties =
     [
@@ -13,7 +15,7 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
     public override string GetCsvHeader()
     {
         return string.Join(
-            Neo4jDb.csvDelimiter,
+            Neo4jDbLegacy.csvDelimiter,
             from x in _properties select x.CsvHeader);
     }
 
@@ -25,7 +27,7 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
     public static string GetCsv(ScriptNode node)
     {
         return string.Join(
-            Neo4jDb.csvDelimiter,
+            Neo4jDbLegacy.csvDelimiter,
             node.Address,
             node.ScriptType.ToString());
     }
@@ -56,7 +58,7 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
         var builder = new StringBuilder();
         builder.Append(
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
-            $"FIELDTERMINATOR '{Neo4jDb.csvDelimiter}' " +
+            $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' " +
             $"MERGE ({node}:{Labels} {{{Props.ScriptAddress.GetSetter()}}}) ");
 
         builder.Append("ON CREATE SET ");

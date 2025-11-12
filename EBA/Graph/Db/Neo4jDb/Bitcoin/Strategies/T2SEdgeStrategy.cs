@@ -1,15 +1,18 @@
 ﻿using EBA.Utilities;
 
-namespace EBA.Graph.Db.Neo4jDb.BitcoinStrategies;
+using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+using EBA.Utilities;
 
-public class S2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
+namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+
+public class T2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
 {
     /// Note that the ordre of the items in this array should 
     /// match those in the `GetCSV` method.
     private readonly Property[] _properties =
     [
-        Props.S2TEdgeSourceTxid,
-        Props.S2TEdgeTargetTxid,
+        Props.T2SEdgeSourceTxid,
+        Props.T2SEdgeTargetTxid,
         Props.EdgeType,
         Props.EdgeValue,
         Props.Height
@@ -18,21 +21,21 @@ public class S2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
     public override string GetCsvHeader()
     {
         return string.Join(
-            Neo4jDb.csvDelimiter,
+            Neo4jDbLegacy.csvDelimiter,
             from x in _properties select x.CsvHeader);
     }
 
     public override string GetCsv(IGraphComponent edge)
     {
-        return GetCsv((S2TEdge)edge);
+        return GetCsv((T2SEdge)edge);
     }
 
-    public static string GetCsv(S2TEdge edge)
+    public static string GetCsv(T2SEdge edge)
     {
-        return string.Join(Neo4jDb.csvDelimiter,
+        return string.Join(Neo4jDbLegacy.csvDelimiter,
         [
-            edge.Source.Address,
-            edge.Target.Txid,
+            edge.Source.Txid,
+            edge.Target.Address,
             edge.Type.ToString(),
             Helpers.Satoshi2BTC(edge.Value).ToString(),
             edge.BlockHeight.ToString()

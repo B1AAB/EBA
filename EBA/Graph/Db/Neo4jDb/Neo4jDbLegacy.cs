@@ -1,0 +1,281 @@
+﻿using EBA.Utilities;
+
+using EBA.Graph.Db.Neo4jDb;
+using EBA.Utilities;
+using EBA.Graph.Bitcoin;
+
+namespace EBA.Graph.Db.Neo4jDb;
+
+public static class Neo4jDbLegacy
+{
+    public const string csvDelimiter = "\t";
+}
+
+public abstract class Neo4jDbLegacy<T> : IGraphDb<T> where T : GraphBase
+{
+    protected Options Options { get; }
+    protected IStrategyFactory StrategyFactory { get; }
+    protected ILogger<Neo4jDbLegacy<T>> Logger { get; }
+
+    private readonly int _maxEntitiesPerBatch;
+    private List<Batch> _batches = [];
+
+    private bool _disposed = false;
+
+    public Neo4jDbLegacy(Options options, ILogger<Neo4jDbLegacy<T>> logger, IStrategyFactory strategyFactory)
+    {
+        Options = options;
+        Logger = logger;
+        StrategyFactory = strategyFactory;
+        _maxEntitiesPerBatch = options.Neo4j.MaxEntitiesPerBatch;
+    }
+
+    public abstract Task SerializeAsync(T g, CancellationToken ct);
+
+    public abstract void ReportQueries();
+
+    /// <summary>
+    /// No precedence should be assumed on serializing different types.
+    /// </summary>
+    public virtual async Task ImportAsync(CancellationToken ct, string batchName = "", List<GraphComponentType>? importOrder = null)
+    {
+        using var driver = await GetDriver(Options.Neo4j);
+
+        _batches = await DeserializeBatchesAsync();
+        IEnumerable<Batch> batches;
+
+        if (string.IsNullOrEmpty(batchName))
+        {
+            batches = _batches;
+            Logger.LogInformation("No batch name is given, processing all the batches in the given batch file.");
+        }
+        else
+        {
+            var batch = _batches.Find(x => x.Name == batchName);
+            if (batch == default)
+                throw new InvalidOperationException(
+                    $"A batch named {batchName} not found in " +
+                    $"{Options.Neo4j.BatchesFilename}");
+            batches = [batch];
+            Logger.LogInformation("Given batch name is {batchName}.", batchName);
+        }
+
+        if (!batches.Any())
+        {
+            Logger.LogInformation("No batch found in {f}.", Options.Neo4j.BatchesFilename);
+            return;
+        }
+
+        Logger.LogInformation(
+            "Processing {n:n0} batch(es) found in {f}.",
+            batches.Count(), Options.Neo4j.BatchesFilename);
+
+        var c = 0;
+        var importRuntime = TimeSpan.Zero;
+        var stopwatch = new Stopwatch();
+
+        foreach (var batch in batches)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            Logger.LogInformation("Processing batch {b} {c}.", batch.Name, $"({++c:n0}/{batches.Count():n0})");
+
+            var typesInfo = batch.TypesInfo;
+            var typesKeys = importOrder ?? typesInfo.Keys;
+            foreach (var typeKey in typesKeys)
+            {
+                stopwatch.Restart();
+                if (!typesInfo.ContainsKey(typeKey))
+                {
+                    Logger.LogInformation(
+                        "Skipping type {t} since the batch {b} does not contain it.",
+                        typeKey, batch.Name);
+                    continue;
+                }
+
+                Logger.LogInformation("Importing type {t}.", typeKey);
+                var strategy = StrategyFactory.GetStrategy(typeKey);
+                await ExecuteLoadQueryAsync(driver, strategy, typesInfo[typeKey].Filename);
+
+                stopwatch.Stop();
+                importRuntime += stopwatch.Elapsed;
+                Logger.LogInformation(
+                    "Importing type {t} finished in {et} seconds.",
+                    typeKey, Helpers.GetEtInSeconds(stopwatch.Elapsed));
+            }
+        }
+
+        Logger.LogInformation("Successfully finished import in {et}.", importRuntime);
+    }
+
+    public abstract Task SampleAsync(CancellationToken ct);
+
+    public virtual async Task<IDriver> GetDriver(Neo4jOptions options)
+    {
+        var driver = GraphDatabase.Driver(
+            options.Uri,
+            AuthTokens.Basic(options.User, options.Password));
+
+        try
+        {
+            await driver.VerifyConnectivityAsync();
+        }
+        catch (AggregateException)
+        {
+            throw;
+        }
+
+        return driver;
+    }
+
+    private async Task ExecuteLoadQueryAsync(IDriver driver, StrategyBase strategy, string filename)
+    {
+        // Localization, if needed.
+        // Neo4j import needs files to be placed in a particular folder 
+        // before it can import them.
+        var fileLocalized = false;
+        var localFilename = filename;
+
+        if (!Helpers.AssertPathEqual(
+            Path.GetDirectoryName(filename),
+            Options.Neo4j.ImportDirectory))
+        {
+            localFilename = Path.Join(Options.Neo4j.ImportDirectory, Path.GetFileName(filename));
+            File.Copy(filename, localFilename, true);
+            fileLocalized = true;
+        }
+
+        var filename4Query = Options.Neo4j.CypherImportPrefix + Path.GetFileName(localFilename);
+
+        using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
+        try
+        {
+            var queryResult = await session.ExecuteWriteAsync(async x =>
+            {
+                IResultCursor cursor = await x.RunAsync(strategy.GetQuery(filename4Query));
+                return await cursor.ToListAsync();
+            });
+        }
+        catch (Exception e)
+        {
+            Logger.LogCritical(
+                "The folloiwng exceptions occurred executing a Neo4j query. {e}",
+                string.Join("; ", e.InnerException?.Message));
+            throw;
+        }
+
+        // Delocalization.
+        if (fileLocalized)
+        {
+            File.Delete(localFilename);
+        }
+    }
+
+    protected async Task<Batch> GetBatchAsync(List<GraphComponentType> types)
+    {
+        if (_batches.Count == 0)
+            _batches = await DeserializeBatchesAsync();
+
+        if (_batches.Count == 0 || _batches[^1].GetMaxCount() >= _maxEntitiesPerBatch)
+            _batches.Add(new Batch(_batches.Count.ToString(), Options.WorkingDir, types, Options.Neo4j.CompressOutput));
+
+        return _batches[^1];
+    }
+
+    protected void SerializeBatches()
+    {
+        JsonSerializer<List<Batch>>.Serialize(
+            _batches, Options.Neo4j.BatchesFilename);
+    }
+
+    protected async Task SerializeBatchesAsync()
+    {
+        await JsonSerializer<List<Batch>>.SerializeAsync(
+            _batches, Options.Neo4j.BatchesFilename);
+    }
+
+    private async Task<List<Batch>> DeserializeBatchesAsync()
+    {
+        return await JsonSerializer<List<Batch>>.DeserializeAsync(
+            Options.Neo4j.BatchesFilename);
+    }
+
+    public static bool CanUseGraph(
+        GraphBase g,
+        int minNodeCount = 3, int maxNodeCount = 200,
+        int minEdgeCount = 3, int maxEdgeCount = 200,
+        double tolerance = 0.5)
+    {
+        // TODO: implement checks on the graph; e.g., graph size, or if it was already defined.
+
+        // TODO: very big graphs cause various issues
+        // with Tensorflow when training, such as out-of-memory
+        // (hence radically slow process), or even trying to
+        // multiply matrixes of very large size 2**32 or even
+        // larger. There should be much better workarounds at
+        // Tensorflow level, but for now, we limit the size of graphs.
+        if (g.NodeCount < minNodeCount - (minNodeCount * tolerance) ||
+            //g.NodeCount > maxNodeCount + (maxNodeCount * tolerance) ||
+            g.EdgeCount < minEdgeCount - (minEdgeCount * tolerance)) //||
+            //g.EdgeCount > maxEdgeCount + (maxEdgeCount * tolerance))
+            return false;
+
+        /*
+        if (g.NodeCount > maxNodeCount || g.EdgeCount > maxEdgeCount)
+            g.Downsample(maxNodeCount, maxEdgeCount);*/
+
+        return true;
+    }
+
+
+    // TODO: Make the following methods more generic, e.g., replace ScriptNode with INode
+    public abstract Task<List<ScriptNode>> GetRandomNodes(
+        IDriver driver, int nodesCount, double rootNodesSelectProb = 0.1);
+
+    public abstract Task<GraphBase> GetNeighborsAsync(
+        IDriver driver, string rootScriptAddress, GraphSampleOptions options);
+
+    public abstract Task<GraphBase> GetDisjointGraphsRandomEdges(
+        IDriver driver, int edgeCount, double edgeSelectProb = 0.2);
+
+    public abstract Task<GraphBase> GetDisjointGraphsRandomNeighborhoods(
+        IDriver driver, int edgeCount, GraphSampleOptions options);
+
+    public abstract Task<bool> TrySampleNeighborsAsync(
+        IDriver driver, ScriptNode rootNode, string workingDir);
+
+    public void Dispose()
+    {
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                StrategyFactory.Dispose();
+                SerializeBatches();
+            }
+        }
+
+        _disposed = true;
+    }
+
+
+    public Task<List<IRecord>> GetNeighborsAsync(NodeLabels rootNodeLabel, string propKey, string propValue, int queryLimit, string labelFilters, int maxLevel, GraphTraversal traversalAlgorithm, string relationshipFilter = "")
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task VerifyConnectivityAsync(CancellationToken ct)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<List<IRecord>> GetRandomNodesAsync(NodeLabels label, int count, CancellationToken ct, double rootNodeSelectProbability = 0.1, string nodeVariable = "randomNode")
+    {
+        throw new NotImplementedException();
+    }
+}

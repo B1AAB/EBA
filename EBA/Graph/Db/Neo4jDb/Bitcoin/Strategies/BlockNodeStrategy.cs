@@ -1,8 +1,10 @@
-﻿namespace EBA.Graph.Db.Neo4jDb.BitcoinStrategies;
+﻿using EBA.Graph.Bitcoin;
+
+namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
 {
-    public const string Labels = "Block";
+    public const NodeLabels Labels = NodeLabels.Block;
 
     /// Note that the ordre of the items in this array should 
     /// match those returned from the `GetCsv()` method.
@@ -21,7 +23,7 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
     public override string GetCsvHeader()
     {
         return string.Join(
-            Neo4jDb.csvDelimiter,
+            Neo4jDbLegacy.csvDelimiter,
             from x in _properties select x.CsvHeader);
     }
 
@@ -35,7 +37,7 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
         /// Note that the order of the items in this array should 
         /// match those in the `_properties`. 
         return string.Join(
-            Neo4jDb.csvDelimiter,
+            Neo4jDbLegacy.csvDelimiter,
             [
                 node.Height.ToString(),
                 node.MedianTime.ToString(),
@@ -78,7 +80,7 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
         var builder = new StringBuilder();
         builder.Append(
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
-            $"FIELDTERMINATOR '{Neo4jDb.csvDelimiter}' " +
+            $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' " +
             $"MERGE ({block}:{Labels} " +
             $"{{{Props.Height.GetSetter()}}}) ");
 
