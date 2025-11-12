@@ -5,52 +5,74 @@ sidebar_position: 1
 slug: quickstart
 ---
 
+Exploring the intersection of ML and Cryptocurrency 
+is a fascinating and impactful journey. 
+You can deep-dive into a specialized area or explore it end-to-end; 
+either way, there is huge potential for novel data sources, 
+model architectures, and impactful applications in decentralized finance (DeFi). 
 
-For a quick start, 
-we train and evaluate a model to generate node embeddings for 
-a Bitcoin script based on its 3-hop neighborhood. 
-We experiment with an unsupervised contrastive learning model and 
-then use the resulting embeddings to cluster the nodes. 
-We then compare these clusters with external annotations that 
-identify the wallet to which a script belongs and 
-classify wallets as belonging to exchanges, 
-mining pools, or gambling services.
-For model development, we use this dataset, 
-which contains `200k` randomly selected script nodes with 
-their neighborhoods sampled using the [Forest-Fire method](/docs/bitcoin/sampling/forest-fire). 
-More details on the model and instructions for this quick start 
-are available at [this page](https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification).
+EBA equips you with all the tools and data you need for this journey, 
+and this quick start helps you decide the right starting point for your application.
 
 
-As the following diagram illustrates, 
-this quick start bypasses the ETL pipeline to focus directly on the machine learning application. 
-We skip the ETL pipeline because it requires 
-weeks of processing and significant computational resources, 
-which is beyond the scope of a quick start. 
-The complete ETL pipeline is [documented in this section](/docs/bitcoin/etl/overview).
+## Path 1: Charting the Cosmos
+
+Choose this path to see the full, end-to-end journey. 
+You will start with the raw data, 
+learn how the graph pipeline is built, 
+and finish by training a complete model.
+
+* **What you will do:**
+  * Learn about the raw data we collect from Bitcoin.
+  * See why a graph database is essential for this dataset and how we can leverage it.
+  * Understand how we sample communities from the graph database.
+  * Train a _"hello-world"_ model to generate node embeddings for a Bitcoin script based on its 3-hop neighborhood.
+  * Run an unsupervised contrastive learning model, use the embeddings to cluster nodes, and evaluate the results.
+
+* **Resources you need:**
+  * Colab or a local Jupyter notebook
+
+* **Get started:** [Notebook Link](https://github.com/B1AAB/GraphStudio/blob/main/g101/g101.ipynb)
 
 
-```mermaid
-%%{ 
-  init: { 
-    'gitGraph': { 
-      'mainBranchName': 'Bitcoin-Regular'
-    },
-    'themeVariables': { 'fontSize': '14px', 'commitLabelFontSize': '14px'}
-  } 
-}%%
+
+## Path 2: Visiting the Stars
+
+Choose this path to skip the pipeline setup and 
+jump straight into model building and analysis.
 
 
-gitGraph:
-    commit id: "Sync Node"
-    commit id: "Traverse Chain"
-    commit id: "Address Stats"
-    commit id: "Txo lifecycle"
-    commit id: "Import into Neo4j"
-    commit id: "Sample Communities"
-    branch Bitcoin-Quick-Start
-    checkout Bitcoin-Quick-Start
-    commit id: "Hello-world Script Classification" 
-    checkout Bitcoin-Regular
-    merge Bitcoin-Quick-Start
-```
+* **What you will do:**
+  * Use our pre-sampled communities and load them directly into a PyG `InMemoryDataset`
+  * Train and evaluate a model to generate node embeddings for a Bitcoin script (address) based on its 3-hop neighborhood.
+  * Experiment with an unsupervised contrastive learning model to cluster nodes based on their learned embeddings.
+  * Compare your clusters with external annotations (like WalletExplorer) to identify exchanges, mining pools, or gambling services.
+
+* Resources you need:
+  * Jupyter notebook
+
+* **Get started:** [Script classification quick-start](https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification)
+
+
+## Charting Your Own Course
+
+
+We're glad you're interested and 
+hope you see how this resource can empower your work. 
+You're working with a real-world dataset spanning over 16 years, 
+so scale is an inseparable part of this journey. 
+This sheer scale is what makes this dataset powerful, 
+but it also demands significant computational resources. 
+For instance, running a Bitcoin node needs `~800GB` of storage and a week to sync, 
+and a graph database requires `~3TB` of storage.
+
+
+We are committed to making this resource [widely accessible](./accessibility). 
+To do this, we've taken two steps:
+
+1. The entire ecosystem is fully modular. You can skip parts of the journey as we provide checkpoint data for each step.
+
+2. We provide application-focused guides to help you find the correct starting point for your goals.
+
+
+[Dive into our application-focused guides](/docs/bitcoin/etl/overview) to find the perfect path for your project.
