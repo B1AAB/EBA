@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this resource, please cite it as below."
+authors:
+  - family-names: "Jalili"
+    given-names: "Vahid"
+    orcid: "https://orcid.org/0000-0003-4986-2157"
+title: "The Temporal Graph of Bitcoin Transactions"
+version: 0.1
+date-released: 2025
+url: "https://github.com/B1AAB/EBA"
+preferred-citation:
+  type: article
+  authors:
+    - family-names: "Jalili"
+      given-names: "Vahid"
+      orcid: "https://orcid.org/0000-0003-4986-2157"
+  journal: "arXiv preprint arXiv:2510.20028"
+  title: "The Temporal Graph of Bitcoin Transactions"
+  year: 2025

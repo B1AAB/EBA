@@ -420,4 +420,6 @@ FodyWeavers.xsd
 publish/
 build/
 
+.idea/
+
 !website/releases/

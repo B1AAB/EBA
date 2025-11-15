@@ -32,24 +32,3 @@ Additionally, we provide the following ready-to-use sampled communities:
 
     * [Dataset](https://www.kaggle.com/datasets/vjalili/bitcoin-graph-sampled-communities)
     * [Tutorial](https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification)
-
-
-## Sample Your Own Communities
-
--   Setup a Neo4j database
-    *   Access a Neo4j solution, e.g., [a local installation](/docs/gs/installation#neo4j)
-    *   [Download Bitcoin Graph](/releases/data-release/v1): You may download the graph in two formats:
-        *   Neo4j Database Dump, which is the faster option as 
-            it bypasses the need for a bulk import 
-            (see [load Neo4j database dump](/docs/bitcoin/etl/import#load)).
-        *   Neo4j format TSV files, which is more flexible but 
-            requires a computationally demanding bulk import that can take 2-3 weeks to complete
-            (see [import TSV into Neo4j database](/docs/bitcoin/etl/import#full)).
-
-    *   Start the Neo4j database (e.g., via [Neo4j Desktop](https://neo4j.com/docs/desktop/current/operations/instance-management/#_startstop_instance)).
-
--   Run the sampling method; you may run the following command for a documentation on the command's arguments.
-
-    ```bash
-    .\eba.exe bitcoin sample --help
-    ```
