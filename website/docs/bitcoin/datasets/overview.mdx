@@ -11,16 +11,45 @@ and available resources.
 
 
 
-* Skip all data pre-processing & **start modeling**
+* Skip data pre-processing & **start modeling**
 
-    - [Download sampled communities](https://www.kaggle.com/datasets/vjalili/bitcoin-graph-sampled-communities)
+    *   Best for rapid prototyping 
+    *   Lightweight (runs in Colab)
+
+    This option helps you understand the data structure 
+    and start building immediately, 
+    without needing to install or host a database.
+
+    -   [Download generic sampled communities](https://www.kaggle.com/datasets/vjalili/bitcoin-graph-sampled-communities) 
+        to build your own models
+    -   Run 
+        [graph 101 (g101) Jupyter Notebook](https://github.com/B1AAB/GraphStudio/blob/main/g101/g101.ipynb), 
+        or explore 
+        [quickstart demo models](https://github.com/B1AAB/GraphStudio/tree/main/quickstart)
 
 
-* Skip the ETL pipeline & **sample your own graphs**
-    - [Download Neo4j Database Dump](https://drive.google.com/drive/folders/1bAsjgVaIQrG2TDGkMtIEDPX8xKoiHJUf?usp=sharing).
-    - [Documentation](/docs/bitcoin/etl/import#load) on importing the dataset into Neo4j.
-    - [Documentation](/docs/bitcoin/sampling/overview) on sampling your own graphs.
+* Skip the ETL pipeline & **sample your own communities**
+    
+    *   Best for specialized applications
+    *   Resource-intensive with long runtimes
+    
+    This option enables you to sample custom neighborhoods 
+    tailored to your specific application.
 
 
-* Skip the Bitcoin node sync and chain traverse & **use summary statistics**
-    - [Download](https://drive.google.com/file/d/1_V-PNh9yhWDzQyvYj4If3m2HxNF6wiuz/view?usp=sharing) block summary statistics, & check [documentation](./stats).
+    -   [Import graph into a Neo4j database](/docs/bitcoin/etl/import) 
+        or 
+        [restore the database dump](/docs/bitcoin/etl/restore)
+    -   [Documentation](/docs/bitcoin/sampling/overview) on sampling your own graphs
+
+
+* Skip the Bitcoin node sync and chain traverse & **use summary statistics** 
+
+    *   Best for macro analysis
+    *   Lightweight (Runs in Colab)
+
+    This option provides longitudinal statistics of the Bitcoin blockchain, 
+    which you can study individually or use to augment multi-modal architectures.
+
+    -   [Download](https://www.kaggle.com/datasets/aab/bitcoin-block-metadata) block summary statistics
+    -   [Documentation](./stats)

@@ -17,14 +17,14 @@ and start querying the full graph significantly faster.
 
 The process involves:
 
-    *   Downloading the multi-part archive.
+    *   Downloading a multi-part archive of the database dump.
     *   Extracting the archive to a local directory.
     *   Loading the dump into your Neo4j instance.
 
 :::tip Do I need to host a graph database?
 
 **Yes,** if you want to 
-sample application-specific communities or 
+[sample application-specific communities](/docs/bitcoin/sampling/overview) or 
 explore the graph interactively 
 (e.g., querying $n$-hop neighborhoods).
 
@@ -32,7 +32,7 @@ explore the graph interactively
 a quick start for developing models using our 
 [generic, pre-sampled communities](https://www.kaggle.com/datasets/aab/bitcoin-graph-sampled-communities).
 In this case, you can jump straight to the 
-[g101 Jupyter notebook](https://github.com/B1AAB/GraphStudio/blob/main/g101/g101.ipynb) or 
+[g101 Jupyter Notebook](https://github.com/B1AAB/GraphStudio/blob/main/g101/g101.ipynb) or 
 [these quick-start examples](https://github.com/B1AAB/GraphStudio/tree/main/quickstart).
 :::
 
@@ -62,30 +62,33 @@ populated Neo4j database: `~2.7 TB`).
     ```
 
 
-
 ### Download & extract archive
 
 The database dump is compressed and split into many chunks 
-(`1070` chunks, `700 MB` each in [v1](/releases/data-release/v1)) 
+(`1070` chunks, `700 MB` each in [data release v1](/releases/data-release/v1)) 
 to ensure reliable downloading.
 
 1. Configure environment variables to specify the target directories for downloading and extracting the data.
 
     ```bash
-    # Replace path.
+    # Set the download path for the multi-part archive. 
+    # Requires ~800 GB free space.
     export G_DOWNLOAD_PATH="/mnt/download/path"
+
+    # Set the extraction path for the archive.
+    # Requires ~800 GB free space.
     export G_EXTRACT_PATH="/mnt/extract/path"
     ```
 
 
-2. Sync the dump files.
+2. Download the database dump files.
 
 
     ```bash
     aws s3 sync s3://bitcoin-graph/v1/neo4j_db_dump/ "${G_DOWNLOAD_PATH}" --no-sign-request
     ```
 
-3. Extract the multi-part archive. 
+3. Extract the downloaded multi-part archive. 
 
     ```bash
     7z x "${G_DOWNLOAD_PATH}/neo4j.dump.gz.001" -o"${G_EXTRACT_PATH}"

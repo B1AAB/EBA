@@ -14,8 +14,9 @@ if you need to modify the graph structure or append new data that is not include
 *Note: This is highly resource-intensive and can take 2-3 weeks on a standard desktop.*
 
 **No,** 
-if you simply want to explore the graph or sample communities from the dataset. 
-In this case, use the [restore database dump](./restore) instead; it bypasses the weeks-long processing time required for the bulk import described on this page. 
+if you simply want to explore the graph or 
+[sample communities](/docs/bitcoin/sampling/overview) from the dataset. 
+In this case, [restore database dump](./restore) instead; it bypasses the weeks-long processing time required for the bulk import described on this page. 
 :::
 
 
@@ -130,7 +131,7 @@ meaning it does not support incremental updates to an existing graph.
 
 4.  Determine the optimal heap size for the import process. 
     For a graph of this magnitude, memory configuration is critical for performance. 
-    Please refer to [Neo4j Memory Configuration Guide]((https://neo4j.com/docs/operations-manual/current/performance/memory-configuration/)).
+    Please refer to [Neo4j Memory Configuration Guide](https://neo4j.com/docs/operations-manual/current/performance/memory-configuration/).
 
 
 5.  Execute the import command. 

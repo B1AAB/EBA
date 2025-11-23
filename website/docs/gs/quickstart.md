@@ -30,7 +30,7 @@ and finish by training a complete model.
   * Run an unsupervised contrastive learning model, use the embeddings to cluster nodes, and evaluate the results.
 
 * **Resources you need:**
-  * Colab or a local Jupyter notebook
+  * Colab or a local Jupyter Notebook
 
 * **Get started:** [Notebook Link](https://github.com/B1AAB/GraphStudio/blob/main/g101/g101.ipynb)
 
@@ -49,7 +49,7 @@ jump straight into model building and analysis.
   * Compare your clusters with external annotations (like WalletExplorer) to identify exchanges, mining pools, or gambling services.
 
 * Resources you need:
-  * Jupyter notebook
+  * Jupyter Notebook
 
 * **Get started:** [Script classification quick-start](https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification)
 
