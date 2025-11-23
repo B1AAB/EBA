@@ -6,6 +6,8 @@ slug: /bitcoin/etl/restore
 ---
 
 
+
+
 On this page, we walk through the steps to populate an empty Neo4j database using our 
 [database dump](/releases/tags/data-releases). 
 This approach allows you to skip the resource-intensive 
@@ -18,6 +20,21 @@ The process involves:
     *   Downloading the multi-part archive.
     *   Extracting the archive to a local directory.
     *   Loading the dump into your Neo4j instance.
+
+:::tip Do I need to host a graph database?
+
+**Yes,** if you want to 
+sample application-specific communities or 
+explore the graph interactively 
+(e.g., querying $n$-hop neighborhoods).
+
+**No,** if you want 
+a quick start for developing models using our 
+[generic, pre-sampled communities](https://www.kaggle.com/datasets/aab/bitcoin-graph-sampled-communities).
+In this case, you can jump straight to the 
+[g101 Jupyter notebook](https://github.com/B1AAB/GraphStudio/blob/main/g101/g101.ipynb) or 
+[these quick-start examples](https://github.com/B1AAB/GraphStudio/tree/main/quickstart).
+:::
 
 
 :::danger Resource Requirements 
