@@ -4,7 +4,7 @@
         <title>EBA Blog</title>
         <link>https://eba.b1aab.ai/releases</link>
         <description>EBA Blog</description>
-        <lastBuildDate>Sat, 04 Oct 2025 01:06:59 GMT</lastBuildDate>
+        <lastBuildDate>Mon, 24 Nov 2025 02:34:11 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
@@ -12,7 +12,7 @@
             <title><![CDATA[Bitcoin Graph v1]]></title>
             <link>https://eba.b1aab.ai/releases/data-release/v1</link>
             <guid>https://eba.b1aab.ai/releases/data-release/v1</guid>
-            <pubDate>Sat, 04 Oct 2025 01:06:59 GMT</pubDate>
+            <pubDate>Mon, 24 Nov 2025 02:34:11 GMT</pubDate>
             <description><![CDATA[Initial data release.]]></description>
             <content:encoded><![CDATA[<p>This data release provides the full output of the ETL pipeline,
 covering the Bitcoin blockchain up to block height <code>863 000</code>.
@@ -22,51 +22,62 @@ provided in both Neo4j-compatible TSV and database dump formats,
 alongside pre-sampled communities and per-block summary statistics.</p>
 <p>The release contains the following resources:</p>
 <hr>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="bitcoin-graph">Bitcoin Graph<a href="https://eba.b1aab.ai/releases/data-release/v1#bitcoin-graph" class="hash-link" aria-label="Direct link to Bitcoin Graph" title="Direct link to Bitcoin Graph">​</a></h3>
-<div class="tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Use Cases</li><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">Downloads</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
-<li>Developing specialized cryptocurrency ML models;</li>
-<li>Sampling application-specific communities;</li>
-<li>Exploring the graph.</li>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="bitcoin-graph">Bitcoin Graph<a href="https://eba.b1aab.ai/releases/data-release/v1#bitcoin-graph" class="hash-link" aria-label="Direct link to Bitcoin Graph" title="Direct link to Bitcoin Graph" translate="no">​</a></h3>
+<div class="theme-tabs-container tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Use Cases</li><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">Downloads</li><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Schema &amp; Specs</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
+<li class="">Developing specialized cryptocurrency ML models;</li>
+<li class="">Sampling application-specific communities;</li>
+<li class="">Exploring the graph.</li>
 </ul></div><div role="tabpanel" class="tabItem_Ymn6"><ul>
-<li>Download <a href="https://drive.google.com/drive/folders/11X6QiVvWSOzxvDIAD0OWu3g2Sa0as3UQ?usp=drive_link" target="_blank" rel="noopener noreferrer">Neo4j format (1.17TB)</a></li>
-<li>Download <a href="https://drive.google.com/drive/folders/1bAsjgVaIQrG2TDGkMtIEDPX8xKoiHJUf?usp=drive_link" target="_blank" rel="noopener noreferrer">Neo4j database dump (731GB)</a></li>
-<li><a href="https://eba.b1aab.ai/docs/bitcoin/datasets/neo4j-format">Documentation</a></li>
-</ul></div></div></div>
-<hr>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="sampled-communities">Sampled Communities<a href="https://eba.b1aab.ai/releases/data-release/v1#sampled-communities" class="hash-link" aria-label="Direct link to Sampled Communities" title="Direct link to Sampled Communities">​</a></h3>
-<div class="tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Use Cases</li><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">Downloads</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
-<li>A quick introduction and exploring the dataset.</li>
-</ul></div><div role="tabpanel" class="tabItem_Ymn6"><ul>
-<li><a href="https://www.kaggle.com/datasets/vjalili/bitcoin-graph-sampled-communities" target="_blank" rel="noopener noreferrer">Download from Kaggle</a></li>
-<li>Use in a <a href="https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification" target="_blank" rel="noopener noreferrer"><em>Hello-World</em> script classification model</a></li>
-</ul></div></div></div>
-<hr>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="block-summary-statistics">Block Summary Statistics<a href="https://eba.b1aab.ai/releases/data-release/v1#block-summary-statistics" class="hash-link" aria-label="Direct link to Block Summary Statistics" title="Direct link to Block Summary Statistics">​</a></h3>
-<div class="tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Use Cases</li><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">Downloads</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
-<li>Longitudinal analysis of on-chain dynamics and trends.</li>
-<li>Combine on-chain block statistics with external data (e.g., market trading values for use in market forecasting models).</li>
-</ul></div><div role="tabpanel" class="tabItem_Ymn6"><ul>
-<li><a href="https://www.kaggle.com/datasets/vjalili/bitcoin-block-metadata" target="_blank" rel="noopener noreferrer">Download from Kaggle</a></li>
-<li><a href="https://eba.b1aab.ai/docs/bitcoin/datasets/stats">Documentation</a></li>
-</ul></div></div></div>
-<hr>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="dataset-spec">Dataset Spec<a href="https://eba.b1aab.ai/releases/data-release/v1#dataset-spec" class="hash-link" aria-label="Direct link to Dataset Spec" title="Direct link to Dataset Spec">​</a></h2>
+<li class="">
+<p>Download Neo4j format (<code>1.17TB</code>) from:</p>
 <ul>
-<li>
+<li class=""><a href="https://drive.google.com/drive/folders/11X6QiVvWSOzxvDIAD0OWu3g2Sa0as3UQ?usp=drive_link" target="_blank" rel="noopener noreferrer" class="">Google Drive</a></li>
+<li class="">AWS: <code>s3://bitcoin-graph/v1/data_to_import_neo4j/</code> (Walkthrough)</li>
+</ul>
+</li>
+<li class="">
+<p>Download Neo4j database dump (<code>731GB</code>) from:</p>
+<ul>
+<li class=""><a href="https://drive.google.com/drive/folders/1bAsjgVaIQrG2TDGkMtIEDPX8xKoiHJUf?usp=drive_link" target="_blank" rel="noopener noreferrer" class="">Google Drive</a></li>
+<li class="">AWS: <code>s3://bitcoin-graph/v1/neo4j_db_dump/</code> (<a class="" href="https://eba.b1aab.ai/docs/bitcoin/etl/restore">Walkthrough</a>)</li>
+</ul>
+</li>
+</ul></div><div role="tabpanel" class="tabItem_Ymn6" hidden=""></div></div></div>
+<hr>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="sampled-communities">Sampled Communities<a href="https://eba.b1aab.ai/releases/data-release/v1#sampled-communities" class="hash-link" aria-label="Direct link to Sampled Communities" title="Direct link to Sampled Communities" translate="no">​</a></h3>
+<div class="theme-tabs-container tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Use Cases</li><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">Downloads</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
+<li class="">A quick introduction and exploring the dataset.</li>
+</ul></div><div role="tabpanel" class="tabItem_Ymn6"><ul>
+<li class=""><a href="https://www.kaggle.com/datasets/vjalili/bitcoin-graph-sampled-communities" target="_blank" rel="noopener noreferrer" class="">Download from Kaggle</a></li>
+<li class="">Use in a <a href="https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification" target="_blank" rel="noopener noreferrer" class=""><em>Hello-World</em> script classification model</a></li>
+</ul></div></div></div>
+<hr>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="block-summary-statistics">Block Summary Statistics<a href="https://eba.b1aab.ai/releases/data-release/v1#block-summary-statistics" class="hash-link" aria-label="Direct link to Block Summary Statistics" title="Direct link to Block Summary Statistics" translate="no">​</a></h3>
+<div class="theme-tabs-container tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Use Cases</li><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">Downloads</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
+<li class="">Longitudinal analysis of on-chain dynamics and trends.</li>
+<li class="">Combine on-chain block statistics with external data (e.g., market trading values for use in market forecasting models).</li>
+</ul></div><div role="tabpanel" class="tabItem_Ymn6"><ul>
+<li class=""><a href="https://www.kaggle.com/datasets/vjalili/bitcoin-block-metadata" target="_blank" rel="noopener noreferrer" class="">Download from Kaggle</a></li>
+<li class=""><a class="" href="https://eba.b1aab.ai/docs/bitcoin/datasets/stats">Documentation</a></li>
+</ul></div></div></div>
+<hr>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="dataset-spec">Dataset Spec<a href="https://eba.b1aab.ai/releases/data-release/v1#dataset-spec" class="hash-link" aria-label="Direct link to Dataset Spec" title="Direct link to Dataset Spec" translate="no">​</a></h2>
+<ul>
+<li class="">
 <p>Covers all blocks on the Bitcoin Mainnet up to block height <code>863 000</code>.</p>
 </li>
-<li>
+<li class="">
 <p>Node count: <code>2 405 686 021</code> (<code>&gt;1.3B</code> Script nodes, <code>1.08B</code> Tx nodes, <code>863k</code> Block nodes, <code>1</code> Coinbase node).</p>
 </li>
-<li>
+<li class="">
 <p>Edge count: <code>39 724 622 327</code> (<code>&gt;13.2B</code> Redeems, <code>&gt;9.6B</code> Credits, <code>&gt;8.85B</code> Transfers, <code>&gt;4.3B</code> Fee, <code>&gt;3.6B</code> Confirms, <code>&gt;3.3M</code> Mints).</p>
 </li>
-<li>
+<li class="">
 <p>The following transactions are excluded:</p>
 <ul>
-<li>Transactions where the number of non-zero BTC
+<li class="">Transactions where the number of non-zero BTC
 input and output scripts is more than 20 each are excluded.</li>
-<li>Transactions and UTxO with 0 BTC are excluded.</li>
+<li class="">Transactions and UTxO with 0 BTC are excluded.</li>
 </ul>
 </li>
 </ul>]]></content:encoded>
