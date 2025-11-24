@@ -70,6 +70,7 @@ graph LR
 
     subgraph gStudio[Graph Studio]
         direction TB
+
         apps>Applications];
 
         offchain[/Off-chain Resources/];
@@ -82,10 +83,12 @@ graph LR
 
     %% --- Link Definitions ---
     click eba "https://eba.b1aab.ai" "EBA"
-    click offchain "https://github.com/B1AAB/GraphStudio/blob/main/off_chain_resources/" "Off-chain resources"
-    click apps "https://github.com/B1AAB/GraphStudio/blob/main/quickstart/" "Off-chain resources"
-    click neo4j "https://eba.b1aab.ai/releases/tags/data-releases" "Graph in Neo4j"
-    click neo4jDump "https://eba.b1aab.ai/releases/tags/data-releases" "Neo4j Dump"
+    click offchain "https://github.com/B1AAB/GraphStudio/blob/main/off_chain_resources/" "Off-chain Resources"
+    click apps "https://github.com/B1AAB/GraphStudio/blob/main/quickstart/" "Off-chain Resources"
+    click neo4j "https://eba.b1aab.ai/releases/data-release/v1" "Graph in Neo4j"
+    click neo4jDump "https://eba.b1aab.ai/releases/data-release/v1" "Neo4j Dump"
+    click coms "https://www.kaggle.com/datasets/aab/bitcoin-graph-sampled-communities" "Sampled Communities"
+    click tsv "https://eba.b1aab.ai/releases/data-release/v1" "Graph in TSV"
 
     %% --- Styling ---
     %%style eba fill:#ff9e00,stroke:#ff9e00,color:#000
