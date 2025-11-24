@@ -82,11 +82,11 @@ graph LR
     coms --> apps;    
 
     %% --- Link Definitions ---
-    click eba "https://github.com/B1AAB/EBA" "EBA"
-    click offchain "https://github.com/B1AAB/GraphStudio/blob/main/off_chain_resources/" "Off-chain resources"
-    click apps "https://github.com/B1AAB/GraphStudio/blob/main/quickstart/" "Off-chain resources"
-    click neo4j "https://drive.google.com/drive/folders/11X6QiVvWSOzxvDIAD0OWu3g2Sa0as3UQ?usp=sharing" "Graph in Neo4j"
-    click neo4jDump "https://drive.google.com/drive/folders/1bAsjgVaIQrG2TDGkMtIEDPX8xKoiHJUf?usp=sharing" "Neo4j Dump"
+    click eba "https://eba.b1aab.ai" "EBA"
+    click offchain "https://github.com/B1AAB/GraphStudio/blob/main/off_chain_resources/" "Off-chain Resources"
+    click apps "https://github.com/B1AAB/GraphStudio/blob/main/quickstart/" "Off-chain Resources"
+    click neo4j "https://eba.b1aab.ai/releases/data-release/v1" "Graph in Neo4j"
+    click neo4jDump "https://eba.b1aab.ai/releases/data-release/v1" "Neo4j Dump"
     click coms "https://www.kaggle.com/datasets/aab/bitcoin-graph-sampled-communities" "Sampled Communities"
     click tsv "https://eba.b1aab.ai/releases/data-release/v1" "Graph in TSV"
 
