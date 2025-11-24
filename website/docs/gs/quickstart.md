@@ -15,7 +15,7 @@ EBA equips you with all the tools and data you need for this journey,
 and this quick start helps you decide the right starting point for your application.
 
 
-## Path 1: Charting the Cosmos
+### Path 1: Charting the Cosmos
 
 Choose this path to see the full, end-to-end journey. 
 You will start with the raw data, 
@@ -26,7 +26,8 @@ and finish by training a complete model.
   * Learn about the raw data we collect from Bitcoin.
   * See why a graph database is essential for this dataset and how we can leverage it.
   * Understand how we sample communities from the graph database.
-  * Train a _"hello-world"_ model to generate node embeddings for a Bitcoin script based on its 3-hop neighborhood.
+  * Train a _"hello-world"_ model to generate node embeddings for a 
+    Bitcoin script based on its 3-hop neighborhood.
   * Run an unsupervised contrastive learning model, use the embeddings to cluster nodes, and evaluate the results.
 
 * **Resources you need:**
@@ -36,7 +37,7 @@ and finish by training a complete model.
 
 
 
-## Path 2: Visiting the Stars
+### Path 2: Visiting the Stars
 
 Choose this path to skip the pipeline setup and 
 jump straight into model building and analysis.
@@ -44,9 +45,12 @@ jump straight into model building and analysis.
 
 * **What you will do:**
   * Use our pre-sampled communities and load them directly into a PyG `InMemoryDataset`
-  * Train and evaluate a model to generate node embeddings for a Bitcoin script (address) based on its 3-hop neighborhood.
-  * Experiment with an unsupervised contrastive learning model to cluster nodes based on their learned embeddings.
-  * Compare your clusters with external annotations (like WalletExplorer) to identify exchanges, mining pools, or gambling services.
+  * Train and evaluate a model to generate node embeddings for a 
+    Bitcoin script (address) based on its 3-hop neighborhood.
+  * Experiment with an unsupervised contrastive learning model to cluster 
+    nodes based on their learned embeddings.
+  * Compare your clusters with external annotations (like WalletExplorer) 
+    to identify exchanges, mining pools, or gambling services.
 
 * Resources you need:
   * Jupyter Notebook
@@ -54,7 +58,7 @@ jump straight into model building and analysis.
 * **Get started:** [Script classification quick-start](https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification)
 
 
-## Charting Your Own Course
+### Charting Your Own Course
 
 
 We're glad you're interested and 
@@ -75,4 +79,5 @@ To do this, we've taken two steps:
 2. We provide application-focused guides to help you find the correct starting point for your goals.
 
 
-[Dive into our application-focused guides](/docs/bitcoin/etl/overview) to find the perfect path for your project.
+[Dive into our application-focused guides](/docs/bitcoin/etl/overview) 
+to find the perfect path for your project.

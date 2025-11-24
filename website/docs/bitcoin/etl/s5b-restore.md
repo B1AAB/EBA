@@ -122,7 +122,7 @@ to ensure reliable downloading.
     Please refer to [this page](https://neo4j.com/docs/operations-manual/current/backup-restore/restore-dump/)
     for documentation on the `database load` command.
 
-    **Note:** This step will take a significant amount of time and requires at least `2.722 TiB` of free space in the Neo4j database path.
+    **Note:** This step will take a significant amount of time (e.g., 24h) and requires at least `2.72 TB` of free space in the Neo4j database path.
     
 
 3. Start the database service. 

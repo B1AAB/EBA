@@ -25,7 +25,7 @@ such as a self-hosted production cluster or a fully managed,
 
 
 For development and accessibility, 
-all our solutions are designed to run on a standalone Neo4j Desktop installation, 
+all our solutions are designed to run on a standalone Neo4j installation, 
 although a cloud-based deployment can be more performant.
 
 
@@ -48,16 +48,4 @@ Follow [this documentation](/docs/bitcoin/etl/import).
 Choose this path if you want to use the 
 [database dump](/releases/data-release/v1) 
 we provided (this is the faster option).
-
-*   Download Neo4j [database dump](/releases/data-release/v1).
-
-*   You can follow the official steps 
-    [on this page](https://neo4j.com/docs/operations-manual/current/backup-restore/restore-dump/) 
-    to restore the database, or run the command below:
-
-    ```bash
-    .\bin\neo4j-admin.bat database load --overwrite-destination=true --verbose --from-path=M:\\ neo4j
-    ```
-
-    This process may take a few hours and needs `2.722 TiB` of storage.
-    If it asks for a password, you may enter `password`.
+Follow [this documentation](/docs/bitcoin/etl/restore).
