@@ -31,6 +31,19 @@ although a cloud-based deployment can be more performant.
 
 *   Please follow [this documentation](https://neo4j.com/docs/operations-manual/current/installation) 
     to install a Neo4j database. 
+
+    :::danger Make sure you install a compatible Neo4j version
+    For performance reasons, the database dumps we share are in the 
+    [Neo4j _block_](https://neo4j.com/blog/developer/neo4j-graph-native-store-format/) format. 
+
+    The _block_ format is [supported across various Neo4j versions](https://neo4j.com/docs/operations-manual/current/database-internals/store-formats/), 
+    such as Enterprise Edition or Neo4j Desktop. 
+    
+    If you install a version that does not support the _block_ format, 
+    you will get the following error when restoring the database dump:
+
+    > `Failed to load database 'neo4j': Block format detected for database neo4j but unavailable in this edition.`
+    :::
     
 *   Ensure you can connect to the installed Neo4j database.
 
