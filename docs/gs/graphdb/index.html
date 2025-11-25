@@ -16,7 +16,7 @@
 <link rel="search" type="application/opensearchdescription+xml" title="EBA" href="/opensearch.xml">
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.13.24/dist/katex.min.css" integrity="sha384-odtC+0UGzzFL/6PNoE8rX/SPcQDXBJ+uRepguP4QkPCm2LBxH3FA3y+fKSiJ+AmM" crossorigin="anonymous"><link rel="stylesheet" href="/assets/css/styles.35c87264.css">
-<script src="/assets/js/runtime~main.93361eee.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.a1df573a.js" defer="defer"></script>
 <script src="/assets/js/main.785489a3.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -40,6 +40,12 @@ although a cloud-based deployment can be more performant.</p>
 <li class="">
 <p>Please follow <a href="https://neo4j.com/docs/operations-manual/current/installation" target="_blank" rel="noopener noreferrer" class="">this documentation</a>
 to install a Neo4j database.</p>
+<div class="theme-admonition theme-admonition-danger admonition_xJq3 alert alert--danger"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M5.05.31c.81 2.17.41 3.38-.52 4.31C3.55 5.67 1.98 6.45.9 7.98c-1.45 2.05-1.7 6.53 3.53 7.7-2.2-1.16-2.67-4.52-.3-6.61-.61 2.03.53 3.33 1.94 2.86 1.39-.47 2.3.53 2.27 1.67-.02.78-.31 1.44-1.13 1.81 3.42-.59 4.78-3.42 4.78-5.56 0-2.84-2.53-3.22-1.25-5.61-1.52.13-2.03 1.13-1.89 2.75.09 1.08-1.02 1.8-1.86 1.33-.67-.41-.66-1.19-.06-1.78C8.18 5.31 8.68 2.45 5.05.32L5.03.3l.02.01z"></path></svg></span>Make sure you install a compatible Neo4j version</div><div class="admonitionContent_BuS1"><p>For performance reasons, the database dumps we share are in the
+<a href="https://neo4j.com/blog/developer/neo4j-graph-native-store-format/" target="_blank" rel="noopener noreferrer" class="">Neo4j <em>block</em></a> format.</p><p>The <em>block</em> format is <a href="https://neo4j.com/docs/operations-manual/current/database-internals/store-formats/" target="_blank" rel="noopener noreferrer" class="">supported across various Neo4j versions</a>,
+such as Enterprise Edition or Neo4j Desktop.</p><p>If you install a version that does not support the <em>block</em> format,
+you will get the following error when restoring the database dump:</p><blockquote>
+<p><code>Failed to load database &#x27;neo4j&#x27;: Block format detected for database neo4j but unavailable in this edition.</code></p>
+</blockquote></div></div>
 </li>
 <li class="">
 <p>Ensure you can connect to the installed Neo4j database.</p>
