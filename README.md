@@ -33,6 +33,8 @@ across the vibrant cryptocurrency ecosystem, including:
 
 <p align="center">
     |
+    <a href="https://github.com/B1AAB/GraphStudio/blob/main/g101/g101.ipynb">101 Quick Start Jupyter Notebook</a> 
+    |
     <a href="https://github.com/B1AAB/GraphStudio">Explore Example Applications</a> 
     |
 </p>
