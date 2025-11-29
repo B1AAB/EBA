@@ -4,7 +4,7 @@
         <title>EBA Blog</title>
         <link>https://eba.b1aab.ai/releases</link>
         <description>EBA Blog</description>
-        <lastBuildDate>Tue, 25 Nov 2025 03:20:53 GMT</lastBuildDate>
+        <lastBuildDate>Sat, 29 Nov 2025 01:32:50 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
@@ -12,7 +12,7 @@
             <title><![CDATA[Bitcoin Graph v1]]></title>
             <link>https://eba.b1aab.ai/releases/data-release/v1</link>
             <guid>https://eba.b1aab.ai/releases/data-release/v1</guid>
-            <pubDate>Tue, 25 Nov 2025 03:20:53 GMT</pubDate>
+            <pubDate>Sat, 29 Nov 2025 01:32:50 GMT</pubDate>
             <description><![CDATA[Initial data release.]]></description>
             <content:encoded><![CDATA[<p>This data release provides the full output of the ETL pipeline,
 covering the Bitcoin blockchain up to block height <code>863 000</code>.
@@ -32,7 +32,7 @@ alongside pre-sampled communities and per-block summary statistics.</p>
 <p>Download Neo4j format (<code>1.17TB</code>) from:</p>
 <ul>
 <li class=""><a href="https://drive.google.com/drive/folders/11X6QiVvWSOzxvDIAD0OWu3g2Sa0as3UQ?usp=drive_link" target="_blank" rel="noopener noreferrer" class="">Google Drive</a></li>
-<li class="">AWS: <code>s3://bitcoin-graph/v1/data_to_import_neo4j/</code> (Walkthrough)</li>
+<li class="">AWS: <code>s3://bitcoin-graph/v1/data_to_import_neo4j/</code> (<a class="" href="https://eba.b1aab.ai/docs/bitcoin/etl/import">Walkthrough</a>)</li>
 </ul>
 </li>
 <li class="">
@@ -42,23 +42,27 @@ alongside pre-sampled communities and per-block summary statistics.</p>
 <li class="">AWS: <code>s3://bitcoin-graph/v1/neo4j_db_dump/</code> (<a class="" href="https://eba.b1aab.ai/docs/bitcoin/etl/restore">Walkthrough</a>)</li>
 </ul>
 </li>
-</ul></div><div role="tabpanel" class="tabItem_Ymn6" hidden=""></div></div></div>
+</ul></div><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
+<li class=""><a class="" href="https://eba.b1aab.ai/docs/bitcoin/datasets/tsv">Neo4j format (TSV) schema</a></li>
+</ul></div></div></div>
 <hr>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="sampled-communities">Sampled Communities<a href="https://eba.b1aab.ai/releases/data-release/v1#sampled-communities" class="hash-link" aria-label="Direct link to Sampled Communities" title="Direct link to Sampled Communities" translate="no">​</a></h3>
 <div class="theme-tabs-container tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Use Cases</li><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">Downloads</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
 <li class="">A quick introduction and exploring the dataset.</li>
 </ul></div><div role="tabpanel" class="tabItem_Ymn6"><ul>
-<li class=""><a href="https://www.kaggle.com/datasets/vjalili/bitcoin-graph-sampled-communities" target="_blank" rel="noopener noreferrer" class="">Download from Kaggle</a></li>
+<li class=""><a href="https://www.kaggle.com/datasets/aab/bitcoin-graph-sampled-communities" target="_blank" rel="noopener noreferrer" class="">Download from Kaggle</a></li>
 <li class="">Use in a <a href="https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification" target="_blank" rel="noopener noreferrer" class=""><em>Hello-World</em> script classification model</a></li>
 </ul></div></div></div>
 <hr>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="block-summary-statistics">Block Summary Statistics<a href="https://eba.b1aab.ai/releases/data-release/v1#block-summary-statistics" class="hash-link" aria-label="Direct link to Block Summary Statistics" title="Direct link to Block Summary Statistics" translate="no">​</a></h3>
-<div class="theme-tabs-container tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Use Cases</li><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">Downloads</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
+<div class="theme-tabs-container tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Use Cases</li><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">Downloads</li><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Schema &amp; Specs</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
 <li class="">Longitudinal analysis of on-chain dynamics and trends.</li>
 <li class="">Combine on-chain block statistics with external data (e.g., market trading values for use in market forecasting models).</li>
 </ul></div><div role="tabpanel" class="tabItem_Ymn6"><ul>
-<li class=""><a href="https://www.kaggle.com/datasets/vjalili/bitcoin-block-metadata" target="_blank" rel="noopener noreferrer" class="">Download from Kaggle</a></li>
+<li class=""><a href="https://www.kaggle.com/datasets/aab/bitcoin-block-metadata" target="_blank" rel="noopener noreferrer" class="">Download from Kaggle</a></li>
 <li class=""><a class="" href="https://eba.b1aab.ai/docs/bitcoin/datasets/stats">Documentation</a></li>
+</ul></div><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
+<li class=""><a class="" href="https://eba.b1aab.ai/docs/bitcoin/datasets/stats">Block Statistics schema</a></li>
 </ul></div></div></div>
 <hr>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="dataset-spec">Dataset Spec<a href="https://eba.b1aab.ai/releases/data-release/v1#dataset-spec" class="hash-link" aria-label="Direct link to Dataset Spec" title="Direct link to Dataset Spec" translate="no">​</a></h2>
