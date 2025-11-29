@@ -5,7 +5,11 @@ sidebar_label: Sample Communities
 ---
 
 
--   [Setup a Neo4j database](/docs/gs/graphdb), and make sure the database is running and you're connected to it. 
+-   [Setup a Neo4j database](/docs/gs/graphdb)
+
+-   [Restore](/docs/bitcoin/etl/restore) the graph database if needed.
+
+-   Ensure the database is running and you're connected to it. 
 
 -   Run the sampling method; you may run the following command for a documentation on the command's arguments.
 

@@ -11,7 +11,7 @@ slug: /bitcoin/etl/import
 **Yes,**
 if you need to modify the graph structure or append new data that is not included in 
 [our release](/releases/tags/data-releases). 
-*Note: This is highly resource-intensive and can take 2-3 weeks on a standard desktop.*
+*Note: This is highly resource-intensive and can take 2-3 weeks on a high-end desktop computer.*
 
 **No,** 
 if you simply want to explore the graph or 
@@ -20,69 +20,68 @@ In this case, [restore database dump](./restore) instead; it bypasses the weeks-
 :::
 
 
+On this page, we walk through the steps required to import the Bitcoin graph from batched TSV files into a Neo4j database.
+
+
+### Checkpoint: using pre-generated graph data
+
+If you chose to skip the 
+[sync a Bitcoin node](./node-sync) $\rightarrow$ 
+[traverse](./traverse) steps, you do _not_ have the TSV files yet. 
+Instead, you can download the data we have prepared, 
+which encompasses all blocks up to height `863000`.
+
+_Note: If you **did run** the 
+[sync a Bitcoin node](./node-sync) and 
+[traverse](./traverse) steps and 
+generated your own TSV files, you can skip this step and 
+proceed directly to the [import](#import) step below._
+
+:::danger Resource Requirements 
+
+This process involves downloading nearly `1.2 TB` of data; 
+ensure you are using a stable connection without data caps and 
+have at least `1.2 TB` of free disk space. 
+:::
+
+You may take the following steps to download the graph in TSV files.
+
+1. [Install the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
+
+2. Configure environment variable to specify the target directory.
+
+    ```shell
+    export GDIR="/mnt/download/path"
+    ```
+
+3. Download the TSV files. 
+
+    ```shell
+    aws s3 sync s3://bitcoin-graph/v1/data_to_import_neo4j/ "${GDIR}" --no-sign-request    
+    ```
+
+
+
+### Import into the database {#import}
+
 [`neo4j-admin`](https://neo4j.com/docs/operations-manual/4.4/tools/neo4j-admin/neo4j-admin-import/)
 offers the highest throughput method for populating a massive database. 
 Its primary constraint is that it requires an empty database, 
 meaning it does not support incremental updates to an existing graph.
 
 
+1.  Install [neo4j graph database](/docs/gs/graphdb#neo4j).
 
-<details>
-    <summary>Optional: Manual Pre-processing (Experimental)</summary>
-
-    This optional step performs manual deduplication of nodes 
-    to improve the Neo4j import process.
-    While the Neo4j admin tool offers a `--skip-duplicate-nodes` flag, 
-    pre-sorting and deduplicating via the command line is often 
-    more memory-efficient for datasets of this scale.
-
-
-    a.1. Run the _experimental_ application `EXP_PrepareDataForNeo4j`.
-
-        Due to memory constraints, 
-        this step aggregates files but does not strictly deduplicate them; 
-        it outputs intermediate files intended for sorting.
-
-    a.2. `cd` to the directory where the data is persisted
-
-    a.3. Combine the files:
-
-        ```shell
-        cat *_BitcoinTxNode.tsv > combined_BitcoinTxNode.tsv
-        ```
-
-        ```shell
-        cat *_BitcoinScriptNode.tsv > combined_BitcoinScriptNode.tsv
-        ```
-
-    a.4. Sort the files:
-        (The goal of the following is to de-duplicate the Tx and Script node files. neo4j has the argument `--skip-duplicate-nodes[=true|false]` that can be used as an alternative to the following.)
-
-        ```shell
-        LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_BitcoinTxNode.tsv > sorted_BitcoinTxNode.tsv
-        ```
-
-        ```shell
-        LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_BitcoinScriptNode.tsv > sorted_BitcoinScriptNode.tsv
-        ```
-
-    a.5. Run the _experimental_ application `EXP_ProcessSortedNodeFiles`.
-</details>
-
-
-
-
-
-1.  [Create a neo4j database](https://neo4j.com/docs/desktop/current/operations/database-management/#_create_a_new_database).
+2.  [Create a neo4j database](https://neo4j.com/docs/desktop/current/operations/database-management/#_create_a_new_database).
     
-2.  If you are using an existing database instance,
+3.  If you are using an existing database instance,
     ensure the target database is empty and shut down.
 
     ```shell
     sudo systemctl stop neo4j
     ```
 
-3.  Set an environment variable pointing to the directory containing the Bitcoin graph TSV files.
+4.  Set an environment variable pointing to the directory containing the Bitcoin graph TSV files.
 
 
     ```shell
@@ -129,12 +128,12 @@ meaning it does not support incremental updates to an existing graph.
     1   unique_BitcoinTxNode.tsv.gz
     ```
 
-4.  Determine the optimal heap size for the import process. 
+5.  Determine the optimal heap size for the import process. 
     For a graph of this magnitude, memory configuration is critical for performance. 
     Please refer to [Neo4j Memory Configuration Guide](https://neo4j.com/docs/operations-manual/current/performance/memory-configuration/).
 
 
-5.  Execute the import command. 
+6.  Execute the import command. 
     Note that we use regex patterns (e.g., .`*BitcoinS2S.tsv.gz`) to ingest the batched edge files automatically.
 
     ```shell
@@ -159,7 +158,7 @@ meaning it does not support incremental updates to an existing graph.
     ```
 
 
-6.  Once the import concludes, restart the Neo4j service. 
+7.  Once the import concludes, restart the Neo4j service. 
     We also recommend installing the 
     [APOC library](https://neo4j.com/docs/apoc/current/installation/), 
     as it is needed in EBA for sampling communities.

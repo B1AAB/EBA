@@ -12,7 +12,7 @@ slug: graphdb
 from the graph.
 
 **No**, if you only want to use the 
-[communities](https://www.kaggle.com/datasets/vjalili/bitcoin-graph-sampled-communities), or 
+[communities](https://www.kaggle.com/datasets/aab/bitcoin-graph-sampled-communities), or 
 the [sample models](https://github.com/B1AAB/GraphStudio) we provide.
 ::::
 

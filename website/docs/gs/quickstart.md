@@ -15,12 +15,12 @@ EBA equips you with all the tools and data you need for this journey,
 and this quick start helps you decide the right starting point for your application.
 
 
-### Path 1: Charting the Cosmos
+### Path 1: Charting the Cosmos {#path1}
 
 Choose this path to see the full, end-to-end journey. 
 You will start with the raw data, 
 learn how the graph pipeline is built, 
-and finish by training a complete model.
+and finish by training a graph neural network (GNN) model.
 
 * **What you will do:**
   * Learn about the raw data we collect from Bitcoin.
@@ -37,7 +37,7 @@ and finish by training a complete model.
 
 
 
-### Path 2: Visiting the Stars
+### Path 2: Visiting the Stars {#path2}
 
 Choose this path to skip the pipeline setup and 
 jump straight into model building and analysis.
@@ -52,13 +52,13 @@ jump straight into model building and analysis.
   * Compare your clusters with external annotations (like WalletExplorer) 
     to identify exchanges, mining pools, or gambling services.
 
-* Resources you need:
+* **Resources you need**:
   * Jupyter Notebook
 
 * **Get started:** [Script classification quick-start](https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification)
 
 
-### Charting Your Own Course
+### Charting Your Own Course {#your-own-course}
 
 
 We're glad you're interested and 

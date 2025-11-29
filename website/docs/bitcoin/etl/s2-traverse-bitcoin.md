@@ -60,3 +60,45 @@ This horizontal scaling would significantly improve performance;
 however, because this requires a k8s cluster and cloud or on-premises HPC resources 
 that may not be [widely accessible](/docs/gs/accessibility), 
 the specifics of such a deployment are not currently covered.
+
+
+### Optional Post-processing (Experimental)
+
+This optional step performs manual deduplication of nodes 
+to improve the [Neo4j import process](/docs/bitcoin/etl/import).
+While the Neo4j admin tool offers a `--skip-duplicate-nodes` flag, 
+pre-sorting and deduplicating via the command line is often 
+more memory-efficient for datasets of this scale.
+
+
+1. Run the _experimental_ application `EXP_PrepareDataForNeo4j`.
+
+    Due to memory constraints, 
+    this step aggregates files but does not strictly deduplicate them; 
+    it outputs intermediate files intended for sorting.
+
+2. `cd` to the directory where the data is persisted
+
+3. Combine the files:
+
+    ```shell
+    cat *_BitcoinTxNode.tsv > combined_BitcoinTxNode.tsv
+    ```
+
+    ```shell
+    cat *_BitcoinScriptNode.tsv > combined_BitcoinScriptNode.tsv
+    ```
+
+4. Sort the files:
+    (The goal of the following is to de-duplicate the Tx and Script node files. neo4j has the argument `--skip-duplicate-nodes[=true|false]` that can be used as an alternative to the following.)
+
+    ```shell
+    LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_BitcoinTxNode.tsv > sorted_BitcoinTxNode.tsv
+    ```
+
+    ```shell
+    LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_BitcoinScriptNode.tsv > sorted_BitcoinScriptNode.tsv
+    ```
+
+5. Run the _experimental_ application `EXP_ProcessSortedNodeFiles`.
+

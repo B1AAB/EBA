@@ -52,10 +52,11 @@ populated Neo4j database: `~2.7 TB`).
 
 ### Prerequisites & setup
 
-1. Install data source CLI: [install the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
- 
+1. Install [neo4j graph database](/docs/gs/graphdb#neo4j).
 
-2. Install [7-Zip](https://www.7-zip.org).
+2. Install data source CLI: [install the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
+
+3. Install [7-Zip](https://www.7-zip.org).
 
     ```bash
     sudo apt update && sudo apt install p7zip-full -y
