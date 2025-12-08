@@ -11,9 +11,12 @@ a time-stamped, directed edge between their corresponding nodes.
 Consequently, the flow of how funds are earned and spent can be traced 
 by traversing these paths.
 
+
 <p align="center">
     |
     <a href="https://eba.b1aab.ai/docs/gs/welcome">Read More</a> 
+    |
+    <a href="https://eba.b1aab.ai/docs/publications">Publications</a> 
     |
 </p>
 
@@ -31,6 +34,7 @@ across the vibrant cryptocurrency ecosystem, including:
 *   Identifying suspicious or illicit activities.
 *   Benchmarking large-scale, graph-based machine learning models.
 
+
 <p align="center">
     |
     <a href="https://github.com/B1AAB/GraphStudio/blob/main/g101/g101.ipynb">101 Quick Start Jupyter Notebook</a> 
@@ -40,11 +44,13 @@ across the vibrant cryptocurrency ecosystem, including:
 </p>
 
 
+
 The Bitcoin Graph that EBA creates encompasses 
 the complete trading details of over `8.72` billion BTC,
 and it consists of over `2.4` billion nodes and 
 `39.72` billion time-stamped edges spanning more than a decade.
 We share the complete ETL pipeline and all the data it generates.
+
 
 <p align="center">
     |
