@@ -14,16 +14,13 @@
   border: 1px solid var(--ifm-color-emphasis-200);
   background-color: var(--ifm-card-background-color);
   border-radius: var(--ifm-card-border-radius);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
   overflow: hidden;
-  text-decoration: none !important;
 }
 
 .pubCard:hover {
-  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-color: var(--ifm-color-primary);
-  cursor: pointer;
 }
 
 .cardBody {
@@ -38,6 +35,34 @@
   font-size: 1.2rem;
   font-weight: 700;
   line-height: 1.3;
+}
+
+.titleLink {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.titleLink:hover {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+
+.badgeContainer {
+  margin-bottom: 0.5rem;
+}
+
+.highlightBadge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ifm-color-primary);
+  background: rgba(var(--ifm-color-primary-rgb), 0.1);
+  border: 1px solid rgba(var(--ifm-color-primary-rgb), 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
 }
 
 .authorRow {
@@ -60,36 +85,19 @@
   color: var(--ifm-color-emphasis-700);
 }
 
-.stretchedLink::after {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 1;
-  content: "";
-}
-
 .cardFooter {
   padding: 0 1.5rem 1.5rem 1.5rem;
   display: flex;
   gap: 10px;
-  pointer-events: none; 
 }
 
 .actionButton {
-  position: relative;
-  z-index: 2;
-  pointer-events: auto;
+  /* Removed z-index hacks */
 }
 
 .authorLink {
   color: var(--ifm-color-content-secondary);
-  text-decoration: underline;
   text-decoration-color: var(--ifm-color-primary-light);
-  
-  position: relative; 
-  z-index: 2;
 }
 
 .authorLink:hover {

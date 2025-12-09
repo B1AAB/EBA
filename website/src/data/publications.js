@@ -5,10 +5,12 @@ export const publications = [
     authors: [
       { name: "Jalili, Vahid", url: "https://www.linkedin.com/in/jalilivahid/" },
     ],
-    conference: "The Thirty-ninth Annual Conference on Neural Information Processing Systems",
+    conference: "The Thirty-ninth Annual Conference on Neural Information Processing Systems (NeurIPS)",
     url: "https://arxiv.org/abs/2510.20028", 
     type: "Conference",
     year: 2025,
-    pdf: "https://arxiv.org/pdf/2510.20028"
+    pdf: "https://arxiv.org/pdf/2510.20028",
+    openReview: "https://openreview.net/forum?id=Xs7JM4VGHv",
+    highlight: "NeurIPS 2025 Spotlight"
   }
 ];

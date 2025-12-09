@@ -3,16 +3,21 @@ import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import styles from './styles.module.css';
 
-export function PubCard({ title, authors, conference, url, pdf, code, year }) {
+export function PubCard({ title, authors, conference, url, pdf, openReview, year, highlight }) {
   return (
     <div className={clsx('card', styles.pubCard)}>
       <div className={styles.cardBody}>
         
+        {highlight && (
+          <div className={styles.badgeContainer}>
+            <span className={styles.highlightBadge}>{highlight}</span>
+          </div>
+        )}
+
         <h3 className={styles.title}>
           <Link 
             to={url} 
-            className={styles.stretchedLink}
-            style={{ color: 'inherit', textDecoration: 'none' }}
+            className={styles.titleLink}
           >
             {title}
           </Link>
@@ -44,22 +49,22 @@ export function PubCard({ title, authors, conference, url, pdf, code, year }) {
 
       </div>
 
-      {(pdf || code) && (
+      {(pdf || openReview) && (
         <div className={styles.cardFooter}>
           {pdf && (
             <Link 
               to={pdf}
-              className={clsx("button button--primary button--sm", styles.actionButton)}
+              className={clsx("button button--outline button--primary button--sm", styles.actionButton)}
             >
               PDF
             </Link>
           )}
-          {code && (
+          {openReview && (
             <Link 
-              to={code}
+              to={openReview}
               className={clsx("button button--outline button--primary button--sm", styles.actionButton)}
             >
-              Code
+              Open Review
             </Link>
           )}
         </div>

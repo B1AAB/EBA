@@ -16,7 +16,7 @@ by traversing these paths.
     |
     <a href="https://eba.b1aab.ai/docs/gs/welcome">Read More</a> 
     |
-    <a href="https://eba.b1aab.ai/docs/publications">Publications</a> 
+    <a href="https://eba.b1aab.ai/docs/publications">NeurIPS 2025 Spotlight</a> 
     |
 </p>
 
