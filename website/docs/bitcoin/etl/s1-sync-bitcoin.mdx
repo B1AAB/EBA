@@ -30,7 +30,7 @@ You may take the following steps.
 * Download and install [Bitcoin Core](https://bitcoin.org/en/download).
 
 
-* Start `bitcoin-qt` using the following command.
+* Start `Bitcoin Core` using the following command.
 
     ```shell
     cd [installation directory]
@@ -42,11 +42,11 @@ You may take the following steps.
   While you could monitor the progress of synchronizing with the network, 
   the UI does not report on the indexing progress. 
   Hence, after synchronization is complete, the indexing is in progress, 
-  and `bitcoin-qt` will not respond (properly) to API calls before this process finishes. 
+  and `bitcoin Core` will not respond (properly) to API calls before this process finishes. 
   You may "monitor" the indexing progress by monitoring the `\indexes\txindex` directory for changed/added files.
 
   **Why setting `-rpcworkqueue=100`?**
-  EBA is optimized for concurrency and sends many API requests to `bitcoin-qt`, 
+  EBA is optimized for concurrency and sends many API requests to `bitcoin Core`, 
   with a dynamically adjusted degree of parallelization. 
   However, Bitcoin Core's default worker queue size is small and you get a `503` error when EBA creates many concurrent requests 
   (e.g., see [this error](https://github.com/bitcoin/bitcoin/blob/767ee2e3a1082468b4e2248bac3ef8bd54bb2ddb/src/httpserver.cpp#L269));
@@ -66,10 +66,10 @@ You may take the following steps.
 
 ### Privacy Best Practices
 
-Do **NOT** define your real Wallet on this `bitcoin-qt` instance 
+Do **NOT** define your real Wallet on this `Bitcoin Core` instance 
 (i.e., the Wallet you may have used on any Bitcoin exchange service for Bitcoin trading). 
-EBA does **NOT** try to access Wallets defined in `bitcoin-qt`. 
-Regardless, there are some known privacy concerns when running `bitcoin-qt` 
+EBA does **NOT** try to access Wallets defined in `Bitcoin Core`. 
+Regardless, there are some known privacy concerns when running `Bitcoin Core` 
 with a defined wallet while the REST API is enabled. 
 See [Bitcoin docs](https://github.com/bitcoin/bitcoin/blob/master/doc/REST-interface.md#risks).
 
