@@ -88,7 +88,7 @@ public class BitcoinAgent : IDisposable
         CancellationToken cT)
     {
         _logger.LogInformation(
-            "Checking if can communicate with Bitcoin-qt, " +
+            "Checking if can communicate with Bitcoin Core, " +
             "and getting Bitcoin chain information.");
 
         (var isConnected, var chainInfo) = await IsConnectedAsync(cT);
@@ -99,7 +99,7 @@ public class BitcoinAgent : IDisposable
                 "Double-check if the client is running and listening " +
                 "at the given endpoint and port. Also, make sure the " +
                 "client is started with the REST endpoint enabled " +
-                "(see the docs)."); // TODO: add link to related docs.
+                "(see https://eba.b1aab.ai/docs/bitcoin/etl/node-sync).");
 
         if (chainInfo.Chain != "main")
             throw new Exception(
@@ -108,7 +108,7 @@ public class BitcoinAgent : IDisposable
                 $"`{chainInfo.Chain}` chain.");
 
         _logger.LogInformation(
-            "Successfully communicated with Bitcoin-qt, " +
+            "Successfully communicated with Bitcoin Core, " +
             "and received chain information.");
 
         return chainInfo;

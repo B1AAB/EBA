@@ -13,7 +13,7 @@ For this task, you may take the following steps.
 
 - [Install the program](/gs/installation.md), if you have not installed already.
 
-- Make sure `bitcoin-qt` is running and responding to API calls (see [this page](./s1-sync-bitcoin.mdx)).
+- Make sure `Bitcoin Core` is running and responding to API calls (see [this page](./s1-sync-bitcoin.mdx)).
 
 - Run `eba`.
 
