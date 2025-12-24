@@ -4,7 +4,7 @@
         <title>EBA Blog</title>
         <link>https://eba.b1aab.ai/releases</link>
         <description>EBA Blog</description>
-        <lastBuildDate>Tue, 09 Dec 2025 04:59:47 GMT</lastBuildDate>
+        <lastBuildDate>Wed, 24 Dec 2025 20:47:17 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
@@ -12,7 +12,7 @@
             <title><![CDATA[Bitcoin Graph v1]]></title>
             <link>https://eba.b1aab.ai/releases/data-release/v1</link>
             <guid>https://eba.b1aab.ai/releases/data-release/v1</guid>
-            <pubDate>Tue, 09 Dec 2025 04:59:47 GMT</pubDate>
+            <pubDate>Wed, 24 Dec 2025 20:47:17 GMT</pubDate>
             <description><![CDATA[Initial data release.]]></description>
             <content:encoded><![CDATA[<p>This data release provides the full output of the ETL pipeline,
 covering the Bitcoin blockchain up to block height <code>863 000</code>.
