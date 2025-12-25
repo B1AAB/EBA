@@ -11,8 +11,8 @@ public class B2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
             [
                 $":START_ID({BlockNodeStrategy.Label})",
                 $":END_ID({TxNodeStrategy.Label})",
-                Props.EdgeValue,
-                Props.Height,
+                Props.EdgeValue.TypeAnnotatedCsvHeader,
+                Props.Height.TypeAnnotatedCsvHeader,
                 ":TYPE"
             ]);
     }

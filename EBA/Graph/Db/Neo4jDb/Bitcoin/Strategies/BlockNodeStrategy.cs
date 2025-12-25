@@ -25,9 +25,9 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
         return string.Join(
             csvDelimiter,
             [
-                .. Props.Height.GetIdFieldCsvHeader(Label.ToString()),
+                Props.Height.GetIdFieldCsvHeader(Label.ToString()),
                 .. from x in _properties where x != Props.Height select x.TypeAnnotatedCsvHeader,
-                .. ":LABEL"
+                ":LABEL"
             ]);
     }
 

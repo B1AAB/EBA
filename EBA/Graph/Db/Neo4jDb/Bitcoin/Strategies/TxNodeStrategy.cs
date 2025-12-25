@@ -20,9 +20,9 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
         return string.Join(
             csvDelimiter,
             [
-                .. Props.Txid.GetIdFieldCsvHeader(Label.ToString()),
+                Props.Txid.GetIdFieldCsvHeader(Label.ToString()),
                 .. from x in _properties where x != Props.Txid select x.TypeAnnotatedCsvHeader,
-                .. ":LABEL"
+                ":LABEL"
             ]);
     }
 

@@ -38,7 +38,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
         // Serialize Coinbase Node
         using (var writer = new StreamWriter(
             new GZipStream(
-                File.Create(Path.Join(outputDirectory, "BitcoinCoinbase.tsv.gz")),
+                File.Create(Path.Join(outputDirectory, "BitcoinCoinbase.csv.gz")),
                 CompressionMode.Compress)))
         {
             writer.WriteLine(string.Join('\t', $"{NodeLabels.Coinbase}:ID({NodeLabels.Coinbase})", ":LABEL"));

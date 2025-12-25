@@ -17,7 +17,7 @@ public class Property
         Name = name;
         CsvHeader = csvHeader ?? Name;
         _type = type;
-        TypeAnnotatedCsvHeader = $"{Name}:{type}";
+        TypeAnnotatedCsvHeader = $"{Name}:{type.ToString().ToLower()}";
     }
 
     public string GetIdFieldCsvHeader(string idGroup)
