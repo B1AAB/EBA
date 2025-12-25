@@ -3,4 +3,6 @@
 public interface IStrategyFactory : IDisposable
 {
     public StrategyBase GetStrategy(GraphComponentType type);
+
+    public Task SerializeConstantsAsync(string outputDirectory, CancellationToken ct);
 }

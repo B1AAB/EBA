@@ -8,6 +8,8 @@ public class BitcoinGraphAgent : IGraphAgent<BitcoinGraph>, IDisposable
     private readonly IGraphDb<BitcoinGraph> _db;
     private readonly ILogger<BitcoinGraphAgent> _logger;
 
+    private bool _hasSerializedConstants = false;
+
     private bool _disposed = false;
 
     public BitcoinGraphAgent(
@@ -35,6 +37,12 @@ public class BitcoinGraphAgent : IGraphAgent<BitcoinGraph>, IDisposable
 
     public async Task SerializeAsync(BitcoinGraph g, CancellationToken ct)
     {
+        if (!_hasSerializedConstants)
+        {
+            await _db.SerializeConstantsAsync(ct);
+            _hasSerializedConstants = true;
+        }
+
         await _db.SerializeAsync(g, ct);
     }
 

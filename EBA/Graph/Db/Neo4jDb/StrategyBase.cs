@@ -9,6 +9,8 @@ public abstract class StrategyBase(bool serializeCompressed) : IDisposable
     private bool _disposed = false;
     private readonly bool _serializeCompressed = serializeCompressed;
 
+    public const string csvDelimiter = "\t";
+
     private StreamWriter GetStreamWriter(string filename)
     {
         if (_writer is null || _filename != filename)

@@ -113,15 +113,15 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
     // These values will turn into features and nullable features are problematic downstream
     public INode GetOrAddNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null, double? outHopsFromRoot = null)
     {
-        if (node.Labels.Contains(ScriptNodeStrategy.Labels.ToString()))
+        if (node.Labels.Contains(ScriptNodeStrategy.Label.ToString()))
         {
             return GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, outHopsFromRoot: outHopsFromRoot));
         }
-        else if (node.Labels.Contains(TxNodeStrategy.Labels.ToString()))
+        else if (node.Labels.Contains(TxNodeStrategy.Label.ToString()))
         {
             return GetOrAddNode(GraphComponentType.BitcoinTxNode, TxNode.CreateTxNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, hopsFromRoot: outHopsFromRoot));
         }
-        else if (node.Labels.Contains(BlockNodeStrategy.Labels.ToString()))
+        else if (node.Labels.Contains(BlockNodeStrategy.Label.ToString()))
         {
             return GetOrAddNode(GraphComponentType.BitcoinBlockNode, new BlockNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, outHopsFromRoot: outHopsFromRoot));
         }

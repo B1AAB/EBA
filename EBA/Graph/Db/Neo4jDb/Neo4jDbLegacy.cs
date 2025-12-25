@@ -283,4 +283,9 @@ public abstract class Neo4jDbLegacy<T> : IGraphDb<T> where T : GraphBase
     {
         throw new NotImplementedException();
     }
+
+    public Task SerializeConstantsAsync(CancellationToken ct)
+    {
+        throw new NotImplementedException();
+    }
 }

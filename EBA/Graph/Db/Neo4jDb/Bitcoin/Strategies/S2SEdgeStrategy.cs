@@ -1,30 +1,20 @@
 ﻿using EBA.Utilities;
 
-using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
-using EBA.Utilities;
-
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class S2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
 {
-    public const string labels = "Script";
-
-    /// Note that the ordre of the items in this array should 
-    /// match those in the `GetCsv` method.
-    private readonly Property[] _properties =
-    [
-        Props.EdgeSourceAddress,
-        Props.EdgeTargetAddress,
-        Props.EdgeType,
-        Props.EdgeValue,
-        Props.Height
-    ];
-
     public override string GetCsvHeader()
     {
         return string.Join(
-            Neo4jDbLegacy.csvDelimiter,
-            from x in _properties select x.CsvHeader);
+            csvDelimiter,
+            [
+                $":START_ID({ScriptNodeStrategy.Label})",
+                $":END_ID({ScriptNodeStrategy.Label})",
+                Props.EdgeValue,
+                Props.Height,
+                ":TYPE"
+            ]);
     }
 
     public override string GetCsv(IGraphComponent edge)
@@ -35,16 +25,16 @@ public class S2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
     public static string GetCsv(S2SEdge edge)
     {
         /// Note that the ordre of the items in this array should 
-        /// match those in the `_properties`. 
-
-        return string.Join(Neo4jDbLegacy.csvDelimiter,
-        [
-            edge.Source.Address,
-            edge.Target.Address,
-            edge.Type.ToString(),
-            Helpers.Satoshi2BTC(edge.Value).ToString(),
-            edge.BlockHeight.ToString()
-        ]);
+        /// match header.
+        return string.Join(
+            csvDelimiter,
+            [
+                edge.Source.Address,
+                edge.Target.Address,
+                Helpers.Satoshi2BTC(edge.Value).ToString(),
+                edge.BlockHeight.ToString(),
+                edge.Type.ToString()
+            ]);
     }
 
     public override string GetQuery(string csvFilename)
@@ -87,9 +77,9 @@ public class S2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
         builder.Append(
             $"MATCH " +
-            $"({s}:{ScriptNodeStrategy.Labels} {{{Props.EdgeSourceAddress.GetSetter()}}}), " +
-            $"({t}:{ScriptNodeStrategy.Labels} {{{Props.EdgeTargetAddress.GetSetter()}}}), " +
-            $"({b}:{BlockNodeStrategy.Labels} {{{Props.Height.GetSetter()}}}) ");
+            $"({s}:{ScriptNodeStrategy.Label} {{{Props.EdgeSourceAddress.GetSetter()}}}), " +
+            $"({t}:{ScriptNodeStrategy.Label} {{{Props.EdgeTargetAddress.GetSetter()}}}), " +
+            $"({b}:{BlockNodeStrategy.Label} {{{Props.Height.GetSetter()}}}) ");
 
         builder.Append(GetRedeemsEdgeQuery(b, s) + " ");
         builder.Append(GetCreatesEdgeQuery(b, t) + " ");

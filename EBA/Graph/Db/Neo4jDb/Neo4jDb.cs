@@ -149,19 +149,18 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         throw new NotImplementedException();
     }
 
+    public async Task SerializeConstantsAsync(CancellationToken ct)
+    {
+        await _strategyFactory.SerializeConstantsAsync(_options.WorkingDir, ct);
+    }
+
     public async Task SerializeAsync(T g,CancellationToken ct)
     {
         var nodes = g.GetNodes();
         var edges = g.GetEdges();
-        //var graphType = BitcoinGraph.ComponentType;
         var batchInfo = await GetBatchAsync([.. nodes.Keys, .. edges.Keys]);
-        //nodes.Keys.Concat(edges.Keys).Append(graphType).ToList());
 
         var tasks = new List<Task>();
-
-        //batchInfo.AddOrUpdate(graphType, 1);
-        //var graphStrategy = strategyFactory.GetStrategy(graphType);
-        //tasks.Add(graphStrategy.ToCsvAsync(g, batchInfo.GetFilename(graphType)));
 
         foreach (var type in nodes)
         {

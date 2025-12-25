@@ -204,7 +204,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         var rndRecords = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"MATCH ({rndNodeVar}:{ScriptNodeStrategy.Labels}) " +
+                $"MATCH ({rndNodeVar}:{ScriptNodeStrategy.Label}) " +
                 $"WHERE rand() < {rootNodesSelectProb} " +
                 $"WITH {rndNodeVar} " +
                 $"ORDER BY rand() " +
@@ -319,7 +319,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         if (rootScriptAddress == NodeLabels.Coinbase.ToString())
             qBuilder.Append($"MATCH (root:{NodeLabels.Coinbase.ToString()}) ");
         else
-            qBuilder.Append($"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{rootScriptAddress}\" }}) ");
+            qBuilder.Append($"MATCH (root:{ScriptNodeStrategy.Label} {{ Address: \"{rootScriptAddress}\" }}) ");
 
         qBuilder.Append($"CALL apoc.path.spanningTree(root, {{");
         qBuilder.Append($"maxLevel: {options.Hops}, ");
@@ -639,7 +639,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                     var queries = new List<string>();
                     foreach (var node in selectedNodes)
                         if (node.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode) // TODO: this is currently a limitation since we currently do not support root nodes of other types.
-                            queries.Add(GetNeighborsQuery($"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{((ScriptNode)node).Address}\" }}) "));
+                            queries.Add(GetNeighborsQuery($"MATCH (root:{ScriptNodeStrategy.Label} {{ Address: \"{((ScriptNode)node).Address}\" }}) "));
 
                     await ProcessHops(queries, hop + 1);
                 }
@@ -657,7 +657,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
             GetNeighborsQuery(
                 rootScriptAddress == NodeLabels.Coinbase.ToString() ?
                 $"MATCH (root:{NodeLabels.Coinbase.ToString()}) " :
-                $"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{rootScriptAddress}\" }}) ")
+                $"MATCH (root:{ScriptNodeStrategy.Label} {{ Address: \"{rootScriptAddress}\" }}) ")
         };
 
         await ProcessHops(getRootNodeNeighborsQuery);
@@ -682,7 +682,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         var randomNodes = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"Match (source:{ScriptNodeStrategy.Labels})-[edge:{EdgeType.Transfers}]->(target:{ScriptNodeStrategy.Labels}) " +
+                $"Match (source:{ScriptNodeStrategy.Label})-[edge:{EdgeType.Transfers}]->(target:{ScriptNodeStrategy.Label}) " +
                 $"where rand() < {edgeSelectProb} " +
                 $"return source, edge, target limit {edgeCount}");
 
@@ -782,7 +782,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
             var result = await x.RunAsync(
                 $"CREATE INDEX ScriptAddressIndex " +
                 $"IF NOT EXISTS " +
-                $"FOR (n:{ScriptNodeStrategy.Labels}) " +
+                $"FOR (n:{ScriptNodeStrategy.Label}) " +
                 $"ON (n.{Props.ScriptAddress.Name})");
         });
 
@@ -791,7 +791,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
             var result = await x.RunAsync(
                 $"CREATE INDEX TxidIndex " +
                 $"IF NOT EXISTS " +
-                $"FOR (n:{TxNodeStrategy.Labels}) " +
+                $"FOR (n:{TxNodeStrategy.Label}) " +
                 $"ON (n.{Props.Txid.Name})");
         });
 
@@ -800,7 +800,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
             var result = await x.RunAsync(
                 $"CREATE INDEX BlockHeightIndex " +
                 $"IF NOT EXISTS " +
-                $"FOR (block:{BlockNodeStrategy.Labels}) " +
+                $"FOR (block:{BlockNodeStrategy.Label}) " +
                 $"ON (block.{Props.Height.Name})");
         });
 
