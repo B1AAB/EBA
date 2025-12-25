@@ -278,4 +278,9 @@ public abstract class Neo4jDbLegacy<T> : IGraphDb<T> where T : GraphBase
     {
         throw new NotImplementedException();
     }
+
+    public Task SerializeAsync(T graph, IStrategyFactory strategyFactory, CancellationToken ct)
+    {
+        throw new NotImplementedException();
+    }
 }

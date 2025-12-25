@@ -1,25 +1,25 @@
 ﻿using EBA.Graph.Bitcoin.TraversalAlgorithms;
-using EBA.Utilities;
+using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 namespace EBA.Graph.Bitcoin;
 
-public class GraphAgent : IGraphAgent
+public class BitcoinGraphAgent : IGraphAgent<BitcoinGraph>, IDisposable
 {
     private readonly Options _options;
     private readonly IGraphDb<BitcoinGraph> _db;
-    private readonly ILogger<GraphAgent> _logger;
+    private readonly ILogger<BitcoinGraphAgent> _logger;
 
+    private bool _disposed = false;
 
-    public GraphAgent(
+    public BitcoinGraphAgent(
         Options options,
         IGraphDb<BitcoinGraph> graphDb,
-        ILogger<GraphAgent> logger)
+        ILogger<BitcoinGraphAgent> logger)
     {
         _options = options;
         _db = graphDb;
         _logger = logger;
     }
-
 
     public async Task SampleAsync(CancellationToken ct)
     {
@@ -32,5 +32,27 @@ public class GraphAgent : IGraphAgent
         };
 
         await sampler.SampleAsync(ct);
+    }
+
+    public async Task SerializeAsync(BitcoinGraph g, CancellationToken ct)
+    {
+        using var strategy = new BitcoinStrategyFactory(_options);
+        await _db.SerializeAsync(g, strategy, ct);
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            { }
+
+            _disposed = true;
+        }
     }
 }

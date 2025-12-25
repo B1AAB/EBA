@@ -1,11 +1,12 @@
 ﻿using EBA.Graph.Bitcoin;
+using EBA.Graph.Db.Neo4jDb;
 
 namespace EBA.Graph.Db;
 
 public interface IGraphDb<T> : IDisposable where T : GraphBase
 {
     public Task VerifyConnectivityAsync(CancellationToken ct);
-    public Task SerializeAsync(T graph, CancellationToken ct);
+    public Task SerializeAsync(T graph, IStrategyFactory strategyFactory, CancellationToken ct);
     public Task ImportAsync(CancellationToken ct, string batchName = "", List<GraphComponentType>? importOrder = null);
     public Task SampleAsync(CancellationToken ct);
     public void ReportQueries();

@@ -73,9 +73,9 @@ public class Startup
         services.AddSingleton(options);
         services.AddSingleton<IGraphDb<BitcoinGraph>, BitcoinNeo4jDbLegacy>(); // TODO: this is not correct because it is registring two implementations
         services.AddSingleton<IGraphDb<BitcoinGraph>, Neo4jDb<BitcoinGraph>>();
-        services.AddSingleton<BitcoinOrchestrator>();
+        services.AddSingleton<Blockchains.Bitcoin.Orchestrator>();
         //services.AddSingleton<IGraphDb<BitcoinGraph>, Neo4jDbLegacy<BitcoinGraph>>();
-        services.AddSingleton<Graph.Bitcoin.GraphAgent>();
+        services.AddSingleton<Graph.Bitcoin.BitcoinGraphAgent>();
 
         // Passing BitcoinAgent type as the generic argument
         // to AddHttpClient will cause registering it 
@@ -85,7 +85,7 @@ public class Startup
         // every new instance of BitcoinAgent is created
         // with the appropriately configured HttpClient injected in.
         services
-            .AddHttpClient<BitcoinAgent>(client =>
+            .AddHttpClient<BitcoinChainAgent>(client =>
             {
                 client.BaseAddress = options.Bitcoin.ClientUri;
                 client.DefaultRequestHeaders.UserAgent.Clear();

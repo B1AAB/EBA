@@ -748,7 +748,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         {
             count = await session.ExecuteReadAsync(async tx =>
             {
-                var result = await tx.RunAsync($"MATCH (n:{BitcoinAgent.Coinbase}) RETURN COUNT(n)");
+                var result = await tx.RunAsync($"MATCH (n:{Blockchains.Bitcoin.BitcoinChainAgent.Coinbase}) RETURN COUNT(n)");
                 return result.SingleAsync().Result[0].As<int>();
             });
         }
@@ -762,15 +762,15 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                     await session.ExecuteWriteAsync(async tx =>
                     {
                         await tx.RunAsync(
-                            $"CREATE (:{BitcoinAgent.Coinbase} {{" +
+                            $"CREATE (:{Blockchains.Bitcoin.BitcoinChainAgent.Coinbase} {{" +
                             $"{Props.ScriptAddress.Name}: " +
-                            $"\"{BitcoinAgent.Coinbase}\"}})");
+                            $"\"{Blockchains.Bitcoin.BitcoinChainAgent.Coinbase}\"}})");
                     });
                 }
                 break;
             default:
                 // TODO: replace with a more suitable exception type. 
-                throw new Exception($"Found {count} {BitcoinAgent.Coinbase} nodes; expected zero or one.");
+                throw new Exception($"Found {count} {Blockchains.Bitcoin.BitcoinChainAgent.Coinbase} nodes; expected zero or one.");
         }
     }
     private static async Task CreateIndexesAndConstraintsAsync(IDriver driver)

@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Bitcoin.TraversalAlgorithms;
-using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
-using EBA.Utilities;
+﻿using EBA.Utilities;
 
 namespace EBA.Graph.Bitcoin.TraversalAlgorithms;
 
@@ -8,9 +6,9 @@ public class ForestFire : ITraversalAlgorithm
 {
     private readonly Options _options;
     private readonly IGraphDb<BitcoinGraph> _graphDb;
-    private readonly ILogger<GraphAgent> _logger;
+    private readonly ILogger<BitcoinGraphAgent> _logger;
 
-    public ForestFire(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<GraphAgent> logger)
+    public ForestFire(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<BitcoinGraphAgent> logger)
     {
         _options = options;
         _graphDb = graphDb;
@@ -116,7 +114,7 @@ public class ForestFire : ITraversalAlgorithm
         // TODO: this iteration needs to be improved, maybe I have a list like this because of the query?!
         foreach (var r in samplingResult)
         {
-            if (rootScriptAddress == BitcoinAgent.Coinbase.ToString())
+            if (rootScriptAddress == Blockchains.Bitcoin.BitcoinChainAgent.Coinbase.ToString())
             {
                 // ********
                 //root = new CoinbaseNode(r.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);

@@ -1,20 +1,21 @@
-﻿using EBA.Graph.Db;
+﻿using EBA.Graph;
+using EBA.Graph.Db;
 
 using System;
 
 namespace EBA.Blockchains.Bitcoin;
 
-public class BitcoinOrchestrator : IBlockchainOrchestrator
+public class Orchestrator : IBlockchainOrchestrator
 {
-    private readonly BitcoinAgent _agent;
-    private readonly ILogger<BitcoinOrchestrator> _logger;
+    private readonly BitcoinChainAgent _agent;
+    private readonly ILogger<Orchestrator> _logger;
 
     // TODO: check how this class can be improved without leveraging IHost.
     private readonly IHost _host;
 
-    public BitcoinOrchestrator(
-        BitcoinAgent agent,
-        ILogger<BitcoinOrchestrator> logger,
+    public Orchestrator(
+        BitcoinChainAgent agent,
+        ILogger<Orchestrator> logger,
         IHost host)
     {
         _agent = agent;
@@ -110,6 +111,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
         using var gBuffer = new PersistentGraphBuffer(
             graphDb: options.Bitcoin.SkipGraphSerialization ? null : _host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>(),
+            graphAgent: _host.Services.GetRequiredService<EBA.Graph.Bitcoin.BitcoinGraphAgent>(),
             logger: _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),
             pgStatsLogger: _host.Services.GetRequiredService<ILogger<PersistentGraphStatistics>>(),
             pgAddressesLogger: _host.Services.GetRequiredService<ILogger<PersistentBlockAddresses>>(),
@@ -227,7 +229,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         var strategy = ResilienceStrategyFactory.Bitcoin.GetGraphStrategy(
             options.Bitcoin.BitcoinAgentResilienceStrategy);
 
-        var agent = _host.Services.GetRequiredService<BitcoinAgent>();
+        var agent = _host.Services.GetRequiredService<BitcoinChainAgent>();
         var blockGraph = await agent.GetGraph(height, strategy, options.Bitcoin, cT);
 
         if (blockGraph == null)

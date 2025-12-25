@@ -1,10 +1,5 @@
 ﻿using EBA.Utilities;
 
-using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
-using EBA.Utilities;
-
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class C2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
@@ -80,7 +75,7 @@ public class C2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
             $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' ");
 
         builder.Append(
-            $"MATCH ({s}:{BitcoinAgent.Coinbase}) " +
+            $"MATCH ({s}:{BitcoinChainAgent.Coinbase}) " +
             $"MATCH ({t}:{TxNodeStrategy.Labels} {{{Props.T2TEdgeTargetTxid.GetSetter()}}}) " +
             $"MATCH ({b}:{BlockNodeStrategy.Labels} {{{Props.Height.GetSetter()}}}) ");
 

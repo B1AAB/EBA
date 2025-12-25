@@ -14,7 +14,7 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
     }
 
     // TODO: since there is a CoinbaseNode type, this default should change
-    public string Address { get; } = BitcoinAgent.Coinbase.ToString();
+    public string Address { get; } = BitcoinChainAgent.Coinbase.ToString();
     // TODO: since there is a CoinbaseNode type, this default should change
     public ScriptType ScriptType { get; } = ScriptType.Coinbase;
 

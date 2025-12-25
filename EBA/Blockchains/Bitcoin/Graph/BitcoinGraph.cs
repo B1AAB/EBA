@@ -125,7 +125,7 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
         {
             return GetOrAddNode(GraphComponentType.BitcoinBlockNode, new BlockNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, outHopsFromRoot: outHopsFromRoot));
         }
-        else if (node.Labels.Contains(BitcoinAgent.Coinbase.ToString()))
+        else if (node.Labels.Contains(BitcoinChainAgent.Coinbase.ToString()))
         {
             return GetOrAddNode(GraphComponentType.BitcoinCoinbaseNode, new CoinbaseNode(node, originalOutdegree: originalOutdegree, hopsFromRoot: outHopsFromRoot));
         }

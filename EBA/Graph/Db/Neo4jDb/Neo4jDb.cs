@@ -10,6 +10,9 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     private readonly Options _options;
     private readonly IDriver _driver;
 
+    private readonly int _maxEntitiesPerBatch;
+    private List<Batch> _batches = [];
+
     public Neo4jDb(Options options)
     {
         _options = options;
@@ -143,13 +146,62 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         throw new NotImplementedException();
     }
 
-    public Task SerializeAsync(T graph, CancellationToken ct)
+    public async Task SerializeAsync(T g, IStrategyFactory strategyFactory, CancellationToken ct)
     {
-        throw new NotImplementedException();
+        var nodes = g.GetNodes();
+        var edges = g.GetEdges();
+        //var graphType = BitcoinGraph.ComponentType;
+        var batchInfo = await GetBatchAsync([.. nodes.Keys, .. edges.Keys]);
+        //nodes.Keys.Concat(edges.Keys).Append(graphType).ToList());
+
+        var tasks = new List<Task>();
+
+        //batchInfo.AddOrUpdate(graphType, 1);
+        //var graphStrategy = strategyFactory.GetStrategy(graphType);
+        //tasks.Add(graphStrategy.ToCsvAsync(g, batchInfo.GetFilename(graphType)));
+
+        foreach (var type in nodes)
+        {
+            batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != NodeLabels.Coinbase.ToString()));
+            var _strategy = strategyFactory.GetStrategy(type.Key);
+            tasks.Add(
+                _strategy.ToCsvAsync(
+                    type.Value.Where(x => x.Id != NodeLabels.Coinbase.ToString()),
+                    batchInfo.GetFilename(type.Key)));
+        }
+
+        foreach (var type in edges)
+        {
+            batchInfo.AddOrUpdate(type.Key, type.Value.Count);
+            var _strategy = strategyFactory.GetStrategy(type.Key);
+            tasks.Add(
+                _strategy.ToCsvAsync(
+                    type.Value,
+                    batchInfo.GetFilename(type.Key)));
+        }
+
+        await Task.WhenAll(tasks);
+    }
+
+    private async Task<Batch> GetBatchAsync(List<GraphComponentType> types)
+    {
+        if (_batches.Count == 0)
+            _batches = await DeserializeBatchesAsync();
+
+        if (_batches.Count == 0 || _batches[^1].GetMaxCount() >= _maxEntitiesPerBatch)
+            _batches.Add(new Batch(_batches.Count.ToString(), _options.WorkingDir, types, _options.Neo4j.CompressOutput));
+
+        return _batches[^1];
+    }
+
+    private async Task<List<Batch>> DeserializeBatchesAsync()
+    {
+        return await JsonSerializer<List<Batch>>.DeserializeAsync(
+            _options.Neo4j.BatchesFilename);
     }
 
     public void Dispose()
     {
-        throw new NotImplementedException();
+        
     }
 }

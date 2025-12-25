@@ -80,7 +80,7 @@ public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(seriali
             $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' ");
 
         builder.Append(
-            $"MATCH ({s}:{BitcoinAgent.Coinbase}) " +
+            $"MATCH ({s}:{BitcoinChainAgent.Coinbase}) " +
             $"MATCH ({t}:{ScriptNodeStrategy.Labels} {{{Props.EdgeTargetAddress.GetSetter()}}}) " +
             $"MATCH ({b}:{BlockNodeStrategy.Labels} {{{Props.Height.GetSetter()}}}) ");
 
