@@ -1,3 +1,9 @@
+
+<p align="center">
+  <img height="420" alt="dataPipelineOverview_v3_README" src="https://github.com/user-attachments/assets/e36ddf75-02c9-423a-9505-013e839e183a" />
+</p>
+
+
 **EBA addresses a long-standing issue that has hindered 
 the ML community from developing applications for Bitcoin: 
 a lack of ML-first data.** 
