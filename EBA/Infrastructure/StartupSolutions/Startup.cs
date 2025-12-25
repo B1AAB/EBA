@@ -72,7 +72,7 @@ public class Startup
     {
         services.AddSingleton(options);
         services.AddSingleton<IGraphDb<BitcoinGraph>, BitcoinNeo4jDbLegacy>(); // TODO: this is not correct because it is registring two implementations
-        services.AddSingleton<IGraphDb<BitcoinGraph>, Neo4jDb<BitcoinGraph>>();
+        services.AddSingleton<IGraphDb<BitcoinGraph>, BitcoinNeo4jDb>();
         services.AddSingleton<Blockchains.Bitcoin.Orchestrator>();
         //services.AddSingleton<IGraphDb<BitcoinGraph>, Neo4jDbLegacy<BitcoinGraph>>();
         services.AddSingleton<Graph.Bitcoin.BitcoinGraphAgent>();

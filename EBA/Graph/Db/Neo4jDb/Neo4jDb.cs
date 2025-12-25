@@ -9,13 +9,16 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 {
     private readonly Options _options;
     private readonly IDriver _driver;
+    private readonly IStrategyFactory _strategyFactory;
 
-    private readonly int _maxEntitiesPerBatch;
     private List<Batch> _batches = [];
 
-    public Neo4jDb(Options options)
+    private bool _disposed = false;
+
+    public Neo4jDb(Options options, IStrategyFactory strategyFactory)
     {
         _options = options;
+        _strategyFactory = strategyFactory;
 
         // As per suggestions at https://neo4j.com/blog/developer/neo4j-driver-best-practices
         // reuse a driver rather than initializing a new instance per request.
@@ -146,7 +149,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         throw new NotImplementedException();
     }
 
-    public async Task SerializeAsync(T g, IStrategyFactory strategyFactory, CancellationToken ct)
+    public async Task SerializeAsync(T g,CancellationToken ct)
     {
         var nodes = g.GetNodes();
         var edges = g.GetEdges();
@@ -163,7 +166,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         foreach (var type in nodes)
         {
             batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != NodeLabels.Coinbase.ToString()));
-            var _strategy = strategyFactory.GetStrategy(type.Key);
+            var _strategy = _strategyFactory.GetStrategy(type.Key);
             tasks.Add(
                 _strategy.ToCsvAsync(
                     type.Value.Where(x => x.Id != NodeLabels.Coinbase.ToString()),
@@ -173,7 +176,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         foreach (var type in edges)
         {
             batchInfo.AddOrUpdate(type.Key, type.Value.Count);
-            var _strategy = strategyFactory.GetStrategy(type.Key);
+            var _strategy = _strategyFactory.GetStrategy(type.Key);
             tasks.Add(
                 _strategy.ToCsvAsync(
                     type.Value,
@@ -188,7 +191,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         if (_batches.Count == 0)
             _batches = await DeserializeBatchesAsync();
 
-        if (_batches.Count == 0 || _batches[^1].GetMaxCount() >= _maxEntitiesPerBatch)
+        if (_batches.Count == 0 || _batches[^1].GetMaxCount() >= _options.Neo4j.MaxEntitiesPerBatch)
             _batches.Add(new Batch(_batches.Count.ToString(), _options.WorkingDir, types, _options.Neo4j.CompressOutput));
 
         return _batches[^1];
@@ -202,6 +205,19 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
     public void Dispose()
     {
-        
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _strategyFactory.Dispose();
+            }
+
+            _disposed = true;
+        }
     }
 }

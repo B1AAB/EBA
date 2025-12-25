@@ -110,7 +110,6 @@ public class Orchestrator : IBlockchainOrchestrator
         // TODO: refactor the following so that only options is passed to the buffer
 
         using var gBuffer = new PersistentGraphBuffer(
-            graphDb: options.Bitcoin.SkipGraphSerialization ? null : _host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>(),
             graphAgent: _host.Services.GetRequiredService<EBA.Graph.Bitcoin.BitcoinGraphAgent>(),
             logger: _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),
             pgStatsLogger: _host.Services.GetRequiredService<ILogger<PersistentGraphStatistics>>(),
