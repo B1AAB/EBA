@@ -84,108 +84,77 @@ public class ForestFire : ITraversalAlgorithm
         }
     }
 
-    private List<Model.INode> ProcessSamplingResult(
+    private List<Model.INode> Neo4jQueryResultsToBitcoinGraph(
         List<IRecord> samplingResult, 
-        int hop, 
-        string rootScriptAddress, 
-        HashSet<string> allNodesAddedToGraph, 
-        HashSet<string> allEdgesAddedToGraph, 
+        int hop,
         int nodeSamplingCountAtRoot, 
         double nodeCountReductionFactorByHop, 
         BitcoinGraph g)
     {
-        static (Neo4j.Driver.INode, double, double, double) UnpackDict(IDictionary<string, object> dict, double hop)
+        static Model.INode? UnpackDict(IDictionary<string, object> dict, double hop)
         {
             var node = dict["node"].As<Neo4j.Driver.INode>();
             var inDegree = Convert.ToDouble(dict["inDegree"]);
             var outDegree = Convert.ToDouble(dict["outDegree"]);
-            return (node, inDegree, outDegree, hop);
+            if (node is null) return null;
+            return BitcoinGraph.NodeFactory(node, inDegree, outDegree, hop);
         }
 
-        var rnd = new Random(31);
-
-        Node root;
-        var nodes = new Dictionary<string, (Neo4j.Driver.INode, double, double, double)>();
-        var edges = new Dictionary<string, IRelationship>();
+        var nodesUniqueToThisHop = new Dictionary<string, Model.INode>();
+        var edgesUniqueToThisHop = new Dictionary<string, IRelationship>();
 
         var rootNodeId = "";
 
-        // TODO: this iteration needs to be improved, maybe I have a list like this because of the query?!
         foreach (var r in samplingResult)
         {
-            if (rootScriptAddress == BitcoinChainAgent.Coinbase.ToString())
-            {
-                var rootList = r["root"].As<List<object>>();
-                (Neo4j.Driver.INode rootNode, double inDegree, double outDegree, double hopsFromRoot) = UnpackDict(rootList[0].As<IDictionary<string, object>>(), hop);
+            var rootList = r["root"].As<List<object>>();
+            Model.INode? rootNode = UnpackDict(rootList[0].As<IDictionary<string, object>>(), hop);
+            if (rootNode is null)
+                continue;
 
-                if (rootNode is null)
-                    continue;
+            g.GetOrAddNode(rootNode);
 
-                root = new CoinbaseNode(rootNode, originalOutdegree: outDegree, hopsFromRoot: hopsFromRoot);
-
-                if (!allNodesAddedToGraph.Contains(root.Id))
-                {
-                    g.GetOrAddNode(GraphComponentType.BitcoinCoinbaseNode, root);
-                    allNodesAddedToGraph.Add(root.Id);
-                }
-
-                rootNodeId = root.Id;
-            }
-            else
-            {
-                var rootList = r["root"].As<List<object>>();
-                (Neo4j.Driver.INode rootB, double inDegree, double outDegree, double outHopsFromRoot) = UnpackDict(rootList[0].As<IDictionary<string, object>>(), hop);
-
-                if (rootB is null)
-                    continue;
-
-                root = new ScriptNode(rootB, originalIndegree: inDegree, originalOutdegree: outDegree, outHopsFromRoot: outHopsFromRoot);
-
-                if (!allNodesAddedToGraph.Contains(root.Id))
-                {
-                    g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, root);
-                    allNodesAddedToGraph.Add(root.Id);
-                }
-
-                rootNodeId = root.Id;
-            }
+            rootNodeId = rootNode.Id;
 
             foreach (var nodeObject in r["nodes"].As<List<object>>())
             {
-                (Neo4j.Driver.INode node, double inDegree, double outDegree, double hopsFromRoot) = UnpackDict(nodeObject.As<IDictionary<string, object>>(), hop);
-                if (!allNodesAddedToGraph.Contains(node.ElementId))
-                    nodes.TryAdd(node.ElementId, (node, inDegree, outDegree, hopsFromRoot));
+                Model.INode? node = UnpackDict(nodeObject.As<IDictionary<string, object>>(), hop);
+                if (node is null) continue;
+                if (!g.ContainsNode(node.Id))
+                    nodesUniqueToThisHop.TryAdd(node.Id, node);
             }
 
             foreach (var edge in r.Values["relationships"].As<List<IRelationship>>())
-                if (!allEdgesAddedToGraph.Contains(edge.ElementId))
-                    edges.TryAdd(edge.ElementId, edge);
+                if (!g.ContainsEdge(edge.ElementId))
+                    edgesUniqueToThisHop.TryAdd(edge.ElementId, edge);
         }
 
         if (hop == 0)
             g.AddLabel("RootNodeId", rootNodeId);
 
-        var nodesToKeep = nodes.Keys.OrderBy(x => rnd.Next()).Take((int)Math.Floor(nodeSamplingCountAtRoot - hop * nodeCountReductionFactorByHop)).ToList();
-        var nodesToKeepIds = new HashSet<string>();
+        var rnd = new Random(31);
+        var nodesToKeep = nodesUniqueToThisHop.Keys.OrderBy(
+            x => rnd.Next()).Take(
+                (int)Math.Floor(nodeSamplingCountAtRoot - hop * nodeCountReductionFactorByHop))
+            .ToList();
+
+        var nodesUniqueToThisHopToKeep = new HashSet<string>();
         foreach (var nodeId in nodesToKeep)
-            if (!allNodesAddedToGraph.Contains(nodeId))
-                nodesToKeepIds.Add(nodeId);
+            if (!g.ContainsNode(nodeId))
+                nodesUniqueToThisHopToKeep.Add(nodeId);
 
         var addedNodes = new List<Model.INode>();
 
-        foreach (var edge in edges)
+        foreach (var edge in edgesUniqueToThisHop)
         {
             var targetNodeId = edge.Value.EndNodeElementId;
-            if (nodesToKeepIds.Contains(targetNodeId))
+            if (nodesUniqueToThisHopToKeep.Contains(targetNodeId))
             {
                 // so only the "connected" nodes are added.
                 // also, this order is important where 1st the node is added, then the edge.
-                (var ccNode, var indegree, var outdegree, var outHopsFromRoot) = nodes[targetNodeId];
-                addedNodes.Add(g.GetOrAddNode(BitcoinGraph.NodeFactory(ccNode, originalIndegree: indegree, originalOutdegree: outdegree, outHopsFromRoot: outHopsFromRoot)));
-                allNodesAddedToGraph.Add(targetNodeId);
+                addedNodes.Add(g.GetOrAddNode(nodesUniqueToThisHop[targetNodeId]));
 
                 g.GetOrAddEdge(edge.Value);
-                allEdgesAddedToGraph.Add(edge.Value.ElementId);
             }
         }
 
@@ -198,21 +167,15 @@ public class ForestFire : ITraversalAlgorithm
         string propValue,
         int maxHops,
         int hop,
-        string rootScriptAddress,
         int queryLimit,
-        HashSet<string> allNodesAddedToGraph,
-        HashSet<string> allEdgesAddedToGraph,
         int nodeSamplingCountAtRoot,
         double nodeCountReductionFactorByHop,
         BitcoinGraph g)
     {
         var samplingResult = await _graphDb.GetNeighborsAsync(rootNodeLabel, propKey, propValue, queryLimit, 1, GraphTraversal.BFS);
 
-        var selectedNodes = ProcessSamplingResult(
+        var selectedNodes = Neo4jQueryResultsToBitcoinGraph(
             samplingResult, hop,
-            rootScriptAddress: rootScriptAddress,
-            allNodesAddedToGraph: allNodesAddedToGraph,
-            allEdgesAddedToGraph: allEdgesAddedToGraph,
             nodeSamplingCountAtRoot: nodeSamplingCountAtRoot,
             nodeCountReductionFactorByHop: nodeCountReductionFactorByHop,
             g: g);
@@ -227,10 +190,7 @@ public class ForestFire : ITraversalAlgorithm
                         propValue: ((ScriptNode)node).Address,
                         hop: hop + 1,
                         maxHops: maxHops,
-                        rootScriptAddress: rootScriptAddress,
                         queryLimit: queryLimit,
-                        allNodesAddedToGraph: allNodesAddedToGraph,
-                        allEdgesAddedToGraph: allEdgesAddedToGraph,
                         nodeSamplingCountAtRoot: nodeSamplingCountAtRoot,
                         nodeCountReductionFactorByHop: nodeCountReductionFactorByHop,
                         g: g);
@@ -246,8 +206,6 @@ public class ForestFire : ITraversalAlgorithm
         double nodeCountReductionFactorByHop)
     {
         var g = new BitcoinGraph();
-        var allNodesAddedToGraph = new HashSet<string>();
-        var allEdgesAddedToGraph = new HashSet<string>();
 
         _logger.LogInformation("Getting neighbors of random node {node}, at {hop} hop distance.", rootScriptAddress, maxHops);
 
@@ -257,10 +215,7 @@ public class ForestFire : ITraversalAlgorithm
             propValue: rootScriptAddress,
             maxHops: maxHops,
             hop: 0,
-            rootScriptAddress: rootScriptAddress,
             queryLimit: queryLimit,
-            allNodesAddedToGraph: allNodesAddedToGraph,
-            allEdgesAddedToGraph: allEdgesAddedToGraph,
             nodeSamplingCountAtRoot: nodeSamplingCountAtRoot,
             nodeCountReductionFactorByHop: nodeCountReductionFactorByHop,
             g: g);
