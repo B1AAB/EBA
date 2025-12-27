@@ -78,7 +78,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         string relationshipFilter = "")
     {
         var qBuilder = new StringBuilder();
-            qBuilder.Append($"MATCH (root:{rootNodeLabel} {{ {rootNodePropKey}: \"{rootNodePropValue}\" }}) ");
+        qBuilder.Append($"MATCH (root:{rootNodeLabel} {{ {rootNodePropKey}: \"{rootNodePropValue}\" }}) ");
 
         qBuilder.Append($"CALL apoc.path.spanningTree(root, {{");
         qBuilder.Append($"maxLevel: {maxLevel}, ");
@@ -102,8 +102,6 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         qBuilder.Append($"nodes(path) AS pathNodes, ");
         qBuilder.Append($"relationships(path) AS pathRels ");
         qBuilder.Append($"LIMIT {queryLimit} ");
-        //qBuilder.Append($"RETURN [root] AS root, [n IN pathNodes WHERE n <> root] AS nodes, pathRels AS relationships");
-        // ******** 
         qBuilder.Append($"RETURN ");
         qBuilder.Append($"[ {{");
         qBuilder.Append($"node: root, ");

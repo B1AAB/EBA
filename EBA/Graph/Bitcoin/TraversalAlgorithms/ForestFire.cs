@@ -17,22 +17,22 @@ public class ForestFire : ITraversalAlgorithm
 
     public async Task SampleAsync(CancellationToken ct)
     {
-        var sampledGraphsCounter = 0;
+        var sampledSubGraphsCount = 0;
         var attempts = 0;
-        var baseOutputDir = Path.Join(_options.WorkingDir, $"sampled_graphs_{Helpers.GetUnixTimeSeconds()}");
+        var baseOutputDir = Path.Join(_options.WorkingDir, $"sampled_subgraphs_{Helpers.GetUnixTimeSeconds()}");
 
-        _logger.LogInformation("Sampling {n} graphs.", _options.GraphSample.Count - sampledGraphsCounter);
+        _logger.LogInformation("Sampling {n} graphs.", _options.GraphSample.Count - sampledSubGraphsCount);
 
         while (
-            sampledGraphsCounter < _options.GraphSample.Count &&
+            sampledSubGraphsCount < _options.GraphSample.Count &&
             ++attempts <= _options.GraphSample.MaxAttempts)
         {
             _logger.LogInformation(
                 "Getting {n} random root nodes; attempt {a}/{m}.",
-                _options.GraphSample.Count - sampledGraphsCounter,
+                _options.GraphSample.Count - sampledSubGraphsCount,
                 attempts, _options.GraphSample.MaxAttempts);
 
-            var rndRootNodes = await GetRandomScriptNodes(_options.GraphSample.Count - sampledGraphsCounter, ct);
+            var rndRootNodes = await GetRandomScriptNodes(_options.GraphSample.Count - sampledSubGraphsCount, ct);
 
             _logger.LogInformation("Selected {n} random root nodes.", rndRootNodes.Count);
 
@@ -44,7 +44,6 @@ public class ForestFire : ITraversalAlgorithm
                 var graph = await GetNeighborsAsync(
                     rootNodeLabel: NodeLabels.Script,
                     rootScriptAddress: rootNode.Address,
-                    labelFilters: _options.GraphSample.LabelFilters,
                     nodeSamplingCountAtRoot: _options.GraphSample.ForestFireNodeSamplingCountAtRoot,
                     maxHops: _options.GraphSample.ForestFireMaxHops,
                     queryLimit: _options.GraphSample.ForestFireQueryLimit,
@@ -78,7 +77,7 @@ public class ForestFire : ITraversalAlgorithm
 
                     _logger.LogInformation("Serialized the graph.");
 
-                    sampledGraphsCounter++;
+                    sampledSubGraphsCount++;
                     counter++;
                 }
             }
@@ -114,10 +113,8 @@ public class ForestFire : ITraversalAlgorithm
         // TODO: this iteration needs to be improved, maybe I have a list like this because of the query?!
         foreach (var r in samplingResult)
         {
-            if (rootScriptAddress == Blockchains.Bitcoin.BitcoinChainAgent.Coinbase.ToString())
+            if (rootScriptAddress == BitcoinChainAgent.Coinbase.ToString())
             {
-                // ********
-                //root = new CoinbaseNode(r.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
                 var rootList = r["root"].As<List<object>>();
                 (Neo4j.Driver.INode rootNode, double inDegree, double outDegree, double hopsFromRoot) = UnpackDict(rootList[0].As<IDictionary<string, object>>(), hop);
 
@@ -136,8 +133,6 @@ public class ForestFire : ITraversalAlgorithm
             }
             else
             {
-                // ********
-                //var rootB = r.Values["root"].As<List<Neo4j.Driver.INode>>()[0];
                 var rootList = r["root"].As<List<object>>();
                 (Neo4j.Driver.INode rootB, double inDegree, double outDegree, double outHopsFromRoot) = UnpackDict(rootList[0].As<IDictionary<string, object>>(), hop);
 
@@ -146,26 +141,18 @@ public class ForestFire : ITraversalAlgorithm
 
                 root = new ScriptNode(rootB, originalIndegree: inDegree, originalOutdegree: outDegree, outHopsFromRoot: outHopsFromRoot);
 
-                if (!allNodesAddedToGraph.Contains(rootB.ElementId))
+                if (!allNodesAddedToGraph.Contains(root.Id))
                 {
                     g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, root);
-                    allNodesAddedToGraph.Add(rootB.ElementId);
+                    allNodesAddedToGraph.Add(root.Id);
                 }
 
                 rootNodeId = root.Id;
             }
 
-            // ********
-            /*
-            foreach (var node in r.Values["nodes"].As<List<Neo4j.Driver.INode>>())
-                if (!allNodesAddedToGraph.Contains(node.ElementId))
-                    nodes.TryAdd(node.ElementId, node);*/
-
             foreach (var nodeObject in r["nodes"].As<List<object>>())
             {
                 (Neo4j.Driver.INode node, double inDegree, double outDegree, double hopsFromRoot) = UnpackDict(nodeObject.As<IDictionary<string, object>>(), hop);
-                //g.GetOrAddNode(node, originalIndegree: inDegree, originalOutdegree: outDegree);
-
                 if (!allNodesAddedToGraph.Contains(node.ElementId))
                     nodes.TryAdd(node.ElementId, (node, inDegree, outDegree, hopsFromRoot));
             }
