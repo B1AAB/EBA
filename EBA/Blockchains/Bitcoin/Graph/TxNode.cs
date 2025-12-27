@@ -65,9 +65,9 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 
     public static TxNode CreateTxNode(
         Neo4j.Driver.INode node,
-        double? originalIndegree = null,
-        double? originalOutdegree = null,
-        double? hopsFromRoot = null)
+        double originalIndegree,
+        double originalOutdegree,
+        double hopsFromRoot)
     {
         // TODO: all the following double-casting is because of the type
         // normalization happens when bulk-loading data into neo4j.

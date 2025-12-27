@@ -1,5 +1,5 @@
 ﻿using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
-
+using NBitcoin.Protocol.Behaviors;
 using INode = EBA.Graph.Model.INode;
 
 namespace EBA.Blockchains.Bitcoin.Graph;
@@ -109,30 +109,53 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
     }
 
 
-    // TODO: this method or any other methods must definately not accept nullable values.
-    // These values will turn into features and nullable features are problematic downstream
-    public INode GetOrAddNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null, double? outHopsFromRoot = null)
+    public static INode NodeFactory(
+        Neo4j.Driver.INode node,
+        double originalIndegree,
+        double originalOutdegree,
+        double outHopsFromRoot)
     {
         if (node.Labels.Contains(ScriptNodeStrategy.Label.ToString()))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, outHopsFromRoot: outHopsFromRoot));
+            return new ScriptNode(
+                node,
+                originalIndegree: originalIndegree,
+                originalOutdegree: originalOutdegree,
+                outHopsFromRoot: outHopsFromRoot);
         }
         else if (node.Labels.Contains(TxNodeStrategy.Label.ToString()))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinTxNode, TxNode.CreateTxNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, hopsFromRoot: outHopsFromRoot));
+            return TxNode.CreateTxNode(
+                node,
+                originalIndegree: originalIndegree,
+                originalOutdegree: originalOutdegree,
+                hopsFromRoot: outHopsFromRoot);
         }
         else if (node.Labels.Contains(BlockNodeStrategy.Label.ToString()))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinBlockNode, new BlockNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, outHopsFromRoot: outHopsFromRoot));
+            return new BlockNode(
+                node,
+                originalIndegree: originalIndegree,
+                originalOutdegree: originalOutdegree,
+                outHopsFromRoot: outHopsFromRoot);
         }
         else if (node.Labels.Contains(BitcoinChainAgent.Coinbase.ToString()))
         {
-            return GetOrAddNode(GraphComponentType.BitcoinCoinbaseNode, new CoinbaseNode(node, originalOutdegree: originalOutdegree, hopsFromRoot: outHopsFromRoot));
+            return new CoinbaseNode(
+                node,
+                originalOutdegree: originalOutdegree,
+                hopsFromRoot: outHopsFromRoot);
         }
         else
         {
-            throw new NotImplementedException($"Unexpected node type, labels: {string.Join(',', node.Labels)}");
+            throw new NotImplementedException(
+                $"Unexpected node type, labels: {string.Join(',', node.Labels)}");
         }
+    }
+
+    public INode GetOrAddNode(INode node)
+    {
+        return GetOrAddNode(node.GetGraphComponentType(), node);
     }
 
     public IEdge<INode, INode> GetOrAddEdge(IRelationship e)

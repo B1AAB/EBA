@@ -194,7 +194,7 @@ public class ForestFire : ITraversalAlgorithm
                 // so only the "connected" nodes are added.
                 // also, this order is important where 1st the node is added, then the edge.
                 (var ccNode, var indegree, var outdegree, var outHopsFromRoot) = nodes[targetNodeId];
-                addedNodes.Add(g.GetOrAddNode(ccNode, originalIndegree: indegree, originalOutdegree: outdegree, outHopsFromRoot: outHopsFromRoot));
+                addedNodes.Add(g.GetOrAddNode(BitcoinGraph.NodeFactory(ccNode, originalIndegree: indegree, originalOutdegree: outdegree, outHopsFromRoot: outHopsFromRoot)));
                 allNodesAddedToGraph.Add(targetNodeId);
 
                 g.GetOrAddEdge(edge.Value);
