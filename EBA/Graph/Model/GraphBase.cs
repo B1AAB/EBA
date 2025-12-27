@@ -97,6 +97,23 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
         throw new NotImplementedException();
     }
 
+    public bool ContainsNode(string id)
+    {
+        foreach (var nodeTypes in _nodes)
+            if (nodeTypes.Value.ContainsKey(id))
+                return true;
+
+        return false;
+    }
+
+    public bool ContainsEdge(string id)
+    {
+        foreach (var edgeTypes in _edges)
+            if (edgeTypes.Value.ContainsKey(id))
+                return true;
+        return false;
+    }
+
     public bool TryAddNode<T>(GraphComponentType type, T node) where T : INode
     {
         // TODO: this is a hotspot 

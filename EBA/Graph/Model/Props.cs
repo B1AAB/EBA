@@ -23,12 +23,12 @@ public static class Props
     public static Property TxVSize { get; } = new Property(_txNodeVSize, FieldType.Int, "SourceVSize");
     public static Property TxWeight { get; } = new Property(_txNodeWeight, FieldType.Int, "SourceWeight");
     public static Property TxLockTime { get; } = new Property(_txNodeLockTime, FieldType.Int, "SourceLockTime");
-    public static Property BlockMedianTime { get; } = new("MedianTime");
+    public static Property BlockMedianTime { get; } = new("MedianTime", FieldType.Int);
     public static Property BlockConfirmations { get; } = new("Confirmations", FieldType.Int);
     public static Property BlockDifficulty { get; } = new("Difficulty", FieldType.Float);
     public static Property BlockTxCount { get; } = new("TransactionsCount", FieldType.Int);
     public static Property BlockSize { get; } = new("Size", FieldType.Int);
-    public static Property BlockStrippedSize { get; } = new("StrippedSize");
+    public static Property BlockStrippedSize { get; } = new("StrippedSize", FieldType.Int);
     public static Property BlockWeight { get; } = new("Weight", FieldType.Int);
     public static Property EdgeSourceAddress { get; } = new(_addressProperty, csvHeader: "SourceAddress");
     public static Property EdgeTargetAddress { get; } = new(_addressProperty, csvHeader: "TargetAddress");

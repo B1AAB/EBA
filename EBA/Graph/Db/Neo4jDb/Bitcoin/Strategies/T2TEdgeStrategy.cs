@@ -1,30 +1,20 @@
 ﻿using EBA.Utilities;
 
-using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
-using EBA.Utilities;
-
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
 {
-    public const string labels = "Tx";
-
-    /// Note that the ordre of the items in this array should 
-    /// match those in the `GetCSV` method.
-    private readonly Property[] _properties =
-    [
-        Props.T2TEdgeSourceTxid,
-        Props.T2TEdgeTargetTxid,
-        Props.EdgeType,
-        Props.EdgeValue,
-        Props.Height
-    ];
-
     public override string GetCsvHeader()
     {
         return string.Join(
-            Neo4jDbLegacy.csvDelimiter,
-            from x in _properties select x.CsvHeader);
+            csvDelimiter,
+            [
+                $":START_ID({TxNodeStrategy.Label})",
+                $":END_ID({TxNodeStrategy.Label})",
+                Props.EdgeValue.TypeAnnotatedCsvHeader,
+                Props.Height.TypeAnnotatedCsvHeader,
+                ":TYPE"
+            ]);
     }
 
     public override string GetCsv(IGraphComponent edge)
@@ -34,14 +24,15 @@ public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
     public static string GetCsv(T2TEdge edge)
     {
-        return string.Join(Neo4jDbLegacy.csvDelimiter,
-        [
-            edge.Source.Txid,
-            edge.Target.Txid,
-            edge.Type.ToString(),
-            Helpers.Satoshi2BTC(edge.Value).ToString(),
-            edge.BlockHeight.ToString()
-        ]);
+        return string.Join(
+            csvDelimiter,
+            [
+                edge.Source.Txid,
+                edge.Target.Txid,
+                Helpers.Satoshi2BTC(edge.Value).ToString(),
+                edge.BlockHeight.ToString(),
+                edge.Type.ToString()
+            ]);
     }
 
     public override string GetQuery(string csvFilename)
@@ -84,9 +75,9 @@ public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
         builder.Append(
             $"MATCH " +
-            $"({s}:{TxNodeStrategy.Labels} {{{Props.T2TEdgeSourceTxid.GetSetter()}}}), " +
-            $"({t}:{TxNodeStrategy.Labels} {{{Props.T2TEdgeTargetTxid.GetSetter()}}}), " +
-            $"({b}:{BlockNodeStrategy.Labels} {{{Props.Height.GetSetter()}}}) ");
+            $"({s}:{TxNodeStrategy.Label} {{{Props.T2TEdgeSourceTxid.GetSetter()}}}), " +
+            $"({t}:{TxNodeStrategy.Label} {{{Props.T2TEdgeTargetTxid.GetSetter()}}}), " +
+            $"({b}:{BlockNodeStrategy.Label} {{{Props.Height.GetSetter()}}}) ");
 
         builder.Append(
             GetRedeemsEdgeQuery(b, s) + " " +

@@ -53,7 +53,7 @@ public class Orchestrator : IDisposable
     private async Task TraverseBitcoinAsync(Options options)
     {
         var host = await SetupAndGetHostAsync(options);
-        var bitcoinOrchestrator = host.Services.GetRequiredService<BitcoinOrchestrator>();
+        var bitcoinOrchestrator = host.Services.GetRequiredService<Blockchains.Bitcoin.Orchestrator>();
         await bitcoinOrchestrator.TraverseAsync(options, _cT);
     }
 
@@ -87,7 +87,7 @@ public class Orchestrator : IDisposable
         }
         else
         {
-            var bitcoinGraphAgent = host.Services.GetRequiredService<GraphAgent>();
+            var bitcoinGraphAgent = host.Services.GetRequiredService<Graph.Bitcoin.BitcoinGraphAgent>();
             await bitcoinGraphAgent.SampleAsync(_cT);
         }
     }

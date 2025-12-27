@@ -56,7 +56,7 @@ public class BlockNode(
     // normalization happens when bulk-loading data into neo4j.
     // Find a better solution.
 
-    public BlockNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null, double? outHopsFromRoot = null) :
+    public BlockNode(Neo4j.Driver.INode node, double originalIndegree, double originalOutdegree, double outHopsFromRoot) :
         this(
             id: node.ElementId,
             height: long.Parse((string)node.Properties[Props.Height.Name]),

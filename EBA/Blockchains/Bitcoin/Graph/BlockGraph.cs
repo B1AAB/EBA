@@ -24,13 +24,13 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 
     private readonly ConcurrentQueue<TransactionGraph> _txGraphsQueue = new();
 
-    private readonly ILogger<BitcoinAgent> _logger;
+    private readonly ILogger<BitcoinChainAgent> _logger;
 
     private readonly Lock _feeLock = new();
 
     private readonly ChainToGraphModel _chainToGraphModel;
 
-    public BlockGraph(Block block, ChainToGraphModel chainToGraphModel, ILogger<BitcoinAgent> logger) : base()
+    public BlockGraph(Block block, ChainToGraphModel chainToGraphModel, ILogger<BitcoinChainAgent> logger) : base()
     {
         Block = block;
         BlockNode = new BlockNode(block);
@@ -71,7 +71,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     }
 
     public void BuildGraph(CancellationToken ct)
-    {
+      {
         switch(_chainToGraphModel)
         {
             case ChainToGraphModel.UTxOModel:

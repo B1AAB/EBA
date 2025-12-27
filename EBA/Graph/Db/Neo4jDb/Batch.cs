@@ -8,7 +8,7 @@ public class Batch
 {
     public string Name { get; }
     public string DefaultDirectory { get; }
-    private bool _compressOutput;
+    private readonly bool _compressOutput;
 
     public ImmutableDictionary<GraphComponentType, TypeInfo> TypesInfo
     {

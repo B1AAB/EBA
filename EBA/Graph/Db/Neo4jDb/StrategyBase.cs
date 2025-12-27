@@ -9,6 +9,8 @@ public abstract class StrategyBase(bool serializeCompressed) : IDisposable
     private bool _disposed = false;
     private readonly bool _serializeCompressed = serializeCompressed;
 
+    public const string csvDelimiter = "\t";
+
     private StreamWriter GetStreamWriter(string filename)
     {
         if (_writer is null || _filename != filename)
@@ -20,12 +22,9 @@ public abstract class StrategyBase(bool serializeCompressed) : IDisposable
             if (_serializeCompressed)
                 _writer = new StreamWriter(new GZipStream(File.Create(_filename), compressionLevel: CompressionLevel.Optimal));
             else
-                _writer = new StreamWriter(_filename);//, append: true);
+                _writer = new StreamWriter(_filename);
 
             _writer.AutoFlush = true;
-
-            if (new FileInfo(_filename).Length == 0)
-                _writer.WriteLine(GetCsvHeader());
 
             return _writer;
         }
