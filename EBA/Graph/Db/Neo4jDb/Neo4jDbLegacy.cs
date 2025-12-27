@@ -264,7 +264,7 @@ public abstract class Neo4jDbLegacy<T> : IGraphDb<T> where T : GraphBase
     }
 
 
-    public Task<List<IRecord>> GetNeighborsAsync(NodeLabels rootNodeLabel, string propKey, string propValue, int queryLimit, string labelFilters, int maxLevel, GraphTraversal traversalAlgorithm, string relationshipFilter = "")
+    public Task<List<IRecord>> GetNeighborsAsync(NodeLabels rootNodeLabel, string propKey, string propValue, int queryLimit, int maxLevel, GraphTraversal traversalAlgorithm, string relationshipFilter = "")
     {
         throw new NotImplementedException();
     }

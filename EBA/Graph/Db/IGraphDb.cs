@@ -33,7 +33,7 @@ public interface IGraphDb<T> : IDisposable where T : GraphBase
         string propKey,
         string propValue,
         int queryLimit,
-        string labelFilters,
+        //string labelFilters,
         int maxLevel,
         GraphTraversal traversalAlgorithm,
         string relationshipFilter = "");

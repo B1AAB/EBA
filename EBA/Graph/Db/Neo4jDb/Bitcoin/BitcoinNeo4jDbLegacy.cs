@@ -299,7 +299,6 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         return await GetNeighborsUsingForestFireSamplingAlgorithmAsync(
             driver: driver,
             rootScriptAddress: rootScriptAddress,
-            labelFilters: options.LabelFilters,
             nodeSamplingCountAtRoot: options.ForestFireNodeSamplingCountAtRoot,
             maxHops: options.ForestFireMaxHops,
             queryLimit: options.ForestFireQueryLimit,
@@ -330,7 +329,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         else
             qBuilder.Append($"bfs: false, ");
 
-        qBuilder.Append($"labelFilter: '{options.LabelFilters}'");
+        //qBuilder.Append($"labelFilter: '{options.LabelFilters}'");
         //$"    relationshipFilter: \">{EdgeType.Transfers}\"" +
         qBuilder.Append($"}}) ");
         qBuilder.Append($"YIELD path ");
@@ -466,8 +465,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         int nodeSamplingCountAtRoot,
         int maxHops,
         int queryLimit,
-        double nodeCountReductionFactorByHop,
-        string labelFilters)
+        double nodeCountReductionFactorByHop)
     {
         // TODO: this method is experimental, need a thorough re-write.
 
@@ -495,7 +493,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
             qBuilder.Append($"maxLevel: 1, ");
             qBuilder.Append($"limit: {queryLimit}, ");
             qBuilder.Append($"bfs: true, ");
-            qBuilder.Append($"labelFilter: '{labelFilters}'");
+            //qBuilder.Append($"labelFilter: '{labelFilters}'");
             //$"    relationshipFilter: \">{EdgeType.Transfers}\"" +
             qBuilder.Append($"}}) ");
             qBuilder.Append($"YIELD path ");
@@ -721,8 +719,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                 nodeSamplingCountAtRoot: options.DisjointGraph_ForestFireNodeSamplingCountAtRoot,
                 maxHops: options.DisjointGraph_ForestFireMaxHops,
                 queryLimit: options.DisjointGraph_ForestFireQueryLimit,
-                nodeCountReductionFactorByHop: options.DisjointGraph_ForestFireNodeCountReductionFactorByHop,
-                labelFilters: options.DisjointGraph_LabelFilters);
+                nodeCountReductionFactorByHop: options.DisjointGraph_ForestFireNodeCountReductionFactorByHop);
 
             foreach (var node in gB.GetNodes())
                 foreach (var n in node.Value)

@@ -213,14 +213,13 @@ public class ForestFire : ITraversalAlgorithm
         int hop,
         string rootScriptAddress,
         int queryLimit,
-        string labelFilters,
         HashSet<string> allNodesAddedToGraph,
         HashSet<string> allEdgesAddedToGraph,
         int nodeSamplingCountAtRoot,
         double nodeCountReductionFactorByHop,
         BitcoinGraph g)
     {
-        var samplingResult = await _graphDb.GetNeighborsAsync(rootNodeLabel, propKey, propValue, queryLimit, labelFilters, 1, GraphTraversal.BFS);
+        var samplingResult = await _graphDb.GetNeighborsAsync(rootNodeLabel, propKey, propValue, queryLimit, 1, GraphTraversal.BFS);
 
         var selectedNodes = ProcessSamplingResult(
             samplingResult, hop,
@@ -243,7 +242,6 @@ public class ForestFire : ITraversalAlgorithm
                         maxHops: maxHops,
                         rootScriptAddress: rootScriptAddress,
                         queryLimit: queryLimit,
-                        labelFilters: labelFilters,
                         allNodesAddedToGraph: allNodesAddedToGraph,
                         allEdgesAddedToGraph: allEdgesAddedToGraph,
                         nodeSamplingCountAtRoot: nodeSamplingCountAtRoot,
@@ -258,8 +256,7 @@ public class ForestFire : ITraversalAlgorithm
         int nodeSamplingCountAtRoot,
         int maxHops,
         int queryLimit,
-        double nodeCountReductionFactorByHop,
-        string labelFilters)
+        double nodeCountReductionFactorByHop)
     {
         var g = new BitcoinGraph();
         var allNodesAddedToGraph = new HashSet<string>();
@@ -275,7 +272,6 @@ public class ForestFire : ITraversalAlgorithm
             hop: 0,
             rootScriptAddress: rootScriptAddress,
             queryLimit: queryLimit,
-            labelFilters: labelFilters,
             allNodesAddedToGraph: allNodesAddedToGraph,
             allEdgesAddedToGraph: allEdgesAddedToGraph,
             nodeSamplingCountAtRoot: nodeSamplingCountAtRoot,

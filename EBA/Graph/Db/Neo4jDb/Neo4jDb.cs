@@ -72,15 +72,12 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         string rootNodePropKey, 
         string rootNodePropValue, 
         int queryLimit, 
-        string labelFilters, 
+        //string labelFilters, 
         int maxLevel, 
         GraphTraversal traversalAlgorithm,
         string relationshipFilter = "")
     {
         var qBuilder = new StringBuilder();
-        if (rootNodeLabel == NodeLabels.Coinbase)
-            qBuilder.Append($"MATCH (root:{NodeLabels.Coinbase.ToString()}) ");
-        else
             qBuilder.Append($"MATCH (root:{rootNodeLabel} {{ {rootNodePropKey}: \"{rootNodePropValue}\" }}) ");
 
         qBuilder.Append($"CALL apoc.path.spanningTree(root, {{");
@@ -88,13 +85,13 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         qBuilder.Append($"limit: {queryLimit}, ");
 
         if (traversalAlgorithm == GraphTraversal.BFS)
-            qBuilder.Append($"bfs: true, ");
+            qBuilder.Append($"bfs: true ");
         else if (traversalAlgorithm == GraphTraversal.DFS)
-            qBuilder.Append($"bfs: false, ");
+            qBuilder.Append($"bfs: false ");
         else
             throw new ArgumentException($"{traversalAlgorithm} is not supported, supported methods are {{ {GraphTraversal.DFS}, {GraphTraversal.BFS} }}");
 
-        qBuilder.Append($"labelFilter: '{labelFilters}'");
+        //qBuilder.Append($", labelFilter: '{labelFilters}'");
 
         if (!string.IsNullOrWhiteSpace(relationshipFilter))
             qBuilder.Append($", relationshipFilter: '{relationshipFilter}'");
