@@ -1,5 +1,5 @@
 ﻿using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
-using NBitcoin.Protocol.Behaviors;
+using EBA.Utilities;
 using INode = EBA.Graph.Model.INode;
 
 namespace EBA.Blockchains.Bitcoin.Graph;
@@ -153,6 +153,84 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
         }
     }
 
+    public static IEdge<INode, INode> EdgeFactory(
+        INode source,
+        INode target,
+        IRelationship relationship,
+        GraphComponentType sourceNodeGraphComponentType,
+        GraphComponentType targetNodeGraphComponentType)
+    {
+        //var id = relationship.ElementId;
+        var value = Helpers.BTC2Satoshi((double)relationship.Properties[Props.EdgeValue.Name]);
+        var type = Enum.Parse<EdgeType>(relationship.Type);
+        var blockHeight = (long)relationship.Properties[Props.Height.Name];
+        uint timestamp = 0; // TODO currently edges stored on the database do not have a timestamp
+
+        if (sourceNodeGraphComponentType == GraphComponentType.BitcoinCoinbaseNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinTxNode)
+        {
+            return new C2TEdge((TxNode)target, value, timestamp, blockHeight);
+        }
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinCoinbaseNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinScriptNode)
+        {
+            return new C2SEdge((ScriptNode)target, value, timestamp, blockHeight);
+        }
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinTxNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinTxNode)
+        {
+            return new T2TEdge((TxNode)source, (TxNode)target, value, type, timestamp, blockHeight);
+        }
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinScriptNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinScriptNode)
+        {
+            return new S2SEdge((ScriptNode)source, (ScriptNode)target, value, type, timestamp, blockHeight);
+        }
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinScriptNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinBlockNode)
+        {
+            return new S2BEdge((ScriptNode)source, (BlockNode)target, value, type, timestamp, blockHeight);
+        }
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinBlockNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinScriptNode)
+        {
+            return new B2SEdge((BlockNode)source, (ScriptNode)target, value, type, timestamp, blockHeight);
+        }
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinTxNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinBlockNode)
+        {
+            return new T2BEdge((TxNode)source, (BlockNode)target, value, type, timestamp, blockHeight);
+        }
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinBlockNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinTxNode)
+        {
+            return new B2TEdge((BlockNode)source, (TxNode)target, value, type, timestamp, blockHeight);
+        }
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinTxNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinScriptNode)
+        {
+            return new T2SEdge((TxNode)source, (ScriptNode)target, value, type, timestamp, blockHeight);
+        }
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinScriptNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinTxNode)
+        {
+            return new S2TEdge((ScriptNode)source, (TxNode)target, value, type, timestamp, blockHeight);
+        }
+        else
+        {
+            throw new ArgumentException("Invalid edge type");
+        }
+    }
+
     public INode GetOrAddNode(INode node)
     {
         return GetOrAddNode(node.GetGraphComponentType(), node);
@@ -163,7 +241,7 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
         GetNode(e.StartNodeElementId, out var sourceNode, out var sourceNodeComponentType);
         GetNode(e.EndNodeElementId, out var targetNode, out var targetNodeComponentType);
 
-        var candidateEdge = EdgeFactory.CreateEdge(
+        var candidateEdge = EdgeFactory(
             sourceNode,
             targetNode,
             e,
