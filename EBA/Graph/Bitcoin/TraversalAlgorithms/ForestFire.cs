@@ -84,7 +84,7 @@ public class ForestFire : ITraversalAlgorithm
         }
     }
 
-    private List<Model.INode> Neo4jQueryResultsToBitcoinGraph(
+    private List<Model.INode> ProcessSamplingResults(
         List<IRecord> samplingResult, 
         int hop,
         int nodeSamplingCountAtRoot, 
@@ -136,23 +136,22 @@ public class ForestFire : ITraversalAlgorithm
         var nodesToKeep = nodesUniqueToThisHop.Keys.OrderBy(
             x => rnd.Next()).Take(
                 (int)Math.Floor(nodeSamplingCountAtRoot - hop * nodeCountReductionFactorByHop))
-            .ToList();
-
-        var nodesUniqueToThisHopToKeep = new HashSet<string>();
-        foreach (var nodeId in nodesToKeep)
-            if (!g.ContainsNode(nodeId))
-                nodesUniqueToThisHopToKeep.Add(nodeId);
+            .ToHashSet();
 
         var addedNodes = new List<Model.INode>();
 
         foreach (var edge in edgesUniqueToThisHop)
         {
-            var targetNodeId = edge.Value.EndNodeElementId;
-            if (nodesUniqueToThisHopToKeep.Contains(targetNodeId))
+            var subjectNode = 
+                edge.Value.StartNodeElementId == rootNodeId ? 
+                edge.Value.EndNodeElementId : 
+                edge.Value.StartNodeElementId;
+
+            if (nodesToKeep.Contains(subjectNode))
             {
                 // so only the "connected" nodes are added.
-                // also, this order is important where 1st the node is added, then the edge.
-                addedNodes.Add(g.GetOrAddNode(nodesUniqueToThisHop[targetNodeId]));
+                // the following order where 1st the node is added and then the edge, is important.
+                addedNodes.Add(g.GetOrAddNode(nodesUniqueToThisHop[subjectNode]));
 
                 g.GetOrAddEdge(edge.Value);
             }
@@ -174,7 +173,7 @@ public class ForestFire : ITraversalAlgorithm
     {
         var samplingResult = await _graphDb.GetNeighborsAsync(rootNodeLabel, propKey, propValue, queryLimit, 1, GraphTraversal.BFS);
 
-        var selectedNodes = Neo4jQueryResultsToBitcoinGraph(
+        var selectedNodes = ProcessSamplingResults(
             samplingResult, hop,
             nodeSamplingCountAtRoot: nodeSamplingCountAtRoot,
             nodeCountReductionFactorByHop: nodeCountReductionFactorByHop,
