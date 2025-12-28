@@ -100,10 +100,17 @@ public class ForestFire : ITraversalAlgorithm
             return BitcoinGraph.NodeFactory(node, inDegree, outDegree, hop);
         }
 
+        var addedNodes = new List<Model.INode>();
+        if (samplingResult.Count == 0)
+            return addedNodes;
+
         var nodesUniqueToThisHop = new Dictionary<string, Model.INode>();
         var edgesUniqueToThisHop = new Dictionary<string, IRelationship>();
 
-        var rootNodeId = "";
+        var rootList = samplingResult[0]["root"].As<List<object>>();
+        Model.INode? rootNode = 
+            UnpackDict(rootList[0].As<IDictionary<string, object>>(), hop) 
+            ?? throw new Exception("Root node is null.");
 
         foreach (var r in samplingResult)
         {
@@ -113,9 +120,12 @@ public class ForestFire : ITraversalAlgorithm
                 continue;
 
             g.GetOrAddNode(rootNode);
+        if (hop == 0)
+            g.AddLabel("RootNodeId", rootNode.Id);
 
-            rootNodeId = rootNode.Id;
-
+        for (int i = 1; i < samplingResult.Count; i++)
+        {
+            var r = samplingResult[i];
             foreach (var nodeObject in r["nodes"].As<List<object>>())
             {
                 Model.INode? node = UnpackDict(nodeObject.As<IDictionary<string, object>>(), hop);
@@ -125,8 +135,10 @@ public class ForestFire : ITraversalAlgorithm
             }
 
             foreach (var edge in r.Values["relationships"].As<List<IRelationship>>())
+            {
                 if (!g.ContainsEdge(edge.ElementId))
                     edgesUniqueToThisHop.TryAdd(edge.ElementId, edge);
+        }
         }
 
         if (hop == 0)
