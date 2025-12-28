@@ -156,9 +156,7 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
     public static IEdge<INode, INode> EdgeFactory(
         INode source,
         INode target,
-        IRelationship relationship,
-        GraphComponentType sourceNodeGraphComponentType,
-        GraphComponentType targetNodeGraphComponentType)
+        IRelationship relationship)
     {
         //var id = relationship.ElementId;
         var value = Helpers.BTC2Satoshi((double)relationship.Properties[Props.EdgeValue.Name]);
@@ -166,62 +164,62 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
         var blockHeight = (long)relationship.Properties[Props.Height.Name];
         uint timestamp = 0; // TODO currently edges stored on the database do not have a timestamp
 
-        if (sourceNodeGraphComponentType == GraphComponentType.BitcoinCoinbaseNode &&
-            targetNodeGraphComponentType == GraphComponentType.BitcoinTxNode)
+        if (source.GetGraphComponentType() == GraphComponentType.BitcoinCoinbaseNode &&
+            target.GetGraphComponentType() == GraphComponentType.BitcoinTxNode)
         {
             return new C2TEdge((TxNode)target, value, timestamp, blockHeight);
         }
         else if (
-            sourceNodeGraphComponentType == GraphComponentType.BitcoinCoinbaseNode &&
-            targetNodeGraphComponentType == GraphComponentType.BitcoinScriptNode)
+            source.GetGraphComponentType() == GraphComponentType.BitcoinCoinbaseNode &&
+            target.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode)
         {
             return new C2SEdge((ScriptNode)target, value, timestamp, blockHeight);
         }
         else if (
-            sourceNodeGraphComponentType == GraphComponentType.BitcoinTxNode &&
-            targetNodeGraphComponentType == GraphComponentType.BitcoinTxNode)
+            source.GetGraphComponentType() == GraphComponentType.BitcoinTxNode &&
+            target.GetGraphComponentType() == GraphComponentType.BitcoinTxNode)
         {
             return new T2TEdge((TxNode)source, (TxNode)target, value, type, timestamp, blockHeight);
         }
         else if (
-            sourceNodeGraphComponentType == GraphComponentType.BitcoinScriptNode &&
-            targetNodeGraphComponentType == GraphComponentType.BitcoinScriptNode)
+            source.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode &&
+            target.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode)
         {
             return new S2SEdge((ScriptNode)source, (ScriptNode)target, value, type, timestamp, blockHeight);
         }
         else if (
-            sourceNodeGraphComponentType == GraphComponentType.BitcoinScriptNode &&
-            targetNodeGraphComponentType == GraphComponentType.BitcoinBlockNode)
+            source.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode &&
+            target.GetGraphComponentType() == GraphComponentType.BitcoinBlockNode)
         {
             return new S2BEdge((ScriptNode)source, (BlockNode)target, value, type, timestamp, blockHeight);
         }
         else if (
-            sourceNodeGraphComponentType == GraphComponentType.BitcoinBlockNode &&
-            targetNodeGraphComponentType == GraphComponentType.BitcoinScriptNode)
+            source.GetGraphComponentType() == GraphComponentType.BitcoinBlockNode &&
+            target.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode)
         {
             return new B2SEdge((BlockNode)source, (ScriptNode)target, value, type, timestamp, blockHeight);
         }
         else if (
-            sourceNodeGraphComponentType == GraphComponentType.BitcoinTxNode &&
-            targetNodeGraphComponentType == GraphComponentType.BitcoinBlockNode)
+            source.GetGraphComponentType() == GraphComponentType.BitcoinTxNode &&
+            target.GetGraphComponentType() == GraphComponentType.BitcoinBlockNode)
         {
             return new T2BEdge((TxNode)source, (BlockNode)target, value, type, timestamp, blockHeight);
         }
         else if (
-            sourceNodeGraphComponentType == GraphComponentType.BitcoinBlockNode &&
-            targetNodeGraphComponentType == GraphComponentType.BitcoinTxNode)
+            source.GetGraphComponentType() == GraphComponentType.BitcoinBlockNode &&
+            target.GetGraphComponentType() == GraphComponentType.BitcoinTxNode)
         {
             return new B2TEdge((BlockNode)source, (TxNode)target, value, type, timestamp, blockHeight);
         }
         else if (
-            sourceNodeGraphComponentType == GraphComponentType.BitcoinTxNode &&
-            targetNodeGraphComponentType == GraphComponentType.BitcoinScriptNode)
+            source.GetGraphComponentType() == GraphComponentType.BitcoinTxNode &&
+            target.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode)
         {
             return new T2SEdge((TxNode)source, (ScriptNode)target, value, type, timestamp, blockHeight);
         }
         else if (
-            sourceNodeGraphComponentType == GraphComponentType.BitcoinScriptNode &&
-            targetNodeGraphComponentType == GraphComponentType.BitcoinTxNode)
+            source.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode &&
+            target.GetGraphComponentType() == GraphComponentType.BitcoinTxNode)
         {
             return new S2TEdge((ScriptNode)source, (TxNode)target, value, type, timestamp, blockHeight);
         }
@@ -238,15 +236,12 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
 
     public IEdge<INode, INode> GetOrAddEdge(IRelationship e)
     {
-        GetNode(e.StartNodeElementId, out var sourceNode, out var sourceNodeComponentType);
-        GetNode(e.EndNodeElementId, out var targetNode, out var targetNodeComponentType);
+        throw new NotImplementedException();
+    }
 
-        var candidateEdge = EdgeFactory(
-            sourceNode,
-            targetNode,
-            e,
-            sourceNodeComponentType,
-            targetNodeComponentType);
+    public IEdge<INode, INode> GetOrAddEdge(IRelationship e, INode sourceNode, INode targetNode)
+    {
+        var candidateEdge = EdgeFactory(sourceNode, targetNode, e);
 
         var edge = GetOrAddEdge(candidateEdge.GetGraphComponentType(), candidateEdge);
 
