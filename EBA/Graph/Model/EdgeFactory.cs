@@ -64,6 +64,18 @@ public class EdgeFactory
         {
             return new B2TEdge((BlockNode)source, (TxNode)target, value, type, timestamp, blockHeight);
         }
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinTxNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinScriptNode)
+        {
+            return new T2SEdge((TxNode)source, (ScriptNode)target, value, type, timestamp, blockHeight);
+        }
+        else if (
+            sourceNodeGraphComponentType == GraphComponentType.BitcoinScriptNode &&
+            targetNodeGraphComponentType == GraphComponentType.BitcoinTxNode)
+        {
+            return new S2TEdge((ScriptNode)source, (TxNode)target, value, type, timestamp, blockHeight);
+        }
         else
         {
             throw new ArgumentException("Invalid edge type");
