@@ -74,7 +74,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         // Find a better solution.
 
         node.Properties.TryGetValue(Props.TxVersion.Name, out var v);
-        ulong? version = v == null ? null : ulong.Parse((string)v);
+        ulong? version = v == null ? null : ulong.Parse(v.ToString());
 
         node.Properties.TryGetValue(Props.TxSize.Name, out var s);
         int? size = s == null ? null : (int)(long)s;
