@@ -1,21 +1,16 @@
-﻿using EBA.Graph;
-using EBA.Graph.Db;
+﻿namespace EBA.Blockchains.Bitcoin;
 
-using System;
-
-namespace EBA.Blockchains.Bitcoin;
-
-public class Orchestrator : IBlockchainOrchestrator
+public class BitcoinOrchestrator : IBlockchainOrchestrator
 {
     private readonly BitcoinChainAgent _agent;
-    private readonly ILogger<Orchestrator> _logger;
+    private readonly ILogger<BitcoinOrchestrator> _logger;
 
     // TODO: check how this class can be improved without leveraging IHost.
     private readonly IHost _host;
 
-    public Orchestrator(
+    public BitcoinOrchestrator(
         BitcoinChainAgent agent,
-        ILogger<Orchestrator> logger,
+        ILogger<BitcoinOrchestrator> logger,
         IHost host)
     {
         _agent = agent;

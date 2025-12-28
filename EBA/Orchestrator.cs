@@ -53,7 +53,7 @@ public class Orchestrator : IDisposable
     private async Task TraverseBitcoinAsync(Options options)
     {
         var host = await SetupAndGetHostAsync(options);
-        var bitcoinOrchestrator = host.Services.GetRequiredService<Blockchains.Bitcoin.Orchestrator>();
+        var bitcoinOrchestrator = host.Services.GetRequiredService<Blockchains.Bitcoin.BitcoinOrchestrator>();
         await bitcoinOrchestrator.TraverseAsync(options, _cT);
     }
 

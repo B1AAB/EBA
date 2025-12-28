@@ -174,7 +174,7 @@ public class BitcoinChainAgent : IDisposable
                     graph.Stats.Retries = retryAttempts;
                 },
                 new Context()
-                    .SetLogger<Orchestrator>(_logger)
+                    .SetLogger<BitcoinOrchestrator>(_logger)
                     .SetBlockHeight(height),
                 cT);
         }
