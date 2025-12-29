@@ -22,9 +22,12 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
     }
 
     public TxNode(
-        string id, string txid, ulong? version,
-        int? size, int? vSize, int? weight,
-        long? lockTime) : base(id)
+        string txid,
+        ulong? version,
+        int? size,
+        int? vSize,
+        int? weight,
+        long? lockTime) : base(txid)
     {
         Txid = txid;
         Version = version;
@@ -35,14 +38,22 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
     }
 
     public TxNode(
-        string txid, 
+        string txid,
         ulong? version,
-        int? size, int? vSize, int? weight,
-        long? lockTime, 
+        int? size,
+        int? vSize,
+        int? weight,
+        long? lockTime,
         double? originalIndegree = null,
-        double? originalOutdegree = null, 
-        double? hopsFromRoot = null) :
-        base(txid, originalInDegree: originalIndegree, originalOutDegree: originalOutdegree, outHopsFromRoot: hopsFromRoot)
+        double? originalOutdegree = null,
+        double? hopsFromRoot = null,
+        string? idInGraphDb = null) :
+        base(
+            txid,
+            originalInDegree: originalIndegree,
+            originalOutDegree: originalOutdegree,
+            outHopsFromRoot: hopsFromRoot,
+            idInGraphDb: idInGraphDb)
     {
         Txid = txid;
         Version = version;
@@ -53,14 +64,18 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
     }
 
     public TxNode(Transaction tx) :
-        this(tx.Txid, 
-            tx.Version, 
-            tx.Size, tx.VSize, tx.Weight, tx.LockTime)
+        this(
+            tx.Txid,
+            tx.Version,
+            tx.Size,
+            tx.VSize,
+            tx.Weight,
+            tx.LockTime)
     { }
 
-    public override string GetUniqueLabel()
+    public override string GetIdPropertyName()
     {
-        return Txid;
+        return nameof(Txid);
     }
 
     public static TxNode CreateTxNode(
@@ -72,6 +87,12 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         // TODO: all the following double-casting is because of the type
         // normalization happens when bulk-loading data into neo4j.
         // Find a better solution.
+
+        string txid;
+        if (node.Properties.TryGetValue(Props.Txid.Name, out var obj) && obj != null)
+            txid = obj.ToString();
+        else
+            throw new ArgumentNullException(Props.Txid.Name);
 
         node.Properties.TryGetValue(Props.TxVersion.Name, out var v);
         ulong? version = v == null ? null : ulong.Parse(v.ToString());
@@ -89,7 +110,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         long? lockTime = t == null ? null : (long)t;
 
         return new TxNode(
-            txid: node.ElementId,
+            txid: txid,
             version: version,
             size: size,
             vSize: vSize,
@@ -97,7 +118,8 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
             lockTime: lockTime,
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
-            hopsFromRoot: hopsFromRoot);
+            hopsFromRoot: hopsFromRoot,
+            idInGraphDb: node.ElementId);
     }
 
     public static TxNode GetCoinbaseNode()

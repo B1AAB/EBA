@@ -11,6 +11,8 @@ public class Node : INode
 
     public string Id { get; }
 
+    public string? IdInGraphDb { get; }
+
     public int InDegree { get { return IncomingEdges.Count; } }
     public int OutDegree { get { return OutgoingEdges.Count; } }
 
@@ -36,26 +38,24 @@ public class Node : INode
     {
         get
         {
-            return string.Join(Delimiter, new string[]
-            {
-                "Id",
-            });
+            return "Id";
         }
     }
 
     public const char Delimiter = '\t';
 
-    public Node(string id, double? originalInDegree = null, double? originalOutDegree = null, double? outHopsFromRoot = null)
+    public Node(string id, double? originalInDegree = null, double? originalOutDegree = null, double? outHopsFromRoot = null, string? idInGraphDb = null)
     {
         Id = id;
         OriginalInDegree = originalInDegree;
         OriginalOutDegree = originalOutDegree;
         OutHopsFromRoot = outHopsFromRoot;
+        IdInGraphDb = idInGraphDb;
     }
 
-    public virtual string GetUniqueLabel()
+    public virtual string GetIdPropertyName()
     {
-        return Id;
+        return nameof(Id);
     }
 
     public void AddIncomingEdge(IEdge<INode, INode> incomingEdge)

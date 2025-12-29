@@ -8,7 +8,7 @@ public class CoinbaseNode : Node
     public CoinbaseNode(Neo4j.Driver.INode node, double? originalOutdegree = null, double? hopsFromRoot = null) : base(node.ElementId, originalOutDegree: originalOutdegree, outHopsFromRoot: hopsFromRoot)
     { }
 
-    public override string GetUniqueLabel()
+    public override string GetIdPropertyName()
     {
         return "Coinbase";
     }

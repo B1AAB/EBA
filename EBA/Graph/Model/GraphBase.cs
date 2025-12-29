@@ -211,8 +211,8 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
         var edges = _edges.Values.SelectMany(ids => ids.Values).Select(
             edges => new[]
             {
-                edges.Source.GetUniqueLabel(),
-                edges.Target.GetUniqueLabel(),
+                edges.Source.GetIdPropertyName(),
+                edges.Target.GetIdPropertyName(),
                 edges.Source.GetGraphComponentType().ToString(),
                 edges.Target.GetGraphComponentType().ToString(),
                 edges.Value.ToString(),

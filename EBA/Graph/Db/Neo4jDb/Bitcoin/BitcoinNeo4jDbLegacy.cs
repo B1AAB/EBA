@@ -91,7 +91,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         if (Options.GraphSample.CoinbaseMode != CoinbaseSelectionMode.ExcludeCoinbase)
         {
             Logger.LogInformation("Sampling neighbors of the coinbase node.");
-            var tmpSolutionCoinbase = new ScriptNode(NodeLabels.Coinbase.ToString(), NodeLabels.Coinbase.ToString(), ScriptType.Coinbase);
+            var tmpSolutionCoinbase = new ScriptNode(NodeLabels.Coinbase.ToString(), ScriptType.Coinbase);
             if (await TrySampleNeighborsAsync(driver, tmpSolutionCoinbase, baseOutputDir))
             {
                 sampledGraphsCounter++;
