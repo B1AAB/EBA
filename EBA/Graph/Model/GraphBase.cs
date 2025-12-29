@@ -106,6 +106,15 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
         return false;
     }
 
+    public bool TryGetNode(string id, out INode? node)
+    {
+        foreach (var nodeTypes in _nodes)
+            if (nodeTypes.Value.TryGetValue(id, out node))
+                return true;
+        node = null;
+        return false;
+    }
+
     public bool ContainsEdge(string id)
     {
         foreach (var edgeTypes in _edges)
