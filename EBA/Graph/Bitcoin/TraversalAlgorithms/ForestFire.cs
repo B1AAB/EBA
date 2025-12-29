@@ -113,6 +113,7 @@ public class ForestFire : ITraversalAlgorithm
             return addedNodes;
 
         var nodesUniqueToThisHop = new Dictionary<string, Model.INode>();
+        var nodesInThisHopAlreadyInGraph = new Dictionary<string, Model.INode>();
         var edges = new List<IRelationship>();
 
         var rootList = samplingResult[0]["root"].As<List<object>>();
@@ -131,7 +132,9 @@ public class ForestFire : ITraversalAlgorithm
             {
                 Model.INode? node = UnpackDict(nodeObject.As<IDictionary<string, object>>(), hop);
                 if (node is null || node.IdInGraphDb == null) continue;
-                if (!g.ContainsNode(node.Id))
+                if (g.TryGetNode(node.Id, out var nodeInG))
+                    nodesInThisHopAlreadyInGraph.TryAdd(node.IdInGraphDb, nodeInG);
+                else
                     nodesUniqueToThisHop.TryAdd(node.IdInGraphDb, node);
             }
 
@@ -155,19 +158,25 @@ public class ForestFire : ITraversalAlgorithm
             else
                 continue; // edge is not connected to rootNode
 
+            // so only the "connected" nodes are added.
+            // the following order where 1st the node is added and then the edge, is important.
+            Model.INode? subjectNode = null;
             if (nodesToKeep.Contains(subjectNodeGraphDbId))
             {
-                // so only the "connected" nodes are added.
-                // the following order where 1st the node is added and then the edge, is important.
-
-                var subjectNode = g.GetOrAddNode(nodesUniqueToThisHop[subjectNodeGraphDbId]);
+                subjectNode = g.GetOrAddNode(nodesUniqueToThisHop[subjectNodeGraphDbId]);
                 addedNodes.Add(subjectNode);
-
-                if (edge.StartNodeElementId == rootNode.IdInGraphDb)
-                    g.GetOrAddEdge(edge, rootNode, subjectNode);
-                else
-                    g.GetOrAddEdge(edge, subjectNode, rootNode);
             }
+            else if (nodesInThisHopAlreadyInGraph.TryGetValue(subjectNodeGraphDbId, out subjectNode))
+            { }
+            else
+            {
+                continue; // node is not selected to be kept
+            }          
+            
+            if (edge.StartNodeElementId == rootNode.IdInGraphDb)
+                g.GetOrAddEdge(edge, rootNode, subjectNode);
+            else
+                g.GetOrAddEdge(edge, subjectNode, rootNode);
         }
 
         return addedNodes;
@@ -226,6 +235,9 @@ public class ForestFire : ITraversalAlgorithm
         var g = new BitcoinGraph();
 
         _logger.LogInformation("Getting neighbors of random node {node}, at {hop} hop distance.", rootNodeIdProperty, maxHops);
+
+        // temp
+        rootNodeId = "15PSwPAeSB9opMRigpSrJPatGdfKBV4LxY";
 
         await ProcessHops(
             rootNodeLabel: rootNodeLabel,
