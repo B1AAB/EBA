@@ -46,6 +46,23 @@ public class BitcoinGraphAgent : IGraphAgent<BitcoinGraph>, IDisposable
         await _db.SerializeAsync(g, ct);
     }
 
+    /// <summary>
+    /// Converts a specified graph component type to its corresponding node label.
+    /// 
+    /// This is a temp utility method until the node lables and graph component types enums are unified.
+    /// </summary>
+    public static NodeLabels ConvertGraphComponentTypeToNodeLabel(GraphComponentType type)
+    {
+        return type switch
+        {
+            GraphComponentType.BitcoinBlockNode => NodeLabels.Block,
+            GraphComponentType.BitcoinScriptNode => NodeLabels.Script,
+            GraphComponentType.BitcoinTxNode => NodeLabels.Tx,
+            GraphComponentType.BitcoinCoinbaseNode => NodeLabels.Coinbase,
+            _ => throw new ArgumentOutOfRangeException(nameof(type), $"Not a valid node type: {type}"),
+        };
+    }
+
     public void Dispose()
     {
         Dispose(true);

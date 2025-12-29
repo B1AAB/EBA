@@ -1,5 +1,4 @@
 ﻿using EBA.Graph.Bitcoin;
-using EBA.Graph.Db.Neo4jDb;
 
 namespace EBA.Graph.Db;
 
@@ -30,8 +29,8 @@ public interface IGraphDb<T> : IDisposable where T : GraphBase
 
     public Task<List<IRecord>> GetNeighborsAsync(
         NodeLabels rootNodeLabel,
-        string propKey,
-        string propValue,
+        string rootNodeIdProperty,
+        string rootNodeId,
         int queryLimit,
         //string labelFilters,
         int maxLevel,

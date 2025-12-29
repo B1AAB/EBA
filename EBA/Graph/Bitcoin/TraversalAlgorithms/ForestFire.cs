@@ -43,7 +43,8 @@ public class ForestFire : ITraversalAlgorithm
 
                 var graph = await GetNeighborsAsync(
                     rootNodeLabel: NodeLabels.Script,
-                    rootScriptAddress: rootNode.Address,
+                    rootNodeIdProperty: rootNode.GetIdPropertyName(),
+                    rootNodeId: rootNode.Id,
                     nodeSamplingCountAtRoot: _options.GraphSample.ForestFireNodeSamplingCountAtRoot,
                     maxHops: _options.GraphSample.ForestFireMaxHops,
                     queryLimit: _options.GraphSample.ForestFireQueryLimit,
@@ -84,7 +85,14 @@ public class ForestFire : ITraversalAlgorithm
         }
     }
 
-    private List<Model.INode> ProcessSamplingResults(
+    /// <summary>
+    /// Samples a subcommunity from the provided neighborhood query results, 
+    /// adds the corresponding nodes and edges to the specified Bitcoin graph, 
+    /// and returns the list of nodes added during this operation.
+    /// This method ensures that only unique nodes and edges not already present in the graph are added. 
+    /// The number of nodes sampled at each hop decreases linearly based on the specified reduction factor.
+    /// </summary>
+    private List<Model.INode> ProcessQueriedNeighborhood(
         List<IRecord> samplingResult, 
         int hop,
         int nodeSamplingCountAtRoot, 
@@ -105,21 +113,14 @@ public class ForestFire : ITraversalAlgorithm
             return addedNodes;
 
         var nodesUniqueToThisHop = new Dictionary<string, Model.INode>();
-        var edgesUniqueToThisHop = new Dictionary<string, IRelationship>();
+        var edges = new List<IRelationship>();
 
         var rootList = samplingResult[0]["root"].As<List<object>>();
-        Model.INode? rootNode = 
-            UnpackDict(rootList[0].As<IDictionary<string, object>>(), hop) 
-            ?? throw new Exception("Root node is null.");
+        Model.INode? rootNode =
+            g.GetOrAddNode(
+                UnpackDict(rootList[0].As<IDictionary<string, object>>(), hop)
+                ?? throw new Exception("Root node is null."));
 
-        foreach (var r in samplingResult)
-        {
-            var rootList = r["root"].As<List<object>>();
-            Model.INode? rootNode = UnpackDict(rootList[0].As<IDictionary<string, object>>(), hop);
-            if (rootNode is null)
-                continue;
-
-            g.GetOrAddNode(rootNode);
         if (hop == 0)
             g.AddLabel("RootNodeId", rootNode.Id);
 
@@ -129,20 +130,14 @@ public class ForestFire : ITraversalAlgorithm
             foreach (var nodeObject in r["nodes"].As<List<object>>())
             {
                 Model.INode? node = UnpackDict(nodeObject.As<IDictionary<string, object>>(), hop);
-                if (node is null) continue;
+                if (node is null || node.IdInGraphDb == null) continue;
                 if (!g.ContainsNode(node.Id))
-                    nodesUniqueToThisHop.TryAdd(node.Id, node);
+                    nodesUniqueToThisHop.TryAdd(node.IdInGraphDb, node);
             }
 
             foreach (var edge in r.Values["relationships"].As<List<IRelationship>>())
-            {
-                if (!g.ContainsEdge(edge.ElementId))
-                    edgesUniqueToThisHop.TryAdd(edge.ElementId, edge);
+                edges.Add(edge);
         }
-        }
-
-        if (hop == 0)
-            g.AddLabel("RootNodeId", rootNodeId);
 
         var rnd = new Random(31);
         var nodesToKeep = nodesUniqueToThisHop.Keys.OrderBy(
@@ -150,22 +145,28 @@ public class ForestFire : ITraversalAlgorithm
                 (int)Math.Floor(nodeSamplingCountAtRoot - hop * nodeCountReductionFactorByHop))
             .ToHashSet();
 
-        var addedNodes = new List<Model.INode>();
-
-        foreach (var edge in edgesUniqueToThisHop)
+        foreach (var edge in edges)
         {
-            var subjectNode = 
-                edge.Value.StartNodeElementId == rootNodeId ? 
-                edge.Value.EndNodeElementId : 
-                edge.Value.StartNodeElementId;
+            string subjectNodeGraphDbId;
+            if (edge.StartNodeElementId == rootNode.IdInGraphDb)
+                subjectNodeGraphDbId = edge.EndNodeElementId;
+            else if (edge.EndNodeElementId == rootNode.IdInGraphDb)
+                subjectNodeGraphDbId = edge.StartNodeElementId;
+            else
+                continue; // edge is not connected to rootNode
 
-            if (nodesToKeep.Contains(subjectNode))
+            if (nodesToKeep.Contains(subjectNodeGraphDbId))
             {
                 // so only the "connected" nodes are added.
                 // the following order where 1st the node is added and then the edge, is important.
-                addedNodes.Add(g.GetOrAddNode(nodesUniqueToThisHop[subjectNode]));
 
-                g.GetOrAddEdge(edge.Value);
+                var subjectNode = g.GetOrAddNode(nodesUniqueToThisHop[subjectNodeGraphDbId]);
+                addedNodes.Add(subjectNode);
+
+                if (edge.StartNodeElementId == rootNode.IdInGraphDb)
+                    g.GetOrAddEdge(edge, rootNode, subjectNode);
+                else
+                    g.GetOrAddEdge(edge, subjectNode, rootNode);
             }
         }
 
@@ -174,8 +175,8 @@ public class ForestFire : ITraversalAlgorithm
 
     private async Task ProcessHops(
         NodeLabels rootNodeLabel,
-        string propKey,
-        string propValue,
+        string rootNodeIdProperty,
+        string rootNodeId,
         int maxHops,
         int hop,
         int queryLimit,
@@ -183,9 +184,15 @@ public class ForestFire : ITraversalAlgorithm
         double nodeCountReductionFactorByHop,
         BitcoinGraph g)
     {
-        var samplingResult = await _graphDb.GetNeighborsAsync(rootNodeLabel, propKey, propValue, queryLimit, 1, GraphTraversal.BFS);
+        var samplingResult = await _graphDb.GetNeighborsAsync(
+            rootNodeLabel,
+            rootNodeIdProperty,
+            rootNodeId,
+            queryLimit,
+            1,
+            GraphTraversal.BFS);
 
-        var selectedNodes = ProcessSamplingResults(
+        var selectedNodes = ProcessQueriedNeighborhood(
             samplingResult, hop,
             nodeSamplingCountAtRoot: nodeSamplingCountAtRoot,
             nodeCountReductionFactorByHop: nodeCountReductionFactorByHop,
@@ -194,23 +201,23 @@ public class ForestFire : ITraversalAlgorithm
         if (hop < maxHops)
         {
             foreach (var node in selectedNodes)
-                if (node.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode) // TODO: this is currently a limitation since we currently do not support root nodes of other types.
-                    await ProcessHops(
-                        rootNodeLabel: rootNodeLabel,
-                        propKey: "Address",
-                        propValue: ((ScriptNode)node).Address,
-                        hop: hop + 1,
-                        maxHops: maxHops,
-                        queryLimit: queryLimit,
-                        nodeSamplingCountAtRoot: nodeSamplingCountAtRoot,
-                        nodeCountReductionFactorByHop: nodeCountReductionFactorByHop,
-                        g: g);
+                await ProcessHops(
+                    rootNodeLabel: BitcoinGraphAgent.ConvertGraphComponentTypeToNodeLabel(node.GetGraphComponentType()),
+                    rootNodeIdProperty: node.GetIdPropertyName(),
+                    rootNodeId: node.Id,
+                    hop: hop + 1,
+                    maxHops: maxHops,
+                    queryLimit: queryLimit,
+                    nodeSamplingCountAtRoot: nodeSamplingCountAtRoot,
+                    nodeCountReductionFactorByHop: nodeCountReductionFactorByHop,
+                    g: g);
         }
     }
 
     private async Task<GraphBase> GetNeighborsAsync(
         NodeLabels rootNodeLabel,
-        string rootScriptAddress,
+        string rootNodeIdProperty,
+        string rootNodeId,
         int nodeSamplingCountAtRoot,
         int maxHops,
         int queryLimit,
@@ -218,12 +225,12 @@ public class ForestFire : ITraversalAlgorithm
     {
         var g = new BitcoinGraph();
 
-        _logger.LogInformation("Getting neighbors of random node {node}, at {hop} hop distance.", rootScriptAddress, maxHops);
+        _logger.LogInformation("Getting neighbors of random node {node}, at {hop} hop distance.", rootNodeIdProperty, maxHops);
 
         await ProcessHops(
             rootNodeLabel: rootNodeLabel,
-            propKey: "Address",
-            propValue: rootScriptAddress,
+            rootNodeIdProperty: rootNodeIdProperty,
+            rootNodeId: rootNodeId,
             maxHops: maxHops,
             hop: 0,
             queryLimit: queryLimit,

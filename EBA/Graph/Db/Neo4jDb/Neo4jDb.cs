@@ -69,8 +69,8 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
     public async Task<List<IRecord>> GetNeighborsAsync(
         NodeLabels rootNodeLabel, 
-        string rootNodePropKey, 
-        string rootNodePropValue, 
+        string rootNodeIdProperty,
+        string rootNodeId,
         int queryLimit, 
         //string labelFilters, 
         int maxLevel, 
@@ -78,7 +78,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         string relationshipFilter = "")
     {
         var qBuilder = new StringBuilder();
-        qBuilder.Append($"MATCH (root:{rootNodeLabel} {{ {rootNodePropKey}: \"{rootNodePropValue}\" }}) ");
+        qBuilder.Append($"MATCH (root:{rootNodeLabel} {{ {rootNodeIdProperty}: \"{rootNodeId}\" }}) ");
 
         qBuilder.Append($"CALL apoc.path.spanningTree(root, {{");
         qBuilder.Append($"maxLevel: {maxLevel}, ");
