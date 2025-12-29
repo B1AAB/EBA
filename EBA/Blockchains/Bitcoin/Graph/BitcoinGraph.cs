@@ -243,10 +243,14 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
     {
         var candidateEdge = EdgeFactory(sourceNode, targetNode, e);
 
-        var edge = GetOrAddEdge(candidateEdge.GetGraphComponentType(), candidateEdge);
+        var wasAdded = TryGetOrAddEdge(candidateEdge.GetGraphComponentType(), candidateEdge, out var edge);
 
-        sourceNode.AddOutgoingEdge(edge);
-        targetNode.AddIncomingEdge(edge);
+        if (wasAdded)
+        {
+            // TODO 2: it does not seems the source and target nodes are the correct instances
+            sourceNode.AddOutgoingEdge(edge);
+            targetNode.AddIncomingEdge(edge);
+        }
 
         return edge;
     }

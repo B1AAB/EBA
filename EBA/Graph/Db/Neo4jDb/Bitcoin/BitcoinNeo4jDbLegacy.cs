@@ -727,7 +727,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
 
             foreach (var edge in gB.GetEdges())
                 foreach (var e in edge.Value)
-                    g.GetOrAddEdge(edge.Key, e);
+                    g.TryGetOrAddEdge(edge.Key, e, out _);
 
             if (g.EdgeCount + g.EdgeCount * 0.2 >= options.MaxEdgeCount || g.NodeCount + g.NodeCount * 0.2 >= options.MaxNodeCount)
                 break;

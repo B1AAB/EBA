@@ -149,20 +149,15 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
             GetOrAddNode(type, node);
     }
 
-    public T GetOrAddEdge<T>(GraphComponentType type, T edge) where T : IEdge<INode, INode>
+    public bool TryGetOrAddEdge<T>(GraphComponentType type, T edge, out T resultingEdge) where T : IEdge<INode, INode>
     {
         var x = _edges.GetOrAdd(
             type,
             new ConcurrentDictionary<string, IEdge<INode, INode>>());
 
-        return (T)x.GetOrAdd(edge.Id, edge);
-    }
+        resultingEdge = (T)x.GetOrAdd(edge.Id, edge);
 
-    public void AddEdges<T>(GraphComponentType type, IEnumerable<T> edges)
-        where T : IEdge<INode, INode>
-    {
-        foreach (var edge in edges)
-            GetOrAddEdge(type, edge);
+        return ReferenceEquals(resultingEdge, edge);
     }
 
     public void AddOrUpdateEdge<T>(
