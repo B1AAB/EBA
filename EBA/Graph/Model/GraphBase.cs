@@ -125,7 +125,6 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
 
     public bool TryAddNode<T>(GraphComponentType type, T node) where T : INode
     {
-        // TODO: this is a hotspot 
         var x = _nodes.GetOrAdd(
             type,
             new ConcurrentDictionary<string, INode>());
@@ -139,8 +138,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
             type,
             new ConcurrentDictionary<string, INode>());
 
-        return (T)x.AddOrUpdate(node.Id, node, (key, oldValue) => node);
-        // TODO: any better update logic?!
+        return (T)x.GetOrAdd(node.Id, node);
     }
 
     public void AddNodes<T>(GraphComponentType type, IEnumerable<T> nodes) where T : INode

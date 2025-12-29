@@ -243,11 +243,10 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
     {
         var candidateEdge = EdgeFactory(sourceNode, targetNode, e);
 
-        var wasAdded = TryGetOrAddEdge(candidateEdge.GetGraphComponentType(), candidateEdge, out var edge);
-
-        if (wasAdded)
+        if (TryGetOrAddEdge(candidateEdge.GetGraphComponentType(), candidateEdge, out var edge))
         {
-            // TODO 2: it does not seems the source and target nodes are the correct instances
+            // edge was not in the graph, so it has been added,
+            // hence the incoming/outgoing edges also need to be added.
             sourceNode.AddOutgoingEdge(edge);
             targetNode.AddIncomingEdge(edge);
         }

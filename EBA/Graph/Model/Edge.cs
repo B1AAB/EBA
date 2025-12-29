@@ -47,7 +47,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
         Timestamp = timestamp;
         BlockHeight = blockHeight;
 
-        Id = GetHashCode(true);
+        Id = GetHashCode().ToString();
     }
 
     public Edge(

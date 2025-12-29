@@ -108,9 +108,9 @@ public class ForestFire : ITraversalAlgorithm
             return BitcoinGraph.NodeFactory(node, inDegree, outDegree, hop);
         }
 
-        var addedNodes = new List<Model.INode>();
+        var nodesAddedToGraph = new List<Model.INode>();
         if (samplingResult.Count == 0)
-            return addedNodes;
+            return nodesAddedToGraph;
 
         var nodesUniqueToThisHop = new Dictionary<string, Model.INode>();
         var nodesInThisHopAlreadyInGraph = new Dictionary<string, Model.INode>();
@@ -164,7 +164,7 @@ public class ForestFire : ITraversalAlgorithm
             if (nodesToKeep.Contains(subjectNodeGraphDbId))
             {
                 subjectNode = g.GetOrAddNode(nodesUniqueToThisHop[subjectNodeGraphDbId]);
-                addedNodes.Add(subjectNode);
+                nodesAddedToGraph.Add(subjectNode);
             }
             else if (nodesInThisHopAlreadyInGraph.TryGetValue(subjectNodeGraphDbId, out subjectNode))
             { }
@@ -179,7 +179,7 @@ public class ForestFire : ITraversalAlgorithm
                 g.GetOrAddEdge(edge, subjectNode, rootNode);
         }
 
-        return addedNodes;
+        return nodesAddedToGraph;
     }
 
     private async Task ProcessHops(
