@@ -234,7 +234,12 @@ public class ForestFire : ITraversalAlgorithm
     {
         var g = new BitcoinGraph();
 
-        _logger.LogInformation("Getting neighbors of random node {node}, at {hop} hop distance.", rootNodeIdProperty, maxHops);
+        _logger.LogInformation(
+            "Getting neighbors of random node ({label} {{{property}: {value}}}) at {hop} hop distance.",
+            rootNodeLabel.ToString(),
+            rootNodeIdProperty,
+            rootNodeId,
+            maxHops.ToString());
 
         // temp
         rootNodeId = "15PSwPAeSB9opMRigpSrJPatGdfKBV4LxY";
