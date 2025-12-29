@@ -32,9 +32,8 @@ public class GraphFeatures
         NodeFeaturesHeader.Add(GraphComponentType.BitcoinScriptNode, ScriptNode.GetFeaturesName());
         NodeFeaturesHeader.Add(GraphComponentType.BitcoinCoinbaseNode, CoinbaseNode.GetFeaturesName());
 
-        // TODO: extend to support all types of edges in the graph db. 
-        EdgeFeaturesHeader = [];
         var sourceAndTarget = new[] { "Source", "Target" };
+        EdgeFeaturesHeader = [];
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinC2T, [.. sourceAndTarget, .. C2TEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinC2S, [.. sourceAndTarget, .. C2SEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinT2T, [.. sourceAndTarget, .. T2TEdge.GetFeaturesName()]);
@@ -43,17 +42,13 @@ public class GraphFeatures
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinB2S, [.. sourceAndTarget, .. B2SEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinT2B, [.. sourceAndTarget, .. T2BEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinB2T, [.. sourceAndTarget, .. B2TEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinS2T, [.. sourceAndTarget, .. S2TEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinT2S, [.. sourceAndTarget, .. T2SEdge.GetFeaturesName()]);
 
         var nodeFeatures = new Dictionary<GraphComponentType, List<string[]>>();
         var nodeIdToIdx = new Dictionary<GraphComponentType, Dictionary<string, int>>();
-        var nodeGraphComponentTypes = new[]
-        {
-            GraphComponentType.BitcoinBlockNode,
-            GraphComponentType.BitcoinTxNode,
-            GraphComponentType.BitcoinScriptNode,
-            GraphComponentType.BitcoinCoinbaseNode
-        };
 
+        var nodeGraphComponentTypes = NodeFeaturesHeader.Keys.ToArray();
         foreach (var nodeType in nodeGraphComponentTypes)
         {
             nodeFeatures.Add(nodeType, []);
@@ -61,17 +56,7 @@ public class GraphFeatures
         }
 
         var edgeFeatures = new Dictionary<GraphComponentType, List<double[]>>();
-        var edgeGraphComponentTypes = new[]
-        {
-            GraphComponentType.BitcoinC2T,
-            GraphComponentType.BitcoinC2S,
-            GraphComponentType.BitcoinT2T,
-            GraphComponentType.BitcoinS2S,
-            GraphComponentType.BitcoinS2B,
-            GraphComponentType.BitcoinB2S,
-            GraphComponentType.BitcoinT2B,
-            GraphComponentType.BitcoinB2T,
-        };
+        var edgeGraphComponentTypes = EdgeFeaturesHeader.Keys.ToArray();
         foreach (var edgeType in edgeGraphComponentTypes)
         {
             edgeFeatures.Add(edgeType, []);
