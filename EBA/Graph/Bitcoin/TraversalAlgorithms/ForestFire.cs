@@ -244,9 +244,6 @@ public class ForestFire : ITraversalAlgorithm
             rootNodeId,
             maxHops.ToString());
 
-        // temp
-        rootNodeId = "15PSwPAeSB9opMRigpSrJPatGdfKBV4LxY";
-
         await ProcessHops(
             rootNodeLabel: rootNodeLabel,
             rootNodeIdProperty: rootNodeIdProperty,
