@@ -18,10 +18,11 @@ internal class Cli
 
     public Cli(
         Func<Options, Task> bitcoinTraverseCmdHandlerAsync,
-        Func<Options, Task> sampleCmdHandlerAsync,
+        Func<Options, Task> bitcoinDeDupCmdHandlerAsync,
+        Func<Options, Task> bitcoinSampleCmdHandlerAsync,
         Func<Options, Task> bitcoinImportCmdHandlerAsync,
-        Func<Options, Task> addressStatsHandlerAsync,
-        Func<Options, Task> importCypherQueriesAsync,
+        Func<Options, Task> bitcoinAddressStatsHandlerAsync,
+        Func<Options, Task> bitcoinImportCypherQueriesAsync,
         Action<Exception, InvocationContext> exceptionHandler)
     {
         var defOps = new Options();
@@ -83,10 +84,11 @@ internal class Cli
         _rootCmd.AddCommand(GetBitcoinCmd(
             defOps,
             bitcoinTraverseCmdHandlerAsync,
+            bitcoinDeDupCmdHandlerAsync,
             bitcoinImportCmdHandlerAsync,
-            sampleCmdHandlerAsync,
-            addressStatsHandlerAsync,
-            importCypherQueriesAsync));
+            bitcoinSampleCmdHandlerAsync,
+            bitcoinAddressStatsHandlerAsync,
+            bitcoinImportCypherQueriesAsync));
 
         _parser = new CommandLineBuilder(_rootCmd)
             //.UseDefaults() // Do NOT add this since it will cause issues with handling exceptions.
@@ -132,6 +134,7 @@ internal class Cli
     private Command GetBitcoinCmd(
         Options defaultOptions,
         Func<Options, Task> traverseHandlerAsync,
+        Func<Options, Task> dedupHandlerAsync,
         Func<Options, Task> importHandlerAsync,
         Func<Options, Task> sampleHandlerAsync,
         Func<Options, Task> addressStatsHandlerAsync,
@@ -140,15 +143,17 @@ internal class Cli
         var cmd = new Command(
             name: "bitcoin",
             description: "Implements methods for working with the Bitcoin blockchain.");
-        cmd.AddCommand(GetTraverseCmd(defaultOptions, traverseHandlerAsync));
-        cmd.AddCommand(GetImportCmd(defaultOptions, importHandlerAsync));
-        cmd.AddCommand(GetImportCypherQueriesCmd(defaultOptions, importCypherQueriesAsync));
-        cmd.AddCommand(GetSampleCmd(defaultOptions, sampleHandlerAsync));
-        cmd.AddCommand(GetAddressStatsCmd(defaultOptions, addressStatsHandlerAsync));
+
+        cmd.AddCommand(GetBitcoinTraverseCmd(defaultOptions, traverseHandlerAsync));
+        cmd.AddCommand(GetBitcoinDedupCmd(defaultOptions, dedupHandlerAsync));
+        cmd.AddCommand(GetBitcoinImportCmd(defaultOptions, importHandlerAsync));
+        cmd.AddCommand(GetBitcoinImportCypherQueriesCmd(defaultOptions, importCypherQueriesAsync));
+        cmd.AddCommand(GetBitcoinSampleCmd(defaultOptions, sampleHandlerAsync));
+        cmd.AddCommand(GetBitcoinAddressStatsCmd(defaultOptions, addressStatsHandlerAsync));
         return cmd;
     }
 
-    private Command GetTraverseCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    private Command GetBitcoinTraverseCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
         var fromOption = new Option<int>(
             name: "--from",
@@ -266,7 +271,36 @@ internal class Cli
         return cmd;
     }
 
-    private Command GetImportCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    private Command GetBitcoinDedupCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    {
+        var scriptNodesFileOption = new Option<string>(
+            name: "--sorted-script-nodes-file",
+            description: "...");
+
+        var txNodesFileOption = new Option<string>(
+            name: "--sorted-tx-nodes-file",
+            description: "...");
+
+        var cmd = new Command(
+            name: "dedup",
+            description: "...")
+        {
+            scriptNodesFileOption,
+            txNodesFileOption
+        };
+
+        cmd.SetHandler(async (options) =>
+        {
+            await handlerAsync(options);
+        },
+        new OptionsBinder(
+            sortedScriptNodeFilenameOption: scriptNodesFileOption,
+            sortedTxNodeFilenameOption: txNodesFileOption));
+
+        return cmd;
+    }
+
+    private Command GetBitcoinImportCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
         var batchFilenameOption = new Option<string>(
             name: "--batch-filename",
@@ -297,7 +331,7 @@ internal class Cli
         return cmd;
     }
 
-    private Command GetImportCypherQueriesCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    private Command GetBitcoinImportCypherQueriesCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
         var cmd = new Command(
             name: "cypher-queries",
@@ -314,7 +348,7 @@ internal class Cli
         return cmd;
     }
 
-    private Command GetSampleCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    private Command GetBitcoinSampleCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
         var countOption = new Option<int>(
             name: "--count",
@@ -417,7 +451,7 @@ internal class Cli
         return cmd;
     }
 
-    private Command GetAddressStatsCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    private Command GetBitcoinAddressStatsCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
         var addressesFilenameOption = new Option<string>(
             name: "--addresses-filename",

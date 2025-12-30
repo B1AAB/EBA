@@ -25,6 +25,8 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<bool>? _skipGraphSerializationOption;
     private readonly Option<bool>? _skipSerializingAddressesOption;
     private readonly Option<int>? _maxEntriesPerBatch;
+    private readonly Option<string>? _sortedTxNodeFilenameOption;
+    private readonly Option<string>? _sortedScriptNodeFilenameOption;
 
     public OptionsBinder(
         Option<int>? fromOption = null,
@@ -49,7 +51,9 @@ internal class OptionsBinder : BinderBase<Options>
         Option<bool>? trackTxoOption = null,
         Option<bool>? skipGraphSerializationOption = null,
         Option<bool>? skipSerializingAddressesOption = null,
-        Option<int>? maxEntriesPerBatch = null)
+        Option<int>? maxEntriesPerBatch = null,
+        Option<string>? sortedTxNodeFilenameOption = null,
+        Option<string>? sortedScriptNodeFilenameOption = null)
     {
         _fromOption = fromOption;
         _toOption = toOption;
@@ -74,6 +78,8 @@ internal class OptionsBinder : BinderBase<Options>
         _skipGraphSerializationOption = skipGraphSerializationOption;
         _skipSerializingAddressesOption = skipSerializingAddressesOption;
         _maxEntriesPerBatch = maxEntriesPerBatch;
+        _sortedTxNodeFilenameOption = sortedTxNodeFilenameOption;
+        _sortedScriptNodeFilenameOption = sortedScriptNodeFilenameOption;
     }
 
     protected override Options GetBoundValue(BindingContext c)
@@ -128,6 +134,12 @@ internal class OptionsBinder : BinderBase<Options>
             MaxEntitiesPerBatch = GetValue(defs.Neo4j.MaxEntitiesPerBatch, _maxEntriesPerBatch, c),
         };
 
+        var bitcoinDedupOps = new BitcoinDedupOptions()
+        {
+            SortedScriptNodesFilename = GetValue(defs.BitcoinDedup.SortedScriptNodesFilename, _sortedScriptNodeFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
+            SortedTxNodesFilename = GetValue(defs.BitcoinDedup.SortedTxNodesFilename, _sortedTxNodeFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); })
+        };
+
         var options = new Options()
         {
             WorkingDir = wd,
@@ -135,7 +147,8 @@ internal class OptionsBinder : BinderBase<Options>
             Logger = new() { LogFilename = Path.Join(wd, Path.GetFileName(defs.Logger.LogFilename)) },
             Bitcoin = bitcoinOps,
             GraphSample = gsample,
-            Neo4j = neo4jOps
+            Neo4j = neo4jOps,
+            BitcoinDedup = bitcoinDedupOps
         };
 
         return options;
