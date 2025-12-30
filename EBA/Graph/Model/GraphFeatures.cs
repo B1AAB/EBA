@@ -27,10 +27,10 @@ public class GraphFeatures
         LabelsHeader = new ReadOnlyCollection<string>(["GraphID", "RootNodeId", "RootNodeIdx", "NodeCount", "EdgeCount"]);
 
         NodeFeaturesHeader = [];
-        NodeFeaturesHeader.Add(GraphComponentType.BitcoinBlockNode, BlockNode.GetFeaturesName());
-        NodeFeaturesHeader.Add(GraphComponentType.BitcoinTxNode, TxNode.GetFeaturesName());
-        NodeFeaturesHeader.Add(GraphComponentType.BitcoinScriptNode, ScriptNode.GetFeaturesName());
-        NodeFeaturesHeader.Add(GraphComponentType.BitcoinCoinbaseNode, CoinbaseNode.GetFeaturesName());
+        NodeFeaturesHeader.Add(GraphComponentType.BitcoinBlockNode, ["Index", .. BlockNode.GetFeaturesName()]);
+        NodeFeaturesHeader.Add(GraphComponentType.BitcoinTxNode, ["Index", .. TxNode.GetFeaturesName()]);
+        NodeFeaturesHeader.Add(GraphComponentType.BitcoinScriptNode, ["Index", .. ScriptNode.GetFeaturesName()]);
+        NodeFeaturesHeader.Add(GraphComponentType.BitcoinCoinbaseNode, ["Index", .. CoinbaseNode.GetFeaturesName()]);
 
         var sourceAndTarget = new[] { "Source", "Target" };
         EdgeFeaturesHeader = [];
@@ -65,8 +65,9 @@ public class GraphFeatures
         foreach (var node in graph.Nodes)
         {
             var gComponentType = node.GetGraphComponentType();
-            nodeFeatures[gComponentType].Add(node.GetFeatures());
-            nodeIdToIdx[gComponentType].Add(node.Id, nodeIdToIdx[gComponentType].Count);
+            var nodeIndex = nodeIdToIdx[gComponentType].Count;
+            nodeIdToIdx[gComponentType].Add(node.Id, nodeIndex);
+            nodeFeatures[gComponentType].Add([nodeIndex.ToString(), .. node.GetFeatures()]);
         }
 
         foreach (var edge in graph.Edges)
