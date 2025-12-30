@@ -97,14 +97,13 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         // All the following double-casting is because of the type
         // normalization happens when bulk-loading data into neo4j.
 
-        string txid;
-        if (node.Properties.TryGetValue(Props.Txid.Name, out var obj) && obj != null)
-            txid = obj.ToString();
-        else
-            throw new ArgumentNullException(Props.Txid.Name);
+        string? candidateTxid = 
+            (node.Properties.GetValueOrDefault(Props.Txid.Name)?.ToString()) 
+            ?? throw new ArgumentNullException(Props.Txid.Name);
+        string txid = candidateTxid;
 
-        node.Properties.TryGetValue(Props.TxVersion.Name, out var v);
-        ulong? version = v == null ? null : ulong.Parse(v.ToString());
+        string? v = node.Properties.GetValueOrDefault(Props.TxVersion.Name)?.ToString();
+        ulong? version = v == null ? null : ulong.Parse(v);
 
         node.Properties.TryGetValue(Props.TxSize.Name, out var s);
         int? size = s == null ? null : (int)(long)s;
@@ -159,7 +158,6 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 
     public override string[] GetFeatures()
     {
-        // TODO: fix null values and avoid casting
         return
         [
             (Size == null ? double.NaN : (double)Size).ToString(),
