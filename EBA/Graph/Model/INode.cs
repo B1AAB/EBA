@@ -3,6 +3,7 @@
 public interface INode : IGraphComponent
 {
     public string Id { get; }
+    public string? IdInGraphDb { get; }
     public int InDegree { get; }
     public int OutDegree { get; }
 
@@ -11,13 +12,15 @@ public interface INode : IGraphComponent
 
     public string[] GetFeatures();
 
+    public bool HasNullFeatures();
+
     /// <summary>
     /// this can return ID, or any unique label (e.g., script address, or tx hash).
     /// The goal of this method is to return unique label that would be more intuitive 
     /// for the user than ID (such as Neo4j ID). 
     /// </summary>
     /// <returns></returns>
-    public string GetUniqueLabel();
+    public abstract string GetIdPropertyName();
 
     public void AddIncomingEdge(IEdge<INode, INode> incomingEdge);
     public void AddOutgoingEdge(IEdge<INode, INode> outgoingEdge);

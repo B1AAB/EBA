@@ -14,7 +14,7 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
     }
 
     // TODO: since there is a CoinbaseNode type, this default should change
-    public string Address { get; } = BitcoinAgent.Coinbase.ToString();
+    public string Address { get; } = BitcoinChainAgent.Coinbase.ToString();
     // TODO: since there is a CoinbaseNode type, this default should change
     public ScriptType ScriptType { get; } = ScriptType.Coinbase;
 
@@ -31,8 +31,17 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
     }
 
     public ScriptNode(
-        string id, double? originalIndegree = null, double? originalOutdegree = null, double? hopsFromRoot = null) :
-        base(id, originalInDegree: originalIndegree, originalOutDegree: originalOutdegree, outHopsFromRoot: hopsFromRoot)
+        string address,
+        double? originalIndegree = null,
+        double? originalOutdegree = null,
+        double? hopsFromRoot = null,
+        string? idInGraphDb = null) :
+        base(
+            id: address,
+            originalInDegree: originalIndegree,
+            originalOutDegree: originalOutdegree,
+            outHopsFromRoot: hopsFromRoot,
+            idInGraphDb: idInGraphDb)
     { }
 
     public ScriptNode(Utxo utxo) : base(utxo.Id)
@@ -42,28 +51,40 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
     }
 
     public ScriptNode(
-        string id,
         string address,
         ScriptType scriptType,
         double? originalIndegree = null,
-        double? originalOutdegree = null, 
-        double? hopsFromRoot = null) :
-        this(id, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, hopsFromRoot: hopsFromRoot)
+        double? originalOutdegree = null,
+        double? hopsFromRoot = null,
+        string? idInGraphDb = null) :
+        this(
+            address: address,
+            originalIndegree: originalIndegree,
+            originalOutdegree: originalOutdegree,
+            hopsFromRoot: hopsFromRoot,
+            idInGraphDb: idInGraphDb)
     {
         Address = address;
         ScriptType = scriptType;
     }
 
-    public ScriptNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null, double? outHopsFromRoot = null) :
-        this(node.ElementId,
-            (string)node.Properties[Props.ScriptAddress.Name],
-            Enum.Parse<ScriptType>((string)node.Properties[Props.ScriptType.Name]),
-            originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, hopsFromRoot: outHopsFromRoot)
+    public ScriptNode(
+        Neo4j.Driver.INode node,
+        double? originalIndegree = null,
+        double? originalOutdegree = null,
+        double? outHopsFromRoot = null) :
+        this(
+            address: (string)node.Properties[Props.ScriptAddress.Name],
+            scriptType: Enum.Parse<ScriptType>((string)node.Properties[Props.ScriptType.Name]),
+            originalIndegree: originalIndegree,
+            originalOutdegree: originalOutdegree,
+            hopsFromRoot: outHopsFromRoot,
+            idInGraphDb: node.ElementId)
     { }
 
-    public override string GetUniqueLabel()
+    public override string GetIdPropertyName()
     {
-        return Address;
+        return nameof(Address);
     }
 
     public static ScriptNode GetCoinbaseNode()
@@ -79,6 +100,11 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
     public override string[] GetFeatures()
     {
         return [Address, ((double)ScriptType).ToString(), .. base.GetFeatures()];
+    }
+
+    public override bool HasNullFeatures()
+    {
+        return base.HasNullFeatures();
     }
 
     public override int GetHashCode()

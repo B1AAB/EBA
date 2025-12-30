@@ -6,6 +6,16 @@ public interface IGraphDb<T> : IDisposable where T : GraphBase
 {
     public Task VerifyConnectivityAsync(CancellationToken ct);
     public Task SerializeAsync(T graph, CancellationToken ct);
+
+    /// <summary>
+    /// Serializes constant graph components like schema, 
+    /// constraints, and indexes, or unique nodes and relationships 
+    /// that need to be present in a graph belonging to a given 
+    /// blockchain (e.g., a single `coinbase` node).
+    /// </summary>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns></returns>
+    public Task SerializeConstantsAsync(CancellationToken ct);
     public Task ImportAsync(CancellationToken ct, string batchName = "", List<GraphComponentType>? importOrder = null);
     public Task SampleAsync(CancellationToken ct);
     public void ReportQueries();
@@ -19,10 +29,10 @@ public interface IGraphDb<T> : IDisposable where T : GraphBase
 
     public Task<List<IRecord>> GetNeighborsAsync(
         NodeLabels rootNodeLabel,
-        string propKey,
-        string propValue,
+        string rootNodeIdProperty,
+        string rootNodeId,
         int queryLimit,
-        string labelFilters,
+        //string labelFilters,
         int maxLevel,
         GraphTraversal traversalAlgorithm,
         string relationshipFilter = "");

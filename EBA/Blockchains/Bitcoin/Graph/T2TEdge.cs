@@ -26,7 +26,6 @@ public class T2TEdge : Edge<TxNode, TxNode>
     public static T2TEdge Update(T2TEdge oldEdge, T2TEdge newEdge)
     {
         var source = new TxNode(
-            newEdge.Source.Id,
             newEdge.Source.Txid,
             newEdge.Source.Version ?? oldEdge.Source.Version,
             newEdge.Source.Size ?? oldEdge.Source.Size,
@@ -35,7 +34,6 @@ public class T2TEdge : Edge<TxNode, TxNode>
             newEdge.Source.LockTime ?? oldEdge.Source.LockTime);
 
         var target = new TxNode(
-            newEdge.Target.Id,
             newEdge.Target.Txid,
             newEdge.Target.Version ?? oldEdge.Target.Version,
             newEdge.Target.Size ?? oldEdge.Target.Size,

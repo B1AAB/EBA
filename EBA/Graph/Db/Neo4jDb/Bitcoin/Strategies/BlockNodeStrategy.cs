@@ -4,7 +4,7 @@ namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
 {
-    public const NodeLabels Labels = NodeLabels.Block;
+    public const NodeLabels Label = NodeLabels.Block;
 
     /// Note that the ordre of the items in this array should 
     /// match those returned from the `GetCsv()` method.
@@ -23,8 +23,12 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
     public override string GetCsvHeader()
     {
         return string.Join(
-            Neo4jDbLegacy.csvDelimiter,
-            from x in _properties select x.CsvHeader);
+            csvDelimiter,
+            [
+                Props.Height.GetIdFieldCsvHeader(Label.ToString()),
+                .. from x in _properties where x != Props.Height select x.TypeAnnotatedCsvHeader,
+                ":LABEL"
+            ]);
     }
 
     public override string GetCsv(IGraphComponent component)
@@ -37,7 +41,7 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
         /// Note that the order of the items in this array should 
         /// match those in the `_properties`. 
         return string.Join(
-            Neo4jDbLegacy.csvDelimiter,
+            csvDelimiter,
             [
                 node.Height.ToString(),
                 node.MedianTime.ToString(),
@@ -47,6 +51,7 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
                 node.Size.ToString(),
                 node.StrippedSize.ToString(),
                 node.Weight.ToString(),
+                Label.ToString()
             ]);
     }
 
@@ -81,7 +86,7 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
         builder.Append(
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
             $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' " +
-            $"MERGE ({block}:{Labels} " +
+            $"MERGE ({block}:{Label} " +
             $"{{{Props.Height.GetSetter()}}}) ");
 
         builder.Append("SET ");

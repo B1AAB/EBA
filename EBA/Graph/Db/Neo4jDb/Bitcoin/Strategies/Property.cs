@@ -8,6 +8,7 @@ public class Property
 
     public string Name { get; }
     public string CsvHeader { get; }
+    public string TypeAnnotatedCsvHeader { get; }
 
     private readonly FieldType _type;
 
@@ -16,6 +17,12 @@ public class Property
         Name = name;
         CsvHeader = csvHeader ?? Name;
         _type = type;
+        TypeAnnotatedCsvHeader = $"{Name}:{type.ToString().ToLower()}";
+    }
+
+    public string GetIdFieldCsvHeader(string idGroup)
+    {
+        return $"{Name}:ID({idGroup})";
     }
 
     public string GetSetter()

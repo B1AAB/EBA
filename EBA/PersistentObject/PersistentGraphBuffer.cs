@@ -4,7 +4,7 @@ namespace EBA.PersistentObject;
 
 public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposable
 {
-    private readonly IGraphDb<BitcoinGraph>? _graphDb;
+    private readonly Graph.Bitcoin.BitcoinGraphAgent? _graphAgent;
     private readonly ILogger<PersistentGraphBuffer> _logger;
     private readonly PersistentGraphStatistics _pGraphStats;
     private readonly PersistentBlockAddresses? _pBlockAddresses;
@@ -23,7 +23,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     private readonly ConcurrentDictionary<long, byte> _blocksHeightsInBuffer = new();
 
     public PersistentGraphBuffer(
-        IGraphDb<BitcoinGraph>? graphDb,
+        Graph.Bitcoin.BitcoinGraphAgent? graphAgent,
         ILogger<PersistentGraphBuffer> logger,
         ILogger<PersistentGraphStatistics> pgStatsLogger,
         ILogger<PersistentBlockAddresses> pgAddressesLogger,
@@ -38,7 +38,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         CancellationToken ct) :
         base(logger, ct)
     {
-        _graphDb = graphDb;
+        _graphAgent = graphAgent;
         _logger = logger;
 
         _options = options;
@@ -77,8 +77,8 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
             _pGraphStats.SerializeAsync(obj.Stats.ToString(), default),
         };
 
-        if (_graphDb != null)
-            tasks.Add(_graphDb.SerializeAsync(obj, default));
+        if (_graphAgent != null)
+            tasks.Add(_graphAgent.SerializeAsync(obj, default));
 
         if (_pTxoLifeCycleBuffer != null)
             tasks.Add(_pTxoLifeCycleBuffer.SerializeAsync(obj.Block.TxoLifecycle.Values, default));
@@ -121,8 +121,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 
             if (disposing)
             {
-                _graphDb?.Dispose();
-                //_pGraphStats.Dispose();
+                _graphAgent?.Dispose();
             }
 
             _disposed = true;

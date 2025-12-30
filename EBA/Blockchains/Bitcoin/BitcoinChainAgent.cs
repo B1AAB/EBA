@@ -2,7 +2,7 @@
 
 namespace EBA.Blockchains.Bitcoin;
 
-public class BitcoinAgent : IDisposable
+public class BitcoinChainAgent : IDisposable
 {
     public const NodeLabels Coinbase = NodeLabels.Coinbase;
     public const uint GenesisTimestamp = 1231006505;
@@ -14,13 +14,13 @@ public class BitcoinAgent : IDisposable
     public const ulong Coin = 100000000;
 
     private readonly HttpClient _client;
-    private readonly ILogger<BitcoinAgent> _logger;
+    private readonly ILogger<BitcoinChainAgent> _logger;
 
     private bool _disposed = false;
 
-    public BitcoinAgent(
+    public BitcoinChainAgent(
         HttpClient client,
-        ILogger<BitcoinAgent> logger)
+        ILogger<BitcoinChainAgent> logger)
     {
         _client = client;
         _logger = logger;
@@ -59,7 +59,7 @@ public class BitcoinAgent : IDisposable
                 HttpMethod.Get, "chaininfo.json");
 
             request.SetPolicyExecutionContext(
-                new Context().SetLogger<BitcoinAgent>(_logger));
+                new Context().SetLogger<BitcoinChainAgent>(_logger));
 
             var response = await _client.SendAsync(request, cT);
             response.EnsureSuccessStatusCode();
@@ -174,7 +174,7 @@ public class BitcoinAgent : IDisposable
                     graph.Stats.Retries = retryAttempts;
                 },
                 new Context()
-                    .SetLogger<Orchestrator>(_logger)
+                    .SetLogger<BitcoinOrchestrator>(_logger)
                     .SetBlockHeight(height),
                 cT);
         }
@@ -215,7 +215,7 @@ public class BitcoinAgent : IDisposable
         BitcoinOptions options,
         CancellationToken cT)
     {
-        var g = new BlockGraph(block, ChainToGraphModel.AccountModel, _logger);
+        var g = new BlockGraph(block, ChainToGraphModel.UTxOModel, _logger);
 
         // By definition, each block has a generative block that is the
         // reward of the miner. Hence, this should never raise an 

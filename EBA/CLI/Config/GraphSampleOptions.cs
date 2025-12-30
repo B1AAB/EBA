@@ -91,7 +91,7 @@ public class GraphSampleOptions
     public int DisjointGraph_ForestFireMaxHops { init; get; } = 3;
     public int DisjointGraph_ForestFireQueryLimit { init; get; } = 100;
     public double DisjointGraph_ForestFireNodeCountReductionFactorByHop { init; get; } = 3.0;
-    public string DisjointGraph_LabelFilters { init; get; } = $"{ScriptNodeStrategy.Labels}|{BlockNodeStrategy.Labels}"; //ScriptNodeStrategy.Labels;
+    public string DisjointGraph_LabelFilters { init; get; } = $"{ScriptNodeStrategy.Label}|{BlockNodeStrategy.Label}"; //ScriptNodeStrategy.Labels;
 
 
     public double RootNodeSelectProb
@@ -114,5 +114,5 @@ public class GraphSampleOptions
     // > end node filter
     // +ScriptNodeStrategy.Labels|-TxNodeStrategy.Labels|>BlockNodeStrategy.Labels
     // more details: https://neo4j.com/labs/apoc/4.1/overview/apoc.path/apoc.path.spanningTree/#expand-spanning-tree-label-filters
-    public string LabelFilters { init; get; } = $"{ScriptNodeStrategy.Labels}|{BlockNodeStrategy.Labels}";
+    //public string LabelFilters { init; get; } = $"{ScriptNodeStrategy.Label}|{BlockNodeStrategy.Label}";
 }

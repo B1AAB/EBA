@@ -1,8 +1,4 @@
-﻿using EBA.Graph.Db.Neo4jDb;
-
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-
-namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+﻿namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public abstract class BitcoinEdgeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
 {

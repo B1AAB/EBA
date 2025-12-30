@@ -4,7 +4,7 @@ namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
 {
-    public const NodeLabels Labels = NodeLabels.Tx;
+    public const NodeLabels Label = NodeLabels.Tx;
     private readonly Property[] _properties =
     [
         Props.Txid,
@@ -18,8 +18,12 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
     public override string GetCsvHeader()
     {
         return string.Join(
-            Neo4jDbLegacy.csvDelimiter,
-            from x in _properties select x.CsvHeader);
+            csvDelimiter,
+            [
+                Props.Txid.GetIdFieldCsvHeader(Label.ToString()),
+                .. from x in _properties where x != Props.Txid select x.TypeAnnotatedCsvHeader,
+                ":LABEL"
+            ]);
     }
 
     public override string GetCsv(IGraphComponent component)
@@ -30,13 +34,14 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
     public static string GetCsv(TxNode node)
     {
         return string.Join(
-            Neo4jDbLegacy.csvDelimiter,
+            csvDelimiter,
             node.Txid,
             node.Version,
             node.Size,
             node.VSize,
             node.Weight,
-            node.LockTime);
+            node.LockTime, 
+            Label.ToString());
     }
 
     public override string GetQuery(string filename)
@@ -60,7 +65,7 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
         builder.Append(
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
             $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' " +
-            $"MERGE ({node}:{Labels} {{{Props.Txid.GetSetter()}}}) ");
+            $"MERGE ({node}:{Label} {{{Props.Txid.GetSetter()}}}) ");
 
         builder.Append("SET ");
         builder.Append(string.Join(

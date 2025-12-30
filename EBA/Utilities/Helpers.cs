@@ -38,12 +38,12 @@ internal class Helpers
 
     public static long BTC2Satoshi(double btc)
     {
-        return Round(BitcoinAgent.Coin * btc);
+        return Round(BitcoinChainAgent.Coin * btc);
     }
 
     public static double Satoshi2BTC(long satoshi)
     {
-        return satoshi / (double)BitcoinAgent.Coin;
+        return satoshi / (double)BitcoinChainAgent.Coin;
     }
 
     public static long Round(double input)

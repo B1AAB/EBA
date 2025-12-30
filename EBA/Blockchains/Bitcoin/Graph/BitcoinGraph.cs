@@ -1,5 +1,5 @@
 ﻿using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
-
+using EBA.Utilities;
 using INode = EBA.Graph.Model.INode;
 
 namespace EBA.Blockchains.Bitcoin.Graph;
@@ -108,49 +108,27 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
             B2TEdge.ComponentType);
     }
 
-
-    // TODO: this method or any other methods must definately not accept nullable values.
-    // These values will turn into features and nullable features are problematic downstream
-    public INode GetOrAddNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null, double? outHopsFromRoot = null)
+    public INode GetOrAddNode(INode node)
     {
-        if (node.Labels.Contains(ScriptNodeStrategy.Labels.ToString()))
-        {
-            return GetOrAddNode(GraphComponentType.BitcoinScriptNode, new ScriptNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, outHopsFromRoot: outHopsFromRoot));
-        }
-        else if (node.Labels.Contains(TxNodeStrategy.Labels.ToString()))
-        {
-            return GetOrAddNode(GraphComponentType.BitcoinTxNode, TxNode.CreateTxNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, hopsFromRoot: outHopsFromRoot));
-        }
-        else if (node.Labels.Contains(BlockNodeStrategy.Labels.ToString()))
-        {
-            return GetOrAddNode(GraphComponentType.BitcoinBlockNode, new BlockNode(node, originalIndegree: originalIndegree, originalOutdegree: originalOutdegree, outHopsFromRoot: outHopsFromRoot));
-        }
-        else if (node.Labels.Contains(BitcoinAgent.Coinbase.ToString()))
-        {
-            return GetOrAddNode(GraphComponentType.BitcoinCoinbaseNode, new CoinbaseNode(node, originalOutdegree: originalOutdegree, hopsFromRoot: outHopsFromRoot));
-        }
-        else
-        {
-            throw new NotImplementedException($"Unexpected node type, labels: {string.Join(',', node.Labels)}");
-        }
+        return GetOrAddNode(node.GetGraphComponentType(), node);
     }
 
     public IEdge<INode, INode> GetOrAddEdge(IRelationship e)
     {
-        GetNode(e.StartNodeElementId, out var sourceNode, out var sourceNodeComponentType);
-        GetNode(e.EndNodeElementId, out var targetNode, out var targetNodeComponentType);
+        throw new NotImplementedException();
+    }
 
-        var candidateEdge = EdgeFactory.CreateEdge(
-            sourceNode,
-            targetNode,
-            e,
-            sourceNodeComponentType,
-            targetNodeComponentType);
+    public IEdge<INode, INode> GetOrAddEdge(IRelationship e, INode sourceNode, INode targetNode)
+    {
+        var candidateEdge = EdgeFactory.CreateEdge(sourceNode, targetNode, e);
 
-        var edge = GetOrAddEdge(candidateEdge.GetGraphComponentType(), candidateEdge);
-
-        sourceNode.AddOutgoingEdge(edge);
-        targetNode.AddIncomingEdge(edge);
+        if (TryGetOrAddEdge(candidateEdge.GetGraphComponentType(), candidateEdge, out var edge))
+        {
+            // edge was not in the graph, so it has been added,
+            // hence the incoming/outgoing edges also need to be added.
+            sourceNode.AddOutgoingEdge(edge);
+            targetNode.AddIncomingEdge(edge);
+        }
 
         return edge;
     }

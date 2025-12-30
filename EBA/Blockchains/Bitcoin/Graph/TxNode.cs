@@ -2,6 +2,16 @@
 
 namespace EBA.Blockchains.Bitcoin.Graph;
 
+// A note on the nullable properties: 
+// These properties can be null when the Tx
+// this type corresponds to is an input transaction (vin) 
+// when reading transactions from the Bitcoin blockchain.
+// In this case, minimal information about the Tx is available, 
+// as opposed to when the Tx is an output transaction (vout).
+// An example is:
+//  {"txid": "0437cd7f8525ceed2324359c2d0ba26006d92d856a9c20fa0241106ee5a597c9"}
+// This Tx is referenced as input in Tx #2 at block height 170. 
+
 public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 {
     public new static GraphComponentType ComponentType { get { return GraphComponentType.BitcoinTxNode; } }
@@ -22,9 +32,12 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
     }
 
     public TxNode(
-        string id, string txid, ulong? version,
-        int? size, int? vSize, int? weight,
-        long? lockTime) : base(id)
+        string txid,
+        ulong? version,
+        int? size,
+        int? vSize,
+        int? weight,
+        long? lockTime) : base(txid)
     {
         Txid = txid;
         Version = version;
@@ -35,14 +48,22 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
     }
 
     public TxNode(
-        string txid, 
+        string txid,
         ulong? version,
-        int? size, int? vSize, int? weight,
-        long? lockTime, 
+        int? size,
+        int? vSize,
+        int? weight,
+        long? lockTime,
         double? originalIndegree = null,
-        double? originalOutdegree = null, 
-        double? hopsFromRoot = null) :
-        base(txid, originalInDegree: originalIndegree, originalOutDegree: originalOutdegree, outHopsFromRoot: hopsFromRoot)
+        double? originalOutdegree = null,
+        double? hopsFromRoot = null,
+        string? idInGraphDb = null) :
+        base(
+            txid,
+            originalInDegree: originalIndegree,
+            originalOutDegree: originalOutdegree,
+            outHopsFromRoot: hopsFromRoot,
+            idInGraphDb: idInGraphDb)
     {
         Txid = txid;
         Version = version;
@@ -53,28 +74,36 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
     }
 
     public TxNode(Transaction tx) :
-        this(tx.Txid, 
-            tx.Version, 
-            tx.Size, tx.VSize, tx.Weight, tx.LockTime)
+        this(
+            tx.Txid,
+            tx.Version,
+            tx.Size,
+            tx.VSize,
+            tx.Weight,
+            tx.LockTime)
     { }
 
-    public override string GetUniqueLabel()
+    public override string GetIdPropertyName()
     {
-        return Txid;
+        return nameof(Txid);
     }
 
     public static TxNode CreateTxNode(
         Neo4j.Driver.INode node,
-        double? originalIndegree = null,
-        double? originalOutdegree = null,
-        double? hopsFromRoot = null)
+        double originalIndegree,
+        double originalOutdegree,
+        double hopsFromRoot)
     {
-        // TODO: all the following double-casting is because of the type
+        // All the following double-casting is because of the type
         // normalization happens when bulk-loading data into neo4j.
-        // Find a better solution.
 
-        node.Properties.TryGetValue(Props.TxVersion.Name, out var v);
-        ulong? version = v == null ? null : ulong.Parse((string)v);
+        string? candidateTxid = 
+            (node.Properties.GetValueOrDefault(Props.Txid.Name)?.ToString()) 
+            ?? throw new ArgumentNullException(Props.Txid.Name);
+        string txid = candidateTxid;
+
+        string? v = node.Properties.GetValueOrDefault(Props.TxVersion.Name)?.ToString();
+        ulong? version = v == null ? null : ulong.Parse(v);
 
         node.Properties.TryGetValue(Props.TxSize.Name, out var s);
         int? size = s == null ? null : (int)(long)s;
@@ -89,7 +118,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         long? lockTime = t == null ? null : (long)t;
 
         return new TxNode(
-            txid: node.ElementId,
+            txid: txid,
             version: version,
             size: size,
             vSize: vSize,
@@ -97,7 +126,8 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
             lockTime: lockTime,
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
-            hopsFromRoot: hopsFromRoot);
+            hopsFromRoot: hopsFromRoot,
+            idInGraphDb: node.ElementId);
     }
 
     public static TxNode GetCoinbaseNode()
@@ -107,7 +137,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 
     public static new string[] GetFeaturesName()
     {
-        return 
+        return
         [
             nameof(Size),
             nameof(Weight),
@@ -116,9 +146,18 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         ];
     }
 
+    public override bool HasNullFeatures()
+    {
+        return Size == null
+               || Version == null
+               || VSize == null
+               || Weight == null
+               || LockTime == null
+               || base.HasNullFeatures();
+    }
+
     public override string[] GetFeatures()
     {
-        // TODO: fix null values and avoid casting
         return
         [
             (Size == null ? double.NaN : (double)Size).ToString(),

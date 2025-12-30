@@ -91,7 +91,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         if (Options.GraphSample.CoinbaseMode != CoinbaseSelectionMode.ExcludeCoinbase)
         {
             Logger.LogInformation("Sampling neighbors of the coinbase node.");
-            var tmpSolutionCoinbase = new ScriptNode(NodeLabels.Coinbase.ToString(), NodeLabels.Coinbase.ToString(), ScriptType.Coinbase);
+            var tmpSolutionCoinbase = new ScriptNode(NodeLabels.Coinbase.ToString(), ScriptType.Coinbase);
             if (await TrySampleNeighborsAsync(driver, tmpSolutionCoinbase, baseOutputDir))
             {
                 sampledGraphsCounter++;
@@ -204,7 +204,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         var rndRecords = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"MATCH ({rndNodeVar}:{ScriptNodeStrategy.Labels}) " +
+                $"MATCH ({rndNodeVar}:{ScriptNodeStrategy.Label}) " +
                 $"WHERE rand() < {rootNodesSelectProb} " +
                 $"WITH {rndNodeVar} " +
                 $"ORDER BY rand() " +
@@ -299,7 +299,6 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         return await GetNeighborsUsingForestFireSamplingAlgorithmAsync(
             driver: driver,
             rootScriptAddress: rootScriptAddress,
-            labelFilters: options.LabelFilters,
             nodeSamplingCountAtRoot: options.ForestFireNodeSamplingCountAtRoot,
             maxHops: options.ForestFireMaxHops,
             queryLimit: options.ForestFireQueryLimit,
@@ -319,7 +318,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         if (rootScriptAddress == NodeLabels.Coinbase.ToString())
             qBuilder.Append($"MATCH (root:{NodeLabels.Coinbase.ToString()}) ");
         else
-            qBuilder.Append($"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{rootScriptAddress}\" }}) ");
+            qBuilder.Append($"MATCH (root:{ScriptNodeStrategy.Label} {{ Address: \"{rootScriptAddress}\" }}) ");
 
         qBuilder.Append($"CALL apoc.path.spanningTree(root, {{");
         qBuilder.Append($"maxLevel: {options.Hops}, ");
@@ -330,7 +329,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         else
             qBuilder.Append($"bfs: false, ");
 
-        qBuilder.Append($"labelFilter: '{options.LabelFilters}'");
+        //qBuilder.Append($"labelFilter: '{options.LabelFilters}'");
         //$"    relationshipFilter: \">{EdgeType.Transfers}\"" +
         qBuilder.Append($"}}) ");
         qBuilder.Append($"YIELD path ");
@@ -445,7 +444,8 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
             foreach (var nodeObject in hop["nodes"].As<List<object>>())
             {
                 (Neo4j.Driver.INode node, double inDegree, double outDegree) = UnpackDict(nodeObject.As<IDictionary<string, object>>());
-                g.GetOrAddNode(node, originalIndegree: inDegree, originalOutdegree: outDegree);
+                NodeFactory.TryCreateNode(node, originalIndegree: inDegree, originalOutdegree: outDegree, outHopsFromRoot: 0, out var v);
+                g.GetOrAddNode(v);
             }
 
             foreach (var relationship in hop.Values["relationships"].As<List<IRelationship>>())
@@ -466,8 +466,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         int nodeSamplingCountAtRoot,
         int maxHops,
         int queryLimit,
-        double nodeCountReductionFactorByHop,
-        string labelFilters)
+        double nodeCountReductionFactorByHop)
     {
         // TODO: this method is experimental, need a thorough re-write.
 
@@ -495,7 +494,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
             qBuilder.Append($"maxLevel: 1, ");
             qBuilder.Append($"limit: {queryLimit}, ");
             qBuilder.Append($"bfs: true, ");
-            qBuilder.Append($"labelFilter: '{labelFilters}'");
+            //qBuilder.Append($"labelFilter: '{labelFilters}'");
             //$"    relationshipFilter: \">{EdgeType.Transfers}\"" +
             qBuilder.Append($"}}) ");
             qBuilder.Append($"YIELD path ");
@@ -611,7 +610,8 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                     // so only the "connected" nodes are added.
                     // also, this order is important where 1st the node is added, then the edge.
                     (var ccNode, var indegree, var outdegree, var outHopsFromRoot) = nodes[targetNodeId];
-                    addedNodes.Add(g.GetOrAddNode(ccNode, originalIndegree: indegree, originalOutdegree: outdegree, outHopsFromRoot: outHopsFromRoot));
+                    NodeFactory.TryCreateNode(ccNode, originalIndegree: indegree, originalOutdegree: outdegree, outHopsFromRoot: outHopsFromRoot, out var v);
+                    addedNodes.Add(v);
                     allNodesAddedToGraph.Add(targetNodeId);
 
                     g.GetOrAddEdge(edge.Value);
@@ -639,7 +639,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                     var queries = new List<string>();
                     foreach (var node in selectedNodes)
                         if (node.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode) // TODO: this is currently a limitation since we currently do not support root nodes of other types.
-                            queries.Add(GetNeighborsQuery($"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{((ScriptNode)node).Address}\" }}) "));
+                            queries.Add(GetNeighborsQuery($"MATCH (root:{ScriptNodeStrategy.Label} {{ Address: \"{((ScriptNode)node).Address}\" }}) "));
 
                     await ProcessHops(queries, hop + 1);
                 }
@@ -657,7 +657,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
             GetNeighborsQuery(
                 rootScriptAddress == NodeLabels.Coinbase.ToString() ?
                 $"MATCH (root:{NodeLabels.Coinbase.ToString()}) " :
-                $"MATCH (root:{ScriptNodeStrategy.Labels} {{ Address: \"{rootScriptAddress}\" }}) ")
+                $"MATCH (root:{ScriptNodeStrategy.Label} {{ Address: \"{rootScriptAddress}\" }}) ")
         };
 
         await ProcessHops(getRootNodeNeighborsQuery);
@@ -682,7 +682,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         var randomNodes = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(
-                $"Match (source:{ScriptNodeStrategy.Labels})-[edge:{EdgeType.Transfers}]->(target:{ScriptNodeStrategy.Labels}) " +
+                $"Match (source:{ScriptNodeStrategy.Label})-[edge:{EdgeType.Transfers}]->(target:{ScriptNodeStrategy.Label}) " +
                 $"where rand() < {edgeSelectProb} " +
                 $"return source, edge, target limit {edgeCount}");
 
@@ -721,8 +721,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                 nodeSamplingCountAtRoot: options.DisjointGraph_ForestFireNodeSamplingCountAtRoot,
                 maxHops: options.DisjointGraph_ForestFireMaxHops,
                 queryLimit: options.DisjointGraph_ForestFireQueryLimit,
-                nodeCountReductionFactorByHop: options.DisjointGraph_ForestFireNodeCountReductionFactorByHop,
-                labelFilters: options.DisjointGraph_LabelFilters);
+                nodeCountReductionFactorByHop: options.DisjointGraph_ForestFireNodeCountReductionFactorByHop);
 
             foreach (var node in gB.GetNodes())
                 foreach (var n in node.Value)
@@ -730,7 +729,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
 
             foreach (var edge in gB.GetEdges())
                 foreach (var e in edge.Value)
-                    g.GetOrAddEdge(edge.Key, e);
+                    g.TryGetOrAddEdge(edge.Key, e, out _);
 
             if (g.EdgeCount + g.EdgeCount * 0.2 >= options.MaxEdgeCount || g.NodeCount + g.NodeCount * 0.2 >= options.MaxNodeCount)
                 break;
@@ -748,7 +747,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         {
             count = await session.ExecuteReadAsync(async tx =>
             {
-                var result = await tx.RunAsync($"MATCH (n:{BitcoinAgent.Coinbase}) RETURN COUNT(n)");
+                var result = await tx.RunAsync($"MATCH (n:{Blockchains.Bitcoin.BitcoinChainAgent.Coinbase}) RETURN COUNT(n)");
                 return result.SingleAsync().Result[0].As<int>();
             });
         }
@@ -762,15 +761,15 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                     await session.ExecuteWriteAsync(async tx =>
                     {
                         await tx.RunAsync(
-                            $"CREATE (:{BitcoinAgent.Coinbase} {{" +
+                            $"CREATE (:{Blockchains.Bitcoin.BitcoinChainAgent.Coinbase} {{" +
                             $"{Props.ScriptAddress.Name}: " +
-                            $"\"{BitcoinAgent.Coinbase}\"}})");
+                            $"\"{Blockchains.Bitcoin.BitcoinChainAgent.Coinbase}\"}})");
                     });
                 }
                 break;
             default:
                 // TODO: replace with a more suitable exception type. 
-                throw new Exception($"Found {count} {BitcoinAgent.Coinbase} nodes; expected zero or one.");
+                throw new Exception($"Found {count} {Blockchains.Bitcoin.BitcoinChainAgent.Coinbase} nodes; expected zero or one.");
         }
     }
     private static async Task CreateIndexesAndConstraintsAsync(IDriver driver)
@@ -782,7 +781,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
             var result = await x.RunAsync(
                 $"CREATE INDEX ScriptAddressIndex " +
                 $"IF NOT EXISTS " +
-                $"FOR (n:{ScriptNodeStrategy.Labels}) " +
+                $"FOR (n:{ScriptNodeStrategy.Label}) " +
                 $"ON (n.{Props.ScriptAddress.Name})");
         });
 
@@ -791,7 +790,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
             var result = await x.RunAsync(
                 $"CREATE INDEX TxidIndex " +
                 $"IF NOT EXISTS " +
-                $"FOR (n:{TxNodeStrategy.Labels}) " +
+                $"FOR (n:{TxNodeStrategy.Label}) " +
                 $"ON (n.{Props.Txid.Name})");
         });
 
@@ -800,7 +799,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
             var result = await x.RunAsync(
                 $"CREATE INDEX BlockHeightIndex " +
                 $"IF NOT EXISTS " +
-                $"FOR (block:{BlockNodeStrategy.Labels}) " +
+                $"FOR (block:{BlockNodeStrategy.Label}) " +
                 $"ON (block.{Props.Height.Name})");
         });
 

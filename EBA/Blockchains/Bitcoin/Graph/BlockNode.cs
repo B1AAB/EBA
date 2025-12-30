@@ -5,7 +5,6 @@
 // can these two, and other similar classes merged?
 
 public class BlockNode(
-    string id,
     long height,
     uint medianTime,
     int transactionsCount,
@@ -16,8 +15,14 @@ public class BlockNode(
     int weight, 
     double? originalIndegree = null,
     double? originalOutdegree = null, 
-    double? outHopsFromRoot = null) : 
-    Node(id, originalInDegree: originalIndegree, originalOutDegree: originalOutdegree, outHopsFromRoot: outHopsFromRoot), 
+    double? outHopsFromRoot = null, 
+    string? idInGraphDb = null) : 
+    Node(
+        id: height.ToString(),
+        originalInDegree: originalIndegree,
+        originalOutDegree: originalOutdegree,
+        outHopsFromRoot: outHopsFromRoot,
+        idInGraphDb: idInGraphDb), 
     IComparable<BlockNode>, IEquatable<BlockNode>
 {
     public static new GraphComponentType ComponentType
@@ -40,7 +45,6 @@ public class BlockNode(
     public int Weight { get; } = weight;
 
     public BlockNode(Block block) : this(
-        id: block.Height.ToString(),
         height: block.Height,
         medianTime: block.MedianTime,
         transactionsCount: block.TransactionsCount,
@@ -56,9 +60,12 @@ public class BlockNode(
     // normalization happens when bulk-loading data into neo4j.
     // Find a better solution.
 
-    public BlockNode(Neo4j.Driver.INode node, double? originalIndegree = null, double? originalOutdegree = null, double? outHopsFromRoot = null) :
+    public BlockNode(
+        Neo4j.Driver.INode node,
+        double originalIndegree,
+        double originalOutdegree,
+        double outHopsFromRoot) :
         this(
-            id: node.ElementId,
             height: long.Parse((string)node.Properties[Props.Height.Name]),
             medianTime: (uint)(long)node.Properties[Props.BlockMedianTime.Name],
             transactionsCount: (int)(long)node.Properties[Props.BlockTxCount.Name],
@@ -69,12 +76,13 @@ public class BlockNode(
             weight: (int)(long)node.Properties[Props.BlockWeight.Name],
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
-            outHopsFromRoot: outHopsFromRoot)
+            outHopsFromRoot: outHopsFromRoot,
+            idInGraphDb: node.ElementId)
     { }
 
-    public override string GetUniqueLabel()
+    public override string GetIdPropertyName()
     {
-        return Height.ToString();
+        return nameof(Height);
     }
 
     public new static string[] GetFeaturesName()

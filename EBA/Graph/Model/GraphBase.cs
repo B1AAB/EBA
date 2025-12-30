@@ -97,9 +97,34 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
         throw new NotImplementedException();
     }
 
+    public bool ContainsNode(string id)
+    {
+        foreach (var nodeTypes in _nodes)
+            if (nodeTypes.Value.ContainsKey(id))
+                return true;
+
+        return false;
+    }
+
+    public bool TryGetNode(string id, out INode? node)
+    {
+        foreach (var nodeTypes in _nodes)
+            if (nodeTypes.Value.TryGetValue(id, out node))
+                return true;
+        node = null;
+        return false;
+    }
+
+    public bool ContainsEdge(string id)
+    {
+        foreach (var edgeTypes in _edges)
+            if (edgeTypes.Value.ContainsKey(id))
+                return true;
+        return false;
+    }
+
     public bool TryAddNode<T>(GraphComponentType type, T node) where T : INode
     {
-        // TODO: this is a hotspot 
         var x = _nodes.GetOrAdd(
             type,
             new ConcurrentDictionary<string, INode>());
@@ -113,8 +138,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
             type,
             new ConcurrentDictionary<string, INode>());
 
-        return (T)x.AddOrUpdate(node.Id, node, (key, oldValue) => node);
-        // TODO: any better update logic?!
+        return (T)x.GetOrAdd(node.Id, node);
     }
 
     public void AddNodes<T>(GraphComponentType type, IEnumerable<T> nodes) where T : INode
@@ -123,20 +147,15 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
             GetOrAddNode(type, node);
     }
 
-    public T GetOrAddEdge<T>(GraphComponentType type, T edge) where T : IEdge<INode, INode>
+    public bool TryGetOrAddEdge<T>(GraphComponentType type, T edge, out T resultingEdge) where T : IEdge<INode, INode>
     {
         var x = _edges.GetOrAdd(
             type,
             new ConcurrentDictionary<string, IEdge<INode, INode>>());
 
-        return (T)x.GetOrAdd(edge.Id, edge);
-    }
+        resultingEdge = (T)x.GetOrAdd(edge.Id, edge);
 
-    public void AddEdges<T>(GraphComponentType type, IEnumerable<T> edges)
-        where T : IEdge<INode, INode>
-    {
-        foreach (var edge in edges)
-            GetOrAddEdge(type, edge);
+        return ReferenceEquals(resultingEdge, edge);
     }
 
     public void AddOrUpdateEdge<T>(
@@ -194,8 +213,8 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
         var edges = _edges.Values.SelectMany(ids => ids.Values).Select(
             edges => new[]
             {
-                edges.Source.GetUniqueLabel(),
-                edges.Target.GetUniqueLabel(),
+                edges.Source.GetIdPropertyName(),
+                edges.Target.GetIdPropertyName(),
                 edges.Source.GetGraphComponentType().ToString(),
                 edges.Target.GetGraphComponentType().ToString(),
                 edges.Value.ToString(),

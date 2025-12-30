@@ -9,10 +9,16 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 {
     private readonly Options _options;
     private readonly IDriver _driver;
+    private readonly IStrategyFactory _strategyFactory;
 
-    public Neo4jDb(Options options)
+    private List<Batch> _batches = [];
+
+    private bool _disposed = false;
+
+    public Neo4jDb(Options options, IStrategyFactory strategyFactory)
     {
         _options = options;
+        _strategyFactory = strategyFactory;
 
         // As per suggestions at https://neo4j.com/blog/developer/neo4j-driver-best-practices
         // reuse a driver rather than initializing a new instance per request.
@@ -63,32 +69,29 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
     public async Task<List<IRecord>> GetNeighborsAsync(
         NodeLabels rootNodeLabel, 
-        string rootNodePropKey, 
-        string rootNodePropValue, 
+        string rootNodeIdProperty,
+        string rootNodeId,
         int queryLimit, 
-        string labelFilters, 
+        //string labelFilters, 
         int maxLevel, 
         GraphTraversal traversalAlgorithm,
         string relationshipFilter = "")
     {
         var qBuilder = new StringBuilder();
-        if (rootNodeLabel == NodeLabels.Coinbase)
-            qBuilder.Append($"MATCH (root:{NodeLabels.Coinbase.ToString()}) ");
-        else
-            qBuilder.Append($"MATCH (root:{rootNodeLabel} {{ {rootNodePropKey}: \"{rootNodePropValue}\" }}) ");
+        qBuilder.Append($"MATCH (root:{rootNodeLabel} {{ {rootNodeIdProperty}: \"{rootNodeId}\" }}) ");
 
         qBuilder.Append($"CALL apoc.path.spanningTree(root, {{");
         qBuilder.Append($"maxLevel: {maxLevel}, ");
         qBuilder.Append($"limit: {queryLimit}, ");
 
         if (traversalAlgorithm == GraphTraversal.BFS)
-            qBuilder.Append($"bfs: true, ");
+            qBuilder.Append($"bfs: true ");
         else if (traversalAlgorithm == GraphTraversal.DFS)
-            qBuilder.Append($"bfs: false, ");
+            qBuilder.Append($"bfs: false ");
         else
             throw new ArgumentException($"{traversalAlgorithm} is not supported, supported methods are {{ {GraphTraversal.DFS}, {GraphTraversal.BFS} }}");
 
-        qBuilder.Append($"labelFilter: '{labelFilters}'");
+        //qBuilder.Append($", labelFilter: '{labelFilters}'");
 
         if (!string.IsNullOrWhiteSpace(relationshipFilter))
             qBuilder.Append($", relationshipFilter: '{relationshipFilter}'");
@@ -99,8 +102,6 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         qBuilder.Append($"nodes(path) AS pathNodes, ");
         qBuilder.Append($"relationships(path) AS pathRels ");
         qBuilder.Append($"LIMIT {queryLimit} ");
-        //qBuilder.Append($"RETURN [root] AS root, [n IN pathNodes WHERE n <> root] AS nodes, pathRels AS relationships");
-        // ******** 
         qBuilder.Append($"RETURN ");
         qBuilder.Append($"[ {{");
         qBuilder.Append($"node: root, ");
@@ -143,13 +144,74 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         throw new NotImplementedException();
     }
 
-    public Task SerializeAsync(T graph, CancellationToken ct)
+    public async Task SerializeConstantsAsync(CancellationToken ct)
     {
-        throw new NotImplementedException();
+        await _strategyFactory.SerializeConstantsAsync(_options.WorkingDir, ct);
+    }
+
+    public async Task SerializeAsync(T g,CancellationToken ct)
+    {
+        var nodes = g.GetNodes();
+        var edges = g.GetEdges();
+        var batchInfo = await GetBatchAsync([.. nodes.Keys, .. edges.Keys]);
+
+        var tasks = new List<Task>();
+
+        foreach (var type in nodes)
+        {
+            batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != NodeLabels.Coinbase.ToString()));
+            var _strategy = _strategyFactory.GetStrategy(type.Key);
+            tasks.Add(
+                _strategy.ToCsvAsync(
+                    type.Value.Where(x => x.Id != NodeLabels.Coinbase.ToString()),
+                    batchInfo.GetFilename(type.Key)));
+        }
+
+        foreach (var type in edges)
+        {
+            batchInfo.AddOrUpdate(type.Key, type.Value.Count);
+            var _strategy = _strategyFactory.GetStrategy(type.Key);
+            tasks.Add(
+                _strategy.ToCsvAsync(
+                    type.Value,
+                    batchInfo.GetFilename(type.Key)));
+        }
+
+        await Task.WhenAll(tasks);
+    }
+
+    private async Task<Batch> GetBatchAsync(List<GraphComponentType> types)
+    {
+        if (_batches.Count == 0)
+            _batches = await DeserializeBatchesAsync();
+
+        if (_batches.Count == 0 || _batches[^1].GetMaxCount() >= _options.Neo4j.MaxEntitiesPerBatch)
+            _batches.Add(new Batch(_batches.Count.ToString(), _options.WorkingDir, types, _options.Neo4j.CompressOutput));
+
+        return _batches[^1];
+    }
+
+    private async Task<List<Batch>> DeserializeBatchesAsync()
+    {
+        return await JsonSerializer<List<Batch>>.DeserializeAsync(
+            _options.Neo4j.BatchesFilename);
     }
 
     public void Dispose()
     {
-        throw new NotImplementedException();
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _strategyFactory.Dispose();
+            }
+
+            _disposed = true;
+        }
     }
 }

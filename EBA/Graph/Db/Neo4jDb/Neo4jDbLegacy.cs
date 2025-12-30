@@ -264,7 +264,7 @@ public abstract class Neo4jDbLegacy<T> : IGraphDb<T> where T : GraphBase
     }
 
 
-    public Task<List<IRecord>> GetNeighborsAsync(NodeLabels rootNodeLabel, string propKey, string propValue, int queryLimit, string labelFilters, int maxLevel, GraphTraversal traversalAlgorithm, string relationshipFilter = "")
+    public Task<List<IRecord>> GetNeighborsAsync(NodeLabels rootNodeLabel, string rootNodeIdProperty, string rootNodeId, int queryLimit, int maxLevel, GraphTraversal traversalAlgorithm, string relationshipFilter = "")
     {
         throw new NotImplementedException();
     }
@@ -275,6 +275,16 @@ public abstract class Neo4jDbLegacy<T> : IGraphDb<T> where T : GraphBase
     }
 
     public Task<List<IRecord>> GetRandomNodesAsync(NodeLabels label, int count, CancellationToken ct, double rootNodeSelectProbability = 0.1, string nodeVariable = "randomNode")
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SerializeAsync(T graph, IStrategyFactory strategyFactory, CancellationToken ct)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task SerializeConstantsAsync(CancellationToken ct)
     {
         throw new NotImplementedException();
     }
