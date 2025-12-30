@@ -132,7 +132,9 @@ public class ForestFire : ITraversalAlgorithm
             var r = samplingResult[i];
             foreach (var nodeObject in r["nodes"].As<List<object>>())
             {
-                if (!TryUnpackDict(nodeObject.As<IDictionary<string, object>>(), hop, out var node) || node == null || node.IdInGraphDb == null)
+                if (!TryUnpackDict(nodeObject.As<IDictionary<string, object>>(), hop, out var node)
+                    || node == null
+                    || node.IdInGraphDb == null)
                     continue;
 
                 if (g.TryGetNode(node.Id, out var nodeInG))
