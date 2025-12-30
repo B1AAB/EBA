@@ -12,6 +12,8 @@ public interface INode : IGraphComponent
 
     public string[] GetFeatures();
 
+    public bool HasNullFeatures();
+
     /// <summary>
     /// this can return ID, or any unique label (e.g., script address, or tx hash).
     /// The goal of this method is to return unique label that would be more intuitive 

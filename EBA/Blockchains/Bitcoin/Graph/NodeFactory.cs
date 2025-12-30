@@ -4,42 +4,56 @@ namespace EBA.Blockchains.Bitcoin.Graph;
 
 public class NodeFactory
 {
-    public static EBA.Graph.Model.INode CreateNode(
+    /// <summary>
+    /// Attempts to create a strongly-typed graph node instance from the given Neo4j node
+    /// </summary>
+    /// <returns> true if the node was successfully converted 
+    /// to a strongly-typed graph node; otherwise, false.</returns>
+    public static bool TryCreateNode(
         Neo4j.Driver.INode node,
         double originalIndegree,
         double originalOutdegree,
-        double outHopsFromRoot)
+        double outHopsFromRoot, 
+        out EBA.Graph.Model.INode createdNode)
     {
         if (node.Labels.Contains(ScriptNodeStrategy.Label.ToString()))
         {
-            return new ScriptNode(
+            createdNode = new ScriptNode(
                 node,
                 originalIndegree: originalIndegree,
                 originalOutdegree: originalOutdegree,
                 outHopsFromRoot: outHopsFromRoot);
+
+            return true;
         }
         else if (node.Labels.Contains(TxNodeStrategy.Label.ToString()))
         {
-            return TxNode.CreateTxNode(
+            createdNode = TxNode.CreateTxNode(
                 node,
                 originalIndegree: originalIndegree,
                 originalOutdegree: originalOutdegree,
                 hopsFromRoot: outHopsFromRoot);
+
+            return !((TxNode)createdNode).HasNullFeatures();
         }
         else if (node.Labels.Contains(BlockNodeStrategy.Label.ToString()))
         {
-            return new BlockNode(
+            createdNode = new BlockNode(
                 node,
                 originalIndegree: originalIndegree,
                 originalOutdegree: originalOutdegree,
                 outHopsFromRoot: outHopsFromRoot);
+
+            return true;
         }
         else if (node.Labels.Contains(BitcoinChainAgent.Coinbase.ToString()))
         {
-            return new CoinbaseNode(
+            createdNode = new CoinbaseNode(
                 node,
                 originalOutdegree: originalOutdegree,
                 hopsFromRoot: outHopsFromRoot);
+
+            return true;
         }
         else
         {

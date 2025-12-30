@@ -444,7 +444,8 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
             foreach (var nodeObject in hop["nodes"].As<List<object>>())
             {
                 (Neo4j.Driver.INode node, double inDegree, double outDegree) = UnpackDict(nodeObject.As<IDictionary<string, object>>());
-                g.GetOrAddNode(NodeFactory.CreateNode(node, originalIndegree: inDegree, originalOutdegree: outDegree, outHopsFromRoot: 0));
+                NodeFactory.TryCreateNode(node, originalIndegree: inDegree, originalOutdegree: outDegree, outHopsFromRoot: 0, out var v);
+                g.GetOrAddNode(v);
             }
 
             foreach (var relationship in hop.Values["relationships"].As<List<IRelationship>>())
@@ -609,7 +610,8 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                     // so only the "connected" nodes are added.
                     // also, this order is important where 1st the node is added, then the edge.
                     (var ccNode, var indegree, var outdegree, var outHopsFromRoot) = nodes[targetNodeId];
-                    addedNodes.Add(NodeFactory.CreateNode(ccNode, originalIndegree: indegree, originalOutdegree: outdegree, outHopsFromRoot: outHopsFromRoot));
+                    NodeFactory.TryCreateNode(ccNode, originalIndegree: indegree, originalOutdegree: outdegree, outHopsFromRoot: outHopsFromRoot, out var v);
+                    addedNodes.Add(v);
                     allNodesAddedToGraph.Add(targetNodeId);
 
                     g.GetOrAddEdge(edge.Value);

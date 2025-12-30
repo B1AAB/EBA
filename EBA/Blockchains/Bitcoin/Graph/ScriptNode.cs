@@ -102,6 +102,11 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         return [Address, ((double)ScriptType).ToString(), .. base.GetFeatures()];
     }
 
+    public override bool HasNullFeatures()
+    {
+        return base.HasNullFeatures();
+    }
+
     public override int GetHashCode()
     {
         // Do not add ID here, because ID is generated

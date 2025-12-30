@@ -147,6 +147,16 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         ];
     }
 
+    public override bool HasNullFeatures()
+    {
+        return Size == null
+               || Version == null
+               || VSize == null
+               || Weight == null
+               || LockTime == null
+               || base.HasNullFeatures();
+    }
+
     public override string[] GetFeatures()
     {
         // TODO: fix null values and avoid casting

@@ -78,6 +78,13 @@ public class Node : INode
         OutgoingEdges.Add(outgoingEdge);
     }
 
+    public virtual bool HasNullFeatures()
+    {
+        return OriginalInDegree == null
+               || OriginalOutDegree == null
+               || OutHopsFromRoot == null;
+    }
+
     public static string[] GetFeaturesName()
     {
         return

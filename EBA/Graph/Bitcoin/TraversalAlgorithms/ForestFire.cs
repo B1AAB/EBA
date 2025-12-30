@@ -99,13 +99,15 @@ public class ForestFire : ITraversalAlgorithm
         double nodeCountReductionFactorByHop, 
         BitcoinGraph g)
     {
-        static Model.INode? UnpackDict(IDictionary<string, object> dict, double hop)
+        static bool TryUnpackDict(IDictionary<string, object> dict, double hop, out Model.INode? v)
         {
+            v = null;
             var node = dict["node"].As<Neo4j.Driver.INode>();
             var inDegree = Convert.ToDouble(dict["inDegree"]);
             var outDegree = Convert.ToDouble(dict["outDegree"]);
-            if (node is null) return null;
-            return NodeFactory.CreateNode(node, inDegree, outDegree, hop);
+            if (node is null) 
+                return false;
+            return NodeFactory.TryCreateNode(node, inDegree, outDegree, hop, out v);
         }
 
         var nodesAddedToGraph = new List<Model.INode>();
@@ -117,10 +119,10 @@ public class ForestFire : ITraversalAlgorithm
         var edges = new List<IRelationship>();
 
         var rootList = samplingResult[0]["root"].As<List<object>>();
-        Model.INode? rootNode =
-            g.GetOrAddNode(
-                UnpackDict(rootList[0].As<IDictionary<string, object>>(), hop)
-                ?? throw new Exception("Root node is null."));
+        if (!TryUnpackDict(rootList[0].As<IDictionary<string, object>>(), hop, out var builtRootNode) || builtRootNode == null)
+            return nodesAddedToGraph;
+
+        Model.INode rootNode = g.GetOrAddNode(builtRootNode);
 
         if (hop == 0)
             g.AddLabel("RootNodeId", rootNode.Id);
@@ -130,8 +132,9 @@ public class ForestFire : ITraversalAlgorithm
             var r = samplingResult[i];
             foreach (var nodeObject in r["nodes"].As<List<object>>())
             {
-                Model.INode? node = UnpackDict(nodeObject.As<IDictionary<string, object>>(), hop);
-                if (node is null || node.IdInGraphDb == null) continue;
+                if (!TryUnpackDict(nodeObject.As<IDictionary<string, object>>(), hop, out var node) || node == null || node.IdInGraphDb == null)
+                    continue;
+
                 if (g.TryGetNode(node.Id, out var nodeInG))
                     nodesInThisHopAlreadyInGraph.TryAdd(node.IdInGraphDb, nodeInG);
                 else
