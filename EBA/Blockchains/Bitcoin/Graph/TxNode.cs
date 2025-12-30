@@ -2,6 +2,16 @@
 
 namespace EBA.Blockchains.Bitcoin.Graph;
 
+// A note on the nullable properties: 
+// These properties can be null when the Tx
+// this type corresponds to is an input transaction (vin) 
+// when reading transactions from the Bitcoin blockchain.
+// In this case, minimal information about the Tx is available, 
+// as opposed to when the Tx is an output transaction (vout).
+// An example is:
+//  {"txid": "0437cd7f8525ceed2324359c2d0ba26006d92d856a9c20fa0241106ee5a597c9"}
+// This Tx is referenced as input in Tx #2 at block height 170. 
+
 public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 {
     public new static GraphComponentType ComponentType { get { return GraphComponentType.BitcoinTxNode; } }
@@ -84,9 +94,8 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         double originalOutdegree,
         double hopsFromRoot)
     {
-        // TODO: all the following double-casting is because of the type
+        // All the following double-casting is because of the type
         // normalization happens when bulk-loading data into neo4j.
-        // Find a better solution.
 
         string txid;
         if (node.Properties.TryGetValue(Props.Txid.Name, out var obj) && obj != null)
@@ -129,7 +138,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 
     public static new string[] GetFeaturesName()
     {
-        return 
+        return
         [
             nameof(Size),
             nameof(Weight),

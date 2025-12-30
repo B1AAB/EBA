@@ -105,7 +105,7 @@ public class ForestFire : ITraversalAlgorithm
             var inDegree = Convert.ToDouble(dict["inDegree"]);
             var outDegree = Convert.ToDouble(dict["outDegree"]);
             if (node is null) return null;
-            return BitcoinGraph.NodeFactory(node, inDegree, outDegree, hop);
+            return NodeFactory.CreateNode(node, inDegree, outDegree, hop);
         }
 
         var nodesAddedToGraph = new List<Model.INode>();
