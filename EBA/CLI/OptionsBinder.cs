@@ -97,35 +97,35 @@ internal class OptionsBinder : BinderBase<Options>
 
         var wd = GetValue(defs.WorkingDir, _workingDirOption, c);
 
-        var bitcoinOps = new BitcoinOptions()
+        var bitcoinTraverseOptions = new BitcoinTraverseOptions()
         {
-            ClientUri = GetValue(defs.Bitcoin.ClientUri, _bitcoinClientUri, c),
-            From = GetValue(defs.Bitcoin.From, _fromOption, c),
-            To = GetValue(defs.Bitcoin.To, _toOption, c),
-            Granularity = GetValue(defs.Bitcoin.Granularity, _granularityOption, c),
-            BlocksToProcessListFilename = Path.Join(wd, defs.Bitcoin.BlocksToProcessListFilename),
-            BlocksFailedToProcessListFilename = Path.Join(wd, defs.Bitcoin.BlocksFailedToProcessListFilename),
-            StatsFilename = GetValue(defs.Bitcoin.StatsFilename, _statsFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
-            PerBlockAddressesFilename = GetValue(defs.Bitcoin.PerBlockAddressesFilename, _addressesFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
-            MaxBlocksInBuffer = GetValue(defs.Bitcoin.MaxBlocksInBuffer, _maxBlocksInBufferOption, c),
-            TxoFilename = GetValue(defs.Bitcoin.TxoFilename, _txoFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
-            TrackTxo = GetValue(defs.Bitcoin.TrackTxo, _trackTxoOption, c),
-            SkipGraphSerialization = GetValue(defs.Bitcoin.SkipGraphSerialization, _skipGraphSerializationOption, c),
-            SkipSerializingAddresses = GetValue(defs.Bitcoin.SkipSerializingAddresses, _skipSerializingAddressesOption, c)
+            ClientUri = GetValue(defs.Bitcoin.Traverse.ClientUri, _bitcoinClientUri, c),
+            From = GetValue(defs.Bitcoin.Traverse.From, _fromOption, c),
+            To = GetValue(defs.Bitcoin.Traverse.To, _toOption, c),
+            Granularity = GetValue(defs.Bitcoin.Traverse.Granularity, _granularityOption, c),
+            BlocksToProcessListFilename = Path.Join(wd, defs.Bitcoin.Traverse.BlocksToProcessListFilename),
+            BlocksFailedToProcessListFilename = Path.Join(wd, defs.Bitcoin.Traverse.BlocksFailedToProcessListFilename),
+            StatsFilename = GetValue(defs.Bitcoin.Traverse.StatsFilename, _statsFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
+            PerBlockAddressesFilename = GetValue(defs.Bitcoin.Traverse.PerBlockAddressesFilename, _addressesFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
+            MaxBlocksInBuffer = GetValue(defs.Bitcoin.Traverse.MaxBlocksInBuffer, _maxBlocksInBufferOption, c),
+            TxoFilename = GetValue(defs.Bitcoin.Traverse.TxoFilename, _txoFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
+            TrackTxo = GetValue(defs.Bitcoin.Traverse.TrackTxo, _trackTxoOption, c),
+            SkipGraphSerialization = GetValue(defs.Bitcoin.Traverse.SkipGraphSerialization, _skipGraphSerializationOption, c),
+            SkipSerializingAddresses = GetValue(defs.Bitcoin.Traverse.SkipSerializingAddresses, _skipSerializingAddressesOption, c)
         };
 
         // TODO: add a warning hen txofilename is set hwile txoPeristenceStrategy is not set to persist to text file.
 
-        var gsample = new GraphSampleOptions()
+        var gsample = new BitcoinGraphSampleOptions()
         {
-            Count = GetValue(defs.GraphSample.Count, _graphSampleCountOption, c),
-            Hops = GetValue(defs.GraphSample.Hops, _graphSampleHopsOption, c),
-            Mode = GetValue(defs.GraphSample.Mode, _graphSampleModeOption, c),
-            MinNodeCount = GetValue(defs.GraphSample.MinNodeCount, _graphSampleMinNodeCount, c),
-            MaxNodeCount = GetValue(defs.GraphSample.MaxNodeCount, _graphSampleMaxNodeCount, c),
-            MinEdgeCount = GetValue(defs.GraphSample.MinEdgeCount, _graphSampleMinEdgeCount, c),
-            MaxEdgeCount = GetValue(defs.GraphSample.MaxEdgeCount, _graphSampleMaxEdgeCount, c),
-            RootNodeSelectProb = GetValue(defs.GraphSample.RootNodeSelectProb, _graphSampleRootNodeSelectProb, c)
+            Count = GetValue(defs.Bitcoin.GraphSample.Count, _graphSampleCountOption, c),
+            Hops = GetValue(defs.Bitcoin.GraphSample.Hops, _graphSampleHopsOption, c),
+            Mode = GetValue(defs.Bitcoin.GraphSample.Mode, _graphSampleModeOption, c),
+            MinNodeCount = GetValue(defs.Bitcoin.GraphSample.MinNodeCount, _graphSampleMinNodeCount, c),
+            MaxNodeCount = GetValue(defs.Bitcoin.GraphSample.MaxNodeCount, _graphSampleMaxNodeCount, c),
+            MinEdgeCount = GetValue(defs.Bitcoin.GraphSample.MinEdgeCount, _graphSampleMinEdgeCount, c),
+            MaxEdgeCount = GetValue(defs.Bitcoin.GraphSample.MaxEdgeCount, _graphSampleMaxEdgeCount, c),
+            RootNodeSelectProb = GetValue(defs.Bitcoin.GraphSample.RootNodeSelectProb, _graphSampleRootNodeSelectProb, c)
         };
 
         var neo4jOps = new Neo4jOptions()
@@ -136,8 +136,15 @@ internal class OptionsBinder : BinderBase<Options>
 
         var bitcoinDedupOps = new BitcoinDedupOptions()
         {
-            SortedScriptNodesFilename = GetValue(defs.BitcoinDedup.SortedScriptNodesFilename, _sortedScriptNodeFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
-            SortedTxNodesFilename = GetValue(defs.BitcoinDedup.SortedTxNodesFilename, _sortedTxNodeFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); })
+            SortedScriptNodesFilename = GetValue(defs.Bitcoin.Dedup.SortedScriptNodesFilename, _sortedScriptNodeFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
+            SortedTxNodesFilename = GetValue(defs.Bitcoin.Dedup.SortedTxNodesFilename, _sortedTxNodeFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); })
+        };
+
+        var bitcoinOps = new BitcoinOptions()
+        {
+            Traverse = bitcoinTraverseOptions,
+            Dedup = bitcoinDedupOps,
+            GraphSample = gsample
         };
 
         var options = new Options()
@@ -146,9 +153,7 @@ internal class OptionsBinder : BinderBase<Options>
             StatusFile = GetValue(defs.StatusFile, _statusFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
             Logger = new() { LogFilename = Path.Join(wd, Path.GetFileName(defs.Logger.LogFilename)) },
             Bitcoin = bitcoinOps,
-            GraphSample = gsample,
             Neo4j = neo4jOps,
-            BitcoinDedup = bitcoinDedupOps
         };
 
         return options;

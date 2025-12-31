@@ -171,13 +171,13 @@ internal class Cli
             name: "--granularity",
             description: "Set the blockchain traversal granularity." +
             "For instance, if set to `10`, it implies processing every 10 blocks in the blockchain.",
-            getDefaultValue: () => defaultOptions.Bitcoin.Granularity);
+            getDefaultValue: () => defaultOptions.Bitcoin.Traverse.Granularity);
 
         var clientUriOption = new Option<Uri>(
             name: "--client-uri",
             description: "The URI where the Bitcoin client can be reached. The client should " +
             "be started with REST endpoint enabled.",
-            getDefaultValue: () => defaultOptions.Bitcoin.ClientUri);
+            getDefaultValue: () => defaultOptions.Bitcoin.Traverse.ClientUri);
 
         var addressesFilenameOption = new Option<string>(
             name: "--addresses-filename",
@@ -373,7 +373,7 @@ internal class Cli
             parseArgument: x =>
             {
                 if (x.Tokens.Count == 0)
-                    return new Options().GraphSample.Mode;
+                    return new Options().Bitcoin.GraphSample.Mode;
 
                 var valid = Enum.TryParse(x.Tokens.Single().Value, out GraphSampleMode value);
                 if (!valid)
@@ -383,26 +383,26 @@ internal class Cli
 
         var minNodeCountOption = new Option<int>(
             "--min-node-count",
-            getDefaultValue: () => defaultOptions.GraphSample.MinNodeCount);
+            getDefaultValue: () => defaultOptions.Bitcoin.GraphSample.MinNodeCount);
 
         var maxNodeCountOption = new Option<int>(
             "--max-node-count",
-            getDefaultValue: () => defaultOptions.GraphSample.MaxNodeCount);
+            getDefaultValue: () => defaultOptions.Bitcoin.GraphSample.MaxNodeCount);
 
         var minEdgeCountOption = new Option<int>(
             "--min-edge-count",
-            getDefaultValue: () => defaultOptions.GraphSample.MinEdgeCount);
+            getDefaultValue: () => defaultOptions.Bitcoin.GraphSample.MinEdgeCount);
 
         var maxEdgeCountOption = new Option<int>(
             "--max-edge-count",
-            getDefaultValue: () => defaultOptions.GraphSample.MaxEdgeCount);
+            getDefaultValue: () => defaultOptions.Bitcoin.GraphSample.MaxEdgeCount);
 
         var rootNodeSelectProbOption = new Option<double>(
             "--root-node-select-prob",
             description: "The value should be between 0 and 1 (inclusive), " +
             "if the given value is not in this range, it will be replaced " +
             "by the default value.",
-            getDefaultValue: () => defaultOptions.GraphSample.RootNodeSelectProb);
+            getDefaultValue: () => defaultOptions.Bitcoin.GraphSample.RootNodeSelectProb);
 
         var cmd = new Command(
             name: "sample",

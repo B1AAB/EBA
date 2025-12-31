@@ -24,7 +24,7 @@ public class BitcoinGraphAgent : IGraphAgent<BitcoinGraph>, IDisposable
 
     public async Task SampleAsync(CancellationToken ct)
     {
-        var sampler = _options.GraphSample.TraversalAlgorithm switch
+        var sampler = _options.Bitcoin.GraphSample.TraversalAlgorithm switch
         {
             GraphTraversal.FFS => new ForestFire(_options, _db, _logger),
             GraphTraversal.BFS => throw new NotImplementedException(),

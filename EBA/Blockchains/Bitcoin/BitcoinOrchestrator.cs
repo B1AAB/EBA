@@ -26,10 +26,10 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
     {
         var chainInfo = await _agent.AssertChainAsync(cT);
         _logger.LogInformation("Head of the chain is at block {block:n0}.", chainInfo.Blocks);
-        options.Bitcoin.To ??= chainInfo.Blocks;
+        options.Bitcoin.Traverse.To ??= chainInfo.Blocks;
 
         var blockHeightQueue = SetupBlocksQueue(options);
-        var failedBlocksQueue = GetPersistentBlocksQueue(options.Bitcoin.BlocksFailedToProcessListFilename);
+        var failedBlocksQueue = GetPersistentBlocksQueue(options.Bitcoin.Traverse.BlocksFailedToProcessListFilename);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, cT);
 
         cT.ThrowIfCancellationRequested();
@@ -60,13 +60,13 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         CancellationToken cT)
     {
         await Deduplicator.DedupScriptNodesFile(
-            options.BitcoinDedup.SortedScriptNodesFilename,
+            options.Bitcoin.Dedup.SortedScriptNodesFilename,
             Path.Combine(options.WorkingDir, "unique_BitcoinScriptNode.csv"),
             _logger,
             cT);
 
         await Deduplicator.ProcessTxNodesFile(
-            options.BitcoinDedup.SortedTxNodesFilename,
+            options.Bitcoin.Dedup.SortedTxNodesFilename,
             Path.Combine(options.WorkingDir, "unique_BitcoinTxNode.csv"),
             _logger,
             cT);
@@ -78,12 +78,12 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         Options options)
     {
         var heights = new List<long>();
-        for (int h = options.Bitcoin.From;
-            h <= options.Bitcoin.To;
-            h += options.Bitcoin.Granularity)
+        for (int h = options.Bitcoin.Traverse.From;
+            h <= options.Bitcoin.Traverse.To;
+            h += options.Bitcoin.Traverse.Granularity)
             heights.Add(h);
 
-        return GetPersistentBlocksQueue(options.Bitcoin.BlocksToProcessListFilename, heights);
+        return GetPersistentBlocksQueue(options.Bitcoin.Traverse.BlocksToProcessListFilename, heights);
     }
 
     private static PersistentConcurrentQueue GetPersistentBlocksQueue(
@@ -119,8 +119,8 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         }
 
         var pgbSemaphore = new SemaphoreSlim(
-            initialCount: options.Bitcoin.MaxBlocksInBuffer, 
-            maxCount: options.Bitcoin.MaxBlocksInBuffer);
+            initialCount: options.Bitcoin.Traverse.MaxBlocksInBuffer, 
+            maxCount: options.Bitcoin.Traverse.MaxBlocksInBuffer);
 
         // TODO: pass the bitcoin option to the following method instead of passing null values depending on the set options.
         // TODO: refactor the following so that only options is passed to the buffer
@@ -130,30 +130,30 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             logger: _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),
             pgStatsLogger: _host.Services.GetRequiredService<ILogger<PersistentGraphStatistics>>(),
             pgAddressesLogger: _host.Services.GetRequiredService<ILogger<PersistentBlockAddresses>>(),
-            pTxoLifeCyccleLogger: options.Bitcoin.TrackTxo ?_host.Services.GetRequiredService<ILogger<PersistentTxoLifeCycleBuffer>>() : null,
-            graphStatsFilename: options.Bitcoin.StatsFilename,
-            perBlockAddressesFilename: options.Bitcoin.PerBlockAddressesFilename,
-            txoLifeCycleFilename: options.Bitcoin.TrackTxo ? options.Bitcoin.TxoFilename : null,
-            maxTxoPerFile: options.Bitcoin.MaxTxoPerFile,
-            maxAddressesPerFile: options.Bitcoin.MaxBlockAddressesPerFile,
+            pTxoLifeCyccleLogger: options.Bitcoin.Traverse.TrackTxo ?_host.Services.GetRequiredService<ILogger<PersistentTxoLifeCycleBuffer>>() : null,
+            graphStatsFilename: options.Bitcoin.Traverse.StatsFilename,
+            perBlockAddressesFilename: options.Bitcoin.Traverse.PerBlockAddressesFilename,
+            txoLifeCycleFilename: options.Bitcoin.Traverse.TrackTxo ? options.Bitcoin.Traverse.TxoFilename : null,
+            maxTxoPerFile: options.Bitcoin.Traverse.MaxTxoPerFile,
+            maxAddressesPerFile: options.Bitcoin.Traverse.MaxBlockAddressesPerFile,
             options: options,
             semaphore: pgbSemaphore,
             ct: cT);
 
         _logger.LogInformation(
             "Traversing blocks [{from:n0}, {to:n0}).",
-            options.Bitcoin.From,
-            options.Bitcoin.To);
+            options.Bitcoin.Traverse.From,
+            options.Bitcoin.Traverse.To);
 
         _logger.LogInformation(
             "{count:n0} blocks to process; {processed:n0} blocks are previously processed.",
             blocksQueue.Count,
-            options.Bitcoin.To - options.Bitcoin.From - blocksQueue.Count);
+            options.Bitcoin.Traverse.To - options.Bitcoin.Traverse.From - blocksQueue.Count);
 
         var parallelOptions = new ParallelOptions() { CancellationToken = cT };
-        if (options.Bitcoin.MaxConcurrentBlocks != null)
+        if (options.Bitcoin.Traverse.MaxConcurrentBlocks != null)
             parallelOptions.MaxDegreeOfParallelism =
-                (int)options.Bitcoin.MaxConcurrentBlocks;
+                (int)options.Bitcoin.Traverse.MaxConcurrentBlocks;
 
         #if DEBUG
         parallelOptions.MaxDegreeOfParallelism = 1;
@@ -242,7 +242,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         _logger.LogInformation("Block {height:n0} {step}: Started processing", height, "[1/3]");
 
         var strategy = ResilienceStrategyFactory.Bitcoin.GetGraphStrategy(
-            options.Bitcoin.BitcoinAgentResilienceStrategy);
+            options.Bitcoin.Traverse.BitcoinAgentResilienceStrategy);
 
         var agent = _host.Services.GetRequiredService<BitcoinChainAgent>();
         var blockGraph = await agent.GetGraph(height, strategy, options.Bitcoin, cT);

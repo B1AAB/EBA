@@ -55,7 +55,7 @@ public enum EdgeTypes
     ALL
 }
 
-public class GraphSampleOptions
+public class BitcoinGraphSampleOptions
 {
     public int Count { init; get; }
     public int Hops { init; get; }

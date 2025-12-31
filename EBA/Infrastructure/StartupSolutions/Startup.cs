@@ -87,16 +87,16 @@ public class Startup
         services
             .AddHttpClient<BitcoinChainAgent>(client =>
             {
-                client.BaseAddress = options.Bitcoin.ClientUri;
+                client.BaseAddress = options.Bitcoin.Traverse.ClientUri;
                 client.DefaultRequestHeaders.UserAgent.Clear();
                 client.DefaultRequestHeaders.Add("User-Agent", "EBA");
-                client.Timeout = options.Bitcoin.HttpClientTimeout;
+                client.Timeout = options.Bitcoin.Traverse.HttpClientTimeout;
             })
             .AddPolicyHandler((provider, _) =>
             {
                 return ResilienceStrategyFactory.Bitcoin.GetClientStrategy(
                     provider,
-                    options.Bitcoin.HttpClientResilienceStrategy);
+                    options.Bitcoin.Traverse.HttpClientResilienceStrategy);
             });
 
         // This sets the limit for all the endpoints globally. 

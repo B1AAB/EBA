@@ -45,7 +45,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 
         _pGraphStats = new(graphStatsFilename, int.MaxValue, pgStatsLogger, ct);
 
-        if (!_options.Bitcoin.SkipSerializingAddresses)
+        if (!_options.Bitcoin.Traverse.SkipSerializingAddresses)
             _pBlockAddresses = new(perBlockAddressesFilename, maxAddressesPerFile, pgAddressesLogger, ct);
 
         if (txoLifeCycleFilename != null && pTxoLifeCyccleLogger != null)

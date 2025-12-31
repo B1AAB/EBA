@@ -84,7 +84,7 @@ public class Orchestrator : IDisposable
         var host = await SetupAndGetHostAsync(options);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
 
-        if (options.Bitcoin.UseLegacyGraphDbMethod)
+        if (options.Bitcoin.Traverse.UseLegacyGraphDbMethod)
         {
             var graphDb = host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>();
             await graphDb.SampleAsync(_cT);
