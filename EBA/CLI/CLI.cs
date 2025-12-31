@@ -275,15 +275,18 @@ internal class Cli
     {
         var scriptNodesFileOption = new Option<string>(
             name: "--sorted-script-nodes-file",
-            description: "...");
+            description: "The file containing sorted Script nodes.");
 
         var txNodesFileOption = new Option<string>(
             name: "--sorted-tx-nodes-file",
-            description: "...");
+            description: "The file containing sorted Tx nodes files.");
 
         var cmd = new Command(
             name: "dedup",
-            description: "...")
+            description: 
+                "Deduplicates sorted Script and Tx node files. " +
+                "See documentation at the following link on the rational " +
+                "and sorting the files. https://eba.b1aab.ai/docs/bitcoin/etl/traverse")
         {
             scriptNodesFileOption,
             txNodesFileOption
