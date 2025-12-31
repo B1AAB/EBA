@@ -1,5 +1,5 @@
 ---
-title: Restore database dump
+title: Restore Database Dump
 description: Step 5b. Load a database dump
 sidebar_position: 5
 slug: /bitcoin/etl/restore
@@ -132,5 +132,6 @@ to ensure reliable downloading.
     sudo systemctl start neo4j
     ```
 
-
 4. Enable [APOC](https://neo4j.com/docs/apoc/current/installation/).
+
+5.  [Update Neo4j database configuration](./db-conf).

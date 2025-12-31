@@ -39,7 +39,7 @@ public class BitcoinGraphAgent : IGraphAgent<BitcoinGraph>, IDisposable
     {
         if (!_hasSerializedConstants)
         {
-            await _db.SerializeConstantsAsync(ct);
+            await _db.SerializeConstantsAndConstraintsAsync(ct);
             _hasSerializedConstants = true;
         }
 

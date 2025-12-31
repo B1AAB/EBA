@@ -144,9 +144,10 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         throw new NotImplementedException();
     }
 
-    public async Task SerializeConstantsAsync(CancellationToken ct)
+    public async Task SerializeConstantsAndConstraintsAsync(CancellationToken ct)
     {
         await _strategyFactory.SerializeConstantsAsync(_options.WorkingDir, ct);
+        await _strategyFactory.SerializeSchemasAsync(_options.WorkingDir, ct);
     }
 
     public async Task SerializeAsync(T g,CancellationToken ct)
