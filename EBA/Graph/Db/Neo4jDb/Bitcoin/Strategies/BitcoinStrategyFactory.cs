@@ -55,6 +55,35 @@ public class BitcoinStrategyFactory : IStrategyFactory
         }
     }
 
+    public async Task SerializeSchemasAsync(string outputDirectory, CancellationToken ct)
+    {
+        using var writer = new StreamWriter(File.Create(Path.Join(outputDirectory, "shema.cypher")));
+        writer.WriteLine("// EBA Bitcoin Graph Schema");
+        writer.WriteLine("");
+
+        var scriptAddressUniqueness =
+            $"// Uniqueness constraint for {NodeLabels.Script}.{Props.ScriptAddress.Name} property." +
+            $"\r\nCREATE CONSTRAINT {NodeLabels.Script}_{Props.ScriptAddress.Name}_Unique " +
+            $"\r\nIF NOT EXISTS " +
+            $"\r\nFOR (v:{NodeLabels.Script}) REQUIRE v.{Props.ScriptAddress.Name} IS UNIQUE;";
+
+        var txidUniqueness =
+            $"// Uniqueness constraint for {NodeLabels.Tx}.{Props.Txid.Name} property." +
+            $"\r\nCREATE CONSTRAINT {NodeLabels.Tx}_{Props.Txid.Name}_Unique " +
+            $"\r\nIF NOT EXISTS " +
+            $"\r\nFOR (v:{NodeLabels.Tx}) REQUIRE v.{Props.Txid.Name} IS UNIQUE;";
+
+        var blockHeightUniqueness =
+            $"// Uniqueness constraint for {NodeLabels.Block}.{Props.Height.Name} property." +
+            $"\r\nCREATE CONSTRAINT {NodeLabels.Block}_{Props.Height.Name}_Unique " +
+            $"\r\nIF NOT EXISTS " +
+            $"\r\nFOR (v:{NodeLabels.Block}) REQUIRE v.{Props.Height.Name} IS UNIQUE;";
+
+        writer.WriteLine(scriptAddressUniqueness);
+        writer.WriteLine(txidUniqueness);
+        writer.WriteLine(blockHeightUniqueness);
+    }
+
     public void Dispose()
     {
         Dispose(true);

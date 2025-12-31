@@ -8,14 +8,14 @@ public interface IGraphDb<T> : IDisposable where T : GraphBase
     public Task SerializeAsync(T graph, CancellationToken ct);
 
     /// <summary>
-    /// Serializes constant graph components like schema, 
-    /// constraints, and indexes, or unique nodes and relationships 
+    /// Serializes constant graph components like
+    /// constraints and indexes, or unique nodes and relationships 
     /// that need to be present in a graph belonging to a given 
     /// blockchain (e.g., a single `coinbase` node).
     /// </summary>
     /// <param name="ct">Cancellation token.</param>
     /// <returns></returns>
-    public Task SerializeConstantsAsync(CancellationToken ct);
+    public Task SerializeConstantsAndConstraintsAsync(CancellationToken ct);
     public Task ImportAsync(CancellationToken ct, string batchName = "", List<GraphComponentType>? importOrder = null);
     public Task SampleAsync(CancellationToken ct);
     public void ReportQueries();
