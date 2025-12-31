@@ -233,13 +233,13 @@ public abstract class Neo4jDbLegacy<T> : IGraphDb<T> where T : GraphBase
         IDriver driver, int nodesCount, double rootNodesSelectProb = 0.1);
 
     public abstract Task<GraphBase> GetNeighborsAsync(
-        IDriver driver, string rootScriptAddress, GraphSampleOptions options);
+        IDriver driver, string rootScriptAddress, BitcoinGraphSampleOptions options);
 
     public abstract Task<GraphBase> GetDisjointGraphsRandomEdges(
         IDriver driver, int edgeCount, double edgeSelectProb = 0.2);
 
     public abstract Task<GraphBase> GetDisjointGraphsRandomNeighborhoods(
-        IDriver driver, int edgeCount, GraphSampleOptions options);
+        IDriver driver, int edgeCount, BitcoinGraphSampleOptions options);
 
     public abstract Task<bool> TrySampleNeighborsAsync(
         IDriver driver, ScriptNode rootNode, string workingDir);
