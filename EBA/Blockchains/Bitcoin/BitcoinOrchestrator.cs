@@ -61,13 +61,13 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
     {
         await Deduplicator.DedupScriptNodesFile(
             options.BitcoinDedup.SortedScriptNodesFilename,
-            Path.Combine(options.WorkingDir, "unique_BitcoinScriptNode.tsv"),
+            Path.Combine(options.WorkingDir, "unique_BitcoinScriptNode.csv"),
             _logger,
             cT);
 
         await Deduplicator.ProcessTxNodesFile(
             options.BitcoinDedup.SortedTxNodesFilename,
-            Path.Combine(options.WorkingDir, "unique_BitcoinTxNode.tsv"),
+            Path.Combine(options.WorkingDir, "unique_BitcoinTxNode.csv"),
             _logger,
             cT);
 
