@@ -1,4 +1,6 @@
-﻿namespace EBA.Blockchains.Bitcoin;
+﻿using EBA.Blockchains.Bitcoin.Utilities;
+
+namespace EBA.Blockchains.Bitcoin;
 
 public class BitcoinOrchestrator : IBlockchainOrchestrator
 {
@@ -51,6 +53,25 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
             throw;
         }
+    }
+
+    public async Task DeDupAsync(
+        Options options,
+        CancellationToken cT)
+    {
+        await Deduplicator.DedupScriptNodesFile(
+            options.BitcoinDedup.SortedScriptNodesFilename,
+            Path.Combine(options.WorkingDir, "unique_BitcoinScriptNode.csv"),
+            _logger,
+            cT);
+
+        await Deduplicator.ProcessTxNodesFile(
+            options.BitcoinDedup.SortedTxNodesFilename,
+            Path.Combine(options.WorkingDir, "unique_BitcoinTxNode.csv"),
+            _logger,
+            cT);
+
+        _logger.LogInformation("Successfully finished deduplication.");
     }
 
     private static PersistentConcurrentQueue SetupBlocksQueue(

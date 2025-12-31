@@ -62,43 +62,78 @@ that may not be [widely accessible](/docs/gs/accessibility),
 the specifics of such a deployment are not currently covered.
 
 
-### Optional Post-processing (Experimental)
 
-This optional step performs manual deduplication of nodes 
-to improve the [Neo4j import process](/docs/bitcoin/etl/import).
-While the Neo4j admin tool offers a `--skip-duplicate-nodes` flag, 
-pre-sorting and deduplicating via the command line is often 
-more memory-efficient for datasets of this scale.
+## Deduplicate Nodes
+
+This step deduplicates the 
+`Tx` (`[0-9]*_BitcoinTxNode.csv.gz`) and 
+`Script` (`[0-9]*_BitcoinScriptNode.csv.gz`) 
+node files.
+
+<details>
+
+    <summary>Why is deduplication required?</summary>
+
+    For performance reasons, 
+    EBA does not attempt to ensure uniqueness in the `Tx` and `Script` files 
+    during the initial traversal. 
+    Instead, it writes nodes as it encounters them. 
+    A `Tx` node is created once when the block containing the transaction is parsed, 
+    and again every time that transaction is referenced as a `txin` in subsequent blocks. 
+    The same applies to `Script` nodes. 
+    Consequently, the `Tx` and `Script` nodes files contain a high degree of duplication.
 
 
-1. Run the _experimental_ application `EXP_PrepareDataForNeo4j`.
+    Crucially, the instance of the node created where the transaction 
+    originated contains detailed information, 
+    whereas references in subsequent blocks contain minimal information. 
+    This means some duplicate entries are rich in data while others 
+    are missing feature values. 
+    Therefore, we must deduplicate the files by "merging" duplicates 
+    into a single node that retains values for all features.
 
-    Due to memory constraints, 
-    this step aggregates files but does not strictly deduplicate them; 
-    it outputs intermediate files intended for sorting.
 
-2. `cd` to the directory where the data is persisted
+    This step is critical for the Neo4j import process. 
+    While the Neo4j admin tool offers a `--skip-duplicate-nodes` flag, 
+    relying on it is discouraged because it only tolerates 
+    a limited number of duplicates, 
+    and increasing that limit incurs significant performance penalties. 
+    Furthermore, Neo4j does not support the merging of data described above; 
+    it would simply discard subsequent entries.
 
-3. Combine the files:
+</details>
+
+
+1.  `cd` to the directory where the data is persisted.
+
+2.  Combine the files:
 
     ```shell
-    cat *_BitcoinTxNode.tsv > combined_BitcoinTxNode.tsv
+    zcat [0-9]*_BitcoinTxNode.csv.gz > combined_BitcoinTxNode.csv
     ```
 
     ```shell
-    cat *_BitcoinScriptNode.tsv > combined_BitcoinScriptNode.tsv
+    zcat [0-9]*_BitcoinScriptNode.csv.gz > combined_BitcoinScriptNode.csv
     ```
 
-4. Sort the files:
-    (The goal of the following is to de-duplicate the Tx and Script node files. neo4j has the argument `--skip-duplicate-nodes[=true|false]` that can be used as an alternative to the following.)
+3.  Sort the files. 
+    Note: Since these files can be very large, 
+    the command below is configured to use temporary on-disk files. 
+    Ensure you have sufficient disk space (at least as much as the `combined_*` files) 
+    and are running on performant media (e.g., NVMe). 
+    Adjust the `--buffer-size` according to the available memory on your machine.
+
 
     ```shell
-    LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_BitcoinTxNode.tsv > sorted_BitcoinTxNode.tsv
+    LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_BitcoinTxNode.csv > sorted_BitcoinTxNode.csv
     ```
 
     ```shell
-    LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_BitcoinScriptNode.tsv > sorted_BitcoinScriptNode.tsv
+    LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_BitcoinScriptNode.csv > sorted_BitcoinScriptNode.csv
     ```
 
-5. Run the _experimental_ application `EXP_ProcessSortedNodeFiles`.
+4.  Run the following command to deduplicate the files:
 
+    ```shell
+    .\eba.exe bitcoin dedup --sorted-script-nodes-file sorted_BitcoinScriptNode.csv --sorted-tx-nodes-file sorted_BitcoinTxNode.csv
+    ```

@@ -1,8 +1,4 @@
 using EBA.CLI;
-using EBA.Graph.Bitcoin;
-using EBA.Utilities;
-
-using EBA.CLI;
 
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
@@ -21,12 +17,13 @@ public class Orchestrator : IDisposable
         _cT = cancelationToken;
 
         _cli = new Cli(
-            TraverseBitcoinAsync,
-            SampleGraphAsync,
-            ImportGraphAsync,
-            AddressStatsAsync,
-            ImportCypherQueriesAsync,
-            (e, c) =>
+            bitcoinTraverseCmdHandlerAsync: BitcoinTraverseAsync,
+            bitcoinDeDupCmdHandlerAsync: BitcoinDeDupAsync,
+            bitcoinSampleCmdHandlerAsync: BitcoinSampleGraphAsync,
+            bitcoinImportCmdHandlerAsync: BitcoinImportGraphAsync,
+            bitcoinAddressStatsHandlerAsync: BitcoinAddressStatsAsync,
+            bitcoinImportCypherQueriesAsync: BitcoinImportCypherQueriesAsync,
+            exceptionHandler: (e, c) =>
             {
                 if (_logger != null)
                     _logger.LogCritical("{error}", e.Message);
@@ -50,14 +47,21 @@ public class Orchestrator : IDisposable
         return host;
     }
 
-    private async Task TraverseBitcoinAsync(Options options)
+    private async Task BitcoinTraverseAsync(Options options)
     {
         var host = await SetupAndGetHostAsync(options);
-        var bitcoinOrchestrator = host.Services.GetRequiredService<Blockchains.Bitcoin.BitcoinOrchestrator>();
+        var bitcoinOrchestrator = host.Services.GetRequiredService<BitcoinOrchestrator>();
         await bitcoinOrchestrator.TraverseAsync(options, _cT);
     }
 
-    private async Task ImportGraphAsync(Options options)
+    private async Task BitcoinDeDupAsync(Options options)
+    {
+        var host = await SetupAndGetHostAsync(options);
+        var bitcoinOrchestrator = host.Services.GetRequiredService<BitcoinOrchestrator>();
+        await bitcoinOrchestrator.DeDupAsync(options, _cT);
+    }
+
+    private async Task BitcoinImportGraphAsync(Options options)
     {
         var host = await SetupAndGetHostAsync(options);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
@@ -66,7 +70,7 @@ public class Orchestrator : IDisposable
         await graphDb.ImportAsync(_cT);
     }
 
-    private async Task ImportCypherQueriesAsync(Options options)
+    private async Task BitcoinImportCypherQueriesAsync(Options options)
     {
         var host = await SetupAndGetHostAsync(options);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
@@ -75,7 +79,7 @@ public class Orchestrator : IDisposable
         graphDb.ReportQueries();
     }
 
-    private async Task SampleGraphAsync(Options options)
+    private async Task BitcoinSampleGraphAsync(Options options)
     {
         var host = await SetupAndGetHostAsync(options);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
@@ -92,7 +96,7 @@ public class Orchestrator : IDisposable
         }
     }
 
-    private async Task AddressStatsAsync(Options options)
+    private async Task BitcoinAddressStatsAsync(Options options)
     {
         _ = await SetupAndGetHostAsync(options);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
