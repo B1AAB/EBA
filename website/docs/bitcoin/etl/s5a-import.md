@@ -1,5 +1,5 @@
 ---
-title: Import into neo4j
+title: Import into Neo4j
 description: Step 5. Import into neo4j
 sidebar_position: 4
 slug: /bitcoin/etl/import
@@ -162,3 +162,5 @@ meaning it does not support incremental updates to an existing graph.
     We also recommend installing the 
     [APOC library](https://neo4j.com/docs/apoc/current/installation/), 
     as it is needed in EBA for sampling communities.
+
+8.  [Update Neo4j database configuration](./db-conf).
