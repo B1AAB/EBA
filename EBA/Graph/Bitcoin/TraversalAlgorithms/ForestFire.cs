@@ -1,4 +1,3 @@
-﻿using EBA.Utilities;
 
 namespace EBA.Graph.Bitcoin.TraversalAlgorithms;
 
@@ -47,7 +46,7 @@ public class ForestFire : ITraversalAlgorithm
                     rootNodeIdProperty: rootNode.GetIdPropertyName(),
                     rootNodeId: rootNode.Id,
                     nodeSamplingCountAtRoot: _options.Bitcoin.GraphSample.ForestFireOptions.NodeSamplingCountAtRoot,
-                    maxHops: _options.Bitcoin.GraphSample.Hops,
+                    maxHops: _options.Bitcoin.GraphSample.ForestFireOptions.MaxHops,
                     queryLimit: _options.Bitcoin.GraphSample.ForestFireOptions.QueryLimit,
                     nodeCountReductionFactorByHop: _options.Bitcoin.GraphSample.ForestFireOptions.NodeCountReductionFactorByHop,
                     ct: ct);
@@ -195,7 +194,7 @@ public class ForestFire : ITraversalAlgorithm
         return nodesAddedToGraph;
     }
 
-    private async Task ProcessHops(
+    private async Task<bool> ProcessHops(
         NodeLabels rootNodeLabel,
         string rootNodeIdProperty,
         string rootNodeId,
@@ -228,6 +227,14 @@ public class ForestFire : ITraversalAlgorithm
         if (hop < maxHops)
         {
             foreach (var node in selectedNodes)
+            {
+                if (g.NodeCount >= _options.Bitcoin.GraphSample.MaxNodeCount ||
+                   g.EdgeCount >= _options.Bitcoin.GraphSample.MaxEdgeCount)
+                {
+                    // Reached maximum node or edge count; stopping further expansions.
+                    return false;
+                }
+
                 await ProcessHops(
                     rootNodeLabel: BitcoinGraphAgent.ConvertGraphComponentTypeToNodeLabel(node.GetGraphComponentType()),
                     rootNodeIdProperty: node.GetIdPropertyName(),
@@ -240,6 +247,9 @@ public class ForestFire : ITraversalAlgorithm
                     g: g,
                     ct: ct);
         }
+    }
+
+        return true;
     }
 
     private async Task<GraphBase> GetNeighborsAsync(
@@ -263,7 +273,7 @@ public class ForestFire : ITraversalAlgorithm
             rootNodeId,
             maxHops.ToString());
 
-        await ProcessHops(
+        var completedWalk = await ProcessHops(
             rootNodeLabel: rootNodeLabel,
             rootNodeIdProperty: rootNodeIdProperty,
             rootNodeId: rootNodeId,
@@ -275,10 +285,21 @@ public class ForestFire : ITraversalAlgorithm
             g: g,
             ct: ct);
 
-        _logger.LogInformation("Retrieved neighbors.");
-        _logger.LogInformation("Building a graph from the neighbors.");
+        if (!completedWalk)
+        {
+            _logger.LogWarning(
+                "Stopped expanding neighbors early due to reaching maximum node or edge count: " +
+                "{nodeCount:N0} nodes (max: {maxNodeCount:N0}), {edgeCount:N0} edges (max: {maxEdgeCount:N0}).",
+                g.NodeCount,
+                _options.Bitcoin.GraphSample.MaxNodeCount,
+                g.EdgeCount,
+                _options.Bitcoin.GraphSample.MaxEdgeCount);
+        }
 
-        _logger.LogInformation("Build graph from the neighbors; {nodeCount} nodes and {edgeCount} edges.", g.NodeCount, g.EdgeCount);
+        _logger.LogInformation(
+            "Retrieved neighbors and built a graph from the neighbors: " +
+            "{nodeCount} nodes and {edgeCount} edges.",
+            g.NodeCount, g.EdgeCount);
 
         return g;
     }
