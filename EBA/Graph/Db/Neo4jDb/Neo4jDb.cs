@@ -60,7 +60,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 $"LIMIT {count} " +
                 $"RETURN {nodeVariable}");
 
-            return await result.ToListAsync();
+            return await result.ToListAsync(cancellationToken: ct);
         });
 
         return rndRecords;
@@ -72,11 +72,13 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         string rootNodeIdProperty,
         string rootNodeId,
         int queryLimit, 
-        //string labelFilters, 
         int maxLevel, 
         GraphTraversal traversalAlgorithm,
+        CancellationToken ct,
         string relationshipFilter = "")
     {
+        ct.ThrowIfCancellationRequested();
+
         var qBuilder = new StringBuilder();
         qBuilder.Append($"MATCH (root:{rootNodeLabel} {{ {rootNodeIdProperty}: \"{rootNodeId}\" }}) ");
 
@@ -123,7 +125,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         var samplingResult = await session.ExecuteReadAsync(async x =>
         {
             var result = await x.RunAsync(qBuilder.ToString());
-            return await result.ToListAsync();
+            return await result.ToListAsync(ct);
         });
 
         return samplingResult;

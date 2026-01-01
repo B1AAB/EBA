@@ -19,7 +19,6 @@ public class ForestFire : ITraversalAlgorithm
     {
         var sampledSubGraphsCount = 0;
         var attempts = 0;
-        var baseOutputDir = Path.Join(_options.WorkingDir, $"sampled_subgraphs_{Helpers.GetUnixTimeSeconds()}");
 
         _logger.LogInformation("Sampling {n} graphs.", _options.Bitcoin.GraphSample.Count - sampledSubGraphsCount);
 
@@ -39,6 +38,8 @@ public class ForestFire : ITraversalAlgorithm
             int counter = 1;
             foreach (var rootNode in rndRootNodes)
             {
+                ct.ThrowIfCancellationRequested();
+
                 _logger.LogInformation("Sampling neighbors of the random root node {n}/{t}.", counter, rndRootNodes.Count);
 
                 var graph = await GetNeighborsAsync(
@@ -48,7 +49,9 @@ public class ForestFire : ITraversalAlgorithm
                     nodeSamplingCountAtRoot: _options.Bitcoin.GraphSample.ForestFireNodeSamplingCountAtRoot,
                     maxHops: _options.Bitcoin.GraphSample.ForestFireMaxHops,
                     queryLimit: _options.Bitcoin.GraphSample.ForestFireQueryLimit,
-                    nodeCountReductionFactorByHop: _options.Bitcoin.GraphSample.ForestFireNodeCountReductionFactorByHop);
+                    nodeCountReductionFactorByHop: _options.Bitcoin.GraphSample.ForestFireNodeCountReductionFactorByHop,
+                    ct: ct);
+
                 var perBatchLabelsFilename = Path.Join(_options.WorkingDir, "Labels.tsv");
 
                 if (graph.NodeCount < _options.Bitcoin.GraphSample.MinNodeCount - (_options.Bitcoin.GraphSample.MinNodeCount * 0.0) ||
@@ -70,6 +73,8 @@ public class ForestFire : ITraversalAlgorithm
                 }
                 else
                 {
+                    ct.ThrowIfCancellationRequested();
+
                     graph.Serialize(
                         Path.Join(_options.WorkingDir, graph.Id),
                         perBatchLabelsFilename,
@@ -97,7 +102,8 @@ public class ForestFire : ITraversalAlgorithm
         int hop,
         int nodeSamplingCountAtRoot, 
         double nodeCountReductionFactorByHop, 
-        BitcoinGraph g)
+        BitcoinGraph g,
+        CancellationToken ct)
     {
         static bool TryUnpackDict(IDictionary<string, object> dict, double hop, out Model.INode? v)
         {
@@ -146,6 +152,8 @@ public class ForestFire : ITraversalAlgorithm
             foreach (var edge in r.Values["relationships"].As<List<IRelationship>>())
                 edges.Add(edge);
         }
+
+        ct.ThrowIfCancellationRequested();
 
         var rnd = new Random(31);
         var nodesToKeep = nodesUniqueToThisHop.Keys.OrderBy(
@@ -196,21 +204,26 @@ public class ForestFire : ITraversalAlgorithm
         int queryLimit,
         int nodeSamplingCountAtRoot,
         double nodeCountReductionFactorByHop,
-        BitcoinGraph g)
+        BitcoinGraph g,
+        CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
+
         var samplingResult = await _graphDb.GetNeighborsAsync(
             rootNodeLabel,
             rootNodeIdProperty,
             rootNodeId,
             queryLimit,
             1,
-            GraphTraversal.BFS);
+            GraphTraversal.BFS,
+            ct: ct);
 
         var selectedNodes = ProcessQueriedNeighborhood(
             samplingResult, hop,
             nodeSamplingCountAtRoot: nodeSamplingCountAtRoot,
             nodeCountReductionFactorByHop: nodeCountReductionFactorByHop,
-            g: g);
+            g: g,
+            ct: ct);
 
         if (hop < maxHops)
         {
@@ -224,7 +237,8 @@ public class ForestFire : ITraversalAlgorithm
                     queryLimit: queryLimit,
                     nodeSamplingCountAtRoot: nodeSamplingCountAtRoot,
                     nodeCountReductionFactorByHop: nodeCountReductionFactorByHop,
-                    g: g);
+                    g: g,
+                    ct: ct);
         }
     }
 
@@ -235,8 +249,11 @@ public class ForestFire : ITraversalAlgorithm
         int nodeSamplingCountAtRoot,
         int maxHops,
         int queryLimit,
-        double nodeCountReductionFactorByHop)
+        double nodeCountReductionFactorByHop,
+        CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
+
         var g = new BitcoinGraph();
 
         _logger.LogInformation(
@@ -255,7 +272,8 @@ public class ForestFire : ITraversalAlgorithm
             queryLimit: queryLimit,
             nodeSamplingCountAtRoot: nodeSamplingCountAtRoot,
             nodeCountReductionFactorByHop: nodeCountReductionFactorByHop,
-            g: g);
+            g: g,
+            ct: ct);
 
         _logger.LogInformation("Retrieved neighbors.");
         _logger.LogInformation("Building a graph from the neighbors.");

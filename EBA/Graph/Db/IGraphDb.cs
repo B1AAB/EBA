@@ -32,8 +32,8 @@ public interface IGraphDb<T> : IDisposable where T : GraphBase
         string rootNodeIdProperty,
         string rootNodeId,
         int queryLimit,
-        //string labelFilters,
         int maxLevel,
         GraphTraversal traversalAlgorithm,
+        CancellationToken ct,
         string relationshipFilter = "");
 }
