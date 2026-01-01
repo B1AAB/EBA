@@ -12,7 +12,8 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<int>? _graphSampleMaxNodeCount;
     private readonly Option<int>? _graphSampleMinEdgeCount;
     private readonly Option<int>? _graphSampleMaxEdgeCount;
-    private readonly Option<GraphSampleMode>? _graphSampleModeOption;
+    private readonly Option<GraphTraversal>? _graphSampleMethodOption;
+    private readonly Option<string>? _graphSampleMethodOptionsOption;
     private readonly Option<double>? _graphSampleRootNodeSelectProb;
     private readonly Option<string>? _workingDirOption;
     private readonly Option<string>? _statusFilenameOption;
@@ -39,7 +40,8 @@ internal class OptionsBinder : BinderBase<Options>
         Option<int>? graphSampleMaxNodeCount = null,
         Option<int>? graphSampleMinEdgeCount = null,
         Option<int>? graphSampleMaxEdgeCount = null,
-        Option<GraphSampleMode>? graphSampleModeOption = null,
+        Option<GraphTraversal>? graphSampleMethodOption = null,
+        Option<string> graphSampleMethodOptionsOption = null,
         Option<double>? graphSampleRootNodeSelectProb = null,
         Option<string>? workingDirOption = null,
         Option<string>? statusFilenameOption = null,
@@ -65,7 +67,8 @@ internal class OptionsBinder : BinderBase<Options>
         _graphSampleMaxNodeCount = graphSampleMaxNodeCount;
         _graphSampleMinEdgeCount = graphSampleMinEdgeCount;
         _graphSampleMaxEdgeCount = graphSampleMaxEdgeCount;
-        _graphSampleModeOption = graphSampleModeOption;
+        _graphSampleMethodOption = graphSampleMethodOption;
+        _graphSampleMethodOptionsOption = graphSampleMethodOptionsOption;
         _graphSampleRootNodeSelectProb = graphSampleRootNodeSelectProb;
         _workingDirOption = workingDirOption;
         _statusFilenameOption = statusFilenameOption;
@@ -112,15 +115,28 @@ internal class OptionsBinder : BinderBase<Options>
             TrackTxo = GetValue(defs.Bitcoin.Traverse.TrackTxo, _trackTxoOption, c),
             SkipGraphSerialization = GetValue(defs.Bitcoin.Traverse.SkipGraphSerialization, _skipGraphSerializationOption, c),
             SkipSerializingAddresses = GetValue(defs.Bitcoin.Traverse.SkipSerializingAddresses, _skipSerializingAddressesOption, c)
-        };
+        };        
 
-        // TODO: add a warning hen txofilename is set hwile txoPeristenceStrategy is not set to persist to text file.
+        var traversalAlgorithm = GetValue(defs.Bitcoin.GraphSample.TraversalAlgorithm, _graphSampleMethodOption, c);
+        var forestFireOptions = defs.Bitcoin.GraphSample.ForestFireOptions;
+        if (traversalAlgorithm == GraphTraversal.FFS)
+        {
+            if (_graphSampleMethodOptionsOption != null && c.ParseResult.HasOption(_graphSampleMethodOptionsOption))
+            {
+                var jsonValue = c.ParseResult.GetValueForOption(_graphSampleMethodOptionsOption);
+                if (!string.IsNullOrWhiteSpace(jsonValue))
+                    forestFireOptions = JsonSerializer
+                        .Deserialize<BitcoinForestFireOptions>(jsonValue) 
+                        ?? forestFireOptions;
+            }
+        }
 
         var gsample = new BitcoinGraphSampleOptions()
         {
             Count = GetValue(defs.Bitcoin.GraphSample.Count, _graphSampleCountOption, c),
             Hops = GetValue(defs.Bitcoin.GraphSample.Hops, _graphSampleHopsOption, c),
-            Mode = GetValue(defs.Bitcoin.GraphSample.Mode, _graphSampleModeOption, c),
+            TraversalAlgorithm = traversalAlgorithm,
+            ForestFireOptions = forestFireOptions,
             MinNodeCount = GetValue(defs.Bitcoin.GraphSample.MinNodeCount, _graphSampleMinNodeCount, c),
             MaxNodeCount = GetValue(defs.Bitcoin.GraphSample.MaxNodeCount, _graphSampleMaxNodeCount, c),
             MinEdgeCount = GetValue(defs.Bitcoin.GraphSample.MinEdgeCount, _graphSampleMinEdgeCount, c),

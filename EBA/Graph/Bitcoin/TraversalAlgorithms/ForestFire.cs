@@ -46,10 +46,10 @@ public class ForestFire : ITraversalAlgorithm
                     rootNodeLabel: NodeLabels.Script,
                     rootNodeIdProperty: rootNode.GetIdPropertyName(),
                     rootNodeId: rootNode.Id,
-                    nodeSamplingCountAtRoot: _options.Bitcoin.GraphSample.ForestFireNodeSamplingCountAtRoot,
-                    maxHops: _options.Bitcoin.GraphSample.ForestFireMaxHops,
-                    queryLimit: _options.Bitcoin.GraphSample.ForestFireQueryLimit,
-                    nodeCountReductionFactorByHop: _options.Bitcoin.GraphSample.ForestFireNodeCountReductionFactorByHop,
+                    nodeSamplingCountAtRoot: _options.Bitcoin.GraphSample.ForestFireOptions.NodeSamplingCountAtRoot,
+                    maxHops: _options.Bitcoin.GraphSample.Hops,
+                    queryLimit: _options.Bitcoin.GraphSample.ForestFireOptions.QueryLimit,
+                    nodeCountReductionFactorByHop: _options.Bitcoin.GraphSample.ForestFireOptions.NodeCountReductionFactorByHop,
                     ct: ct);
 
                 var perBatchLabelsFilename = Path.Join(_options.WorkingDir, "Labels.tsv");

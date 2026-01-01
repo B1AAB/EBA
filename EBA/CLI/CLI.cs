@@ -355,31 +355,44 @@ internal class Cli
     {
         var countOption = new Option<int>(
             name: "--count",
-            description: "The number of graphs to sample.");
+            description: "Sets the number of communities to sample.");
         countOption.AddAlias("-c");
 
-        var hopsOption = new Option<int>(
-            name: "--hops",
-            description: "The number of hops to reach for sampling.");
-        hopsOption.AddAlias("-h");
 
-        // TODO: rework this option.
-        var modeOption = new Option<GraphSampleMode>(
-            name: "--mode",
-            description: "Sets sampling mode, supported options are: " +
-                         "ConnectedGraph (Graph is a single connected component) and  " +
-                         "ConnectedGraphAndForest (Graph is a forest of connected components, i.e., a collection of disjoint graphs).",
-            isDefault: true,
+        var methodsAliases = new Dictionary<GraphTraversal, string[]>
+        {
+            { GraphTraversal.FFS,
+            [
+                "Forest-First-Sampling",
+                "FFS"
+            ] }
+        };
+
+        var methodOption = new Option<GraphTraversal>(
+            name: "--method",
+            description: 
+                "Sets sampling method, supported options are: " +
+                "{" +
+                    string.Join(", ", methodsAliases.Select(kvp => $"[{string.Join(", ", kvp.Value)}]")) +
+                "}",
             parseArgument: x =>
             {
+                var def = new Options().Bitcoin.GraphSample.TraversalAlgorithm;
                 if (x.Tokens.Count == 0)
-                    return new Options().Bitcoin.GraphSample.Mode;
+                    return def;
 
-                var valid = Enum.TryParse(x.Tokens.Single().Value, out GraphSampleMode value);
-                if (!valid)
-                    x.ErrorMessage = $"Invalid mode; provided `{value}`, expected `A` or `B`";
-                return value;
+                var providedValue = x.Tokens.Single().Value;
+                foreach (var kvp in methodsAliases)
+                    if (kvp.Value.Any(alias => string.Equals(alias, providedValue, StringComparison.OrdinalIgnoreCase)))
+                        return kvp.Key;
+
+                x.ErrorMessage = $"Invalid --method provided: `{providedValue}`";
+                return def;
             });
+
+        var methodOptionsOption = new Option<string>(
+            name: "--method-options",
+            description: "A JSON string containing method-specific options.");
 
         var minNodeCountOption = new Option<int>(
             "--min-node-count",
@@ -409,13 +422,13 @@ internal class Cli
             description: "Methods for sampling from the graph.")
         {
             countOption,
-            hopsOption,
             minNodeCountOption,
             maxNodeCountOption,
             minEdgeCountOption,
             maxEdgeCountOption,
             rootNodeSelectProbOption,
-            modeOption
+            methodOption,
+            methodOptionsOption,
         };
 
         cmd.AddValidator(commandResult =>
@@ -427,8 +440,27 @@ internal class Cli
                 if (commandResult.FindResultFor(countOption) == null)
                     errors.Add("Option '--count' is required when --status-filename is not used.");
 
-                if (commandResult.FindResultFor(hopsOption) == null)
-                    errors.Add("Option '--hops' is required when --status-filename is not used.");
+                if (commandResult.FindResultFor(methodOption) == null)
+                    errors.Add($"Option '--{methodOption.Name}' is required when --status-filename is not used.");
+            }
+
+            var methodOptionsJson = commandResult.GetValueForOption(methodOptionsOption);
+            if (commandResult.GetValueForOption(methodOption) == GraphTraversal.FFS
+                && !string.IsNullOrWhiteSpace(methodOptionsJson))
+            {
+                try
+                {
+                    var serializationOptions = new JsonSerializerOptions
+                    {
+                        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+                        PropertyNameCaseInsensitive = true
+                    };
+                    JsonSerializer.Deserialize<BitcoinForestFireOptions>(methodOptionsJson, serializationOptions);
+                }
+                catch (JsonException e)
+                {
+                    errors.Add($"Invalid JSON for the Forest Fire sampling method options: {e.Message}");
+                }
             }
 
             if (errors.Count > 0)
@@ -441,12 +473,12 @@ internal class Cli
         },
         new OptionsBinder(
             graphSampleCountOption: countOption,
-            graphSampleHopOption: hopsOption,
             graphSampleMinNodeCount: minNodeCountOption,
             graphSampleMaxNodeCount: maxNodeCountOption,
             graphSampleMinEdgeCount: minEdgeCountOption,
             graphSampleMaxEdgeCount: maxEdgeCountOption,
-            graphSampleModeOption: modeOption,
+            graphSampleMethodOption: methodOption,
+            graphSampleMethodOptionsOption: methodOptionsOption,
             graphSampleRootNodeSelectProb: rootNodeSelectProbOption,
             workingDirOption: _workingDirOption,
             statusFilenameOption: _statusFilenameOption));

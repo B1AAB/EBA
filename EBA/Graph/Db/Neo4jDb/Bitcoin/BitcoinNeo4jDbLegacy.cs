@@ -299,10 +299,10 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         return await GetNeighborsUsingForestFireSamplingAlgorithmAsync(
             driver: driver,
             rootScriptAddress: rootScriptAddress,
-            nodeSamplingCountAtRoot: options.ForestFireNodeSamplingCountAtRoot,
-            maxHops: options.ForestFireMaxHops,
-            queryLimit: options.ForestFireQueryLimit,
-            nodeCountReductionFactorByHop: options.ForestFireNodeCountReductionFactorByHop);
+            nodeSamplingCountAtRoot: options.ForestFireOptions.NodeSamplingCountAtRoot,
+            maxHops: options.ForestFireOptions.MaxHops,
+            queryLimit: options.ForestFireOptions.QueryLimit,
+            nodeCountReductionFactorByHop: options.ForestFireOptions.NodeCountReductionFactorByHop);
     }
 
     private async Task<GraphBase> GetNeighborsUsingGraphTraversalAlgorithmAsync(IDriver driver, string rootScriptAddress, BitcoinGraphSampleOptions options)
