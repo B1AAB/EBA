@@ -361,11 +361,13 @@ internal class Cli
 
         var methodsAliases = new Dictionary<GraphTraversal, string[]>
         {
-            { GraphTraversal.FFS,
-            [
-                "Forest-First-Sampling",
-                "FFS"
-            ] }
+            {
+                GraphTraversal.FFS,
+                [
+                    "Forest-Fire",
+                    "FFS"
+                ]
+            }
         };
 
         var methodOption = new Option<GraphTraversal>(

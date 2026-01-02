@@ -1,5 +1,4 @@
-
-namespace EBA.Graph.Bitcoin.TraversalAlgorithms;
+﻿namespace EBA.Graph.Bitcoin.TraversalAlgorithms;
 
 public class ForestFire : ITraversalAlgorithm
 {
@@ -25,21 +24,26 @@ public class ForestFire : ITraversalAlgorithm
             sampledSubGraphsCount < _options.Bitcoin.GraphSample.Count &&
             ++attempts <= _options.Bitcoin.GraphSample.MaxAttempts)
         {
+            var remaining = _options.Bitcoin.GraphSample.Count - sampledSubGraphsCount;
             _logger.LogInformation(
-                "Getting {n} random root nodes; attempt {a}/{m}.",
-                _options.Bitcoin.GraphSample.Count - sampledSubGraphsCount,
-                attempts, _options.Bitcoin.GraphSample.MaxAttempts);
+                "Attempt {Attempt}/{MaxAttempts}: querying {RequestedCount} random root node(s) for sampling.",
+                attempts, _options.Bitcoin.GraphSample.MaxAttempts, remaining);
 
-            var rndRootNodes = await GetRandomScriptNodes(_options.Bitcoin.GraphSample.Count - sampledSubGraphsCount, ct);
+            var rndRootNodes = await GetRandomScriptNodes(remaining, ct);
 
-            _logger.LogInformation("Selected {n} random root nodes.", rndRootNodes.Count);
+            _logger.LogInformation(
+                "Attempt {Attempt}: Selected {SelectedCount} random root node(s).",
+                attempts, rndRootNodes.Count);
 
             int counter = 1;
             foreach (var rootNode in rndRootNodes)
             {
                 ct.ThrowIfCancellationRequested();
+                var rootNodeLabelInLogs = $"({NodeLabels.Script} {{{rootNode.GetIdPropertyName()}={rootNode.Id}}})";
 
-                _logger.LogInformation("Sampling neighbors of the random root node {n}/{t}.", counter, rndRootNodes.Count);
+                _logger.LogInformation(
+                    "Sampling neighbors for root {Index}/{Total}. {rootNodeTag}",
+                    counter, rndRootNodes.Count, rootNodeLabelInLogs);
 
                 var graph = await GetNeighborsAsync(
                     rootNodeLabel: NodeLabels.Script,
@@ -53,40 +57,44 @@ public class ForestFire : ITraversalAlgorithm
 
                 var perBatchLabelsFilename = Path.Join(_options.WorkingDir, "Labels.tsv");
 
-                if (graph.NodeCount < _options.Bitcoin.GraphSample.MinNodeCount - (_options.Bitcoin.GraphSample.MinNodeCount * 0.0) ||
-                    graph.EdgeCount < _options.Bitcoin.GraphSample.MinEdgeCount - (_options.Bitcoin.GraphSample.MinEdgeCount * 0.0))
+                if (graph.NodeCount < _options.Bitcoin.GraphSample.MinNodeCount ||
+                    graph.EdgeCount < _options.Bitcoin.GraphSample.MinEdgeCount)
                 {
                     _logger.LogWarning(
-                        "The sampled graph with {a} nodes and {b} edges does not match required charactersitics: " +
-                        "MinNodeCount: {c}, MaxNodeCount: {d}, MinEdgeCount: {e}, MaxEdgeCount: {f}",
+                        "Sampled neighborhood of the root {rootNodeTag} is rejected because the sampled graph size did not meet constraints: " +
+                        "nodes={NodeCount} (min={MinNode}, max={MaxNode}), edges={EdgeCount} (min={MinEdge}, max={MaxEdge}).",
+                        rootNodeLabelInLogs,
                         graph.NodeCount,
-                        graph.EdgeCount,
                         _options.Bitcoin.GraphSample.MinNodeCount,
                         _options.Bitcoin.GraphSample.MaxNodeCount,
+                        graph.EdgeCount,
                         _options.Bitcoin.GraphSample.MinEdgeCount,
                         _options.Bitcoin.GraphSample.MaxEdgeCount);
-
-                    _logger.LogWarning(
-                        "Failed sampling neighbors of the root node {r}.",
-                        rootNode.Address);
                 }
                 else
                 {
                     ct.ThrowIfCancellationRequested();
 
+                    var graphDir = Path.Join(_options.WorkingDir, graph.Id);
                     graph.Serialize(
-                        Path.Join(_options.WorkingDir, graph.Id),
+                        graphDir,
                         perBatchLabelsFilename,
                         serializeFeatureVectors: _options.Bitcoin.GraphSample.SerializeFeatureVectors,
                         serializeEdges: _options.Bitcoin.GraphSample.SerializeEdges);
 
-                    _logger.LogInformation("Serialized the graph.");
+                    _logger.LogInformation(
+                        "Successfully serialized sampled graph from root {rootNodeTag}",
+                        rootNodeLabelInLogs);
 
                     sampledSubGraphsCount++;
                     counter++;
                 }
             }
         }
+
+        _logger.LogInformation(
+            "Sampling finished. Total sampled communities={TotalSampled:N0}, Attempts={Attempts}.",
+            sampledSubGraphsCount, attempts);
     }
 
     /// <summary>
@@ -228,8 +236,8 @@ public class ForestFire : ITraversalAlgorithm
         {
             foreach (var node in selectedNodes)
             {
-                if (g.NodeCount >= _options.Bitcoin.GraphSample.MaxNodeCount ||
-                   g.EdgeCount >= _options.Bitcoin.GraphSample.MaxEdgeCount)
+                if (g.NodeCount >= _options.Bitcoin.GraphSample.MaxNodeCount
+                    || g.EdgeCount >= _options.Bitcoin.GraphSample.MaxEdgeCount)
                 {
                     // Reached maximum node or edge count; stopping further expansions.
                     return false;
@@ -246,8 +254,8 @@ public class ForestFire : ITraversalAlgorithm
                     nodeCountReductionFactorByHop: nodeCountReductionFactorByHop,
                     g: g,
                     ct: ct);
+            }
         }
-    }
 
         return true;
     }
@@ -266,12 +274,11 @@ public class ForestFire : ITraversalAlgorithm
 
         var g = new BitcoinGraph();
 
+        var rootNodeLabelInLogs = $"({rootNodeLabel} {{{rootNodeIdProperty}={rootNodeId}}})";
         _logger.LogInformation(
-            "Getting neighbors of random node ({label} {{{property}: {value}}}) at {hop} hop distance.",
-            rootNodeLabel.ToString(),
-            rootNodeIdProperty,
-            rootNodeId,
-            maxHops.ToString());
+            "Retrieving neighbors for root node {rootNodeTag} up to {MaxHops} hop(s). ",
+            rootNodeLabelInLogs,
+            maxHops);
 
         var completedWalk = await ProcessHops(
             rootNodeLabel: rootNodeLabel,
@@ -288,8 +295,10 @@ public class ForestFire : ITraversalAlgorithm
         if (!completedWalk)
         {
             _logger.LogWarning(
-                "Stopped expanding neighbors early due to reaching maximum node or edge count: " +
-                "{nodeCount:N0} nodes (max: {maxNodeCount:N0}), {edgeCount:N0} edges (max: {maxEdgeCount:N0}).",
+                "Neighbor expansion stopped early because the graph size passed the set limits. " +
+                "Current graph size: " +
+                "nodes={NodeCount:N0} (max={MaxNodeCount:N0}), " +
+                "edges={EdgeCount:N0} (max={MaxEdgeCount:N0}).",
                 g.NodeCount,
                 _options.Bitcoin.GraphSample.MaxNodeCount,
                 g.EdgeCount,
@@ -297,9 +306,8 @@ public class ForestFire : ITraversalAlgorithm
         }
 
         _logger.LogInformation(
-            "Retrieved neighbors and built a graph from the neighbors: " +
-            "{nodeCount} nodes and {edgeCount} edges.",
-            g.NodeCount, g.EdgeCount);
+            "Neighbor retrieval completed for root node {rootNodeTag}. Built graph with {NodeCount:N0} nodes and {EdgeCount:N0} edges.",
+            rootNodeLabelInLogs, g.NodeCount, g.EdgeCount);
 
         return g;
     }
