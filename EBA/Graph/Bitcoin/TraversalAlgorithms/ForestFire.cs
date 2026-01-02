@@ -6,6 +6,8 @@ public class ForestFire : ITraversalAlgorithm
     private readonly IGraphDb<BitcoinGraph> _graphDb;
     private readonly ILogger<BitcoinGraphAgent> _logger;
 
+    private int _maxHopReached = 0;
+
     public ForestFire(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<BitcoinGraphAgent> logger)
     {
         _options = options;
@@ -234,6 +236,8 @@ public class ForestFire : ITraversalAlgorithm
 
         if (hop < maxHops)
         {
+            _maxHopReached = Math.Max(_maxHopReached, hop);
+
             foreach (var node in selectedNodes)
             {
                 if (g.NodeCount >= _options.Bitcoin.GraphSample.MaxNodeCount
@@ -280,6 +284,7 @@ public class ForestFire : ITraversalAlgorithm
             rootNodeLabelInLogs,
             maxHops);
 
+        _maxHopReached = 0;
         var completedWalk = await ProcessHops(
             rootNodeLabel: rootNodeLabel,
             rootNodeIdProperty: rootNodeIdProperty,
@@ -298,11 +303,13 @@ public class ForestFire : ITraversalAlgorithm
                 "Neighbor expansion stopped early because the graph size passed the set limits. " +
                 "Current graph size: " +
                 "nodes={NodeCount:N0} (max={MaxNodeCount:N0}), " +
-                "edges={EdgeCount:N0} (max={MaxEdgeCount:N0}).",
+                "edges={EdgeCount:N0} (max={MaxEdgeCount:N0}). " +
+                "Max hop reached: {maxHop}",
                 g.NodeCount,
                 _options.Bitcoin.GraphSample.MaxNodeCount,
                 g.EdgeCount,
-                _options.Bitcoin.GraphSample.MaxEdgeCount);
+                _options.Bitcoin.GraphSample.MaxEdgeCount,
+                _maxHopReached);
         }
 
         _logger.LogInformation(
