@@ -27,11 +27,11 @@ and adjust the algorithm's parameters as follows.
 
 Example: 
 
-```shell
-.\eba.exe bitcoin sample \
-    --count 100 \
-    --method ffs \
-    --method-options "{\"maxHops\": 6}"
+```powershell
+.\eba.exe bitcoin sample `
+    --count 1000 `
+    --method ffs `
+    --method-options '{\"maxHops\": 6, \"nodeCountAtRoot\": 10, \"reductionFactor\": 2, \"queryLimit\": 1000}'
 ```
 
 This command sets the method to `sample`, 
@@ -57,7 +57,7 @@ FFS-specific arguments are documented below.
 | ------------------------------------------- | -------- | ------- | ----------- |
 | [`maxHops`](#max-hops)                      | `int`    | `2`     | Maximum traversal depth (hops) away from the root node. |
 | [`queryLimit`](#query-limit)                | `int`    | `1000`  | Maximum number of neighbors to query from the database before sampling. |
-| [`NodeSamplingCountAtRoot`](#count-at-root) | `int`    | `100`   | Maximum number of neighbors to sample from the root node. |
+| [`nodeCountAtRoot`](#count-at-root) | `int` | `100`   | Maximum number of neighbors to sample from the root node. |
 | [`reductionFactor`](#reduction-factor)      | `double` | `4.0`   | Factor controlling the reduction of sampled neighbors as hop depth increases. |
 
 
@@ -75,7 +75,7 @@ These queried nodes become the candidate pool for the forest-fire algorithm
 
 
 
-### `NodeSamplingCountAtRoot` {#count-at-root}
+### `nodeCountAtRoot` {#count-at-root}
 
 Sets the maximum number of neighbors to sample 
 from the root node's queried set 
@@ -91,5 +91,5 @@ This reduction is controlled by the reduction factor.
 The number of nodes sampled at a specific hop is calculated as:
 
 ```
-floor(NodeSamplingCountAtRoot - (hop * reductionFactor))
+floor(nodeCountAtRoot - (hop * reductionFactor))
 ```
