@@ -172,6 +172,13 @@ public class ForestFire : ITraversalAlgorithm
 
         foreach (var edge in edges)
         {
+            if (g.NodeCount >= _options.Bitcoin.GraphSample.MaxNodeCount
+                || g.EdgeCount >= _options.Bitcoin.GraphSample.MaxEdgeCount)
+            {
+                // Reached maximum node or edge count; stopping further additions.
+                break;
+            }
+
             string subjectNodeGraphDbId;
             if (edge.StartNodeElementId == rootNode.IdInGraphDb)
                 subjectNodeGraphDbId = edge.EndNodeElementId;
