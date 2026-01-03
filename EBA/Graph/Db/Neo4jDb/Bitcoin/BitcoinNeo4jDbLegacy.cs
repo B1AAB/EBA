@@ -294,15 +294,17 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
     {
         // TODO: both of the following methods need a rewrite, they could be merged with simpler interface.
 
-        if (options.TraversalAlgorithm == GraphTraversal.BFS || options.TraversalAlgorithm == GraphTraversal.DFS)
+        /*if (options.TraversalAlgorithm == GraphTraversal.BFS || options.TraversalAlgorithm == GraphTraversal.DFS)
             return await GetNeighborsUsingGraphTraversalAlgorithmAsync(driver, rootScriptAddress, options);
-        return await GetNeighborsUsingForestFireSamplingAlgorithmAsync(
+        */
+        return
+            await GetNeighborsUsingForestFireSamplingAlgorithmAsync(
             driver: driver,
             rootScriptAddress: rootScriptAddress,
-            nodeSamplingCountAtRoot: options.ForestFireNodeSamplingCountAtRoot,
-            maxHops: options.ForestFireMaxHops,
-            queryLimit: options.ForestFireQueryLimit,
-            nodeCountReductionFactorByHop: options.ForestFireNodeCountReductionFactorByHop);
+            nodeSamplingCountAtRoot: options.ForestFireOptions.NodeSamplingCountAtRoot,
+            maxHops: options.ForestFireOptions.MaxHops,
+            queryLimit: options.ForestFireOptions.QueryLimit,
+            nodeCountReductionFactorByHop: options.ForestFireOptions.NodeCountReductionFactorByHop);
     }
 
     private async Task<GraphBase> GetNeighborsUsingGraphTraversalAlgorithmAsync(IDriver driver, string rootScriptAddress, BitcoinGraphSampleOptions options)
@@ -324,10 +326,10 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
         qBuilder.Append($"maxLevel: {options.Hops}, ");
         qBuilder.Append($"limit: {Options.Bitcoin.GraphSample.MaxEdgesFetchFromNeighbor}, ");
 
-        if (Options.Bitcoin.GraphSample.TraversalAlgorithm == GraphTraversal.BFS)
+        //if (Options.Bitcoin.GraphSample.TraversalAlgorithm == GraphTraversal.BFS)
             qBuilder.Append($"bfs: true, ");
-        else
-            qBuilder.Append($"bfs: false, ");
+        /*else
+            qBuilder.Append($"bfs: false, ");*/
 
         //qBuilder.Append($"labelFilter: '{options.LabelFilters}'");
         //$"    relationshipFilter: \">{EdgeType.Transfers}\"" +

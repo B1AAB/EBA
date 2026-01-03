@@ -29,14 +29,14 @@ public enum GraphTraversal
     // deterministic sampling algorithm
     // stops when a criteria is met (e.g., max number of nodes or edges sampled)
     // Breadth-first Search
-    BFS,
+    //BFS,
 
     // path search algorithm
     // traverse the graph using the given algorithm 
     // deterministic sampling algorithm
     // stops when a criteria is met (e.g., max number of nodes or edges sampled)
     // Depth-first Search
-    DFS,
+    //DFS,
 
     // sampling algorithm 
     // non-deterministic sampling algorithm
@@ -82,11 +82,6 @@ public class BitcoinGraphSampleOptions
     public bool SerializeEdges { init; get; } = false;
     public bool SerializeFeatureVectors { init; get; } = true;
 
-    public int ForestFireNodeSamplingCountAtRoot { init; get; } = 100;
-    public int ForestFireMaxHops { init; get; } = 2;
-    public int ForestFireQueryLimit { init; get; } = 1000;
-    public double ForestFireNodeCountReductionFactorByHop { init; get; } = 4.0;
-
     public int DisjointGraph_ForestFireNodeSamplingCountAtRoot { init; get; } = 20;
     public int DisjointGraph_ForestFireMaxHops { init; get; } = 3;
     public int DisjointGraph_ForestFireQueryLimit { init; get; } = 100;
@@ -115,4 +110,6 @@ public class BitcoinGraphSampleOptions
     // +ScriptNodeStrategy.Labels|-TxNodeStrategy.Labels|>BlockNodeStrategy.Labels
     // more details: https://neo4j.com/labs/apoc/4.1/overview/apoc.path/apoc.path.spanningTree/#expand-spanning-tree-label-filters
     //public string LabelFilters { init; get; } = $"{ScriptNodeStrategy.Label}|{BlockNodeStrategy.Label}";
+
+    public BitcoinForestFireOptions ForestFireOptions { init; get;  } = new BitcoinForestFireOptions();
 }

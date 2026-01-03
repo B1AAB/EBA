@@ -1,0 +1,95 @@
+---
+id: forestfire
+title: Forest-Fire
+sidebar_label: Forest-Fire
+sidebar_position: 3
+slug: /bitcoin/sampling/forest-fire
+---
+
+**Motivation:** 
+Consider a node with an out-degree of `100`, 
+where each of its neighbors also has a similar out-degree. 
+If the goal is to sample `10` nodes from the neighborhood within `3` hops, 
+a breadth-first search (BFS) traversal will likely return `10` direct neighbors of the root node, 
+and a depth-first search (DFS) search will likely return the first neighbor found and `9` of that neighbor's neighbors. 
+Therefore, neither of these methods will effectively sample nodes up to `3` hops away, 
+nor will the sampled subgraph be representative of the broader `3`-hop neighborhood structure.
+
+
+Therefore, to sample representative neighborhoods in the Bitcoin graph, 
+we developed a method that randomly selects a subset of neighbors for a root node. 
+Then, for each of those selected nodes, it chooses a subset of their immediate neighbors, 
+and continues this process until a termination criterion is met. 
+
+
+You may set the `sample` method to use the forest-fire algorithm 
+and adjust the algorithm's parameters as follows.
+
+Example: 
+
+```shell
+.\eba.exe bitcoin sample \
+    --count 100 \
+    --method ffs \
+    --method-options "{\"maxHops\": 6}"
+```
+
+This command sets the method to `sample`, 
+aiming for `100` communities using the `ffs` (forest-fire sampling) strategy 
+at a maximum depth of `6` hops from the root nodes.
+
+:::tip You can provide arguments via a JSON file
+In addition to passing arguments via the command line, you can supply them using a JSON file.
+See [this page](./overview) for an example.
+:::
+
+
+You may run the following command to view documentation for common arguments of the `sample` command:
+
+```bash
+.\eba.exe bitcoin sample --help
+```
+
+FFS-specific arguments are documented below.
+
+
+| Option                                      | Type     | Default | Description |
+| ------------------------------------------- | -------- | ------- | ----------- |
+| [`maxHops`](#max-hops)                      | `int`    | `2`     | Maximum traversal depth (hops) away from the root node. |
+| [`queryLimit`](#query-limit)                | `int`    | `1000`  | Maximum number of neighbors to query from the database before sampling. |
+| [`NodeSamplingCountAtRoot`](#count-at-root) | `int`    | `100`   | Maximum number of neighbors to sample from the root node. |
+| [`reductionFactor`](#reduction-factor)      | `double` | `4.0`   | Factor controlling the reduction of sampled neighbors as hop depth increases. |
+
+
+### `maxHops` {#max-hops}
+
+Sets the maximum number of hops away from the root node that the algorithm is allowed to traverse.
+
+
+
+### `queryLimit` {#query-limit}
+
+Sets the maximum number of neighbors to query from the database for a given node. 
+These queried nodes become the candidate pool for the forest-fire algorithm 
+(i.e., the algorithm will select a subset from these).
+
+
+
+### `NodeSamplingCountAtRoot` {#count-at-root}
+
+Sets the maximum number of neighbors to sample 
+from the root node's queried set 
+(the size of which is limited by `queryLimit`).
+
+
+
+### `reductionFactor` {#reduction-factor}
+
+As the algorithm traverses deeper from the root node, 
+it randomly selects fewer neighbors. 
+This reduction is controlled by the reduction factor. 
+The number of nodes sampled at a specific hop is calculated as:
+
+```
+floor(NodeSamplingCountAtRoot - (hop * reductionFactor))
+```

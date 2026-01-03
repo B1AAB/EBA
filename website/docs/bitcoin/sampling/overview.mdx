@@ -23,7 +23,7 @@ that can be adjusted to fit the data requirements
 of a wide spectrum of application areas. 
 The strategies we currently provide are:
 
-- [Random Neighborhood Sampling](./rns)
+- [Forest-Fire Sampling (FFS) algorithm](./forest-fire)
 
 
 Additionally, we provide the following ready-to-use sampled communities:
@@ -32,3 +32,57 @@ Additionally, we provide the following ready-to-use sampled communities:
 
     * [Dataset](https://www.kaggle.com/datasets/aab/bitcoin-graph-sampled-communities)
     * [Tutorial](https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification)
+
+
+### Sample Your Own Communities
+
+-   [Setup a Neo4j database](/docs/gs/graphdb)
+
+-   [Restore](/docs/bitcoin/etl/restore) the graph database if needed.
+
+-   Ensure the database is running and you're connected to it. 
+
+-   Run the `sample` method; you may run the following command for a documentation on the command's arguments.
+
+    ```bash
+    .\eba.exe bitcoin sample --help
+    ```
+
+-   You may refer to the following documentation on arguments specific to each sampling algorithm:
+
+    -   [Forest-Fire Sampling (FFS) algorithm](./forest-fire)
+
+
+:::tip You can provide arguments via a JSON file
+
+In addition to passing arguments via the command line, you can supply them using a JSON file.
+For instance:
+
+```json
+{
+  "Bitcoin": {
+    "GraphSample": {
+      "Count": 100,
+      "MinNodeCount": 500,
+      "MaxNodeCount": 1000,
+      "MinEdgeCount": 499,
+      "MaxEdgeCount": 10000,
+      "RootNodeSelectProb": 0.3,
+      "TraversalAlgorithm": 0,
+      "ForestFireOptions": {
+        "maxHops": 6,
+        "queryLimit": 1000,
+        "reductionFactor": 4,
+        "nodeCountAtRoot": 100
+      }
+    }
+  }
+}
+```
+
+You may then run the tool using the JSON file as the following. 
+
+```bash
+.\eba.exe bitcoin sample --status-filename .\my_options.json
+```
+:::

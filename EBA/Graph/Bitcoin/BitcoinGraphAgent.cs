@@ -27,8 +27,8 @@ public class BitcoinGraphAgent : IGraphAgent<BitcoinGraph>, IDisposable
         var sampler = _options.Bitcoin.GraphSample.TraversalAlgorithm switch
         {
             GraphTraversal.FFS => new ForestFire(_options, _db, _logger),
-            GraphTraversal.BFS => throw new NotImplementedException(),
-            GraphTraversal.DFS => throw new NotImplementedException(),
+            //GraphTraversal.BFS => throw new NotImplementedException(),
+            //GraphTraversal.DFS => throw new NotImplementedException(),
             _ => throw new NotImplementedException(),
         };
 
