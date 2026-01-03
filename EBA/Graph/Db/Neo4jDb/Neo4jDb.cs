@@ -73,7 +73,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         string rootNodeId,
         int queryLimit, 
         int maxLevel, 
-        GraphTraversal traversalAlgorithm,
+        bool useBFS,
         CancellationToken ct,
         string relationshipFilter = "")
     {
@@ -86,12 +86,10 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         qBuilder.Append($"maxLevel: {maxLevel}, ");
         qBuilder.Append($"limit: {queryLimit}, ");
 
-        if (traversalAlgorithm == GraphTraversal.BFS)
+        if (useBFS)
             qBuilder.Append($"bfs: true ");
-        else if (traversalAlgorithm == GraphTraversal.DFS)
+        else 
             qBuilder.Append($"bfs: false ");
-        else
-            throw new ArgumentException($"{traversalAlgorithm} is not supported, supported methods are {{ {GraphTraversal.DFS}, {GraphTraversal.BFS} }}");
 
         //qBuilder.Append($", labelFilter: '{labelFilters}'");
 

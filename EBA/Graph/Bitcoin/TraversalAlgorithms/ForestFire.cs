@@ -224,7 +224,7 @@ public class ForestFire : ITraversalAlgorithm
             rootNodeId,
             queryLimit,
             1,
-            GraphTraversal.BFS,
+            true,
             ct: ct);
 
         var selectedNodes = ProcessQueriedNeighborhood(

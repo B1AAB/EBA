@@ -33,7 +33,7 @@ public interface IGraphDb<T> : IDisposable where T : GraphBase
         string rootNodeId,
         int queryLimit,
         int maxLevel,
-        GraphTraversal traversalAlgorithm,
+        bool useBFS,
         CancellationToken ct,
         string relationshipFilter = "");
 }

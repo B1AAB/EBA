@@ -356,7 +356,6 @@ internal class Cli
         var countOption = new Option<int>(
             name: "--count",
             description: "Sets the number of communities to sample.");
-        countOption.AddAlias("-c");
 
 
         var methodsAliases = new Dictionary<GraphTraversal, string[]>
@@ -364,18 +363,17 @@ internal class Cli
             {
                 GraphTraversal.FFS,
                 [
-                    "Forest-Fire",
-                    "FFS"
+                    "Forest-Fire"
                 ]
             }
         };
 
         var methodOption = new Option<GraphTraversal>(
             name: "--method",
-            description: 
-                "Sets sampling method, supported options are: " +
+            description:
+                "Sets the sampling method; currently supported methods are: " +
                 "{" +
-                    string.Join(", ", methodsAliases.Select(kvp => $"[{string.Join(", ", kvp.Value)}]")) +
+                    string.Join(", ", methodsAliases.Select(kvp => $"[{kvp.Value[0]} ({kvp.Key})]")) +
                 "}",
             parseArgument: x =>
             {
@@ -384,12 +382,15 @@ internal class Cli
                     return def;
 
                 var providedValue = x.Tokens.Single().Value;
-                foreach (var kvp in methodsAliases)
-                    if (kvp.Value.Any(alias => string.Equals(alias, providedValue, StringComparison.OrdinalIgnoreCase)))
-                        return kvp.Key;
-
-                x.ErrorMessage = $"Invalid --method provided: `{providedValue}`";
-                return def;
+                if (Enum.TryParse<GraphTraversal>(providedValue, ignoreCase: true, out var parsedValue))
+                {
+                    return parsedValue;
+                }
+                else
+                {
+                    x.ErrorMessage = $"Invalid --method provided: `{providedValue}`";
+                    return def;
+                }
             });
 
         var methodOptionsOption = new Option<string>(
@@ -398,30 +399,37 @@ internal class Cli
 
         var minNodeCountOption = new Option<int>(
             "--min-node-count",
+            description: "Sets the minimum number of nodes in each sampled subgraph.",
             getDefaultValue: () => defaultOptions.Bitcoin.GraphSample.MinNodeCount);
 
         var maxNodeCountOption = new Option<int>(
             "--max-node-count",
+            description: "Sets the maximum number of nodes in each sampled subgraph.",
             getDefaultValue: () => defaultOptions.Bitcoin.GraphSample.MaxNodeCount);
 
         var minEdgeCountOption = new Option<int>(
             "--min-edge-count",
+            description: "Sets the minimum number of edges in each sampled subgraph.",
             getDefaultValue: () => defaultOptions.Bitcoin.GraphSample.MinEdgeCount);
 
         var maxEdgeCountOption = new Option<int>(
             "--max-edge-count",
+            description: "Sets the maximum number of edges in each sampled subgraph.",
             getDefaultValue: () => defaultOptions.Bitcoin.GraphSample.MaxEdgeCount);
 
         var rootNodeSelectProbOption = new Option<double>(
             "--root-node-select-prob",
-            description: "The value should be between 0 and 1 (inclusive), " +
-            "if the given value is not in this range, it will be replaced " +
-            "by the default value.",
+            description:
+                "Sets the sampling rate for root nodes. Accepts values from 0.0 to 1.0; " +
+                "invalid inputs are replaced by the default configuration.",
             getDefaultValue: () => defaultOptions.Bitcoin.GraphSample.RootNodeSelectProb);
 
         var cmd = new Command(
             name: "sample",
-            description: "Methods for sampling from the graph.")
+            description: 
+                "Methods for sampling from the graph. " +
+                "Please refer to the following documentation for detailed description of the arguments: " +
+                "https://eba.b1aab.ai/docs/bitcoin/sampling/overview")
         {
             countOption,
             minNodeCountOption,
