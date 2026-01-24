@@ -1,6 +1,6 @@
 ﻿using EBA.Utilities;
 
-namespace EBA.Blockchains.Bitcoin.Graph;
+namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 {

@@ -1,6 +1,6 @@
 ﻿using EBA.Graph.Bitcoin;
 
-namespace EBA.Blockchains.Bitcoin.Graph;
+namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
 {

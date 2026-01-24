@@ -1,7 +1,7 @@
 ﻿using EBA.Utilities;
 using INode = EBA.Graph.Model.INode;
 
-namespace EBA.Blockchains.Bitcoin.Graph;
+namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class EdgeFactory
 {

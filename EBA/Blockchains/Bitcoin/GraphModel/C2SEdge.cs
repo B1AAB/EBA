@@ -1,4 +1,4 @@
-﻿namespace EBA.Blockchains.Bitcoin.Graph;
+﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 /// <summary>
 /// Coinbase to Script edge.

@@ -1,8 +1,4 @@
-﻿namespace EBA.Blockchains.Bitcoin.Graph;
-
-
-// TODO: this class seems redundant given Bitcoin.Model.Block
-// can these two, and other similar classes merged?
+﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class BlockNode(
     long height,

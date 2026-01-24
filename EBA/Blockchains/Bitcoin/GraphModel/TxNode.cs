@@ -1,6 +1,6 @@
 ﻿using EBA.Graph.Bitcoin;
 
-namespace EBA.Blockchains.Bitcoin.Graph;
+namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 // A note on the nullable properties: 
 // These properties can be null when the Tx

@@ -1,4 +1,4 @@
-﻿namespace EBA.Blockchains.Bitcoin.Graph;
+﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class CoinbaseNode : Node
 {

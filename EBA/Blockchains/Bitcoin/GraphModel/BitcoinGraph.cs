@@ -1,6 +1,6 @@
 ﻿using INode = EBA.Graph.Model.INode;
 
-namespace EBA.Blockchains.Bitcoin.Graph;
+namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 // TODO: can the following AddOrUpdateEdge methods made generic and simplified?!
 

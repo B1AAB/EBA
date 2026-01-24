@@ -1,6 +1,6 @@
 ﻿using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
-namespace EBA.Blockchains.Bitcoin.Graph;
+namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class NodeFactory
 {
