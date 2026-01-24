@@ -123,10 +123,11 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
             AddOrUpdateEdge(new S2TEdge(
                 source.Key,
                 txGraph.TxNode,
-                source.Value,
+                source.Value.Value,
                 EdgeType.Redeems,
                 Timestamp,
-                Block.Height));
+                Block.Height,
+                source.Value.CreatedInBlockHeight));
         }
 
         foreach (var sourceTx in txGraph.SourceTxes)
@@ -237,7 +238,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         {
             foreach (var s in txGraph.SourceScripts)
             {
-                var sourceFeeShare = Helpers.Round(fee * (s.Value / (double)(txGraph.TotalInputValue == 0 ? 1 : txGraph.TotalInputValue)));
+                var sourceFeeShare = Helpers.Round(fee * (s.Value.Value / (double)(txGraph.TotalInputValue == 0 ? 1 : txGraph.TotalInputValue)));
 
                 foreach (var minerScript in coinbaseTxG.TargetScripts)
                 {
@@ -246,7 +247,8 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                         EdgeType.Fee, Timestamp, Block.Height));
                 }
 
-                txGraph.SourceScripts.AddOrUpdate(s.Key, s.Value, (_, preV) => preV - sourceFeeShare);
+                // TODO: this is temporarily disabled after changing value type and not fixed because this method will be deprecated soon.
+                // txGraph.SourceScripts.AddOrUpdate(s.Key, s.Value, (_, preV) => preV.Value - sourceFeeShare);
             }
 
             AddOrUpdateEdge(new T2TEdge(txGraph.TxNode, coinbaseTxG.TxNode, fee, EdgeType.Fee, Timestamp, Block.Height));
@@ -300,7 +302,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                     */
 
                     AddOrUpdateEdge(new S2SEdge(
-                        s.Key, t.Key, Helpers.Round(t.Value * (s.Value / (double)sumInputWithoutFee)),
+                        s.Key, t.Key, Helpers.Round(t.Value * (s.Value.Value / (double)sumInputWithoutFee)),
                         EdgeType.Transfers,
                         Timestamp,
                         Block.Height));
