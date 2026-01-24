@@ -32,7 +32,7 @@ public class S2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
                 edge.Target.Txid,
                 Helpers.Satoshi2BTC(edge.Value).ToString(),
                 edge.BlockHeight.ToString(),
-                edge.CreatedInBockHeight.ToString(),
+                edge.UTxOCreatedInBockHeight.ToString(),
                 edge.Type.ToString(),
             ]);
     }
