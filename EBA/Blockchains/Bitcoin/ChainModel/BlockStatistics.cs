@@ -53,7 +53,7 @@ public class BlockStatistics(Block block)
     }
 
     private readonly uint[] _edgeLabelCount =
-        new uint[Enum.GetNames(typeof(EdgeLabel)).Length];
+        new uint[Enum.GetNames<EdgeLabel>().Length];
 
     public Dictionary<EdgeLabel, long> EdgeLabelValueSum
     {
@@ -67,10 +67,10 @@ public class BlockStatistics(Block block)
     } 
 
     private readonly long[] _edgeLabelValueSum =
-        new long[Enum.GetNames(typeof(EdgeLabel)).Length];
+        new long[Enum.GetNames<EdgeLabel>().Length];
 
     private readonly ConcurrentDictionary<ScriptType, uint> _scriptTypeCount =
-        new(Enum.GetValues(typeof(ScriptType))
+        new(Enum.GetValues<ScriptType>()
                 .Cast<ScriptType>()
                 .ToDictionary(x => x, x => (uint)0));
 
@@ -176,15 +176,15 @@ public class BlockStatistics(Block block)
                 "OutputsValuesMedian",
                 "OutputsValuesVariance",
 
-                string.Join(_delimiter,((ScriptType[])Enum.GetValues(typeof(ScriptType))).Select(x => $"ScriptType_{x}")),
+                string.Join(_delimiter,Enum.GetValues<ScriptType>().Select(x => $"ScriptType_{x}")),
 
                 string.Join(
                     _delimiter,
-                    ((EdgeLabel[])Enum.GetValues(typeof(EdgeLabel))).Select(
+                    Enum.GetValues<EdgeLabel>().Select(
                         x => "BlockGraph" + x + "EdgeCount").ToArray()),
                 string.Join(
                     _delimiter,
-                    ((EdgeLabel[])Enum.GetValues(typeof(EdgeLabel))).Select(
+                    Enum.GetValues<EdgeLabel>().Select(
                         x => "BlockGraph" + x + "EdgeValueSum").ToArray()),
 
                 "SpentOutputAgeMax",
@@ -254,7 +254,7 @@ public class BlockStatistics(Block block)
 
                 string.Join(
                     _delimiter,
-                    Enum.GetValues(typeof(ScriptType)).Cast<ScriptType>().Select(e => _scriptTypeCount[e])),
+                    Enum.GetValues<ScriptType>().Cast<ScriptType>().Select(e => _scriptTypeCount[e])),
 
                 string.Join(
                     _delimiter,
