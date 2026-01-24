@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
-using EBA.Utilities;
-using INode = EBA.Graph.Model.INode;
+﻿using INode = EBA.Graph.Model.INode;
 
 namespace EBA.Blockchains.Bitcoin.Graph;
 

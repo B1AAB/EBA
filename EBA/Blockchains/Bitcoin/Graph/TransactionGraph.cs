@@ -20,7 +20,7 @@ public class TransactionGraph : GraphBase
     public long Fee { set; get; }
 
     public ConcurrentDictionary<string, long> SourceTxes { set; get; } = new();
-    public ConcurrentDictionary<ScriptNode, long> SourceScripts { set; get; } = new();
+    public ConcurrentDictionary<ScriptNode, Utxo> SourceScripts { set; get; } = new();
     public ConcurrentDictionary<ScriptNode, long> TargetScripts { set; get; } = new();
 
     public TransactionGraph(Transaction tx) : base()
@@ -28,13 +28,14 @@ public class TransactionGraph : GraphBase
         TxNode = new TxNode(tx);
     }
 
-    public ScriptNode AddSource(string txid, Utxo utxo)
+    public void AddSource(string txid, Utxo utxo)
     {
         SourceTxes.AddOrUpdate(txid, utxo.Value, (_, oldValue) => oldValue + utxo.Value);
         //RoundedIncrement(ref _totalInputValue, utxo.Value);
         //_totalInputValue += utxo.Value;
         Helpers.ThreadsafeAdd(ref _totalInputValue, utxo.Value);
-        return AddOrUpdate(SourceScripts, new ScriptNode(utxo), utxo.Value);
+
+        SourceScripts.GetOrAdd(new ScriptNode(utxo), utxo);
     }
 
     public ScriptNode AddTarget(Utxo utxo)

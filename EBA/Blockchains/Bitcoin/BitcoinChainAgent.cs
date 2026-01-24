@@ -242,12 +242,7 @@ public class BitcoinChainAgent : IDisposable
                 isGenerated: true, createdInHeight: block.Height);
 
             if (options.Traverse.TrackTxo)
-                g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo,
-                    (k, oldValue) =>
-                    {
-                        oldValue.AddCreatedIn(block.Height);
-                        return oldValue;
-                    });
+                g.Block.TxoLifecycle.TryAdd(utxo.Id, utxo);
 
             var node = mintingTxGraph.AddTarget(utxo);
             rewardAddresses.Add(node);
@@ -312,8 +307,7 @@ public class BitcoinChainAgent : IDisposable
                 if (options.Traverse.TrackTxo)
                     g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
                     {
-                        oldValue.AddCreatedIn(height: input.PrevOut.Height);
-                        oldValue.AddSpentIn(g.Block.Height);
+                        oldValue.SpentInBlockHeight = g.Block.Height;
                         return oldValue;
                     });
 
@@ -375,11 +369,7 @@ public class BitcoinChainAgent : IDisposable
             g.Stats.AddOutputValue(utxo.Value);
 
             if (options.Traverse.TrackTxo)
-                g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
-                {
-                    oldValue.AddCreatedIn(g.Block.Height);
-                    return oldValue;
-                });
+                g.Block.TxoLifecycle.TryAdd(utxo.Id, utxo);
         }
 
         g.Stats.AddInputsCount(tx.Inputs.Count);
