@@ -22,14 +22,14 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
         get
         {
             return string.Join(_delimiter, new string[]
-        {
-            "Source",
-            "Target",
-            "Value",
-            "EdgeType",
-            "TimeOffsetFromGenesisBlock",
-            "BlockHeight"
-        });
+            {
+                "Source",
+                "Target",
+                "Value",
+                "EdgeType",
+                "TimeOffsetFromGenesisBlock",
+                "BlockHeight"
+            });
         }
     }
 
