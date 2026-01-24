@@ -1,8 +1,6 @@
 ﻿using EBA.Utilities;
 
-using System;
-
-namespace EBA.Blockchains.Bitcoin.Model;
+namespace EBA.Blockchains.Bitcoin.ChainModel;
 
 public class BlockStatistics(Block block)
 {

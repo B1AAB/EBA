@@ -1,4 +1,4 @@
-﻿namespace EBA.Blockchains.Bitcoin.Model;
+﻿namespace EBA.Blockchains.Bitcoin.ChainModel;
 
 public enum ChainToGraphModel
 {

@@ -1,6 +1,6 @@
 ﻿global using EBA.Blockchains.Bitcoin;
 global using EBA.Blockchains.Bitcoin.Graph;
-global using EBA.Blockchains.Bitcoin.Model;
+global using EBA.Blockchains.Bitcoin.ChainModel;
 global using EBA.CLI.Config;
 global using EBA.Graph.Db;
 global using EBA.Graph.Model;
