@@ -126,7 +126,8 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                 source.Value.Value,
                 EdgeType.Redeems,
                 Timestamp,
-                Block.Height));
+                Block.Height,
+                source.Value.CreatedInBlockHeight));
         }
 
         foreach (var sourceTx in txGraph.SourceTxes)

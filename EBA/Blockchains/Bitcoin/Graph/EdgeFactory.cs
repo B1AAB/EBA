@@ -73,7 +73,8 @@ public class EdgeFactory
             source.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode &&
             target.GetGraphComponentType() == GraphComponentType.BitcoinTxNode)
         {
-            return new S2TEdge((ScriptNode)source, (TxNode)target, value, type, timestamp, blockHeight);
+            var createdInBlockHeight = (long)relationship.Properties[Props.CreatedInBlockHeight.Name];
+            return new S2TEdge((ScriptNode)source, (TxNode)target, value, type, timestamp, blockHeight, createdInBlockHeight);
         }
         else
         {

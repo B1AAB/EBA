@@ -1,6 +1,4 @@
-﻿using System.Data;
-
-namespace EBA.Blockchains.Bitcoin.Model;
+﻿namespace EBA.Blockchains.Bitcoin.Model;
 
 public class Utxo
 {
@@ -19,17 +17,6 @@ public class Utxo
     public long CreatedInBlockHeight { get; }
 
     public long? SpentInBlockHeight { set; get; }
-
-    public ReadOnlyCollection<long> SpentInBlockHeight
-    {
-        get { return _spentInHeight.AsReadOnly(); }
-    }
-    private readonly List<long> _spentInHeight = [];
-
-    public int SpentInCount
-    {
-        get { return _spentInHeight.Count; }
-    }
 
     public Utxo(
         string id, string? address, long value, ScriptType scriptType, bool isGenerated,

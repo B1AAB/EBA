@@ -15,6 +15,7 @@ public static class Props
     private const string _scriptTypeProperty = "ScriptType";
 
     public static Property Height { get; } = new("Height", FieldType.Int);
+    public static Property CreatedInBlockHeight { get; } = new("CreatedInBlockHeight", FieldType.Int);
     public static Property ScriptAddress { get; } = new(_addressProperty);
     public static Property ScriptType { get; } = new(_scriptTypeProperty);
     public static Property Txid { get; } = new(_txNodeTxid);

@@ -14,18 +14,47 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
 
     public EdgeLabel Label { get { return EdgeLabel.S2TTransfer; } }
 
+    public long CreatedInBockHeight { get; }
+
     public S2TEdge(
         ScriptNode source,
         TxNode target,
         long value,
         EdgeType type,
         uint timestamp,
-        long blockHeight) :
+        long blockHeight,
+        long createdInBockHeight) :
         base(source, target, value, type, timestamp, blockHeight)
-    { }
+    {
+        CreatedInBockHeight = createdInBockHeight;
+    }
 
     public S2TEdge Update(long value)
     {
-        return new S2TEdge(Source, Target, Value + value, Type, Timestamp, BlockHeight);
+        return new S2TEdge(Source, Target, Value + value, Type, Timestamp, BlockHeight, CreatedInBockHeight);
+    }
+
+
+    // TODO: maybe a better alternative is to override the base or get from it but now that is static
+    public static new string[] GetFeaturesName()
+    {
+        return
+        [
+            nameof(Value),
+            nameof(Type),
+            nameof(BlockHeight),
+            nameof(CreatedInBockHeight),
+            "UtxoAgeBlocks"
+        ];
+    }
+
+    public override double[] GetFeatures()
+    {
+        return
+        [
+            .. base.GetFeatures(),
+            CreatedInBockHeight,
+            BlockHeight - CreatedInBockHeight
+        ];
     }
 }
