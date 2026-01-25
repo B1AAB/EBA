@@ -13,6 +13,8 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     private bool _disposed = false;
     private readonly Options _options;
 
+    private const char _delimiter = '\t';
+
     public ReadOnlyCollection<long> BlocksHeightInBuffer
     {
         get
@@ -74,7 +76,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         // on cancellation and recovery, but that can add additional complexities.
         var tasks = new List<Task>
         {
-            _pGraphStats.SerializeAsync(obj.Stats.ToString(), default),
+            _pGraphStats.SerializeAsync(obj, default),
         };
 
         if (_graphAgent != null)
@@ -85,7 +87,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 
         //if (!_options.Bitcoin.SkipSerializingAddresses)
         if (_pBlockAddresses != null)
-            tasks.Add(_pBlockAddresses.SerializeAsync(obj.Stats.ToStringsAddresses(), default));
+            tasks.Add(_pBlockAddresses.SerializeAsync(obj.Block.ToStringsAddresses(_delimiter), default));
 
         await Task.WhenAll(tasks);
 
@@ -93,7 +95,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 
         _logger.LogInformation(
             "Block {height:n0} {step}: Finished processing in {runtime} seconds.",
-            obj.Block.Height, "[3/3]", Helpers.GetEtInSeconds(obj.Stats.Runtime));
+            obj.Block.Height, "[3/3]", Helpers.GetEtInSeconds(obj.Runtime));
 
         _semaphore.Release();
     }

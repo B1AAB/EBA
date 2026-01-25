@@ -6,8 +6,34 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 {
     public uint Timestamp { get; }
     public Block Block { get; }
-    public BlockNode BlockNode { get; }
-    public BlockStatistics Stats { set; get; }
+    public BlockNode BlockNode { private set; get; }
+
+    /// <summary>
+    /// Sets and gets retry attempts to contruct the block graph.
+    /// </summary>
+    public int Retries { set; get; } = 0;
+
+    public TimeSpan Runtime { get { return _stopwatch.Elapsed; } }
+    private readonly Stopwatch _stopwatch = new();
+    public void StartStopwatch()
+    {
+        _stopwatch.Start();
+    }
+    public void StopStopwatch()
+    {
+        _stopwatch.Stop();
+    }
+
+    private readonly uint[] _edgeLabelCount =
+    new uint[Enum.GetNames<EdgeLabel>().Length];
+    private readonly long[] _edgeLabelValueSum =
+    new long[Enum.GetNames<EdgeLabel>().Length];
+
+    public void IncrementEdgeType(EdgeLabel label, long value)
+    {
+        Interlocked.Increment(ref _edgeLabelCount[(int)label]);
+        Helpers.ThreadsafeAdd(ref _edgeLabelValueSum[(int)label], value);
+    }
 
     public List<ScriptNode> RewardsAddresses { set; get; } = [];
 
@@ -33,8 +59,8 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     public BlockGraph(Block block, ChainToGraphModel chainToGraphModel, ILogger<BitcoinChainAgent> logger) : base()
     {
         Block = block;
-        BlockNode = new BlockNode(block);
-        TryAddNode(BlockNode.ComponentType, BlockNode);
+        //BlockNode = new BlockNode(block);
+        //TryAddNode(BlockNode.ComponentType, BlockNode);
 
         // See the following BIP on using `mediantime` instead of `time`.
         // https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
@@ -44,8 +70,8 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 
         _logger = logger;
 
-        Stats = new BlockStatistics(block);
-        Stats.StartStopwatch();
+        //Stats = new BlockStatistics(block);
+        StartStopwatch();
     }
 
     public void SetCoinbaseTx(TransactionGraph coinbaseTx)
@@ -71,8 +97,11 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     }
 
     public void BuildGraph(CancellationToken ct)
-      {
-        switch(_chainToGraphModel)
+    {
+        BlockNode = new BlockNode(Block);
+        TryAddNode(BlockNode.ComponentType, BlockNode);
+
+        switch (_chainToGraphModel)
         {
             case ChainToGraphModel.UTxOModel:
                 BuildGraphNativeModel(ct);
@@ -171,8 +200,8 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         // TODO: make sure this is addressed in the updated method
         var miningReward = _coinbaseTxGraph.TargetScripts.Sum(x => x.Value);
         var mintedBitcoins = miningReward - TotalFee;
-        Stats.MintedBitcoins = mintedBitcoins;
-        Stats.TxFees = TotalFee;
+        Block.SetMintedBitcoins(mintedBitcoins);
+        Block.SetTxFees(TotalFee);
 
 
         AddOrUpdateEdge(new C2TEdge(_coinbaseTxGraph.TxNode, mintedBitcoins, Timestamp, Block.Height));
@@ -334,43 +363,43 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     public new void AddOrUpdateEdge(C2TEdge edge)
     {
         base.AddOrUpdateEdge(edge);
-        Stats.IncrementEdgeType(edge.Label, edge.Value);
+        IncrementEdgeType(edge.Label, edge.Value);
     }
 
     public new void AddOrUpdateEdge(C2SEdge edge)
     {
         base.AddOrUpdateEdge(edge);
-        Stats.IncrementEdgeType(edge.Label, edge.Value);
+        IncrementEdgeType(edge.Label, edge.Value);
     }
 
     public new void AddOrUpdateEdge(T2TEdge edge)
     {
         base.AddOrUpdateEdge(edge);
-        Stats.IncrementEdgeType(edge.Label, edge.Value);
+        IncrementEdgeType(edge.Label, edge.Value);
     }
     
     public new void AddOrUpdateEdge(S2SEdge edge)
     {
         base.AddOrUpdateEdge(edge);
-        Stats.IncrementEdgeType(edge.Label, edge.Value);
+        IncrementEdgeType(edge.Label, edge.Value);
     }
 
     public new void AddOrUpdate(S2TEdge edge)
     {
         base.AddOrUpdateEdge(edge);
-        Stats.IncrementEdgeType(edge.Label, edge.Value);
+        IncrementEdgeType(edge.Label, edge.Value);
     }
 
     public new void AddOrUpdate(T2SEdge edge)
     {
         base.AddOrUpdateEdge(edge);
-        Stats.IncrementEdgeType(edge.Label, edge.Value);
+        IncrementEdgeType(edge.Label, edge.Value);
     }
 
     public new void AddOrUpdate(B2TEdge edge)
     {
         base.AddOrUpdateEdge(edge);
-        Stats.IncrementEdgeType(edge.Label, edge.Value);
+        IncrementEdgeType(edge.Label, edge.Value);
     }
 
     public bool Equals(BlockGraph? other)
@@ -391,5 +420,14 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     public override int GetHashCode()
     {
         throw new NotImplementedException();
+    }
+
+    public static string GetStatisticsHeader(char delimiter)
+    {
+        return "";
+    }
+    public string GetStatistics(char delimiter)
+    {
+        return "";
     }
 }

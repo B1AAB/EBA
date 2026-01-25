@@ -10,23 +10,60 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
     /// match those returned from the `GetCsv()` method.
     private static readonly Property[] _properties =
     [
-        Props.Height,
-        Props.BlockMedianTime,
+        Props.BlockHash,
         Props.BlockConfirmations,
+        Props.Height,
+        Props.BlockVersion,
+        Props.BlockVersionHex,
+        Props.BlockMerkleroot,
+        Props.BlockTime,
+        Props.BlockMedianTime,
+        Props.BlockNonce,
+        Props.BlockBits,
         Props.BlockDifficulty,
-        Props.BlockTxCount,
-        Props.BlockSize,
+        Props.BlockChainwork,
+        Props.BlockTransactionsCount,
+        Props.BlockPreviousBlockHash,
+        Props.BlockNextBlockHash,
         Props.BlockStrippedSize,
-        Props.BlockWeight
+        Props.BlockSize,
+        Props.BlockWeight,
+        Props.BlockCoinbaseOutputsCount,
+        Props.BlockTxFees,
+        Props.BlockMintedBitcoins
     ];
 
     public override string GetCsvHeader()
     {
         return string.Join(
-            csvDelimiter,
+            Options.CsvDelimiter,
             [
                 Props.Height.GetIdFieldCsvHeader(Label.ToString()),
-                .. from x in _properties where x != Props.Height select x.TypeAnnotatedCsvHeader,
+                Props.BlockHash.TypeAnnotatedCsvHeader,
+                Props.BlockConfirmations.TypeAnnotatedCsvHeader,
+                Props.BlockVersion.TypeAnnotatedCsvHeader,  
+                Props.BlockVersionHex.TypeAnnotatedCsvHeader,
+                Props.BlockMerkleroot.TypeAnnotatedCsvHeader,
+                Props.BlockTime.TypeAnnotatedCsvHeader,
+                Props.BlockMedianTime.TypeAnnotatedCsvHeader,
+                Props.BlockNonce.TypeAnnotatedCsvHeader,
+                Props.BlockBits.TypeAnnotatedCsvHeader,
+                Props.BlockDifficulty.TypeAnnotatedCsvHeader,
+                Props.BlockChainwork.TypeAnnotatedCsvHeader,
+                Props.BlockTransactionsCount.TypeAnnotatedCsvHeader,
+                Props.BlockPreviousBlockHash.TypeAnnotatedCsvHeader,
+                Props.BlockNextBlockHash.TypeAnnotatedCsvHeader,
+                Props.BlockStrippedSize.TypeAnnotatedCsvHeader,
+                Props.BlockSize.TypeAnnotatedCsvHeader,
+                Props.BlockWeight.TypeAnnotatedCsvHeader,
+                Props.BlockCoinbaseOutputsCount.TypeAnnotatedCsvHeader,
+                Props.BlockTxFees.TypeAnnotatedCsvHeader,
+                Props.BlockMintedBitcoins.TypeAnnotatedCsvHeader,
+                DescriptiveStatisticsStrategy.GetCsvHeader("InputsCounts"),
+                DescriptiveStatisticsStrategy.GetCsvHeader("OutputCounts"),
+                DescriptiveStatisticsStrategy.GetCsvHeader("InputValues"),
+                DescriptiveStatisticsStrategy.GetCsvHeader("OutputValues"),
+                DescriptiveStatisticsStrategy.GetCsvHeader("SpentOutputAge"),
                 ":LABEL"
             ]);
     }
@@ -38,19 +75,39 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
 
     public static string GetCsv(BlockNode node)
     {
+        var m = node.BlockMetadata;
+
         /// Note that the order of the items in this array should 
         /// match those in the `_properties`. 
         return string.Join(
-            csvDelimiter,
+            Options.CsvDelimiter,
             [
-                node.Height.ToString(),
-                node.MedianTime.ToString(),
-                node.Confirmations.ToString(),
-                node.Difficulty.ToString(),
-                node.TransactionsCount.ToString(),
-                node.Size.ToString(),
-                node.StrippedSize.ToString(),
-                node.Weight.ToString(),
+                m.Height.ToString(),
+                m.Hash,
+                m.Confirmations.ToString(),
+                m.Version.ToString(),
+                m.VersionHex,
+                m.Merkleroot,
+                m.Time.ToString(),
+                m.MedianTime.ToString(),
+                m.Nonce.ToString(),
+                m.Bits,
+                m.Difficulty.ToString(),
+                m.Chainwork,
+                m.TransactionsCount.ToString(),
+                m.PreviousBlockHash,
+                m.NextBlockHash,
+                m.StrippedSize,
+                m.Size,
+                m.Weight,
+                m.CoinbaseOutputsCount,
+                m.TxFees,
+                m.MintedBitcoins,
+                DescriptiveStatisticsStrategy.GetCsv(m.InputCounts),
+                DescriptiveStatisticsStrategy.GetCsv(m.OutputCounts),
+                DescriptiveStatisticsStrategy.GetCsv(m.InputValues),
+                DescriptiveStatisticsStrategy.GetCsv(m.OutputValues),
+                DescriptiveStatisticsStrategy.GetCsv(m.SpentOutputAge),
                 Label.ToString()
             ]);
     }

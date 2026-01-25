@@ -30,6 +30,8 @@ public class Options
     public BitcoinOptions Bitcoin { init; get; } = new();
     public Neo4jOptions Neo4j { init; get; } = new();
 
+    public const char CsvDelimiter = '\t';
+
     private static readonly long _timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
     private static readonly string _wd = Path.Join(Environment.CurrentDirectory, $"session_{_timestamp}");
 }

@@ -27,7 +27,7 @@ public class B2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
         return string.Join(
             csvDelimiter,
             [
-                edge.Source.Height,
+                edge.Source.BlockMetadata.Height,
                 edge.Target.Txid,
                 Helpers.Satoshi2BTC(edge.Value).ToString(),
                 edge.BlockHeight.ToString(),

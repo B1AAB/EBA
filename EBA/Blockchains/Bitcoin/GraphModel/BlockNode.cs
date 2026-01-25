@@ -1,20 +1,15 @@
-﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
+﻿using EBA.Graph.Db.Neo4jDb;
+
+namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class BlockNode(
-    long height,
-    uint medianTime,
-    int transactionsCount,
-    double difficulty,
-    int size,
-    int strippedSize,
-    int confirmations,
-    int weight, 
+    BlockMetadata blockMetadata,
     double? originalIndegree = null,
-    double? originalOutdegree = null, 
-    double? outHopsFromRoot = null, 
+    double? originalOutdegree = null,
+    double? outHopsFromRoot = null,
     string? idInGraphDb = null) : 
     Node(
-        id: height.ToString(),
+        id: blockMetadata.Height.ToString(),
         originalInDegree: originalIndegree,
         originalOutDegree: originalOutdegree,
         outHopsFromRoot: outHopsFromRoot,
@@ -31,25 +26,9 @@ public class BlockNode(
         return ComponentType;
     }
 
-    public long Height { get; } = height;
-    public uint MedianTime { get; } = medianTime;
-    public int TransactionsCount { get; } = transactionsCount;
-    public double Difficulty { get; } = difficulty;
-    public int Size { get; } = size;
-    public int StrippedSize { get; } = strippedSize;
-    public int Confirmations { get; } = confirmations;
-    public int Weight { get; } = weight;
+    public BlockMetadata BlockMetadata { init; get; } = blockMetadata;
 
-    public BlockNode(Block block) : this(
-        height: block.Height,
-        medianTime: block.MedianTime,
-        transactionsCount: block.TransactionsCount,
-        difficulty: block.Difficulty,
-        size: block.Size,
-        strippedSize: block.StrippedSize,
-        confirmations: block.Confirmations,
-        weight: block.Weight)
-    { }
+    public BlockNode(Block block) : this(blockMetadata: block) { }
 
 
     // TODO: all the following double-casting is because of the type
@@ -62,14 +41,45 @@ public class BlockNode(
         double originalOutdegree,
         double outHopsFromRoot) :
         this(
-            height: long.Parse((string)node.Properties[Props.Height.Name]),
-            medianTime: (uint)(long)node.Properties[Props.BlockMedianTime.Name],
-            transactionsCount: (int)(long)node.Properties[Props.BlockTxCount.Name],
-            difficulty: (double)node.Properties[Props.BlockDifficulty.Name],
-            size: (int)(long)node.Properties[Props.BlockSize.Name],
-            strippedSize: (int)(long)node.Properties[Props.BlockStrippedSize.Name],
-            confirmations: (int)(long)node.Properties[Props.BlockConfirmations.Name],
-            weight: (int)(long)node.Properties[Props.BlockWeight.Name],
+            blockMetadata: new BlockMetadata()
+            {
+                Hash = (string)node.Properties[Props.BlockHash.Name],
+                VersionHex = (string)node.Properties[Props.BlockVersionHex.Name],
+                Merkleroot = (string)node.Properties[Props.BlockMerkleroot.Name],
+                Bits = (string)node.Properties[Props.BlockBits.Name],
+                Chainwork = (string)node.Properties[Props.BlockChainwork.Name],
+                PreviousBlockHash = (string)node.Properties[Props.BlockPreviousBlockHash.Name],
+                NextBlockHash = (string)node.Properties[Props.BlockNextBlockHash.Name],
+                Confirmations = (int)(long)node.Properties[Props.BlockConfirmations.Name],
+                Height = (long)node.Properties[Props.Height.Name],
+                Version = (ulong)(long)node.Properties[Props.BlockVersion.Name],
+                Time = (uint)(long)node.Properties[Props.BlockTime.Name],
+                MedianTime = (uint)(long)node.Properties[Props.BlockMedianTime.Name],
+                Nonce = (ulong)(long)node.Properties[Props.BlockNonce.Name],
+                TransactionsCount = (int)(long)node.Properties[Props.BlockTransactionsCount.Name],
+                StrippedSize = (int)(long)node.Properties[Props.BlockStrippedSize.Name],
+                Size = (int)(long)node.Properties[Props.BlockSize.Name],
+                Weight = (int)(long)node.Properties[Props.BlockWeight.Name],
+                CoinbaseOutputsCount = (int)(long)node.Properties[Props.BlockCoinbaseOutputsCount.Name],
+                TxFees = (long)node.Properties[Props.BlockTxFees.Name],
+                MintedBitcoins = (long)node.Properties[Props.BlockMintedBitcoins.Name],
+                Difficulty = (double)node.Properties[Props.BlockDifficulty.Name],
+
+                InputCounts = DescriptiveStatisticsStrategy.FromProperties(
+                    node.Properties, Props.BlockInputCountsPrefix),
+
+                OutputCounts = DescriptiveStatisticsStrategy.FromProperties(
+                    node.Properties, Props.BlockOutputCountsPrefix),
+
+                InputValues = DescriptiveStatisticsStrategy.FromProperties(
+                    node.Properties, Props.BlockInputValuesPrefix),
+
+                OutputValues = DescriptiveStatisticsStrategy.FromProperties(
+                    node.Properties, Props.BlockOutputValuesPrefix),
+
+                SpentOutputAge = DescriptiveStatisticsStrategy.FromProperties(
+                    node.Properties, Props.BlockSpentOutputAgePrefix)
+            },
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
             outHopsFromRoot: outHopsFromRoot,
@@ -78,21 +88,21 @@ public class BlockNode(
 
     public override string GetIdPropertyName()
     {
-        return nameof(Height);
+        return nameof(BlockMetadata.Height);
     }
 
     public new static string[] GetFeaturesName()
     {
         return 
         [
-            nameof(Height),
-            nameof(MedianTime),
-            nameof(TransactionsCount),
-            nameof(Difficulty),
-            nameof(Size),
-            nameof(StrippedSize),
-            nameof(Confirmations),
-            nameof(Weight),
+            nameof(BlockMetadata.Height),
+            nameof(BlockMetadata.MedianTime),
+            nameof(BlockMetadata.TransactionsCount),
+            nameof(BlockMetadata.Difficulty),
+            nameof(BlockMetadata.Size),
+            nameof(BlockMetadata.StrippedSize),
+            nameof(BlockMetadata.Confirmations),
+            nameof(BlockMetadata.Weight),
             .. Node.GetFeaturesName()
         ];
     }
@@ -101,14 +111,14 @@ public class BlockNode(
     {
         return 
         [
-            Height.ToString(), 
-            MedianTime.ToString(), 
-            TransactionsCount.ToString(), 
-            Difficulty.ToString(), 
-            Size.ToString(), 
-            StrippedSize.ToString(), 
-            Confirmations.ToString(), 
-            Weight.ToString(),
+            BlockMetadata.Height.ToString(), 
+            BlockMetadata.MedianTime.ToString(), 
+            BlockMetadata.TransactionsCount.ToString(), 
+            BlockMetadata.Difficulty.ToString(), 
+            BlockMetadata.Size.ToString(), 
+            BlockMetadata.StrippedSize.ToString(), 
+            BlockMetadata.Confirmations.ToString(), 
+            BlockMetadata.Weight.ToString(),
             .. base.GetFeatures()
         ];
     }
