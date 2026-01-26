@@ -28,6 +28,9 @@ public class BlockNode(
 
     public BlockMetadata BlockMetadata { init; get; } = blockMetadata;
 
+    public uint[] EdgeLabelCount { set; get; } = [];
+    public long[] EdgeLabelValueSum { set; get; } = [];
+
     public BlockNode(Block block) : this(blockMetadata: block) { }
 
 

@@ -111,6 +111,9 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                 BuildGraphExpandedModel(ct);
                 break;
         }
+
+        BlockNode.EdgeLabelCount = _edgeLabelCount;
+        BlockNode.EdgeLabelValueSum = _edgeLabelValueSum;
     }
 
     private void BuildGraphNativeModel(CancellationToken ct)
