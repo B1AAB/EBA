@@ -93,8 +93,8 @@ public static class MappingHelpers
     }
 
     public static DescriptiveStatistics ReadDescriptiveStats(
-    IReadOnlyDictionary<string, object> properties,
-    string prefix)
+        IReadOnlyDictionary<string, object> properties,
+        string prefix)
     {
         DescriptiveStatistics d = null!;
         DescriptiveStatistics.Percentile p = null!;

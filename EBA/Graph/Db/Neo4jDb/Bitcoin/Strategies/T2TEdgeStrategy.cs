@@ -62,10 +62,11 @@ public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
         string l = Property.lineVarName, s = "source", t = "target", b = "block";
 
+        /*
         var builder = new StringBuilder(
             $"LOAD CSV WITH HEADERS FROM '{csvFilename}' AS {l} " +
             $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' ");
-
+        
         builder.Append(
             $"MATCH " +
             $"({s}:{TxNodeStrategy.Label} {{{Props.T2TEdgeSourceTxid.GetSetter()}}}), " +
@@ -84,7 +85,10 @@ public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
         builder.Append(
             $" RETURN distinct 'DONE'");
+        
 
         return builder.ToString();
+        */
+        return string.Empty;
     }
 }
