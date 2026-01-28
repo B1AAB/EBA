@@ -4,17 +4,18 @@ namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
 {
+    private static readonly PropertyMapping<T2TEdge>[] _mappings =
+    [
+        MappingHelpers.SourceId<T2TEdge>(TxNodeStrategy.Label, e => e.Source.Txid),
+        MappingHelpers.TargetId<T2TEdge>(TxNodeStrategy.Label, e => e.Target.Txid),
+        MappingHelpers.Value<T2TEdge>(e => Helpers.Satoshi2BTC(e.Value)),
+        MappingHelpers.Height<T2TEdge>(e => e.BlockHeight),
+        MappingHelpers.EdgeType<T2TEdge>(e => e.Type)
+    ];
+
     public override string GetCsvHeader()
     {
-        return string.Join(
-            csvDelimiter,
-            [
-                $":START_ID({TxNodeStrategy.Label})",
-                $":END_ID({TxNodeStrategy.Label})",
-                Props.EdgeValue.TypeAnnotatedCsvHeader,
-                Props.Height.TypeAnnotatedCsvHeader,
-                ":TYPE"
-            ]);
+        return _mappings.GetCsvHeader();
     }
 
     public override string GetCsv(IGraphComponent edge)
@@ -24,15 +25,7 @@ public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
     public static string GetCsv(T2TEdge edge)
     {
-        return string.Join(
-            csvDelimiter,
-            [
-                edge.Source.Txid,
-                edge.Target.Txid,
-                Helpers.Satoshi2BTC(edge.Value).ToString(),
-                edge.BlockHeight.ToString(),
-                edge.Type.ToString()
-            ]);
+        return _mappings.GetCsv(edge);
     }
 
     public override string GetQuery(string csvFilename)

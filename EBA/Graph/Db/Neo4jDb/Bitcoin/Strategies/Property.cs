@@ -9,14 +9,13 @@ public class Property
     public string Name { get; }
     public string CsvHeader { get; }
     public string TypeAnnotatedCsvHeader { get; }
-
-    private readonly FieldType _type;
+    public FieldType Type { get; }
 
     public Property(string name, FieldType type = FieldType.String, string? csvHeader = null)
     {
         Name = name;
         CsvHeader = csvHeader ?? Name;
-        _type = type;
+        Type = type;
         TypeAnnotatedCsvHeader = $"{Name}:{type.ToString().ToLower()}";
     }
 
@@ -42,7 +41,7 @@ public class Property
 
     public string GetReader()
     {
-        return _type switch
+        return Type switch
         {
             FieldType.Int => $"toInteger({lineVarName}.{CsvHeader})",
             FieldType.Float => $"toFloat({lineVarName}.{CsvHeader})",

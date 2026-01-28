@@ -1,4 +1,5 @@
 ﻿using EBA.Graph.Db.Neo4jDb;
+using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 namespace EBA.Blockchains.Bitcoin.GraphModel;
 
@@ -44,50 +45,48 @@ public class BlockNode(
         double originalOutdegree,
         double outHopsFromRoot) :
         this(
-            blockMetadata: new BlockMetadata()
-            {
-                Hash = (string)node.Properties[Props.BlockHash.Name],
-                VersionHex = (string)node.Properties[Props.BlockVersionHex.Name],
-                Merkleroot = (string)node.Properties[Props.BlockMerkleroot.Name],
-                Bits = (string)node.Properties[Props.BlockBits.Name],
-                Chainwork = (string)node.Properties[Props.BlockChainwork.Name],
-                PreviousBlockHash = (string)node.Properties[Props.BlockPreviousBlockHash.Name],
-                NextBlockHash = (string)node.Properties[Props.BlockNextBlockHash.Name],
-                Confirmations = (int)(long)node.Properties[Props.BlockConfirmations.Name],
-                Height = (long)node.Properties[Props.Height.Name],
-                Version = (ulong)(long)node.Properties[Props.BlockVersion.Name],
-                Time = (uint)(long)node.Properties[Props.BlockTime.Name],
-                MedianTime = (uint)(long)node.Properties[Props.BlockMedianTime.Name],
-                Nonce = (ulong)(long)node.Properties[Props.BlockNonce.Name],
-                TransactionsCount = (int)(long)node.Properties[Props.BlockTransactionsCount.Name],
-                StrippedSize = (int)(long)node.Properties[Props.BlockStrippedSize.Name],
-                Size = (int)(long)node.Properties[Props.BlockSize.Name],
-                Weight = (int)(long)node.Properties[Props.BlockWeight.Name],
-                CoinbaseOutputsCount = (int)(long)node.Properties[Props.BlockCoinbaseOutputsCount.Name],
-                TxFees = (long)node.Properties[Props.BlockTxFees.Name],
-                MintedBitcoins = (long)node.Properties[Props.BlockMintedBitcoins.Name],
-                Difficulty = (double)node.Properties[Props.BlockDifficulty.Name],
-
-                InputCounts = DescriptiveStatisticsStrategy.FromProperties(
-                    node.Properties, Props.BlockInputCountsPrefix),
-
-                OutputCounts = DescriptiveStatisticsStrategy.FromProperties(
-                    node.Properties, Props.BlockOutputCountsPrefix),
-
-                InputValues = DescriptiveStatisticsStrategy.FromProperties(
-                    node.Properties, Props.BlockInputValuesPrefix),
-
-                OutputValues = DescriptiveStatisticsStrategy.FromProperties(
-                    node.Properties, Props.BlockOutputValuesPrefix),
-
-                SpentOutputAge = DescriptiveStatisticsStrategy.FromProperties(
-                    node.Properties, Props.BlockSpentOutputAgePrefix)
-            },
+            blockMetadata: ReadBlockMetadata(node.Properties),
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
             outHopsFromRoot: outHopsFromRoot,
             idInGraphDb: node.ElementId)
     { }
+
+    private static BlockMetadata ReadBlockMetadata(IReadOnlyDictionary<string, object> props)
+    {
+        Block b; // dummy for nameof
+
+        return new BlockMetadata
+        {
+            Hash = (string)props[nameof(b.Hash)],
+            VersionHex = (string)props[nameof(b.VersionHex)],
+            Merkleroot = (string)props[nameof(b.Merkleroot)],
+            Bits = (string)props[nameof(b.Bits)],
+            Chainwork = (string)props[nameof(b.Chainwork)],
+            PreviousBlockHash = (string)props[nameof(b.PreviousBlockHash)],
+            NextBlockHash = (string)props[nameof(b.NextBlockHash)],
+            Confirmations = (int)(long)props[nameof(b.Confirmations)],
+            Height = (long)props[nameof(b.Height)],
+            Version = (ulong)(long)props[nameof(b.Version)],
+            Time = (uint)(long)props[nameof(b.Time)],
+            MedianTime = (uint)(long)props[nameof(b.MedianTime)],
+            Nonce = (ulong)(long)props[nameof(b.Nonce)],
+            TransactionsCount = (int)(long)props[nameof(b.TransactionsCount)],
+            StrippedSize = (int)(long)props[nameof(b.StrippedSize)],
+            Size = (int)(long)props[nameof(b.Size)],
+            Weight = (int)(long)props[nameof(b.Weight)],
+            CoinbaseOutputsCount = (int)(long)props[nameof(b.CoinbaseOutputsCount)],
+            TxFees = (long)props[nameof(b.TxFees)],
+            MintedBitcoins = (long)props[nameof(b.MintedBitcoins)],
+            Difficulty = (double)props[nameof(b.Difficulty)],
+            InputCounts = MappingHelpers.ReadDescriptiveStats(props, nameof(b.InputCounts)),
+            OutputCounts = MappingHelpers.ReadDescriptiveStats(props, nameof(b.OutputCounts)),
+            InputValues = MappingHelpers.ReadDescriptiveStats(props, nameof(b.InputValues)),
+            OutputValues = MappingHelpers.ReadDescriptiveStats(props, nameof(b.OutputValues)),
+            SpentOutputAge = MappingHelpers.ReadDescriptiveStats(props, nameof(b.SpentOutputAge)),
+            ScriptTypeCount = MappingHelpers.ReadScriptTypeCounts(props)
+        };
+    }
 
     public override string GetIdPropertyName()
     {

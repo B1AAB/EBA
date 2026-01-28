@@ -5,25 +5,22 @@ namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
 {
     public const NodeLabels Label = NodeLabels.Tx;
-    private readonly Property[] _properties =
+
+    private static readonly PropertyMapping<TxNode>[] _mappings =
     [
-        Props.Txid,
-        Props.TxVersion,
-        Props.TxSize,
-        Props.TxVSize,
-        Props.TxWeight,
-        Props.TxLockTime
+        new(nameof(TxNode.Txid), FieldType.String, n => n.Txid, p => p.GetIdFieldCsvHeader(Label.ToString())),
+        new(nameof(TxNode.Version), FieldType.Int, n => n.Version),
+        new(nameof(TxNode.Size), FieldType.Int, n => n.Size),
+        new(nameof(TxNode.VSize), FieldType.Int, n => n.VSize),
+        new(nameof(TxNode.Weight), FieldType.Int, n => n.Weight),
+        new(nameof(TxNode.LockTime), FieldType.Int, n => n.LockTime),
+
+        new(":LABEL", FieldType.String, _ => Label, _ => ":LABEL"),
     ];
 
     public override string GetCsvHeader()
     {
-        return string.Join(
-            csvDelimiter,
-            [
-                Props.Txid.GetIdFieldCsvHeader(Label.ToString()),
-                .. from x in _properties where x != Props.Txid select x.TypeAnnotatedCsvHeader,
-                ":LABEL"
-            ]);
+        return _mappings.GetCsvHeader();
     }
 
     public override string GetCsv(IGraphComponent component)
@@ -33,15 +30,7 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
 
     public static string GetCsv(TxNode node)
     {
-        return string.Join(
-            csvDelimiter,
-            node.Txid,
-            node.Version,
-            node.Size,
-            node.VSize,
-            node.Weight,
-            node.LockTime, 
-            Label.ToString());
+        return _mappings.GetCsv(node);
     }
 
     public override string GetQuery(string filename)
@@ -62,6 +51,7 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
         string l = Property.lineVarName, node = "node";
 
         var builder = new StringBuilder();
+        /*
         builder.Append(
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
             $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' " +
@@ -71,7 +61,7 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
         builder.Append(string.Join(
             ", ",
             from x in _properties where x != Props.Txid select $"{x.GetSetterWithNullCheck(node)}"));
-
+        */
         return builder.ToString();
     }
 }
