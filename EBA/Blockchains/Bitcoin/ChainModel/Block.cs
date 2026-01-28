@@ -67,10 +67,18 @@ public class Block : BlockMetadata
     }
 
     private readonly ConcurrentBag<string> _outputAddresses = [];
+
     private readonly ConcurrentDictionary<ScriptType, uint> _scriptTypeCount = 
         new(Enum.GetValues<ScriptType>()
                 .Cast<ScriptType>()
                 .ToDictionary(x => x, x => (uint)0));
+    public override Dictionary<ScriptType, uint> ScriptTypeCount
+    {
+        get
+        {
+            return _scriptTypeCount.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        }
+    }
 
     public void AddOutputStatistics(string? address, ScriptType scriptType)
     {

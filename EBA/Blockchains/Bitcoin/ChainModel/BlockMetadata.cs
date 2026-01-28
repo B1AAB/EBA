@@ -71,4 +71,6 @@ public class BlockMetadata
     public virtual DescriptiveStatistics? InputValues { init; get; }
     public virtual DescriptiveStatistics? OutputValues { init; get; }
     public virtual DescriptiveStatistics? SpentOutputAge { init; get; }
+
+    public virtual Dictionary<ScriptType, uint> ScriptTypeCount { init; get; } = [];
 }

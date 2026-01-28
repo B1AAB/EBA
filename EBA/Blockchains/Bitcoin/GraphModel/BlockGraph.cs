@@ -24,11 +24,8 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         _stopwatch.Stop();
     }
 
-    private readonly uint[] _edgeLabelCount =
-    new uint[Enum.GetNames<EdgeLabel>().Length];
-    private readonly long[] _edgeLabelValueSum =
-    new long[Enum.GetNames<EdgeLabel>().Length];
-
+    private readonly uint[] _edgeLabelCount = new uint[Enum.GetNames<EdgeLabel>().Length];
+    private readonly long[] _edgeLabelValueSum = new long[Enum.GetNames<EdgeLabel>().Length];
     public void IncrementEdgeType(EdgeLabel label, long value)
     {
         Interlocked.Increment(ref _edgeLabelCount[(int)label]);
