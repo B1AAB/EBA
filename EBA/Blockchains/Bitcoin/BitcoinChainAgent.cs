@@ -171,7 +171,7 @@ public class BitcoinChainAgent : IDisposable
                 {
                     retryAttempts++;
                     graph = await GetGraph(height, options, cT);
-                    graph.Stats.Retries = retryAttempts;
+                    graph.Retries = retryAttempts;
                 },
                 new Context()
                     .SetLogger<BitcoinOrchestrator>(_logger)
@@ -205,7 +205,7 @@ public class BitcoinChainAgent : IDisposable
 
         var graph = await ProcessBlockAsync(block, options, cT);
 
-        graph.Stats.StopStopwatch();
+        graph.StopStopwatch();
 
         return graph;
     }
@@ -229,13 +229,13 @@ public class BitcoinChainAgent : IDisposable
             if (!output.IsValueTransfer)
             {
                 // This is added for script type statistics only
-                g.Stats.AddNonTransferOutputStatistics(output.GetScriptType());
+                g.Block.AddNonTransferOutputStatistics(output.GetScriptType());
                 continue;
             }
 
             output.TryGetAddress(out string? address);
 
-            g.Stats.AddOutputStatistics(address, output.GetScriptType());
+            g.Block.AddOutputStatistics(address, output.GetScriptType());
 
             var utxo = new Utxo(
                 coinbaseTx.Txid, output.Index, address, output.Value, output.GetScriptType(),
@@ -249,7 +249,7 @@ public class BitcoinChainAgent : IDisposable
         }
 
         g.SetCoinbaseTx(mintingTxGraph);
-        g.Stats.CoinbaseOutputsCount = rewardAddresses.Count;
+        g.Block.SetCoinbaseOutputsCount(rewardAddresses.Count);
 
         cT.ThrowIfCancellationRequested();
 
@@ -311,7 +311,7 @@ public class BitcoinChainAgent : IDisposable
                         return oldValue;
                     });
 
-                g.Stats.AddSpentOutputsAge(g.Block.Height - input.PrevOut.Height);
+                g.Block.AddSpentOutputsAge(g.Block.Height - input.PrevOut.Height);
             }
             else
             {
@@ -339,7 +339,7 @@ public class BitcoinChainAgent : IDisposable
                 });*/
             }
 
-            g.Stats.AddInputValue(utxo.Value);
+            g.Block.AddInputValue(utxo.Value);
             txGraph.AddSource(input.TxId, utxo);
         }
 
@@ -351,14 +351,14 @@ public class BitcoinChainAgent : IDisposable
             if (!output.IsValueTransfer)
             {
                 // This is added for script type statistics only
-                g.Stats.AddNonTransferOutputStatistics(output.GetScriptType());
+                g.Block.AddNonTransferOutputStatistics(output.GetScriptType());
                 continue;
             }
 
             transferOutputsCount++;
 
             output.TryGetAddress(out string? address);
-            g.Stats.AddOutputStatistics(address, output.GetScriptType());
+            g.Block.AddOutputStatistics(address, output.GetScriptType());
 
             var cIn = g.Block.Hash;
             var utxo = new Utxo(
@@ -366,14 +366,14 @@ public class BitcoinChainAgent : IDisposable
                 isGenerated: false, createdInHeight: g.Block.Height);
 
             txGraph.AddTarget(utxo);
-            g.Stats.AddOutputValue(utxo.Value);
+            g.Block.AddOutputValue(utxo.Value);
 
             if (options.Traverse.TrackTxo)
                 g.Block.TxoLifecycle.TryAdd(utxo.Id, utxo);
         }
 
-        g.Stats.AddInputsCount(tx.Inputs.Count);
-        g.Stats.AddOutputsCount(transferOutputsCount);
+        g.Block.AddInputsCount(tx.Inputs.Count);
+        g.Block.AddOutputsCount(transferOutputsCount);
         g.Enqueue(txGraph);
     }
 

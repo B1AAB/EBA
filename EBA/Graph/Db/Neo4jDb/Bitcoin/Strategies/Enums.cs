@@ -2,5 +2,5 @@
 
 public enum FieldType
 {
-    String, Int, Float
+    String, Int, Float, Long, Double
 }

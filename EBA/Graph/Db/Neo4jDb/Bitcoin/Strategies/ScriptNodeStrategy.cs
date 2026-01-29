@@ -6,21 +6,16 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
 {
     public const NodeLabels Label = NodeLabels.Script;
 
-    private readonly Property[] _properties =
+    private readonly static PropertyMapping<ScriptNode>[] _mappings =
     [
-        Props.ScriptAddress,
-        Props.ScriptType
+        new(nameof(ScriptNode.Address), FieldType.String, n => n.Address, p => p.GetIdFieldCsvHeader(Label.ToString())),
+        new(nameof(ScriptNode.ScriptType), FieldType.String, n => n.ScriptType),
+        new(":LABEL", FieldType.String, _ => Label, _ => ":LABEL"),
     ];
 
     public override string GetCsvHeader()
     {
-        return string.Join(
-            csvDelimiter,
-            [
-                Props.ScriptAddress.GetIdFieldCsvHeader(Label.ToString()),
-                Props.ScriptType.TypeAnnotatedCsvHeader,
-                ":LABEL"
-            ]);
+        return _mappings.GetCsvHeader();
     }
 
     public override string GetCsv(IGraphComponent component)
@@ -30,11 +25,7 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
 
     public static string GetCsv(ScriptNode node)
     {
-        return string.Join(
-            csvDelimiter,
-            node.Address,
-            node.ScriptType.ToString(),
-            Label.ToString());
+        return _mappings.GetCsv(node);
     }
 
     public override string GetQuery(string filename)
@@ -61,6 +52,7 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
         string l = Property.lineVarName, node = "node";
 
         var builder = new StringBuilder();
+        /*
         builder.Append(
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
             $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' " +
@@ -76,7 +68,7 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
             $"WHEN '{nameof(ScriptType.Unknown)}' THEN {node}.{Props.ScriptType.Name} " +
             $"ELSE {l}.{Props.ScriptType.CsvHeader} " +
             $"END");
-
+        */
         return builder.ToString();
     }
 }
