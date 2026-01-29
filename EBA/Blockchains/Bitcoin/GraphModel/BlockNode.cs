@@ -1,5 +1,6 @@
 ﻿using EBA.Graph.Db.Neo4jDb;
 using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+using EBA.Utilities;
 
 namespace EBA.Blockchains.Bitcoin.GraphModel;
 
@@ -103,8 +104,15 @@ public class BlockNode(
             nameof(BlockMetadata.Difficulty),
             nameof(BlockMetadata.Size),
             nameof(BlockMetadata.StrippedSize),
-            nameof(BlockMetadata.Confirmations),
             nameof(BlockMetadata.Weight),
+            nameof(BlockMetadata.CoinbaseOutputsCount),
+            nameof(BlockMetadata.TxFees),
+            nameof(BlockMetadata.MintedBitcoins),
+            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.InputCounts)),
+            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.OutputCounts)),
+            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.InputValues)),
+            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.OutputValues)),
+            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.SpentOutputAge)),
             .. Node.GetFeaturesName()
         ];
     }
@@ -118,9 +126,16 @@ public class BlockNode(
             BlockMetadata.TransactionsCount.ToString(), 
             BlockMetadata.Difficulty.ToString(), 
             BlockMetadata.Size.ToString(), 
-            BlockMetadata.StrippedSize.ToString(), 
-            BlockMetadata.Confirmations.ToString(), 
+            BlockMetadata.StrippedSize.ToString(),
             BlockMetadata.Weight.ToString(),
+            BlockMetadata.CoinbaseOutputsCount.ToString(),
+            BlockMetadata.TxFees.ToString(),
+            BlockMetadata.MintedBitcoins.ToString(),
+            .. BlockMetadata.InputCounts.GetFeatures(),
+            .. BlockMetadata.OutputCounts.GetFeatures(),
+            .. BlockMetadata.InputValues.GetFeatures(),
+            .. BlockMetadata.OutputValues.GetFeatures(),
+            .. BlockMetadata.SpentOutputAge.GetFeatures(),
             .. base.GetFeatures()
         ];
     }
