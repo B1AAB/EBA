@@ -59,4 +59,46 @@ public class DescriptiveStatistics
             Kurtosis = Statistics.Kurtosis(data);
         }
     }
+
+    public static string[] GetFeaturesName(string prefix)
+    {
+        return [
+            $"{prefix}.{nameof(Sum)}",
+            $"{prefix}.{nameof(Count)}",
+            $"{prefix}.{nameof(Min)}",
+            $"{prefix}.{nameof(Max)}",
+            $"{prefix}.{nameof(Mean)}",
+            $"{prefix}.{nameof(Variance)}",
+            $"{prefix}.{nameof(Skewness)}",
+            $"{prefix}.{nameof(Kurtosis)}",
+            $"{prefix}.{nameof(Percentiles)}.{nameof(Percentile.P01)}",
+            $"{prefix}.{nameof(Percentiles)}.{nameof(Percentile.P05)}",
+            $"{prefix}.{nameof(Percentiles)}.{nameof(Percentile.P25)}",
+            $"{prefix}.{nameof(Percentiles)}.{nameof(Percentile.P50)}",
+            $"{prefix}.{nameof(Percentiles)}.{nameof(Percentile.P75)}",
+            $"{prefix}.{nameof(Percentiles)}.{nameof(Percentile.P95)}",
+            $"{prefix}.{nameof(Percentiles)}.{nameof(Percentile.P99)}"
+        ];
+    }
+
+    public string[] GetFeatures()
+    {
+        return [
+            Sum.ToString(),
+            Count.ToString(),
+            Min.ToString(),
+            Max.ToString(),
+            Mean.ToString(),
+            Variance.ToString(),
+            Skewness.ToString(),
+            Kurtosis.ToString(),
+            Percentiles.P01.ToString(),
+            Percentiles.P05.ToString(),
+            Percentiles.P25.ToString(),
+            Percentiles.P50.ToString(),
+            Percentiles.P75.ToString(),
+            Percentiles.P95.ToString(),
+            Percentiles.P99.ToString()
+        ];
+    }
 }
