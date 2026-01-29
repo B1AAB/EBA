@@ -66,7 +66,7 @@ public class BlockNode(
             PreviousBlockHash = (string)props[nameof(b.PreviousBlockHash)],
             NextBlockHash = (string)props[nameof(b.NextBlockHash)],
             Confirmations = (int)(long)props[nameof(b.Confirmations)],
-            Height = (long)props[nameof(b.Height)],
+            Height = long.Parse((string)props[nameof(b.Height)]),
             Version = (ulong)(long)props[nameof(b.Version)],
             Time = (uint)(long)props[nameof(b.Time)],
             MedianTime = (uint)(long)props[nameof(b.MedianTime)],
