@@ -14,7 +14,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
 
     public EdgeLabel Label { get { return EdgeLabel.S2TTransfer; } }
 
-    public long UTxOCreatedInBockHeight { get; }
+    public long UTxOCreatedInBlockHeight { get; }
 
     public S2TEdge(
         ScriptNode source,
@@ -26,12 +26,12 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         long utxoCreatedInBlockHeight) :
         base(source, target, value, type, timestamp, blockHeight)
     {
-        UTxOCreatedInBockHeight = utxoCreatedInBlockHeight;
+        UTxOCreatedInBlockHeight = utxoCreatedInBlockHeight;
     }
 
     public S2TEdge Update(long value)
     {
-        return new S2TEdge(Source, Target, Value + value, Type, Timestamp, BlockHeight, UTxOCreatedInBockHeight);
+        return new S2TEdge(Source, Target, Value + value, Type, Timestamp, BlockHeight, UTxOCreatedInBlockHeight);
     }
 
 
@@ -43,7 +43,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
             nameof(Value),
             nameof(Type),
             nameof(BlockHeight),
-            nameof(UTxOCreatedInBockHeight),
+            nameof(UTxOCreatedInBlockHeight),
             "UtxoAgeBlocks"
         ];
     }
@@ -53,8 +53,8 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         return
         [
             .. base.GetFeatures(),
-            UTxOCreatedInBockHeight,
-            BlockHeight - UTxOCreatedInBockHeight
+            UTxOCreatedInBlockHeight,
+            BlockHeight - UTxOCreatedInBlockHeight
         ];
     }
 }
