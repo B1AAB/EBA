@@ -10,6 +10,7 @@ public class S2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
         MappingHelpers.TargetId<S2TEdge>(TxNodeStrategy.Label, e => e.Target.Txid),
         MappingHelpers.Value<S2TEdge>(e => Helpers.Satoshi2BTC(e.Value)),
         MappingHelpers.Height<S2TEdge>(e => e.BlockHeight),
+        new(nameof(S2TEdge.UTxOCreatedInBlockHeight), FieldType.Long, e => e.UTxOCreatedInBlockHeight),
         MappingHelpers.EdgeType<S2TEdge>(e => e.Type)
     ];
 
