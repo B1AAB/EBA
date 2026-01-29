@@ -9,11 +9,11 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
     private static readonly PropertyMapping<TxNode>[] _mappings =
     [
         new(nameof(TxNode.Txid), FieldType.String, n => n.Txid, p => p.GetIdFieldCsvHeader(Label.ToString())),
-        new(nameof(TxNode.Version), FieldType.Int, n => n.Version),
-        new(nameof(TxNode.Size), FieldType.Int, n => n.Size),
-        new(nameof(TxNode.VSize), FieldType.Int, n => n.VSize),
-        new(nameof(TxNode.Weight), FieldType.Int, n => n.Weight),
-        new(nameof(TxNode.LockTime), FieldType.Int, n => n.LockTime),
+        new(nameof(TxNode.Version), FieldType.Long, n => n.Version),
+        new(nameof(TxNode.Size), FieldType.Long, n => n.Size),
+        new(nameof(TxNode.VSize), FieldType.Long, n => n.VSize),
+        new(nameof(TxNode.Weight), FieldType.Long, n => n.Weight),
+        new(nameof(TxNode.LockTime), FieldType.Long, n => n.LockTime),
 
         new(":LABEL", FieldType.String, _ => Label, _ => ":LABEL"),
     ];

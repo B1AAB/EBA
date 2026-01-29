@@ -24,11 +24,11 @@ public static class MappingHelpers
 
     public static PropertyMapping<T> Height<T>(Func<T, long> getValue)
     {
-        return new("Height", FieldType.Int, x => getValue(x));
+        return new("Height", FieldType.Long, x => getValue(x));
     }
     public static PropertyMapping<T> Value<T>(Func<T, double> getValue)
     {
-        return new("Value", FieldType.Float, x => getValue(x));
+        return new("Value", FieldType.Double, x => getValue(x));
     }
     public static PropertyMapping<T> Address<T>(Func<T, string?> getValue)
     {
@@ -63,21 +63,21 @@ public static class MappingHelpers
 
         return
         [
-            new($"{prefix}.{nameof(d.Sum)}", FieldType.Float, s => getStats(s)?.Sum),
-            new($"{prefix}.{nameof(d.Count)}", FieldType.Float, s => getStats(s)?.Count),
-            new($"{prefix}.{nameof(d.Min)}", FieldType.Float, s => getStats(s)?.Min),
-            new($"{prefix}.{nameof(d.Max)}", FieldType.Float, s => getStats(s)?.Max),
-            new($"{prefix}.{nameof(d.Mean)}", FieldType.Float, s => getStats(s)?.Mean),
-            new($"{prefix}.{nameof(d.Variance)}", FieldType.Float, s => getStats(s)?.Variance),
-            new($"{prefix}.{nameof(d.Skewness)}", FieldType.Float, s => getStats(s)?.Skewness),
-            new($"{prefix}.{nameof(d.Kurtosis)}", FieldType.Float, s => getStats(s)?.Kurtosis),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P01)}", FieldType.Float, s => getStats(s)?.Percentiles.P01),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P05)}", FieldType.Float, s => getStats(s)?.Percentiles.P05),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P25)}", FieldType.Float, s => getStats(s)?.Percentiles.P25),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P50)}", FieldType.Float, s => getStats(s)?.Percentiles.P50),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P75)}", FieldType.Float, s => getStats(s)?.Percentiles.P75),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P95)}", FieldType.Float, s => getStats(s)?.Percentiles.P95),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P99)}", FieldType.Float, s => getStats(s)?.Percentiles.P99),
+            new($"{prefix}.{nameof(d.Sum)}", FieldType.Double, s => getStats(s)?.Sum),
+            new($"{prefix}.{nameof(d.Count)}", FieldType.Double, s => getStats(s)?.Count),
+            new($"{prefix}.{nameof(d.Min)}", FieldType.Double, s => getStats(s)?.Min),
+            new($"{prefix}.{nameof(d.Max)}", FieldType.Double, s => getStats(s)?.Max),
+            new($"{prefix}.{nameof(d.Mean)}", FieldType.Double, s => getStats(s)?.Mean),
+            new($"{prefix}.{nameof(d.Variance)}", FieldType.Double, s => getStats(s)?.Variance),
+            new($"{prefix}.{nameof(d.Skewness)}", FieldType.Double, s => getStats(s)?.Skewness),
+            new($"{prefix}.{nameof(d.Kurtosis)}", FieldType.Double, s => getStats(s)?.Kurtosis),
+            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P01)}", FieldType.Double, s => getStats(s)?.Percentiles.P01),
+            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P05)}", FieldType.Double, s => getStats(s)?.Percentiles.P05),
+            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P25)}", FieldType.Double, s => getStats(s)?.Percentiles.P25),
+            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P50)}", FieldType.Double, s => getStats(s)?.Percentiles.P50),
+            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P75)}", FieldType.Double, s => getStats(s)?.Percentiles.P75),
+            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P95)}", FieldType.Double, s => getStats(s)?.Percentiles.P95),
+            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P99)}", FieldType.Double, s => getStats(s)?.Percentiles.P99),
         ];
     }
 
@@ -88,7 +88,7 @@ public static class MappingHelpers
             Enum.GetValues<ScriptType>()
                 .Select(scriptType => new PropertyMapping<T>(
                     $"ScriptType.{scriptType}",
-                    FieldType.Int,
+                    FieldType.Long,
                     x => getScriptTypeCounts(x).GetValueOrDefault(scriptType)))];
     }
 
