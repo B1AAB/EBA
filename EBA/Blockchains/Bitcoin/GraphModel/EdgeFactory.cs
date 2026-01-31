@@ -1,4 +1,5 @@
-﻿using EBA.Utilities;
+﻿using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+using EBA.Utilities;
 using INode = EBA.Graph.Model.INode;
 
 namespace EBA.Blockchains.Bitcoin.GraphModel;
@@ -10,10 +11,9 @@ public class EdgeFactory
         INode target,
         IRelationship relationship)
     {
-        //var id = relationship.ElementId;
-        var value = Helpers.BTC2Satoshi((double)relationship.Properties[Props.EdgeValue.Name]);
+        var value = Helpers.BTC2Satoshi(MappingHelpers.ValueBTCMapper<IRelationship>(null!).ReadFrom<double>(relationship.Properties));
         var type = Enum.Parse<EdgeType>(relationship.Type);
-        var blockHeight = (long)relationship.Properties[Props.Height.Name];
+        var blockHeight = MappingHelpers.HeightMapper<IRelationship>(null!).ReadFrom<long>(relationship.Properties);
         uint timestamp = 0; // TODO currently edges stored on the database do not have a timestamp
 
         if (source.GetGraphComponentType() == GraphComponentType.BitcoinCoinbaseNode &&

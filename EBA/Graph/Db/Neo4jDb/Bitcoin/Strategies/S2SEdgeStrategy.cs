@@ -1,4 +1,5 @@
 ﻿using EBA.Utilities;
+using System.ComponentModel;
 
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
@@ -8,8 +9,8 @@ public class S2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
     [
         MappingHelpers.SourceId<S2SEdge>(ScriptNodeStrategy.Label, e => e.Source.Address),
         MappingHelpers.TargetId<S2SEdge>(ScriptNodeStrategy.Label, e => e.Target.Address),
-        MappingHelpers.Value<S2SEdge>(e => Helpers.Satoshi2BTC(e.Value)),
-        MappingHelpers.Height<S2SEdge>(e => e.BlockHeight),
+        MappingHelpers.ValueBTCMapper<S2SEdge>(e => Helpers.Satoshi2BTC(e.Value)),
+        MappingHelpers.HeightMapper<S2SEdge>(e => e.BlockHeight),
         MappingHelpers.EdgeType<S2SEdge>(e => e.Type)
     ];
 
@@ -60,6 +61,7 @@ public class S2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
         // RETURN distinct 'DONE'
         //
 
+        /*
         string l = Property.lineVarName, b = "block", s = "source", t = "target";
 
         var builder = new StringBuilder(
@@ -81,6 +83,7 @@ public class S2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
         builder.Append(" RETURN distinct 'DONE'");
 
-        return builder.ToString();
+        return builder.ToString();*/
+        throw new NotImplementedException();
     }
 }

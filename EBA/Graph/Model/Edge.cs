@@ -1,4 +1,5 @@
-﻿using EBA.Utilities;
+﻿using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+using EBA.Utilities;
 
 namespace EBA.Graph.Model;
 
@@ -57,9 +58,9 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
         Source = source;
         Target = target;
         Id = relationship.ElementId;
-        Value = Helpers.BTC2Satoshi((double)relationship.Properties[Props.EdgeValue.Name]);
+        Value = Helpers.BTC2Satoshi(MappingHelpers.ValueBTCMapper<IRelationship>(null!).ReadFrom<double>(relationship.Properties));
         Type = Enum.Parse<EdgeType>(relationship.Type);
-        BlockHeight = (long)relationship.Properties[Props.Height.Name];
+        BlockHeight = MappingHelpers.HeightMapper<IRelationship>(null!).ReadFrom<long>(relationship.Properties);
     }
 
     public static string[] GetFeaturesName()

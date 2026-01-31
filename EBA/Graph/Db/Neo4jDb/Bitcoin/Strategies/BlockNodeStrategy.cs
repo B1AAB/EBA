@@ -9,7 +9,7 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
     private const Block v = null!;
     private static readonly PropertyMapping<BlockNode>[] _mappings =
     [
-        new(nameof(v.Height), FieldType.Int, n => n.BlockMetadata.Height, p => p.GetIdFieldCsvHeader(Label.ToString())),
+        MappingHelpers.HeightMapper<BlockNode>(n => n.BlockMetadata.Height, p => p.GetIdFieldCsvHeader(Label.ToString())),
         new(nameof(v.Hash), FieldType.String, n => n.BlockMetadata.Hash),
         new(nameof(v.Confirmations), FieldType.Long, n => n.BlockMetadata.Confirmations),
         new(nameof(v.Version), FieldType.Long, n => n.BlockMetadata.Version),
@@ -119,11 +119,11 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
         //  block.SumChangeEdgeTypes=toFloat(line.SumChangeEdgeTypes),
         //  block.SumFeeEdgeTypes=toFloat(line.SumFeeEdgeTypes)
         //
-
+        /*
         string l = Property.lineVarName, block = "block";
 
         var builder = new StringBuilder();
-        /*
+        
         builder.Append(
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
             $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' " +
@@ -134,7 +134,9 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
         builder.Append(string.Join(
             ", ",
             from x in _properties where x != Props.Height select x.GetSetter(block)));
-        */
+        
         return builder.ToString();
+        */
+        throw new NotImplementedException();
     }
 }

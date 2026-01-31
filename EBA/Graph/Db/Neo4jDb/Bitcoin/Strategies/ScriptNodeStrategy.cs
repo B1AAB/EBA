@@ -7,9 +7,14 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
     public const NodeLabels Label = NodeLabels.Script;
 
     private const ScriptNode v = null!;
+    private static readonly PropertyMapping<ScriptNode> _address = 
+        MappingHelpers.Address<ScriptNode>(
+            n => n.Address, 
+            p => p.GetIdFieldCsvHeader(Label.ToString()));
+
     private readonly static PropertyMapping<ScriptNode>[] _mappings =
     [
-        new(nameof(v.Address), FieldType.String, n => n.Address, p => p.GetIdFieldCsvHeader(Label.ToString())),
+        _address,
         new(nameof(v.ScriptType), FieldType.String, n => n.ScriptType),
         new(":LABEL", FieldType.String, _ => Label, _ => ":LABEL"),
     ];
@@ -39,7 +44,7 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
         double? hopsFromRoot)
     {
         return new ScriptNode(
-            address: _mappingsDict[nameof(v.Address)].ReadFrom<string>(node.Properties),
+            address: _address.ReadFrom<string>(node.Properties),
             scriptType: _mappingsDict[nameof(v.ScriptType)].ReadFrom<ScriptType>(node.Properties),
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
@@ -67,11 +72,11 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
         //         ELSE line.ScriptType
         //       END
         //
-
+        /*
         string l = Property.lineVarName, node = "node";
 
         var builder = new StringBuilder();
-        /*
+        
         builder.Append(
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
             $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' " +
@@ -87,7 +92,9 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
             $"WHEN '{nameof(ScriptType.Unknown)}' THEN {node}.{Props.ScriptType.Name} " +
             $"ELSE {l}.{Props.ScriptType.CsvHeader} " +
             $"END");
-        */
+        
         return builder.ToString();
+        */
+        throw new NotImplementedException();
     }
 }

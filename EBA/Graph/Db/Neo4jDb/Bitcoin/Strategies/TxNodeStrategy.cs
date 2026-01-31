@@ -9,7 +9,7 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
     private const TxNode v = null!;
     private static readonly PropertyMapping<TxNode>[] _mappings =
     [
-        new(nameof(v.Txid), FieldType.String, n => n.Txid, p => p.GetIdFieldCsvHeader(Label.ToString())),
+        MappingHelpers.TxIdMapper<TxNode>(n => n.Txid, p => p.GetIdFieldCsvHeader(Label.ToString())),
         new(nameof(v.Version), FieldType.Long, n => n.Version),
         new(nameof(v.Size), FieldType.Long, n => n.Size),
         new(nameof(v.VSize), FieldType.Long, n => n.VSize),
@@ -72,10 +72,10 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
         //  node.LockTime = CASE line.SourceLockTime WHEN "" THEN null ELSE toInteger(line.SourceLockTime) END 
         //
 
-        string l = Property.lineVarName, node = "node";
+        /*string l = Property.lineVarName, node = "node";
 
         var builder = new StringBuilder();
-        /*
+        
         builder.Append(
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
             $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' " +
@@ -85,7 +85,8 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
         builder.Append(string.Join(
             ", ",
             from x in _properties where x != Props.Txid select $"{x.GetSetterWithNullCheck(node)}"));
-        */
-        return builder.ToString();
+        
+        return builder.ToString();*/
+        throw new NotImplementedException();
     }
 }

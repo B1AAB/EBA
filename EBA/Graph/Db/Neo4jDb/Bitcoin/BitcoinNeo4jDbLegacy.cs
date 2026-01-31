@@ -1,11 +1,10 @@
-﻿using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
-using EBA.Utilities;
-
+﻿using EBA.Graph.Bitcoin;
 using EBA.Graph.Db.Neo4jDb;
+using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 using EBA.Utilities;
-
+using EBA.Utilities;
 using Microsoft.Extensions.Primitives;
-using EBA.Graph.Bitcoin;
+using System.Reflection.Emit;
 
 
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin;
@@ -762,9 +761,10 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                 {
                     await session.ExecuteWriteAsync(async tx =>
                     {
+                        var x = MappingHelpers.Address<ScriptNode>(n => n.Address).Property.Name;
                         await tx.RunAsync(
                             $"CREATE (:{Blockchains.Bitcoin.BitcoinChainAgent.Coinbase} {{" +
-                            $"{Props.ScriptAddress.Name}: " +
+                            $"{x}: " +
                             $"\"{Blockchains.Bitcoin.BitcoinChainAgent.Coinbase}\"}})");
                     });
                 }
@@ -778,22 +778,25 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
     {
         using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
 
+        var heightLabel = MappingHelpers.HeightProperty.Name;
+
         await session.ExecuteWriteAsync(async x =>
         {
             var result = await x.RunAsync(
                 $"CREATE INDEX ScriptAddressIndex " +
                 $"IF NOT EXISTS " +
                 $"FOR (n:{ScriptNodeStrategy.Label}) " +
-                $"ON (n.{Props.ScriptAddress.Name})");
+                $"ON (n.{MappingHelpers.Address<ScriptNode>(n => n.Address).Property.Name})");
         });
 
+        var txidName = MappingHelpers.TxIdMapper<TxNode>(n => n.Txid).Property.Name;
         await session.ExecuteWriteAsync(async x =>
         {
             var result = await x.RunAsync(
                 $"CREATE INDEX TxidIndex " +
                 $"IF NOT EXISTS " +
                 $"FOR (n:{TxNodeStrategy.Label}) " +
-                $"ON (n.{Props.Txid.Name})");
+                $"ON (n.{txidName})");
         });
 
         await session.ExecuteWriteAsync(async x =>
@@ -802,7 +805,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                 $"CREATE INDEX BlockHeightIndex " +
                 $"IF NOT EXISTS " +
                 $"FOR (block:{BlockNodeStrategy.Label}) " +
-                $"ON (block.{Props.Height.Name})");
+                $"ON (block.{heightLabel})");
         });
 
         await session.ExecuteWriteAsync(async x =>
@@ -811,7 +814,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                 $"CREATE INDEX GenerationEdgeIndex " +
                 $"IF NOT EXISTS " +
                 $"FOR ()-[r:{EdgeType.Mints}]->()" +
-                $"on (r.{Props.Height.Name})");
+                $"on (r.{heightLabel})");
         });
 
         await session.ExecuteWriteAsync(async x =>
@@ -820,7 +823,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                 $"CREATE INDEX TransferEdgeIndex " +
                 $"IF NOT EXISTS " +
                 $"FOR ()-[r:{EdgeType.Transfers}]->()" +
-                $"on (r.{Props.Height.Name})");
+                $"on (r.{heightLabel})");
         });
 
         await session.ExecuteWriteAsync(async x =>
@@ -829,7 +832,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                 $"CREATE INDEX FeeEdgeIndex " +
                 $"IF NOT EXISTS " +
                 $"FOR ()-[r:{EdgeType.Fee}]->()" +
-                $"on (r.{Props.Height.Name})");
+                $"on (r.{heightLabel})");
         });
     }
 }

@@ -9,8 +9,8 @@ public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(seriali
     [
         MappingHelpers.SourceId<C2SEdge>(NodeLabels.Coinbase, _ => NodeLabels.Coinbase),
         MappingHelpers.TargetId<C2SEdge>(ScriptNodeStrategy.Label, e => e.Target.Address),
-        MappingHelpers.Value<C2SEdge>(e => Helpers.Satoshi2BTC(e.Value)),
-        MappingHelpers.Height<C2SEdge>(e => e.BlockHeight),
+        MappingHelpers.ValueBTCMapper<C2SEdge>(e => Helpers.Satoshi2BTC(e.Value)),
+        MappingHelpers.HeightMapper<C2SEdge>(e => e.BlockHeight),
         MappingHelpers.EdgeType<C2SEdge>(e => e.Type)
     ];
 
@@ -58,7 +58,7 @@ public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(seriali
         // YIELD rel
         // RETURN distinct 'DONE'
         //
-
+        /*
         string l = Property.lineVarName, b = "block", s = "coinbase", t = "target";
 
         var builder = new StringBuilder(
@@ -76,6 +76,7 @@ public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(seriali
         builder.Append(GetApocCreateEdgeQuery(GetEdgePropertiesBase(), s, t));
         builder.Append(" RETURN distinct 'DONE'");
 
-        return builder.ToString();
+        return builder.ToString();*/
+        throw new NotImplementedException();
     }
 }

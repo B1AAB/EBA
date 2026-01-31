@@ -42,7 +42,7 @@ public abstract class BitcoinEdgeStrategy(bool serializeCompressed) : StrategyBa
 
     public static ReadOnlyCollection<Property> GetEdgePropertiesBase()
     {
-        return new ReadOnlyCollection<Property>([Props.Height, Props.EdgeValue]);
+        return new ReadOnlyCollection<Property>([MappingHelpers.HeightProperty, MappingHelpers.BTCValueProperty]);
     }
 
     public static string GetApocCreateEdgeQuery(
@@ -64,7 +64,7 @@ public abstract class BitcoinEdgeStrategy(bool serializeCompressed) : StrategyBa
         //     target)
         // YIELD rel
         //
-
+        /*
         var builder = new StringBuilder(
             $"CALL apoc.create.relationship(" +
             $"{sourceVar}, " +
@@ -78,7 +78,8 @@ public abstract class BitcoinEdgeStrategy(bool serializeCompressed) : StrategyBa
             $"{targetVar}) " +
             $"YIELD rel");
 
-        return builder.ToString();
+        return builder.ToString();*/
+        throw new NotImplementedException();
     }
 
     public static string GetApocMergeEdgeQuery(
@@ -105,7 +106,7 @@ public abstract class BitcoinEdgeStrategy(bool serializeCompressed) : StrategyBa
         // YIELD rel
         // SET rel.Count = rel.Count + 1
         //
-
+        /*
         var builder = new StringBuilder(
             "CALL apoc.merge.relationship(" +
             $"{sourceVar}, " +
@@ -123,6 +124,7 @@ public abstract class BitcoinEdgeStrategy(bool serializeCompressed) : StrategyBa
             $"YIELD rel " +
             $"SET rel.Count = rel.Count + 1");
 
-        return builder.ToString();
+        return builder.ToString();*/
+        throw new NotImplementedException();
     }
 }

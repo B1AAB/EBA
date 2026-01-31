@@ -22,17 +22,27 @@ public static class MappingHelpers
             mappings.Select(m => m.GetValue(source)));
     }
 
-    public static PropertyMapping<T> Height<T>(Func<T, long> getValue)
+    public static Property HeightProperty { get; } = new(nameof(Block.Height), FieldType.Long);
+    public static PropertyMapping<T> HeightMapper<T>(Func<T, long> getValue, Func<Property, string>? headerOverride = null)
     {
-        return new("Height", FieldType.Long, x => getValue(x));
+        return new(HeightProperty, x => getValue(x), headerOverride);
     }
-    public static PropertyMapping<T> Value<T>(Func<T, double> getValue)
+
+    public static PropertyMapping<T> Address<T>(Func<T, string?> getValue, Func<Property, string>? headerOverride = null)
     {
-        return new("Value", FieldType.Double, x => getValue(x));
+        return new(nameof(ScriptNode.Address), FieldType.String, x => getValue(x), headerOverride);
     }
-    public static PropertyMapping<T> Address<T>(Func<T, string?> getValue)
+
+    public static PropertyMapping<T> TxIdMapper<T>(Func<T, string> getValue, Func<Property, string>? headerOverride = null)
     {
-        return new("Address", FieldType.String, x => getValue(x));
+        return new(nameof(TxNode.Txid), FieldType.String, x => getValue(x), headerOverride);
+    }
+
+
+    public static Property BTCValueProperty { get; } = new("Value", FieldType.Float);
+    public static PropertyMapping<T> ValueBTCMapper<T>(Func<T, double> getValue)
+    {
+        return new(BTCValueProperty, x => getValue(x));
     }
 
     public static PropertyMapping<T> SourceId<T>(NodeLabels label, Func<T, object?> getValue)

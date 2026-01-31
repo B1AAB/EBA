@@ -1,15 +1,32 @@
 ﻿namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 
-public class PropertyMapping<TEntity>(
-    string propertyLabel,
-    FieldType neo4jNormalizedType,
+public class PropertyMapping<TEntity>
+{
+    public Property Property { get; }
+    private readonly Func<TEntity, object?> _getValue;
+    private readonly Func<Property, string>? _headerOverride;
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "<Pending>")]
+    public PropertyMapping(
+    Property property,
     Func<TEntity, object?> getValue,
     Func<Property, string>? headerOverride = null)
-{
-    public Property Property { get; } = new Property(propertyLabel, neo4jNormalizedType);
-    private readonly Func<TEntity, object?> _getValue = getValue;
-    private readonly Func<Property, string>? _headerOverride = headerOverride;
+    {
+        Property = property;
+        _getValue = getValue;
+        _headerOverride = headerOverride;
+    }
+
+    public PropertyMapping(
+        string propertyLabel,
+        FieldType neo4jNormalizedType,
+        Func<TEntity, object?> getValue,
+        Func<Property, string>? headerOverride = null) :
+        this(new Property(propertyLabel, neo4jNormalizedType), getValue, headerOverride)
+    { }
+
+
 
     public string GetHeader()
     {
