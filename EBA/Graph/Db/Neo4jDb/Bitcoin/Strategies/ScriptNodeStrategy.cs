@@ -44,8 +44,8 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
         double? hopsFromRoot)
     {
         return new ScriptNode(
-            address: _address.ReadFrom<string>(node.Properties),
-            scriptType: _mappingsDict[nameof(v.ScriptType)].ReadFrom<ScriptType>(node.Properties),
+            address: _address.Deserialize<string>(node.Properties),
+            scriptType: _mappingsDict[nameof(v.ScriptType)].Deserialize<ScriptType>(node.Properties),
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
             hopsFromRoot: hopsFromRoot,

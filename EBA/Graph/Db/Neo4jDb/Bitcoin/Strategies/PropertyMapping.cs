@@ -21,23 +21,25 @@ public class PropertyMapping<TEntity>
     public PropertyMapping(
         string propertyLabel,
         FieldType neo4jNormalizedType,
-        Func<TEntity, object?> getValue,
+        Func<TEntity, object?> propertySelector,
         Func<Property, string>? headerOverride = null) :
-        this(new Property(propertyLabel, neo4jNormalizedType), getValue, headerOverride)
+        this(
+            new Property(propertyLabel, neo4jNormalizedType), 
+            propertySelector, 
+            headerOverride)
     { }
 
-
-    public string GetHeader()
+    public string SerializeHeader()
     {
         return _headerOverride?.Invoke(Property) ?? Property.TypeAnnotatedCsvHeader;
     }
 
-    public string GetValue(TEntity source)
+    public string SerializeValue(TEntity source)
     {
         return _propertySelector(source)?.ToString() ?? string.Empty;
     }
 
-    public V? ReadFrom<V>(IReadOnlyDictionary<string, object> properties)
+    public V? Deserialize<V>(IReadOnlyDictionary<string, object> properties)
     {
         object? value = properties.GetValueOrDefault(Property.Name);
         if (value == null)

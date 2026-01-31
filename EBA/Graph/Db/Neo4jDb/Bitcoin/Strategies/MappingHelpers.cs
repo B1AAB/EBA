@@ -10,7 +10,7 @@ public static class MappingHelpers
     {
         return string.Join(
             Options.CsvDelimiter,
-            mappings.Select(m => m.GetHeader()));
+            mappings.Select(m => m.SerializeHeader()));
     }
 
     public static string GetCsv<T>(
@@ -19,7 +19,7 @@ public static class MappingHelpers
     {
         return string.Join(
             Options.CsvDelimiter,
-            mappings.Select(m => m.GetValue(source)));
+            mappings.Select(m => m.SerializeValue(source)));
     }
 
     public static Property HeightProperty { get; } = new(nameof(Block.Height), FieldType.Long);

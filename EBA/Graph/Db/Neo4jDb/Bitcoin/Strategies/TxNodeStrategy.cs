@@ -44,13 +44,13 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
         double hopsFromRoot)
     {
         return new TxNode(
-            txid: _mappingsDict[nameof(v.Txid)].ReadFrom<string>(node.Properties) ?? 
+            txid: _mappingsDict[nameof(v.Txid)].Deserialize<string>(node.Properties) ?? 
                 throw new ArgumentNullException(nameof(v.Txid)),
-            version: _mappingsDict[nameof(v.Version)].ReadFrom<ulong>(node.Properties),
-            size: _mappingsDict[nameof(v.Size)].ReadFrom<int>(node.Properties),
-            vSize: _mappingsDict[nameof(v.VSize)].ReadFrom<int>(node.Properties),
-            weight: _mappingsDict[nameof(v.Weight)].ReadFrom<int>(node.Properties),
-            lockTime: _mappingsDict[nameof(v.LockTime)].ReadFrom<long>(node.Properties),
+            version: _mappingsDict[nameof(v.Version)].Deserialize<ulong>(node.Properties),
+            size: _mappingsDict[nameof(v.Size)].Deserialize<int>(node.Properties),
+            vSize: _mappingsDict[nameof(v.VSize)].Deserialize<int>(node.Properties),
+            weight: _mappingsDict[nameof(v.Weight)].Deserialize<int>(node.Properties),
+            lockTime: _mappingsDict[nameof(v.LockTime)].Deserialize<long>(node.Properties),
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
             hopsFromRoot: hopsFromRoot,

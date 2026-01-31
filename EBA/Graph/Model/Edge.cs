@@ -58,9 +58,9 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
         Source = source;
         Target = target;
         Id = relationship.ElementId;
-        Value = Helpers.BTC2Satoshi(MappingHelpers.ValueBTCMapper<IRelationship>(null!).ReadFrom<double>(relationship.Properties));
+        Value = Helpers.BTC2Satoshi(MappingHelpers.ValueBTCMapper<IRelationship>(null!).Deserialize<double>(relationship.Properties));
         Type = Enum.Parse<EdgeType>(relationship.Type);
-        BlockHeight = MappingHelpers.HeightMapper<IRelationship>(null!).ReadFrom<long>(relationship.Properties);
+        BlockHeight = MappingHelpers.HeightMapper<IRelationship>(null!).Deserialize<long>(relationship.Properties);
     }
 
     public static string[] GetFeaturesName()
