@@ -18,17 +18,17 @@ public class NodeFactory
     {
         if (node.Labels.Contains(ScriptNodeStrategy.Label.ToString()))
         {
-            createdNode = new ScriptNode(
+            createdNode = ScriptNodeStrategy.GetNodeFromProps(
                 node,
                 originalIndegree: originalIndegree,
                 originalOutdegree: originalOutdegree,
-                outHopsFromRoot: outHopsFromRoot);
+                hopsFromRoot: outHopsFromRoot);
 
             return true;
         }
         else if (node.Labels.Contains(TxNodeStrategy.Label.ToString()))
         {
-            createdNode = TxNode.CreateTxNode(
+            createdNode = TxNodeStrategy.GetNodeFromProps(
                 node,
                 originalIndegree: originalIndegree,
                 originalOutdegree: originalOutdegree,

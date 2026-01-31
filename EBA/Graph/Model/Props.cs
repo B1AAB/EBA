@@ -26,7 +26,6 @@ public static class Props
     public static Property TxVSize { get; } = new Property(_txNodeVSize, FieldType.Int, "SourceVSize");
     public static Property TxWeight { get; } = new Property(_txNodeWeight, FieldType.Int, "SourceWeight");
     public static Property TxLockTime { get; } = new Property(_txNodeLockTime, FieldType.Int, "SourceLockTime");
-    public static Property BlockTxCount { get; } = new("TransactionsCount", FieldType.Int);
     public static Property EdgeSourceAddress { get; } = new(_addressProperty, csvHeader: "SourceAddress");
     public static Property EdgeTargetAddress { get; } = new(_addressProperty, csvHeader: "TargetAddress");
     public static Property EdgeType { get; } = new("EdgeType");

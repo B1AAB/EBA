@@ -88,48 +88,6 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         return nameof(Txid);
     }
 
-    public static TxNode CreateTxNode(
-        Neo4j.Driver.INode node,
-        double originalIndegree,
-        double originalOutdegree,
-        double hopsFromRoot)
-    {
-        // All the following double-casting is because of the type
-        // normalization happens when bulk-loading data into neo4j.
-
-        string? candidateTxid = 
-            (node.Properties.GetValueOrDefault(Props.Txid.Name)?.ToString()) 
-            ?? throw new ArgumentNullException(Props.Txid.Name);
-        string txid = candidateTxid;
-
-        string? v = node.Properties.GetValueOrDefault(Props.TxVersion.Name)?.ToString();
-        ulong? version = v == null ? null : ulong.Parse(v);
-
-        node.Properties.TryGetValue(Props.TxSize.Name, out var s);
-        int? size = s == null ? null : (int)(long)s;
-
-        node.Properties.TryGetValue(Props.TxVSize.Name, out var vs);
-        int? vSize = vs == null ? null : (int)(long)vs;
-
-        node.Properties.TryGetValue(Props.TxWeight.Name, out var w);
-        int? weight = w == null ? null : (int)(long)w;
-
-        node.Properties.TryGetValue(Props.TxLockTime.Name, out var t);
-        long? lockTime = t == null ? null : (long)t;
-
-        return new TxNode(
-            txid: txid,
-            version: version,
-            size: size,
-            vSize: vSize,
-            weight: weight,
-            lockTime: lockTime,
-            originalIndegree: originalIndegree,
-            originalOutdegree: originalOutdegree,
-            hopsFromRoot: hopsFromRoot,
-            idInGraphDb: node.ElementId);
-    }
-
     public static TxNode GetCoinbaseNode()
     {
         return new TxNode(NodeLabels.Coinbase.ToString());

@@ -6,12 +6,16 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
 {
     public const NodeLabels Label = NodeLabels.Script;
 
+    private const ScriptNode v = null!;
     private readonly static PropertyMapping<ScriptNode>[] _mappings =
     [
-        new(nameof(ScriptNode.Address), FieldType.String, n => n.Address, p => p.GetIdFieldCsvHeader(Label.ToString())),
-        new(nameof(ScriptNode.ScriptType), FieldType.String, n => n.ScriptType),
+        new(nameof(v.Address), FieldType.String, n => n.Address, p => p.GetIdFieldCsvHeader(Label.ToString())),
+        new(nameof(v.ScriptType), FieldType.String, n => n.ScriptType),
         new(":LABEL", FieldType.String, _ => Label, _ => ":LABEL"),
     ];
+
+    private static readonly Dictionary<string, PropertyMapping<ScriptNode>> _mappingsDict =
+        _mappings.ToDictionary(m => m.Property.Name, m => m);
 
     public override string GetCsvHeader()
     {
@@ -26,6 +30,21 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
     public static string GetCsv(ScriptNode node)
     {
         return _mappings.GetCsv(node);
+    }
+
+    public static ScriptNode GetNodeFromProps(
+        Neo4j.Driver.INode node,
+        double? originalIndegree,
+        double? originalOutdegree,
+        double? hopsFromRoot)
+    {
+        return new ScriptNode(
+            address: _mappingsDict[nameof(v.Address)].ReadFrom<string>(node.Properties),
+            scriptType: _mappingsDict[nameof(v.ScriptType)].ReadFrom<ScriptType>(node.Properties),
+            originalIndegree: originalIndegree,
+            originalOutdegree: originalOutdegree,
+            hopsFromRoot: hopsFromRoot,
+            idInGraphDb: node.ElementId.ToString());
     }
 
     public override string GetQuery(string filename)

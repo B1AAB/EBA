@@ -6,17 +6,21 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
 {
     public const NodeLabels Label = NodeLabels.Tx;
 
+    private const TxNode v = null!;
     private static readonly PropertyMapping<TxNode>[] _mappings =
     [
-        new(nameof(TxNode.Txid), FieldType.String, n => n.Txid, p => p.GetIdFieldCsvHeader(Label.ToString())),
-        new(nameof(TxNode.Version), FieldType.Long, n => n.Version),
-        new(nameof(TxNode.Size), FieldType.Long, n => n.Size),
-        new(nameof(TxNode.VSize), FieldType.Long, n => n.VSize),
-        new(nameof(TxNode.Weight), FieldType.Long, n => n.Weight),
-        new(nameof(TxNode.LockTime), FieldType.Long, n => n.LockTime),
+        new(nameof(v.Txid), FieldType.String, n => n.Txid, p => p.GetIdFieldCsvHeader(Label.ToString())),
+        new(nameof(v.Version), FieldType.Long, n => n.Version),
+        new(nameof(v.Size), FieldType.Long, n => n.Size),
+        new(nameof(v.VSize), FieldType.Long, n => n.VSize),
+        new(nameof(v.Weight), FieldType.Long, n => n.Weight),
+        new(nameof(v.LockTime), FieldType.Long, n => n.LockTime),
 
         new(":LABEL", FieldType.String, _ => Label, _ => ":LABEL"),
     ];
+
+    private static readonly Dictionary<string, PropertyMapping<TxNode>> _mappingsDict =
+        _mappings.ToDictionary(m => m.Property.Name, m => m);
 
     public override string GetCsvHeader()
     {
@@ -31,6 +35,26 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
     public static string GetCsv(TxNode node)
     {
         return _mappings.GetCsv(node);
+    }
+
+    public static TxNode GetNodeFromProps(
+        Neo4j.Driver.INode node,
+        double originalIndegree,
+        double originalOutdegree,
+        double hopsFromRoot)
+    {
+        return new TxNode(
+            txid: _mappingsDict[nameof(v.Txid)].ReadFrom<string>(node.Properties) ?? 
+                throw new ArgumentNullException(nameof(v.Txid)),
+            version: _mappingsDict[nameof(v.Version)].ReadFrom<ulong>(node.Properties),
+            size: _mappingsDict[nameof(v.Size)].ReadFrom<int>(node.Properties),
+            vSize: _mappingsDict[nameof(v.VSize)].ReadFrom<int>(node.Properties),
+            weight: _mappingsDict[nameof(v.Weight)].ReadFrom<int>(node.Properties),
+            lockTime: _mappingsDict[nameof(v.LockTime)].ReadFrom<long>(node.Properties),
+            originalIndegree: originalIndegree,
+            originalOutdegree: originalOutdegree,
+            hopsFromRoot: hopsFromRoot,
+            idInGraphDb: node.ElementId);
     }
 
     public override string GetQuery(string filename)

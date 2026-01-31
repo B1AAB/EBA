@@ -68,20 +68,6 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         ScriptType = scriptType;
     }
 
-    public ScriptNode(
-        Neo4j.Driver.INode node,
-        double? originalIndegree = null,
-        double? originalOutdegree = null,
-        double? outHopsFromRoot = null) :
-        this(
-            address: (string)node.Properties[Props.ScriptAddress.Name],
-            scriptType: Enum.Parse<ScriptType>((string)node.Properties[Props.ScriptType.Name]),
-            originalIndegree: originalIndegree,
-            originalOutdegree: originalOutdegree,
-            hopsFromRoot: outHopsFromRoot,
-            idInGraphDb: node.ElementId)
-    { }
-
     public override string GetIdPropertyName()
     {
         return nameof(Address);
