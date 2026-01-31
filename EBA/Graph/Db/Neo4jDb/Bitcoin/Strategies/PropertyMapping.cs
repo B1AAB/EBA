@@ -4,17 +4,17 @@
 public class PropertyMapping<TEntity>
 {
     public Property Property { get; }
-    private readonly Func<TEntity, object?> _getValue;
+    private readonly Func<TEntity, object?> _propertySelector;
     private readonly Func<Property, string>? _headerOverride;
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "<Pending>")]
     public PropertyMapping(
     Property property,
-    Func<TEntity, object?> getValue,
+    Func<TEntity, object?> propertySelector,
     Func<Property, string>? headerOverride = null)
     {
         Property = property;
-        _getValue = getValue;
+        _propertySelector = propertySelector;
         _headerOverride = headerOverride;
     }
 
@@ -27,7 +27,6 @@ public class PropertyMapping<TEntity>
     { }
 
 
-
     public string GetHeader()
     {
         return _headerOverride?.Invoke(Property) ?? Property.TypeAnnotatedCsvHeader;
@@ -35,7 +34,7 @@ public class PropertyMapping<TEntity>
 
     public string GetValue(TEntity source)
     {
-        return _getValue(source)?.ToString() ?? string.Empty;
+        return _propertySelector(source)?.ToString() ?? string.Empty;
     }
 
     public V? ReadFrom<V>(IReadOnlyDictionary<string, object> properties)
