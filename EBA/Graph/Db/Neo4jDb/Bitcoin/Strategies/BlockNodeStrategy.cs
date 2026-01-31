@@ -9,7 +9,7 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
     private const Block v = null!;
     private static readonly PropertyMapping<BlockNode>[] _mappings =
     [
-        MappingHelpers.HeightMapper<BlockNode>(n => n.BlockMetadata.Height, p => p.GetIdFieldCsvHeader(Label.ToString())),
+        PropertyMappingFactory.Height<BlockNode>(n => n.BlockMetadata.Height, p => p.GetIdFieldCsvHeader(Label.ToString())),
         new(nameof(v.Hash), FieldType.String, n => n.BlockMetadata.Hash),
         new(nameof(v.Confirmations), FieldType.Long, n => n.BlockMetadata.Confirmations),
         new(nameof(v.Version), FieldType.Long, n => n.BlockMetadata.Version),
@@ -31,12 +31,12 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
         new(nameof(v.TxFees), FieldType.Long, n => n.BlockMetadata.TxFees),
         new(nameof(v.MintedBitcoins), FieldType.Long, n => n.BlockMetadata.MintedBitcoins),
 
-        .. MappingHelpers.DescriptiveStats<BlockNode>(nameof(v.InputCounts), n => n.BlockMetadata.InputCounts),
-        .. MappingHelpers.DescriptiveStats<BlockNode>(nameof(v.OutputCounts), n => n.BlockMetadata.OutputCounts),
-        .. MappingHelpers.DescriptiveStats<BlockNode>(nameof(v.InputValues), n => n.BlockMetadata.InputValues),
-        .. MappingHelpers.DescriptiveStats<BlockNode>(nameof(v.OutputValues), n => n.BlockMetadata.OutputValues),
-        .. MappingHelpers.DescriptiveStats<BlockNode>(nameof(v.SpentOutputAge), n => n.BlockMetadata.SpentOutputAge),
-        .. MappingHelpers.ScriptTypeCounts<BlockNode>(n => n.BlockMetadata.ScriptTypeCount),
+        .. PropertyMappingFactory.DescriptiveStats<BlockNode>(nameof(v.InputCounts), n => n.BlockMetadata.InputCounts),
+        .. PropertyMappingFactory.DescriptiveStats<BlockNode>(nameof(v.OutputCounts), n => n.BlockMetadata.OutputCounts),
+        .. PropertyMappingFactory.DescriptiveStats<BlockNode>(nameof(v.InputValues), n => n.BlockMetadata.InputValues),
+        .. PropertyMappingFactory.DescriptiveStats<BlockNode>(nameof(v.OutputValues), n => n.BlockMetadata.OutputValues),
+        .. PropertyMappingFactory.DescriptiveStats<BlockNode>(nameof(v.SpentOutputAge), n => n.BlockMetadata.SpentOutputAge),
+        .. PropertyMappingFactory.ScriptTypeCounts<BlockNode>(n => n.BlockMetadata.ScriptTypeCount),
 
         new(":LABEL", FieldType.String, _ => Label, _ => ":LABEL"),
     ];
@@ -86,12 +86,12 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
             TxFees = _mappingsDict[nameof(v.TxFees)].Deserialize<long>(props),
             MintedBitcoins = _mappingsDict[nameof(v.MintedBitcoins)].Deserialize<long>(props),
 
-            InputCounts = MappingHelpers.ReadDescriptiveStats(props, nameof(v.InputCounts)),
-            OutputCounts = MappingHelpers.ReadDescriptiveStats(props, nameof(v.OutputCounts)),
-            InputValues = MappingHelpers.ReadDescriptiveStats(props, nameof(v.InputValues)),
-            OutputValues = MappingHelpers.ReadDescriptiveStats(props, nameof(v.OutputValues)),
-            SpentOutputAge = MappingHelpers.ReadDescriptiveStats(props, nameof(v.SpentOutputAge)),
-            ScriptTypeCount = MappingHelpers.ReadScriptTypeCounts(props)
+            InputCounts = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.InputCounts)),
+            OutputCounts = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.OutputCounts)),
+            InputValues = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.InputValues)),
+            OutputValues = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.OutputValues)),
+            SpentOutputAge = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.SpentOutputAge)),
+            ScriptTypeCount = PropertyMappingFactory.ReadScriptTypeCounts(props)
         };
     }
 

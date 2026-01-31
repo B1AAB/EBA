@@ -761,7 +761,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                 {
                     await session.ExecuteWriteAsync(async tx =>
                     {
-                        var x = MappingHelpers.Address<ScriptNode>(n => n.Address).Property.Name;
+                        var x = PropertyMappingFactory.Address<ScriptNode>(n => n.Address).Property.Name;
                         await tx.RunAsync(
                             $"CREATE (:{Blockchains.Bitcoin.BitcoinChainAgent.Coinbase} {{" +
                             $"{x}: " +
@@ -778,7 +778,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
     {
         using var session = driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
 
-        var heightLabel = MappingHelpers.HeightProperty.Name;
+        var heightLabel = PropertyMappingFactory.HeightProperty.Name;
 
         await session.ExecuteWriteAsync(async x =>
         {
@@ -786,10 +786,10 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                 $"CREATE INDEX ScriptAddressIndex " +
                 $"IF NOT EXISTS " +
                 $"FOR (n:{ScriptNodeStrategy.Label}) " +
-                $"ON (n.{MappingHelpers.Address<ScriptNode>(n => n.Address).Property.Name})");
+                $"ON (n.{PropertyMappingFactory.Address<ScriptNode>(n => n.Address).Property.Name})");
         });
 
-        var txidName = MappingHelpers.TxIdMapper<TxNode>(n => n.Txid).Property.Name;
+        var txidName = PropertyMappingFactory.TxId<TxNode>(n => n.Txid).Property.Name;
         await session.ExecuteWriteAsync(async x =>
         {
             var result = await x.RunAsync(

@@ -42,7 +42,7 @@ public abstract class BitcoinEdgeStrategy(bool serializeCompressed) : StrategyBa
 
     public static ReadOnlyCollection<Property> GetEdgePropertiesBase()
     {
-        return new ReadOnlyCollection<Property>([MappingHelpers.HeightProperty, MappingHelpers.BTCValueProperty]);
+        return new ReadOnlyCollection<Property>([PropertyMappingFactory.HeightProperty, PropertyMappingFactory.BTCValueProperty]);
     }
 
     public static string GetApocCreateEdgeQuery(

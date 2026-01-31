@@ -3,27 +3,10 @@ using EBA.Utilities;
 
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
-public static class MappingHelpers
+public static class PropertyMappingFactory
 {
-    public static string GetCsvHeader<T>(
-        this PropertyMapping<T>[] mappings)
-    {
-        return string.Join(
-            Options.CsvDelimiter,
-            mappings.Select(m => m.SerializeHeader()));
-    }
-
-    public static string GetCsv<T>(
-        this PropertyMapping<T>[] mappings,
-        T source)
-    {
-        return string.Join(
-            Options.CsvDelimiter,
-            mappings.Select(m => m.SerializeValue(source)));
-    }
-
     public static Property HeightProperty { get; } = new(nameof(Block.Height), FieldType.Long);
-    public static PropertyMapping<T> HeightMapper<T>(Func<T, long> getValue, Func<Property, string>? headerOverride = null)
+    public static PropertyMapping<T> Height<T>(Func<T, long> getValue, Func<Property, string>? headerOverride = null)
     {
         return new(HeightProperty, x => getValue(x), headerOverride);
     }
@@ -33,14 +16,13 @@ public static class MappingHelpers
         return new(nameof(ScriptNode.Address), FieldType.String, x => getValue(x), headerOverride);
     }
 
-    public static PropertyMapping<T> TxIdMapper<T>(Func<T, string> getValue, Func<Property, string>? headerOverride = null)
+    public static PropertyMapping<T> TxId<T>(Func<T, string> getValue, Func<Property, string>? headerOverride = null)
     {
         return new(nameof(TxNode.Txid), FieldType.String, x => getValue(x), headerOverride);
     }
 
-
     public static Property BTCValueProperty { get; } = new("Value", FieldType.Float);
-    public static PropertyMapping<T> ValueBTCMapper<T>(Func<T, double> getValue)
+    public static PropertyMapping<T> ValueBTC<T>(Func<T, double> getValue)
     {
         return new(BTCValueProperty, x => getValue(x));
     }

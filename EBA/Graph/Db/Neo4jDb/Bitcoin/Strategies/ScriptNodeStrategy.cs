@@ -8,7 +8,7 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
 
     private const ScriptNode v = null!;
     private static readonly PropertyMapping<ScriptNode> _address = 
-        MappingHelpers.Address<ScriptNode>(
+        PropertyMappingFactory.Address<ScriptNode>(
             n => n.Address, 
             p => p.GetIdFieldCsvHeader(Label.ToString()));
 

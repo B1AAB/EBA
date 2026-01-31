@@ -11,9 +11,9 @@ public class EdgeFactory
         INode target,
         IRelationship relationship)
     {
-        var value = Helpers.BTC2Satoshi(MappingHelpers.ValueBTCMapper<IRelationship>(null!).Deserialize<double>(relationship.Properties));
+        var value = Helpers.BTC2Satoshi(PropertyMappingFactory.ValueBTC<IRelationship>(null!).Deserialize<double>(relationship.Properties));
         var type = Enum.Parse<EdgeType>(relationship.Type);
-        var blockHeight = MappingHelpers.HeightMapper<IRelationship>(null!).Deserialize<long>(relationship.Properties);
+        var blockHeight = PropertyMappingFactory.Height<IRelationship>(null!).Deserialize<long>(relationship.Properties);
         uint timestamp = 0; // TODO currently edges stored on the database do not have a timestamp
 
         if (source.GetGraphComponentType() == GraphComponentType.BitcoinCoinbaseNode &&

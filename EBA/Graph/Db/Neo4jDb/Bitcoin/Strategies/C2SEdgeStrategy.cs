@@ -7,11 +7,11 @@ public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(seriali
 {
     private static readonly PropertyMapping<C2SEdge>[] _mappings =
     [
-        MappingHelpers.SourceId<C2SEdge>(NodeLabels.Coinbase, _ => NodeLabels.Coinbase),
-        MappingHelpers.TargetId<C2SEdge>(ScriptNodeStrategy.Label, e => e.Target.Address),
-        MappingHelpers.ValueBTCMapper<C2SEdge>(e => Helpers.Satoshi2BTC(e.Value)),
-        MappingHelpers.HeightMapper<C2SEdge>(e => e.BlockHeight),
-        MappingHelpers.EdgeType<C2SEdge>(e => e.Type)
+        PropertyMappingFactory.SourceId<C2SEdge>(NodeLabels.Coinbase, _ => NodeLabels.Coinbase),
+        PropertyMappingFactory.TargetId<C2SEdge>(ScriptNodeStrategy.Label, e => e.Target.Address),
+        PropertyMappingFactory.ValueBTC<C2SEdge>(e => Helpers.Satoshi2BTC(e.Value)),
+        PropertyMappingFactory.Height<C2SEdge>(e => e.BlockHeight),
+        PropertyMappingFactory.EdgeType<C2SEdge>(e => e.Type)
     ];
 
     public override string GetCsvHeader()
