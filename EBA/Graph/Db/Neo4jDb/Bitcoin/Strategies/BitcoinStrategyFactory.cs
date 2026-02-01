@@ -60,27 +60,31 @@ public class BitcoinStrategyFactory : IStrategyFactory
         using var writer = new StreamWriter(File.Create(Path.Join(outputDirectory, "schema.cypher")));
         writer.WriteLine("// EBA Bitcoin Graph Schema");
 
+        var x = PropertyMappingFactory.Address<ScriptNode>(n => n.Address).Property.Name;
         var scriptAddressUniqueness =
-            $"// Uniqueness constraint for {NodeLabels.Script}.{Props.ScriptAddress.Name} property." +
-            $"\r\nCREATE CONSTRAINT {NodeLabels.Script}_{Props.ScriptAddress.Name}_Unique " +
+            $"// Uniqueness constraint for {NodeLabels.Script}.{x} property." +
+            $"\r\nCREATE CONSTRAINT {NodeLabels.Script}_{x}_Unique " +
             $"\r\nIF NOT EXISTS " +
-            $"\r\nFOR (v:{NodeLabels.Script}) REQUIRE v.{Props.ScriptAddress.Name} IS UNIQUE;";
+            $"\r\nFOR (v:{NodeLabels.Script}) REQUIRE v.{x} IS UNIQUE;";
         writer.WriteLine("");
         writer.WriteLine(scriptAddressUniqueness);
 
+
+        var txidName = PropertyMappingFactory.TxId<TxNode>(n => n.Txid).Property.Name;
         var txidUniqueness =
-            $"// Uniqueness constraint for {NodeLabels.Tx}.{Props.Txid.Name} property." +
-            $"\r\nCREATE CONSTRAINT {NodeLabels.Tx}_{Props.Txid.Name}_Unique " +
+            $"// Uniqueness constraint for {NodeLabels.Tx}.{txidName} property." +
+            $"\r\nCREATE CONSTRAINT {NodeLabels.Tx}_{txidName}_Unique " +
             $"\r\nIF NOT EXISTS " +
-            $"\r\nFOR (v:{NodeLabels.Tx}) REQUIRE v.{Props.Txid.Name} IS UNIQUE;";
+            $"\r\nFOR (v:{NodeLabels.Tx}) REQUIRE v.{txidName} IS UNIQUE;";
         writer.WriteLine("");
         writer.WriteLine(txidUniqueness);
         
+        var heightName = PropertyMappingFactory.HeightProperty.Name;
         var blockHeightUniqueness =
-            $"// Uniqueness constraint for {NodeLabels.Block}.{Props.Height.Name} property." +
-            $"\r\nCREATE CONSTRAINT {NodeLabels.Block}_{Props.Height.Name}_Unique " +
+            $"// Uniqueness constraint for {NodeLabels.Block}.{heightName} property." +
+            $"\r\nCREATE CONSTRAINT {NodeLabels.Block}_{heightName}_Unique " +
             $"\r\nIF NOT EXISTS " +
-            $"\r\nFOR (v:{NodeLabels.Block}) REQUIRE v.{Props.Height.Name} IS UNIQUE;";
+            $"\r\nFOR (v:{NodeLabels.Block}) REQUIRE v.{heightName} IS UNIQUE;";
         writer.WriteLine("");
         writer.WriteLine(blockHeightUniqueness);
     }

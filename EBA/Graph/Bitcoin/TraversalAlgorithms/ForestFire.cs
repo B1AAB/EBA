@@ -1,4 +1,6 @@
-﻿namespace EBA.Graph.Bitcoin.TraversalAlgorithms;
+﻿using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+
+namespace EBA.Graph.Bitcoin.TraversalAlgorithms;
 
 public class ForestFire : ITraversalAlgorithm
 {
@@ -342,7 +344,7 @@ public class ForestFire : ITraversalAlgorithm
 
         var rndNodes = new List<ScriptNode>();
         foreach (var n in rndRecords)
-            rndNodes.Add(new ScriptNode(n.Values[nodeVar].As<Neo4j.Driver.INode>()));
+            rndNodes.Add(ScriptNodeStrategy.Deserialize(n.Values[nodeVar].As<Neo4j.Driver.INode>(), 0, 0, 0));
 
         return rndNodes;
     }

@@ -4,35 +4,28 @@ namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
 {
+    private static readonly PropertyMapping<T2TEdge>[] _mappings =
+    [
+        PropertyMappingFactory.SourceId<T2TEdge>(TxNodeStrategy.Label, e => e.Source.Txid),
+        PropertyMappingFactory.TargetId<T2TEdge>(TxNodeStrategy.Label, e => e.Target.Txid),
+        PropertyMappingFactory.ValueBTC<T2TEdge>(e => Helpers.Satoshi2BTC(e.Value)),
+        PropertyMappingFactory.Height<T2TEdge>(e => e.BlockHeight),
+        PropertyMappingFactory.EdgeType<T2TEdge>(e => e.Type)
+    ];
+
     public override string GetCsvHeader()
     {
-        return string.Join(
-            csvDelimiter,
-            [
-                $":START_ID({TxNodeStrategy.Label})",
-                $":END_ID({TxNodeStrategy.Label})",
-                Props.EdgeValue.TypeAnnotatedCsvHeader,
-                Props.Height.TypeAnnotatedCsvHeader,
-                ":TYPE"
-            ]);
+        return _mappings.GetCsvHeader();
     }
 
-    public override string GetCsv(IGraphComponent edge)
+    public override string GetCsvRow(IGraphComponent edge)
     {
         return GetCsv((T2TEdge)edge);
     }
 
     public static string GetCsv(T2TEdge edge)
     {
-        return string.Join(
-            csvDelimiter,
-            [
-                edge.Source.Txid,
-                edge.Target.Txid,
-                Helpers.Satoshi2BTC(edge.Value).ToString(),
-                edge.BlockHeight.ToString(),
-                edge.Type.ToString()
-            ]);
+        return _mappings.GetCsv(edge);
     }
 
     public override string GetQuery(string csvFilename)
@@ -69,10 +62,11 @@ public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
         string l = Property.lineVarName, s = "source", t = "target", b = "block";
 
+        /*
         var builder = new StringBuilder(
             $"LOAD CSV WITH HEADERS FROM '{csvFilename}' AS {l} " +
             $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' ");
-
+        
         builder.Append(
             $"MATCH " +
             $"({s}:{TxNodeStrategy.Label} {{{Props.T2TEdgeSourceTxid.GetSetter()}}}), " +
@@ -91,7 +85,10 @@ public class T2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
         builder.Append(
             $" RETURN distinct 'DONE'");
+        
 
         return builder.ToString();
+        */
+        return string.Empty;
     }
 }

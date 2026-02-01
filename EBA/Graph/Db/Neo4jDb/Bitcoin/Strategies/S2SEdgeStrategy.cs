@@ -1,40 +1,32 @@
 ﻿using EBA.Utilities;
+using System.ComponentModel;
 
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class S2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
 {
+    private static readonly PropertyMapping<S2SEdge>[] _mappings =
+    [
+        PropertyMappingFactory.SourceId<S2SEdge>(ScriptNodeStrategy.Label, e => e.Source.Address),
+        PropertyMappingFactory.TargetId<S2SEdge>(ScriptNodeStrategy.Label, e => e.Target.Address),
+        PropertyMappingFactory.ValueBTC<S2SEdge>(e => Helpers.Satoshi2BTC(e.Value)),
+        PropertyMappingFactory.Height<S2SEdge>(e => e.BlockHeight),
+        PropertyMappingFactory.EdgeType<S2SEdge>(e => e.Type)
+    ];
+
     public override string GetCsvHeader()
     {
-        return string.Join(
-            csvDelimiter,
-            [
-                $":START_ID({ScriptNodeStrategy.Label})",
-                $":END_ID({ScriptNodeStrategy.Label})",
-                Props.EdgeValue.TypeAnnotatedCsvHeader,
-                Props.Height.TypeAnnotatedCsvHeader,
-                ":TYPE"
-            ]);
+        return _mappings.GetCsvHeader();
     }
 
-    public override string GetCsv(IGraphComponent edge)
+    public override string GetCsvRow(IGraphComponent edge)
     {
         return GetCsv((S2SEdge)edge);
     }
 
     public static string GetCsv(S2SEdge edge)
     {
-        /// Note that the ordre of the items in this array should 
-        /// match header.
-        return string.Join(
-            csvDelimiter,
-            [
-                edge.Source.Address,
-                edge.Target.Address,
-                Helpers.Satoshi2BTC(edge.Value).ToString(),
-                edge.BlockHeight.ToString(),
-                edge.Type.ToString()
-            ]);
+        return _mappings.GetCsv(edge);
     }
 
     public override string GetQuery(string csvFilename)
@@ -69,6 +61,7 @@ public class S2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
         // RETURN distinct 'DONE'
         //
 
+        /*
         string l = Property.lineVarName, b = "block", s = "source", t = "target";
 
         var builder = new StringBuilder(
@@ -90,6 +83,7 @@ public class S2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 
         builder.Append(" RETURN distinct 'DONE'");
 
-        return builder.ToString();
+        return builder.ToString();*/
+        throw new NotImplementedException();
     }
 }

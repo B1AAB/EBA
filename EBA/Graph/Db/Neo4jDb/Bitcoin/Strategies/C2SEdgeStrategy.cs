@@ -5,37 +5,28 @@ namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
 public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(serializeCompressed)
 {
+    private static readonly PropertyMapping<C2SEdge>[] _mappings =
+    [
+        PropertyMappingFactory.SourceId<C2SEdge>(NodeLabels.Coinbase, _ => NodeLabels.Coinbase),
+        PropertyMappingFactory.TargetId<C2SEdge>(ScriptNodeStrategy.Label, e => e.Target.Address),
+        PropertyMappingFactory.ValueBTC<C2SEdge>(e => Helpers.Satoshi2BTC(e.Value)),
+        PropertyMappingFactory.Height<C2SEdge>(e => e.BlockHeight),
+        PropertyMappingFactory.EdgeType<C2SEdge>(e => e.Type)
+    ];
+
     public override string GetCsvHeader()
     {
-        return string.Join(
-            csvDelimiter,
-            [
-                $":START_ID({NodeLabels.Coinbase})",
-                $":END_ID({ScriptNodeStrategy.Label})",
-                Props.EdgeValue.TypeAnnotatedCsvHeader,
-                Props.Height.TypeAnnotatedCsvHeader,
-                ":TYPE"
-            ]);
+        return _mappings.GetCsvHeader();
     }
 
-    public override string GetCsv(IGraphComponent edge)
+    public override string GetCsvRow(IGraphComponent edge)
     {
         return GetCsv((C2SEdge)edge);
     }
 
     public static string GetCsv(C2SEdge edge)
     {
-        /// Note that the ordre of the items in this array should 
-        /// match header
-        return string.Join(
-            csvDelimiter,
-            [
-                NodeLabels.Coinbase.ToString(),
-                edge.Target.Address,
-                Helpers.Satoshi2BTC(edge.Value).ToString(),
-                edge.BlockHeight.ToString(),
-                edge.Type.ToString()
-            ]);
+        return _mappings.GetCsv(edge);
     }
 
     public override string GetQuery(string csvFilename)
@@ -67,7 +58,7 @@ public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(seriali
         // YIELD rel
         // RETURN distinct 'DONE'
         //
-
+        /*
         string l = Property.lineVarName, b = "block", s = "coinbase", t = "target";
 
         var builder = new StringBuilder(
@@ -85,6 +76,7 @@ public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(seriali
         builder.Append(GetApocCreateEdgeQuery(GetEdgePropertiesBase(), s, t));
         builder.Append(" RETURN distinct 'DONE'");
 
-        return builder.ToString();
+        return builder.ToString();*/
+        throw new NotImplementedException();
     }
 }

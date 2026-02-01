@@ -6,35 +6,50 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
 {
     public const NodeLabels Label = NodeLabels.Script;
 
-    private readonly Property[] _properties =
+    private const ScriptNode v = null!;
+    private static readonly PropertyMapping<ScriptNode> _address = 
+        PropertyMappingFactory.Address<ScriptNode>(
+            n => n.Address, 
+            p => p.GetIdFieldCsvHeader(Label.ToString()));
+
+    private readonly static PropertyMapping<ScriptNode>[] _mappings =
     [
-        Props.ScriptAddress,
-        Props.ScriptType
+        _address,
+        new(nameof(v.ScriptType), FieldType.String, n => n.ScriptType),
+        new(":LABEL", FieldType.String, _ => Label, _ => ":LABEL"),
     ];
+
+    private static readonly Dictionary<string, PropertyMapping<ScriptNode>> _mappingsDict =
+        _mappings.ToDictionary(m => m.Property.Name, m => m);
 
     public override string GetCsvHeader()
     {
-        return string.Join(
-            csvDelimiter,
-            [
-                Props.ScriptAddress.GetIdFieldCsvHeader(Label.ToString()),
-                Props.ScriptType.TypeAnnotatedCsvHeader,
-                ":LABEL"
-            ]);
+        return _mappings.GetCsvHeader();
     }
 
-    public override string GetCsv(IGraphComponent component)
+    public override string GetCsvRow(IGraphComponent component)
     {
         return GetCsv((ScriptNode)component);
     }
 
     public static string GetCsv(ScriptNode node)
     {
-        return string.Join(
-            csvDelimiter,
-            node.Address,
-            node.ScriptType.ToString(),
-            Label.ToString());
+        return _mappings.GetCsv(node);
+    }
+
+    public static ScriptNode Deserialize(
+        Neo4j.Driver.INode node,
+        double? originalIndegree,
+        double? originalOutdegree,
+        double? hopsFromRoot)
+    {
+        return new ScriptNode(
+            address: _address.Deserialize<string>(node.Properties),
+            scriptType: _mappingsDict[nameof(v.ScriptType)].Deserialize<ScriptType>(node.Properties),
+            originalIndegree: originalIndegree,
+            originalOutdegree: originalOutdegree,
+            hopsFromRoot: hopsFromRoot,
+            idInGraphDb: node.ElementId.ToString());
     }
 
     public override string GetQuery(string filename)
@@ -57,10 +72,11 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
         //         ELSE line.ScriptType
         //       END
         //
-
+        /*
         string l = Property.lineVarName, node = "node";
 
         var builder = new StringBuilder();
+        
         builder.Append(
             $"LOAD CSV WITH HEADERS FROM '{filename}' AS {l} " +
             $"FIELDTERMINATOR '{Neo4jDbLegacy.csvDelimiter}' " +
@@ -76,7 +92,9 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
             $"WHEN '{nameof(ScriptType.Unknown)}' THEN {node}.{Props.ScriptType.Name} " +
             $"ELSE {l}.{Props.ScriptType.CsvHeader} " +
             $"END");
-
+        
         return builder.ToString();
+        */
+        throw new NotImplementedException();
     }
 }

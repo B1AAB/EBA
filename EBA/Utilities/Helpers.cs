@@ -274,4 +274,31 @@ internal class Helpers
         var sumOfSquares = data.Sum(x => Math.Pow(x - mean, 2));
         return sumOfSquares / (data.Count() - 1);
     }
+
+    public static double Percentile(double[] sortedSequence, double excelPercentile)
+    {
+        // Implementation source: https://stackoverflow.com/a/8137455/947889
+
+        int N = sortedSequence.Length;
+
+        if (N == 0)
+            return double.NaN;
+
+        double n = (N - 1) * excelPercentile + 1;
+
+        if (n == 1d)
+        {
+            return sortedSequence[0];
+        }
+        else if (n == N)
+        {
+            return sortedSequence[N - 1];
+        }
+        else
+        {
+            int k = (int)n;
+            double d = n - k;
+            return sortedSequence[k - 1] + d * (sortedSequence[k] - sortedSequence[k - 1]);
+        }
+    }
 }
