@@ -27,7 +27,7 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
         return _mappings.GetCsvHeader();
     }
 
-    public override string GetCsv(IGraphComponent component)
+    public override string GetCsvRow(IGraphComponent component)
     {
         return GetCsv((ScriptNode)component);
     }

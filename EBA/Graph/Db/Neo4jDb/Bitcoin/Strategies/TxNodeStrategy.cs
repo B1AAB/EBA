@@ -27,7 +27,7 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
         return _mappings.GetCsvHeader();
     }
 
-    public override string GetCsv(IGraphComponent component)
+    public override string GetCsvRow(IGraphComponent component)
     {
         return GetCsv((TxNode)component);
     }

@@ -19,7 +19,7 @@ public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(seriali
         return _mappings.GetCsvHeader();
     }
 
-    public override string GetCsv(IGraphComponent edge)
+    public override string GetCsvRow(IGraphComponent edge)
     {
         return GetCsv((C2SEdge)edge);
     }

@@ -50,7 +50,7 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
         return _mappings.GetCsvHeader();
     }
 
-    public override string GetCsv(IGraphComponent component)
+    public override string GetCsvRow(IGraphComponent component)
     {
         return GetCsv((BlockNode)component);
     }
