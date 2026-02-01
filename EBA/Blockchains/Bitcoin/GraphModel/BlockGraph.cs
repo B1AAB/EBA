@@ -56,8 +56,6 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     public BlockGraph(Block block, ChainToGraphModel chainToGraphModel, ILogger<BitcoinChainAgent> logger) : base()
     {
         Block = block;
-        //BlockNode = new BlockNode(block);
-        //TryAddNode(BlockNode.ComponentType, BlockNode);
 
         // See the following BIP on using `mediantime` instead of `time`.
         // https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
@@ -67,7 +65,6 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 
         _logger = logger;
 
-        //Stats = new BlockStatistics(block);
         StartStopwatch();
     }
 

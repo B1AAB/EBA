@@ -1,5 +1,4 @@
-﻿using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
-using EBA.Utilities;
+﻿using EBA.Utilities;
 
 namespace EBA.Blockchains.Bitcoin.GraphModel;
 
@@ -33,24 +32,6 @@ public class BlockNode(
     public long[] EdgeLabelValueSum { set; get; } = [];
 
     public BlockNode(Block block) : this(blockMetadata: block) { }
-
-
-    // TODO: all the following double-casting is because of the type
-    // normalization happens when bulk-loading data into neo4j.
-    // Find a better solution.
-
-    public BlockNode(
-        Neo4j.Driver.INode node,
-        double originalIndegree,
-        double originalOutdegree,
-        double outHopsFromRoot) :
-        this(
-            blockMetadata: BlockNodeStrategy.GetNodeFromProps(node.Properties),
-            originalIndegree: originalIndegree,
-            originalOutdegree: originalOutdegree,
-            outHopsFromRoot: outHopsFromRoot,
-            idInGraphDb: node.ElementId)
-    { }
 
     public override string GetIdPropertyName()
     {

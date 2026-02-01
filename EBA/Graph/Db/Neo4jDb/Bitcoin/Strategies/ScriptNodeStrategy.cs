@@ -37,7 +37,7 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
         return _mappings.GetCsv(node);
     }
 
-    public static ScriptNode GetNodeFromProps(
+    public static ScriptNode Deserialize(
         Neo4j.Driver.INode node,
         double? originalIndegree,
         double? originalOutdegree,

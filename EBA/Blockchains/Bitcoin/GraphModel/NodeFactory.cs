@@ -18,7 +18,7 @@ public class NodeFactory
     {
         if (node.Labels.Contains(ScriptNodeStrategy.Label.ToString()))
         {
-            createdNode = ScriptNodeStrategy.GetNodeFromProps(
+            createdNode = ScriptNodeStrategy.Deserialize(
                 node,
                 originalIndegree: originalIndegree,
                 originalOutdegree: originalOutdegree,
@@ -28,7 +28,7 @@ public class NodeFactory
         }
         else if (node.Labels.Contains(TxNodeStrategy.Label.ToString()))
         {
-            createdNode = TxNodeStrategy.GetNodeFromProps(
+            createdNode = TxNodeStrategy.Deserialize(
                 node,
                 originalIndegree: originalIndegree,
                 originalOutdegree: originalOutdegree,
@@ -38,11 +38,11 @@ public class NodeFactory
         }
         else if (node.Labels.Contains(BlockNodeStrategy.Label.ToString()))
         {
-            createdNode = new BlockNode(
+            createdNode = BlockNodeStrategy.Deserialize(
                 node,
                 originalIndegree: originalIndegree,
                 originalOutdegree: originalOutdegree,
-                outHopsFromRoot: outHopsFromRoot);
+                hopsFromRoot: outHopsFromRoot);
 
             return true;
         }

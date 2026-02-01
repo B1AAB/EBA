@@ -1,4 +1,5 @@
 ﻿using EBA.Graph.Bitcoin;
+using Spectre.Console;
 
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
@@ -60,9 +61,14 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
         return _mappings.GetCsv(node);
     }
 
-    public static BlockMetadata GetNodeFromProps(IReadOnlyDictionary<string, object> props)
+    public static BlockNode Deserialize(
+        Neo4j.Driver.INode node,
+        double originalIndegree,
+        double originalOutdegree,
+        double hopsFromRoot)
     {
-        return new BlockMetadata
+        var props = node.Properties;
+        var blockMetadata = new BlockMetadata
         {
             Height = _mappingsDict[nameof(v.Height)].Deserialize<long>(props),
             Hash = _mappingsDict[nameof(v.Hash)].Deserialize<string>(props),
@@ -93,6 +99,13 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
             SpentOutputAge = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.SpentOutputAge)),
             ScriptTypeCount = PropertyMappingFactory.ReadScriptTypeCounts(props)
         };
+
+        return new BlockNode(
+            blockMetadata: blockMetadata,
+            originalIndegree: originalIndegree,
+            originalOutdegree: originalOutdegree,
+            outHopsFromRoot: hopsFromRoot,
+            idInGraphDb: node.ElementId);
     }
 
     public override string GetQuery(string filename)

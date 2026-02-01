@@ -1,5 +1,4 @@
-﻿
-using EBA.Utilities;
+﻿using EBA.Utilities;
 
 namespace EBA.PersistentObject;
 
@@ -82,10 +81,5 @@ public class PersistentGraphStatistics(
                 $"{prefix}.{nameof(DescriptiveStatistics.Percentiles)}.{nameof(DescriptiveStatistics.Percentile.P95)}",
                 $"{prefix}.{nameof(DescriptiveStatistics.Percentiles)}.{nameof(DescriptiveStatistics.Percentile.P99)}",
             });
-    }
-
-    public static DescriptiveStatistics DeserializeDescriptiveStatistics(string value)
-    {
-        return null;
     }
 }

@@ -37,7 +37,7 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
         return _mappings.GetCsv(node);
     }
 
-    public static TxNode GetNodeFromProps(
+    public static TxNode Deserialize(
         Neo4j.Driver.INode node,
         double originalIndegree,
         double originalOutdegree,

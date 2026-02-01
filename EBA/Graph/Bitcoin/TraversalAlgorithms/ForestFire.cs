@@ -344,7 +344,7 @@ public class ForestFire : ITraversalAlgorithm
 
         var rndNodes = new List<ScriptNode>();
         foreach (var n in rndRecords)
-            rndNodes.Add(ScriptNodeStrategy.GetNodeFromProps(n.Values[nodeVar].As<Neo4j.Driver.INode>(), 0, 0, 0));
+            rndNodes.Add(ScriptNodeStrategy.Deserialize(n.Values[nodeVar].As<Neo4j.Driver.INode>(), 0, 0, 0));
 
         return rndNodes;
     }

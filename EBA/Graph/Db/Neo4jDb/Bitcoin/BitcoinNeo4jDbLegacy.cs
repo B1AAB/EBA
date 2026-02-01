@@ -215,7 +215,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
 
         var rndNodes = new List<ScriptNode>();
         foreach (var n in rndRecords)
-            rndNodes.Add(ScriptNodeStrategy.GetNodeFromProps(n.Values[rndNodeVar].As<Neo4j.Driver.INode>(), null, null, null));
+            rndNodes.Add(ScriptNodeStrategy.Deserialize(n.Values[rndNodeVar].As<Neo4j.Driver.INode>(), null, null, null));
 
         return rndNodes;
     }
@@ -428,7 +428,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                 //root = new ScriptNode(hop.Values["root"].As<List<Neo4j.Driver.INode>>()[0]);
                 var rootList = hop["root"].As<List<object>>();
                 (Neo4j.Driver.INode rootNode, double inDegree, double outDegree) = UnpackDict(rootList[0].As<IDictionary<string, object>>());
-                root = ScriptNodeStrategy.GetNodeFromProps(rootNode, originalIndegree: inDegree, originalOutdegree: outDegree, hopsFromRoot: null);
+                root = ScriptNodeStrategy.Deserialize(rootNode, originalIndegree: inDegree, originalOutdegree: outDegree, hopsFromRoot: null);
                 if (root is null)
                     continue;
 
@@ -564,7 +564,7 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
                     if (rootB is null)
                         continue;
 
-                    root = ScriptNodeStrategy.GetNodeFromProps(rootB, originalIndegree: inDegree, originalOutdegree: outDegree, hopsFromRoot: outHopsFromRoot);
+                    root = ScriptNodeStrategy.Deserialize(rootB, originalIndegree: inDegree, originalOutdegree: outDegree, hopsFromRoot: outHopsFromRoot);
 
                     if (!allNodesAddedToGraph.Contains(rootB.ElementId))
                     {
@@ -694,8 +694,8 @@ public class BitcoinNeo4jDbLegacy : Neo4jDbLegacy<BitcoinGraph>
 
         foreach (var n in randomNodes)
         {
-            g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, ScriptNodeStrategy.GetNodeFromProps(n.Values["source"].As<Neo4j.Driver.INode>(), null, null, null));
-            g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, ScriptNodeStrategy.GetNodeFromProps(n.Values["target"].As<Neo4j.Driver.INode>(), null, null, null));
+            g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, ScriptNodeStrategy.Deserialize(n.Values["source"].As<Neo4j.Driver.INode>(), null, null, null));
+            g.GetOrAddNode(GraphComponentType.BitcoinScriptNode, ScriptNodeStrategy.Deserialize(n.Values["target"].As<Neo4j.Driver.INode>(), null, null, null));
             g.GetOrAddEdge(n.Values["edge"].As<IRelationship>());
         }
 
