@@ -418,13 +418,4 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     {
         throw new NotImplementedException();
     }
-
-    public static string GetStatisticsHeader(char delimiter)
-    {
-        return "";
-    }
-    public string GetStatistics(char delimiter)
-    {
-        return "";
-    }
 }

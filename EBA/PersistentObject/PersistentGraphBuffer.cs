@@ -6,7 +6,6 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 {
     private readonly Graph.Bitcoin.BitcoinGraphAgent? _graphAgent;
     private readonly ILogger<PersistentGraphBuffer> _logger;
-    private readonly PersistentGraphStatistics _pGraphStats;
     private readonly PersistentBlockAddresses? _pBlockAddresses;
     private readonly PersistentTxoLifeCycleBuffer? _pTxoLifeCycleBuffer = null;
     private readonly SemaphoreSlim _semaphore;
@@ -27,10 +26,8 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     public PersistentGraphBuffer(
         Graph.Bitcoin.BitcoinGraphAgent? graphAgent,
         ILogger<PersistentGraphBuffer> logger,
-        ILogger<PersistentGraphStatistics> pgStatsLogger,
         ILogger<PersistentBlockAddresses> pgAddressesLogger,
         ILogger<PersistentTxoLifeCycleBuffer>? pTxoLifeCyccleLogger,
-        string graphStatsFilename,
         string perBlockAddressesFilename,
         string? txoLifeCycleFilename,
         int maxTxoPerFile,
@@ -44,8 +41,6 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         _logger = logger;
 
         _options = options;
-
-        _pGraphStats = new(graphStatsFilename, int.MaxValue, pgStatsLogger, ct);
 
         if (!_options.Bitcoin.Traverse.SkipSerializingAddresses)
             _pBlockAddresses = new(perBlockAddressesFilename, maxAddressesPerFile, pgAddressesLogger, ct);
@@ -74,10 +69,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         // or persisting graph but skipping the serialization of its stats.
         // A better alternative for this is using roll-back approaches 
         // on cancellation and recovery, but that can add additional complexities.
-        var tasks = new List<Task>
-        {
-            _pGraphStats.SerializeAsync(obj, default),
-        };
+        var tasks = new List<Task> { };
 
         if (_graphAgent != null)
             tasks.Add(_graphAgent.SerializeAsync(obj, default));

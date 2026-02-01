@@ -205,10 +205,6 @@ internal class Cli
             description: "Addresses are serialized on per-block basis so that they can be used to determine address-level stats " +
             "per block (requires additional storage and a down-stream process). You may skp serializing them if address-level stats is not needed.");
 
-        var statsFilenameOption = new Option<string>(
-            name: "--stats-filename",
-            description: "Sets the filename to store statistics collected during the traverse.");
-
         var maxBlocksInBufferOption = new Option<int>(
             name: "--max-blocks-in-buffer",
             description: "[Advanced] max number of blocks in the serialization buffer. " +
@@ -238,7 +234,6 @@ internal class Cli
             toOption,
             granularityOption,
             clientUriOption,
-            statsFilenameOption,
             addressesFilenameOption,
             maxBlocksInBufferOption,
             txoFilenameOption,
@@ -260,7 +255,6 @@ internal class Cli
             workingDirOption: _workingDirOption,
             statusFilenameOption: _statusFilenameOption,
             addressesFilenameOption: addressesFilenameOption,
-            statsFilenameOption: statsFilenameOption,
             maxBlocksInBufferOption: maxBlocksInBufferOption,
             trackTxoOption: trackTxoOption,
             txoFilenameOption: txoFilenameOption,
@@ -496,15 +490,14 @@ internal class Cli
         return cmd;
     }
 
+    // TODO: 
+    // since stats is not recorded separately during traverse (recorded as block node properties),
+    // hence this command and all its related methods need to be re-thought.
     private Command GetBitcoinAddressStatsCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
         var addressesFilenameOption = new Option<string>(
             name: "--addresses-filename",
             description: "File containing addresses in each block.");
-
-        var statsFilenameOption = new Option<string>(
-            name: "--stats-filename",
-            description: "File containing the block stats.");
 
         var cmd = new Command(
             name: "addresses-to-stats",
@@ -512,7 +505,6 @@ internal class Cli
             "addresses computed from the file containing addresses in each block.")
         {
             addressesFilenameOption,
-            statsFilenameOption
         };
 
 
@@ -523,8 +515,7 @@ internal class Cli
         new OptionsBinder(
             workingDirOption: _workingDirOption,
             statusFilenameOption: _statusFilenameOption,
-            addressesFilenameOption: addressesFilenameOption,
-            statsFilenameOption: statsFilenameOption));
+            addressesFilenameOption: addressesFilenameOption));
 
         return cmd;
     }

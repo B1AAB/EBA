@@ -19,7 +19,6 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<string>? _statusFilenameOption;
     private readonly Option<string>? _batchFilenameOption;
     private readonly Option<string>? _addressesFilenameOption;
-    private readonly Option<string>? _statsFilenameOption;
     private readonly Option<int>? _maxBlocksInBufferOption;
     private readonly Option<string>? _txoFilenameOption;
     private readonly Option<bool>? _trackTxoOption;
@@ -47,7 +46,6 @@ internal class OptionsBinder : BinderBase<Options>
         Option<string>? statusFilenameOption = null,
         Option<string>? batchFilenameOption = null,
         Option<string>? addressesFilenameOption = null,
-        Option<string>? statsFilenameOption = null,
         Option<int>? maxBlocksInBufferOption = null,
         Option<string>? txoFilenameOption = null,
         Option<bool>? trackTxoOption = null,
@@ -74,7 +72,6 @@ internal class OptionsBinder : BinderBase<Options>
         _statusFilenameOption = statusFilenameOption;
         _batchFilenameOption = batchFilenameOption;
         _addressesFilenameOption = addressesFilenameOption;
-        _statsFilenameOption = statsFilenameOption;
         _maxBlocksInBufferOption = maxBlocksInBufferOption;
         _txoFilenameOption = txoFilenameOption;
         _trackTxoOption = trackTxoOption;
@@ -108,7 +105,6 @@ internal class OptionsBinder : BinderBase<Options>
             Granularity = GetValue(defs.Bitcoin.Traverse.Granularity, _granularityOption, c),
             BlocksToProcessListFilename = Path.Join(wd, defs.Bitcoin.Traverse.BlocksToProcessListFilename),
             BlocksFailedToProcessListFilename = Path.Join(wd, defs.Bitcoin.Traverse.BlocksFailedToProcessListFilename),
-            StatsFilename = GetValue(defs.Bitcoin.Traverse.StatsFilename, _statsFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
             PerBlockAddressesFilename = GetValue(defs.Bitcoin.Traverse.PerBlockAddressesFilename, _addressesFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
             MaxBlocksInBuffer = GetValue(defs.Bitcoin.Traverse.MaxBlocksInBuffer, _maxBlocksInBufferOption, c),
             TxoFilename = GetValue(defs.Bitcoin.Traverse.TxoFilename, _txoFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
