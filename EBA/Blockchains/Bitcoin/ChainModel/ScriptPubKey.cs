@@ -15,7 +15,17 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
     public string Descriptor { set; get; } = string.Empty;
 
     [JsonPropertyName("hex")]
-    public string Hex { set; get; } = string.Empty;
+    public string Hex
+    {
+        set
+        {
+            _hex = value;
+            _script = Script.FromHex(_hex);
+        }
+        get { return _hex; }
+    }
+    private string _hex = string.Empty;
+    private Script _script;
 
     [JsonPropertyName("address")]
     public string Address
@@ -25,12 +35,6 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
         {
             if (!string.IsNullOrEmpty(_address))
                 return _address;
-
-            if (Type == "nonstandard")
-            {
-                _address = string.Empty;
-                return _address;
-            }
 
             _address = ExtractAddress();
 
@@ -63,23 +67,33 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
         return Asm.StartsWith("OP_RETURN", StringComparison.InvariantCultureIgnoreCase);
     }
 
+    public bool IsMalleable()
+    {
+        return _script.IsMalleable;
+    }
+
     public override string GetAddress()
     {
         return Address;
     }
 
     private string ExtractAddress()
-    {
-        var parsedHex = Script.FromHex(Hex);
+    {        
         BitcoinAddress? address;
 
-        if (parsedHex.IsScriptType(NBitcoin.ScriptType.P2PKH))
+        if (Type == "nonstandard")
         {
-            address = parsedHex.GetDestinationAddress(Network.Main);
+            _address = string.Empty;
+            return _address;
         }
-        else if (parsedHex.IsScriptType(NBitcoin.ScriptType.P2PK))
+
+        if (_script.IsScriptType(NBitcoin.ScriptType.P2PKH))
         {
-            var pubkeys = parsedHex.GetDestinationPublicKeys();
+            address = _script.GetDestinationAddress(Network.Main);
+        }
+        else if (_script.IsScriptType(NBitcoin.ScriptType.P2PK))
+        {
+            var pubkeys = _script.GetDestinationPublicKeys();
             if (pubkeys.Length == 1)
             {
                 address = pubkeys[0].GetAddress(ScriptPubKeyType.Legacy, Network.Main);
@@ -94,7 +108,7 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
                 return string.Empty;
             }
         }
-        else if (parsedHex.IsScriptType(NBitcoin.ScriptType.MultiSig))
+        else if (_script.IsScriptType(NBitcoin.ScriptType.MultiSig))
         {
             return string.Empty;
         }
@@ -113,7 +127,7 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
             // NBitcoin.ScriptType.P2SH
             // NBitcoin.ScriptType.Witness
 
-            address = parsedHex.GetDestinationAddress(Network.Main);
+            address = _script.GetDestinationAddress(Network.Main);
         }
 
         if (address != null)
