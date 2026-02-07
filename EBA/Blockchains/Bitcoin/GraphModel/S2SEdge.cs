@@ -12,20 +12,10 @@ public class S2SEdge : Edge<ScriptNode, ScriptNode>
         return GraphComponentType.BitcoinS2S;
     }
 
-    public EdgeLabel Label { get { return _label; } }
-    private readonly EdgeLabel _label;
-
     public S2SEdge(
         ScriptNode source, ScriptNode target,
         long value, EdgeType type,
         uint timestamp, long blockHeight) :
-        base(source, target, value, type, timestamp, blockHeight)
-    {
-        _label = Type == EdgeType.Transfers ? EdgeLabel.S2STransfer : EdgeLabel.S2SFee;
-    }
-
-    public S2SEdge Update(long value)
-    {
-        return new S2SEdge(Source, Target, Value + value, Type, Timestamp, BlockHeight);
-    }
+        base(source, target, value, type, type == EdgeType.Transfers ? EdgeLabel.S2STransfer : EdgeLabel.S2SFee, timestamp, blockHeight)
+    { }
 }

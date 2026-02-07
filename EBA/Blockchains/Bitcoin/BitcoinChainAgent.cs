@@ -229,16 +229,16 @@ public class BitcoinChainAgent : IDisposable
             if (!output.IsValueTransfer)
             {
                 // This is added for script type statistics only
-                g.Block.AddNonTransferOutputStatistics(output.GetScriptType());
+                g.Block.AddNonTransferOutputStatistics(output.ScriptPubKey.ScriptType);
                 continue;
             }
 
             output.TryGetAddress(out string? address);
 
-            g.Block.AddOutputStatistics(address, output.GetScriptType());
+            g.Block.AddOutputStatistics(address, output.ScriptPubKey.ScriptType);
 
             var utxo = new Utxo(
-                coinbaseTx.Txid, output.Index, address, output.Value, output.GetScriptType(),
+                coinbaseTx.Txid, output.Index, address, output.Value, output.ScriptPubKey.ScriptType,
                 isGenerated: true, createdInHeight: block.Height);
 
             if (options.Traverse.TrackTxo)
@@ -300,7 +300,7 @@ public class BitcoinChainAgent : IDisposable
                     address: address,
                     value: input.PrevOut.Value,
                     isGenerated: input.PrevOut.Generated,
-                    scriptType: input.PrevOut.ConstructedOutput.GetScriptType(),
+                    scriptType: input.PrevOut.ConstructedOutput.ScriptPubKey.ScriptType,
                     createdInHeight: input.PrevOut.Height,
                     spentInHeight: g.Block.Height);
 
@@ -343,37 +343,41 @@ public class BitcoinChainAgent : IDisposable
             txGraph.AddSource(input.TxId, utxo);
         }
 
-        var transferOutputsCount = 0;
+        var standardOutputsCount = 0;
         foreach (var output in tx.Outputs)
         {
             cT.ThrowIfCancellationRequested();
 
-            if (!output.IsValueTransfer)
+            if (output.ScriptPubKey.ScriptType == ScriptType.NullData)
             {
-                // This is added for script type statistics only
-                g.Block.AddNonTransferOutputStatistics(output.GetScriptType());
-                continue;
+                txGraph.AddTarget(new NullDataNode(output), output.Value);
+                g.Block.AddOutputStatistics(null, ScriptType.NullData);
             }
+            else if (output.ScriptPubKey.ScriptType == ScriptType.nonstandard)
+            {
+                txGraph.AddTarget(new NonStandardScriptNode(output), output.Value);
+                g.Block.AddOutputStatistics(null, ScriptType.nonstandard);
+            }
+            else
+            {
+                standardOutputsCount++;
+                output.TryGetAddress(out string? address);
+                g.Block.AddOutputStatistics(address, output.ScriptPubKey.ScriptType);
 
-            transferOutputsCount++;
+                var utxo = new Utxo(
+                    tx.Txid, output.Index, address, output.Value, output.ScriptPubKey.ScriptType,
+                    isGenerated: false, createdInHeight: g.Block.Height);
 
-            output.TryGetAddress(out string? address);
-            g.Block.AddOutputStatistics(address, output.GetScriptType());
+                txGraph.AddTarget(utxo);
+                g.Block.AddOutputValue(utxo.Value);
 
-            var cIn = g.Block.Hash;
-            var utxo = new Utxo(
-                tx.Txid, output.Index, address, output.Value, output.GetScriptType(),
-                isGenerated: false, createdInHeight: g.Block.Height);
-
-            txGraph.AddTarget(utxo);
-            g.Block.AddOutputValue(utxo.Value);
-
-            if (options.Traverse.TrackTxo)
-                g.Block.TxoLifecycle.TryAdd(utxo.Id, utxo);
+                if (options.Traverse.TrackTxo)
+                    g.Block.TxoLifecycle.TryAdd(utxo.Id, utxo);
+            }
         }
 
         g.Block.AddInputsCount(tx.Inputs.Count);
-        g.Block.AddOutputsCount(transferOutputsCount);
+        g.Block.AddStandardOutputPerTxCount(standardOutputsCount);
         g.Enqueue(txGraph);
     }
 

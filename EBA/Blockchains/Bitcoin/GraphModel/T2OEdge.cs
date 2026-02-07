@@ -1,24 +1,24 @@
 ﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
 
-public class T2SEdge : Edge<TxNode, ScriptNode>
+public class T2OEdge : Edge<TxNode, NonStandardScriptNode>
 {
     public static new GraphComponentType ComponentType
     {
-        get { return GraphComponentType.BitcoinT2S; }
+        get { return GraphComponentType.BitcoinT2O; }
     }
 
     public override GraphComponentType GetGraphComponentType()
     {
-        return GraphComponentType.BitcoinT2S;
+        return GraphComponentType.BitcoinT2O;
     }
 
-    public T2SEdge(
+    public T2OEdge(
         TxNode source,
-        ScriptNode target,
+        NonStandardScriptNode target,
         long value,
         EdgeType type,
         uint timestamp,
         long blockHeight) :
-        base(source, target, value, type, EdgeLabel.T2STransfer, timestamp, blockHeight)
+        base(source, target, value, type, EdgeLabel.T2NonStandard, timestamp, blockHeight)
     { }
 }

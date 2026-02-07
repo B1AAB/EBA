@@ -12,8 +12,6 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         return GraphComponentType.BitcoinS2T;
     }
 
-    public EdgeLabel Label { get { return EdgeLabel.S2TTransfer; } }
-
     public long UTxOCreatedInBlockHeight { get; }
 
     public S2TEdge(
@@ -24,16 +22,10 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         uint timestamp,
         long blockHeight,
         long utxoCreatedInBlockHeight) :
-        base(source, target, value, type, timestamp, blockHeight)
+        base(source, target, value, type, EdgeLabel.S2TTransfer, timestamp, blockHeight)
     {
         UTxOCreatedInBlockHeight = utxoCreatedInBlockHeight;
     }
-
-    public S2TEdge Update(long value)
-    {
-        return new S2TEdge(Source, Target, Value + value, Type, Timestamp, BlockHeight, UTxOCreatedInBlockHeight);
-    }
-
 
     // TODO: maybe a better alternative is to override the base or get from it but now that is static
     public static new string[] GetFeaturesName()

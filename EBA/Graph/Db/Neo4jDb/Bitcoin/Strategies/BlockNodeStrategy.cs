@@ -1,5 +1,4 @@
 ﻿using EBA.Graph.Bitcoin;
-using Spectre.Console;
 
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 
@@ -31,6 +30,8 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
         new(nameof(v.CoinbaseOutputsCount), FieldType.Long, n => n.BlockMetadata.CoinbaseOutputsCount),
         new(nameof(v.TxFees), FieldType.Long, n => n.BlockMetadata.TxFees),
         new(nameof(v.MintedBitcoins), FieldType.Long, n => n.BlockMetadata.MintedBitcoins),
+        new(nameof(v.SumNullDataBitcoins), FieldType.Long, n => n.BlockMetadata.SumNullDataBitcoins),
+        new(nameof(v.SumNonStandardOutputBitcoins), FieldType.Long, n => n.BlockMetadata.SumNonStandardOutputBitcoins),
 
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(nameof(v.InputCounts), n => n.BlockMetadata.InputCounts),
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(nameof(v.OutputCounts), n => n.BlockMetadata.OutputCounts),
@@ -91,6 +92,8 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
             CoinbaseOutputsCount = _mappingsDict[nameof(v.CoinbaseOutputsCount)].Deserialize<int>(props),
             TxFees = _mappingsDict[nameof(v.TxFees)].Deserialize<long>(props),
             MintedBitcoins = _mappingsDict[nameof(v.MintedBitcoins)].Deserialize<long>(props),
+            SumNullDataBitcoins = _mappingsDict[nameof(v.SumNullDataBitcoins)].Deserialize<long>(props),
+            SumNonStandardOutputBitcoins = _mappingsDict[nameof(v.SumNonStandardOutputBitcoins)].Deserialize<long>(props),
 
             InputCounts = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.InputCounts)),
             OutputCounts = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.OutputCounts)),

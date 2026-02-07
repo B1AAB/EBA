@@ -25,7 +25,7 @@ public class PrevOut
     public long Value { get; private set; }
 
     [JsonPropertyName("scriptPubKey")]
-    public ScriptPubKey? ScriptPubKey { set; get; }
+    public ScriptPubKey ScriptPubKey { set; get; }
 
     public Output ConstructedOutput
     {

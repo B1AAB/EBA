@@ -2,108 +2,11 @@
 
 namespace EBA.Blockchains.Bitcoin.GraphModel;
 
-// TODO: can the following AddOrUpdateEdge methods made generic and simplified?!
-
 public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
 {
     public new static GraphComponentType ComponentType
     {
         get { return GraphComponentType.BitcoinGraph; }
-    }
-
-    public void AddOrUpdateEdge(C2TEdge edge)
-    {
-        if (edge.Value == 0)
-            return;
-
-        AddOrUpdateEdge(
-            edge, 
-            (_, oldValue) => edge.Update(oldValue.Value),
-            TxNode.ComponentType,
-            TxNode.ComponentType,
-            C2TEdge.ComponentType);
-    }
-
-    public void AddOrUpdateEdge(C2SEdge edge)
-    {
-        if (edge.Value == 0)
-            return;
-
-        AddOrUpdateEdge(
-            edge,
-            (_, oldValue) => edge.Update(oldValue.Value),
-            ScriptNode.ComponentType,
-            ScriptNode.ComponentType,
-            C2SEdge.ComponentType);
-    }
-
-    public void AddOrUpdateEdge(T2TEdge edge)
-    {
-        if (edge.Value == 0)
-            return;
-
-        AddOrUpdateEdge(
-            edge,
-            (_, oldEdge) => { return T2TEdge.Update((T2TEdge)oldEdge, edge); },
-            TxNode.ComponentType,
-            TxNode.ComponentType,
-            T2TEdge.ComponentType);
-    }
-
-    public void AddOrUpdateEdge(S2SEdge edge)
-    {
-        /// Note that the hashkey is invariant to the edge value.
-        /// If this is changed, the `Equals` method needs to be
-        /// updated accordingly.
-
-        if (edge.Value == 0)
-            return;
-
-        AddOrUpdateEdge(
-            edge,
-            (_, oldValue) => edge.Update(oldValue.Value),
-            ScriptNode.ComponentType,
-            ScriptNode.ComponentType,
-            S2SEdge.ComponentType);
-    }
-
-    public void AddOrUpdateEdge(S2TEdge edge)
-    {
-        if (edge.Value == 0)
-            return;
-
-        AddOrUpdateEdge(
-            edge,
-            (_, oldValue) => edge.Update(oldValue.Value),
-            ScriptNode.ComponentType,
-            TxNode.ComponentType,
-            S2TEdge.ComponentType);
-    }
-
-    public void AddOrUpdateEdge(T2SEdge edge)
-    {
-        if (edge.Value == 0)
-            return;
-
-        AddOrUpdateEdge(
-            edge,
-            (_, oldValue) => edge.Update(oldValue.Value),
-            TxNode.ComponentType,
-            ScriptNode.ComponentType,
-            T2SEdge.ComponentType);
-    }
-
-    public void AddOrUpdateEdge(B2TEdge edge)
-    {
-        if (edge.Value == 0)
-            return;
-
-        AddOrUpdateEdge(
-            edge,
-            (_, oldValue) => edge.Update(oldValue.Value),
-            BlockNode.ComponentType,
-            TxNode.ComponentType,
-            B2TEdge.ComponentType);
     }
 
     public INode GetOrAddNode(INode node)

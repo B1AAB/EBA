@@ -22,6 +22,8 @@ public class TransactionGraph : GraphBase
     public ConcurrentDictionary<string, long> SourceTxes { set; get; } = new();
     public ConcurrentDictionary<ScriptNode, Utxo> SourceScripts { set; get; } = new();
     public ConcurrentDictionary<ScriptNode, long> TargetScripts { set; get; } = new();
+    public ConcurrentDictionary<NonStandardScriptNode, long> TargetNonStandardScripts { set; get; } = new();
+    public ConcurrentDictionary<NullDataNode, long> TargetNullDataValues { set; get; } = new();
 
     public TransactionGraph(Transaction tx) : base()
     {
@@ -44,6 +46,16 @@ public class TransactionGraph : GraphBase
         //_totalOutputValue += utxo.Value;
         Helpers.ThreadsafeAdd(ref _totalOutputValue, utxo.Value);
         return AddOrUpdate(TargetScripts, new ScriptNode(utxo), utxo.Value);
+    }
+
+    public void AddTarget(NullDataNode node, long value)
+    {
+        TargetNullDataValues.AddOrUpdate(node, value, (_, oldValue) => oldValue + value);
+    }
+
+    public void AddTarget(NonStandardScriptNode node, long value)
+    {
+        TargetNonStandardScripts.AddOrUpdate(node, value, (_, oldValue) => oldValue + value);
     }
 
     /*

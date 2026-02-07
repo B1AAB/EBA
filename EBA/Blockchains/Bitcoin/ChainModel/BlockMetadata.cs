@@ -65,6 +65,14 @@ public class BlockMetadata
     public virtual int CoinbaseOutputsCount { init; get; }
     public virtual long TxFees { init; get; }
     public virtual long MintedBitcoins { init; get; }
+    /// <summary>
+    /// Provably unspendable outputs, 
+    /// i.e. OP_RETURN outputs, 
+    /// which are used to embed data in the blockchain and 
+    /// are not meant to be spent.
+    /// </summary>
+    public virtual long SumNullDataBitcoins { init; get; }
+    public virtual long SumNonStandardOutputBitcoins { init; get; }
 
     public virtual DescriptiveStatistics? InputCounts { init; get; }
     public virtual DescriptiveStatistics? OutputCounts { init; get; }

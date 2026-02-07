@@ -31,6 +31,19 @@ public class BlockNode(
     public uint[] EdgeLabelCount { set; get; } = [];
     public long[] EdgeLabelValueSum { set; get; } = [];
 
+    public double ResidualValue
+    {
+        get
+        {
+            if (BlockMetadata.InputValues is null || BlockMetadata.OutputValues is null)
+            {
+                return 0;
+            }
+
+            return BlockMetadata.InputValues.Sum - BlockMetadata.OutputValues.Sum - BlockMetadata.TxFees;
+        }
+    }
+
     public BlockNode(Block block) : this(blockMetadata: block) { }
 
     public override string GetIdPropertyName()

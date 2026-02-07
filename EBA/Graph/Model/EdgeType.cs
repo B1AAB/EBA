@@ -16,7 +16,9 @@ public enum EdgeLabel
     B2TConfirms = 9,
     S2TTransfer = 10,
     T2STransfer = 11,
-    T2SReward = 12
+    T2SReward = 12,
+    T2Null = 13,
+    T2NonStandard = 14
 }
 
 public enum EdgeType

@@ -158,24 +158,30 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
         return ReferenceEquals(resultingEdge, edge);
     }
 
-    public void AddOrUpdateEdge<T>(
-        T edge, Func<string, IEdge<INode, INode>, IEdge<INode, INode>> updateValueFactory,
-        GraphComponentType sourceType,
-        GraphComponentType targetType,
-        GraphComponentType edgeType)
+    public void AddOrUpdateEdge<T>(T edge, Func<T, T, T>? updateFunc = null)
         where T : IEdge<INode, INode>
     {
         var x = _edges.GetOrAdd(
-            edgeType,
+            edge.GetGraphComponentType(),
             new ConcurrentDictionary<string, IEdge<INode, INode>>());
 
-        x.AddOrUpdate(edge.Id, edge, updateValueFactory);
+        x.AddOrUpdate(
+            edge.Id,
+            edge,
+            (_, oldEdge) =>
+            {
+                if (updateFunc != null)
+                    return updateFunc((T)oldEdge, edge);
+
+                oldEdge.AddValue(edge.Value);
+                return oldEdge;
+            });
 
         edge.Source.AddOutgoingEdge(edge);
         edge.Target.AddIncomingEdge(edge);
 
-        TryAddNode(sourceType, edge.Source);
-        TryAddNode(targetType, edge.Target);
+        TryAddNode(edge.Source.GetGraphComponentType(), edge.Source);
+        TryAddNode(edge.Target.GetGraphComponentType(), edge.Target);
     }
 
     public List<T>? GetEdges<T>(GraphComponentType type) where T : IEdge<INode, INode>

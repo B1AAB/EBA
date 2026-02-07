@@ -15,6 +15,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
     public TTarget Target { get; }
     public long Value { get; }
     public EdgeType Type { get; }
+    public EdgeLabel Label { get; }
     public uint Timestamp { get; }
     public long BlockHeight { get; }
 
@@ -38,13 +39,14 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
 
     public Edge(
         TSource source, TTarget target,
-        long value, EdgeType type,
+        long value, EdgeType type, EdgeLabel label,
         uint timestamp, long blockHeight)
     {
         Source = source;
         Target = target;
         Value = value;
         Type = type;
+        Label = label;
         Timestamp = timestamp;
         BlockHeight = blockHeight;
 
@@ -100,5 +102,10 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
     public override int GetHashCode()
     {
         return HashCode.Combine(Source.Id, Target.Id, Value, Type, Timestamp);
+    }
+
+    public void AddValue(long value)
+    {
+        throw new NotImplementedException();
     }
 }
