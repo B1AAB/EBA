@@ -59,6 +59,8 @@ public class BitcoinGraphAgent : IGraphAgent<BitcoinGraph>, IDisposable
             GraphComponentType.BitcoinScriptNode => NodeLabels.Script,
             GraphComponentType.BitcoinTxNode => NodeLabels.Tx,
             GraphComponentType.BitcoinCoinbaseNode => NodeLabels.Coinbase,
+            GraphComponentType.BitcoinNullDataNode => NodeLabels.NullData,
+            GraphComponentType.BitcoinNonStandardScriptNode => NodeLabels.NonStandardScript,
             _ => throw new ArgumentOutOfRangeException(nameof(type), $"Not a valid node type: {type}"),
         };
     }

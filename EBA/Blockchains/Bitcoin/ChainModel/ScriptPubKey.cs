@@ -27,6 +27,24 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
     private string _hex = string.Empty;
     private Script _script;
 
+    public string Base64String
+    {
+        get
+        {
+            return Convert.ToBase64String(Convert.FromHexString(_hex));
+        }
+    }
+
+    public string SHA256HashString
+    {
+        get
+        {
+            byte[] rawBytes = Convert.FromHexString(_hex);
+            byte[] hashBytes = SHA256.HashData(rawBytes);
+            return Convert.ToBase64String(hashBytes);
+        }
+    }
+
     [JsonPropertyName("address")]
     public string Address
     {
@@ -59,18 +77,10 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
         }
     }
 
-    /// <summary>
-    /// means it is unspendable
-    /// </summary>
-    public bool IsOpReturn()
+    public bool IsMalleable
     {
-        return Asm.StartsWith("OP_RETURN", StringComparison.InvariantCultureIgnoreCase);
-    }
-
-    public bool IsMalleable()
-    {
-        return _script.IsMalleable;
-    }
+        get { return _script.IsMalleable; }
+    }    
 
     public override string GetAddress()
     {
@@ -81,7 +91,7 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
     {        
         BitcoinAddress? address;
 
-        if (Type == "nonstandard")
+        if (ScriptType == ScriptType.nonstandard)
         {
             _address = string.Empty;
             return _address;

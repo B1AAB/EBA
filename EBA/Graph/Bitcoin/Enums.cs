@@ -5,7 +5,9 @@ public enum NodeLabels
     Coinbase,
     Script,
     Block,
-    Tx
+    Tx,
+    NullData,
+    NonStandardScript
 }
 
 public enum EdgeTypes

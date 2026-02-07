@@ -12,17 +12,12 @@ public class B2SEdge : Edge<BlockNode, ScriptNode>
         return GraphComponentType.BitcoinB2S;
     }
 
-    public EdgeLabel Label { get { return _label; } }
-    private readonly EdgeLabel _label;
-
     public B2SEdge(
         BlockNode source, ScriptNode target,
         long value, EdgeType type,
         uint timestamp, long blockHeight) :
-        base(source, target, value, type, timestamp, blockHeight)
-    {
-        _label = EdgeLabel.B2SCredits;
-    }
+        base(source, target, value, type, EdgeLabel.B2SCredits, timestamp, blockHeight)
+    { }
 
     public B2SEdge Update(long value)
     {

@@ -18,18 +18,6 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
     // TODO: since there is a CoinbaseNode type, this default should change
     public ScriptType ScriptType { get; } = ScriptType.Coinbase;
 
-    public static new string Header
-    {
-        get
-        {
-            return string.Join(Delimiter, new string[]
-            {
-                Node.Header,
-                "ScriptType"
-            });
-        }
-    }
-
     public ScriptNode(
         string address,
         double? originalIndegree = null,
