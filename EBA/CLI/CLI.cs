@@ -179,10 +179,6 @@ internal class Cli
             "be started with REST endpoint enabled.",
             getDefaultValue: () => defaultOptions.Bitcoin.Traverse.ClientUri);
 
-        var addressesFilenameOption = new Option<string>(
-            name: "--addresses-filename",
-            description: "Sets the filename to persist addresses in each block.");
-
         var trackTxoOption = new Option<bool>(
             name: "--track-txo",
             description: "if set, writes the list of txo it sees to a text file, this file will need to further processed" +
@@ -199,11 +195,6 @@ internal class Cli
             name: "--skip-graph-serialization",
             description: "if provided, it skips writting per-block graphs to files. " +
             "This option is used when other stats are intended to be collected from traverse (e.g., per-block summary stats)");
-
-        var skipSerializingAddresses = new Option<bool>(
-            name: "--skip-address-serialization",
-            description: "Addresses are serialized on per-block basis so that they can be used to determine address-level stats " +
-            "per block (requires additional storage and a down-stream process). You may skp serializing them if address-level stats is not needed.");
 
         var maxBlocksInBufferOption = new Option<int>(
             name: "--max-blocks-in-buffer",
@@ -234,13 +225,11 @@ internal class Cli
             toOption,
             granularityOption,
             clientUriOption,
-            addressesFilenameOption,
             maxBlocksInBufferOption,
             txoFilenameOption,
             skipGraphSerialization,
             trackTxoOption,
-            maxEntriesPerBatch,
-            skipSerializingAddresses
+            maxEntriesPerBatch
         };
 
         cmd.SetHandler(async (options) =>
@@ -254,12 +243,10 @@ internal class Cli
             bitcoinClientUri: clientUriOption,
             workingDirOption: _workingDirOption,
             statusFilenameOption: _statusFilenameOption,
-            addressesFilenameOption: addressesFilenameOption,
             maxBlocksInBufferOption: maxBlocksInBufferOption,
             trackTxoOption: trackTxoOption,
             txoFilenameOption: txoFilenameOption,
             skipGraphSerializationOption: skipGraphSerialization,
-            skipSerializingAddressesOption: skipSerializingAddresses,
             maxEntriesPerBatch: maxEntriesPerBatch));
 
         return cmd;
@@ -514,8 +501,7 @@ internal class Cli
         },
         new OptionsBinder(
             workingDirOption: _workingDirOption,
-            statusFilenameOption: _statusFilenameOption,
-            addressesFilenameOption: addressesFilenameOption));
+            statusFilenameOption: _statusFilenameOption));
 
         return cmd;
     }

@@ -33,9 +33,21 @@ public class Utxo
     }
 
     public Utxo(
-        string txid, int voutN, string? address, long value, ScriptType scriptType, bool isGenerated,
-        long createdInHeight, long? spentInHeight = null) :
-        this(GetId(txid, voutN), address, value, scriptType, isGenerated, createdInHeight, spentInHeight)
+        ScriptPubKey scriptPubKey,
+        string? address,
+        long value,
+        ScriptType scriptType,
+        bool isGenerated,
+        long createdInHeight,
+        long? spentInHeight = null) :
+    this(
+        scriptPubKey.SHA256HashString,
+        address,
+        value,
+        scriptType,
+        isGenerated,
+        createdInHeight,
+        spentInHeight)
     { }
 
     public static string GetId(string txid, int voutN)

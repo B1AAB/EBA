@@ -6,13 +6,9 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 {
     private readonly Graph.Bitcoin.BitcoinGraphAgent? _graphAgent;
     private readonly ILogger<PersistentGraphBuffer> _logger;
-    private readonly PersistentBlockAddresses? _pBlockAddresses;
     private readonly PersistentTxoLifeCycleBuffer? _pTxoLifeCycleBuffer = null;
     private readonly SemaphoreSlim _semaphore;
     private bool _disposed = false;
-    private readonly Options _options;
-
-    private const char _delimiter = '\t';
 
     public ReadOnlyCollection<long> BlocksHeightInBuffer
     {
@@ -26,12 +22,9 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     public PersistentGraphBuffer(
         Graph.Bitcoin.BitcoinGraphAgent? graphAgent,
         ILogger<PersistentGraphBuffer> logger,
-        ILogger<PersistentBlockAddresses> pgAddressesLogger,
         ILogger<PersistentTxoLifeCycleBuffer>? pTxoLifeCyccleLogger,
-        string perBlockAddressesFilename,
         string? txoLifeCycleFilename,
         int maxTxoPerFile,
-        int maxAddressesPerFile,
         SemaphoreSlim semaphore,
         Options options,
         CancellationToken ct) :
@@ -39,11 +32,6 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     {
         _graphAgent = graphAgent;
         _logger = logger;
-
-        _options = options;
-
-        if (!_options.Bitcoin.Traverse.SkipSerializingAddresses)
-            _pBlockAddresses = new(perBlockAddressesFilename, maxAddressesPerFile, pgAddressesLogger, ct);
 
         if (txoLifeCycleFilename != null && pTxoLifeCyccleLogger != null)
             _pTxoLifeCycleBuffer = new(txoLifeCycleFilename, maxTxoPerFile, pTxoLifeCyccleLogger, ct);
@@ -76,10 +64,6 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 
         if (_pTxoLifeCycleBuffer != null)
             tasks.Add(_pTxoLifeCycleBuffer.SerializeAsync(obj.Block.TxoLifecycle.Values, default));
-
-        //if (!_options.Bitcoin.SkipSerializingAddresses)
-        if (_pBlockAddresses != null)
-            tasks.Add(_pBlockAddresses.SerializeAsync(obj.Block.ToStringsAddresses(_delimiter), default));
 
         await Task.WhenAll(tasks);
 

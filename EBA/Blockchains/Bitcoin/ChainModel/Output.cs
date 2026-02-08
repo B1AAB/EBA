@@ -28,6 +28,7 @@ public class Output : IBase64Serializable
     public Output(long value, ScriptPubKey scriptPubKey)
     {
         Value = value;
+        _valueBTC = Helpers.Satoshi2BTC(value);
         ScriptPubKey = scriptPubKey;
     }
 

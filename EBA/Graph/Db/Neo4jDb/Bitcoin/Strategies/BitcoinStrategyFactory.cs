@@ -17,8 +17,6 @@ public class BitcoinStrategyFactory : IStrategyFactory
             {GraphComponentType.BitcoinBlockNode, new BlockNodeStrategy(compressOutput)},
             {GraphComponentType.BitcoinScriptNode, new ScriptNodeStrategy(compressOutput)},
             {GraphComponentType.BitcoinTxNode, new TxNodeStrategy(compressOutput)},
-            {GraphComponentType.BitcoinNullDataNode, new NullDataNodeStrategy(compressOutput)},
-            {GraphComponentType.BitcoinNonStandardScriptNode, new NonStandardNodeStrategy(compressOutput)},
             {GraphComponentType.BitcoinC2T, new C2TEdgeStrategy(compressOutput)},
             {GraphComponentType.BitcoinC2S, new C2SEdgeStrategy(compressOutput)},
             {GraphComponentType.BitcoinS2S, new S2SEdgeStrategy(compressOutput)},
@@ -26,8 +24,6 @@ public class BitcoinStrategyFactory : IStrategyFactory
             {GraphComponentType.BitcoinS2T, new S2TEdgeStrategy(compressOutput)},
             {GraphComponentType.BitcoinT2S, new T2SEdgeStrategy(compressOutput)},
             {GraphComponentType.BitcoinB2T, new B2TEdgeStrategy(compressOutput)},
-            {GraphComponentType.BitcoinT2N, new T2NEdgeStrategy(compressOutput)},
-            {GraphComponentType.BitcoinT2O, new T2OEdgeStrategy(compressOutput)},
         };
     }
 

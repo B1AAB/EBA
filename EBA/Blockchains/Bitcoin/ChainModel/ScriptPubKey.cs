@@ -158,4 +158,9 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
         }
         return Convert.ToBase64String(stream.ToArray());
     }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(_hex);
+    }
 }

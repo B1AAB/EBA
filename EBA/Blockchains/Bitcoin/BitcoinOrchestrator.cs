@@ -128,12 +128,9 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         using var gBuffer = new PersistentGraphBuffer(
             graphAgent: _host.Services.GetRequiredService<EBA.Graph.Bitcoin.BitcoinGraphAgent>(),
             logger: _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),
-            pgAddressesLogger: _host.Services.GetRequiredService<ILogger<PersistentBlockAddresses>>(),
             pTxoLifeCyccleLogger: options.Bitcoin.Traverse.TrackTxo ?_host.Services.GetRequiredService<ILogger<PersistentTxoLifeCycleBuffer>>() : null,
-            perBlockAddressesFilename: options.Bitcoin.Traverse.PerBlockAddressesFilename,
             txoLifeCycleFilename: options.Bitcoin.Traverse.TrackTxo ? options.Bitcoin.Traverse.TxoFilename : null,
             maxTxoPerFile: options.Bitcoin.Traverse.MaxTxoPerFile,
-            maxAddressesPerFile: options.Bitcoin.Traverse.MaxBlockAddressesPerFile,
             options: options,
             semaphore: pgbSemaphore,
             ct: cT);

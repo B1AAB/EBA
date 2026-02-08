@@ -5,15 +5,28 @@ namespace EBA.Blockchains.Bitcoin.ChainModel;
 public class Block : BlockMetadata
 {
     [JsonPropertyName("tx")]
-    public List<Transaction> Transactions { init; get; } = [];
+    public List<Tx> Transactions { init; get; } = [];
 
     public ConcurrentDictionary<string, Utxo> TxoLifecycle { init; get; } = [];
 
     public override DescriptiveStatistics InputCounts { get { return new DescriptiveStatistics([.. _inputsCounts]); } }
-    public override DescriptiveStatistics OutputCounts { get { return new DescriptiveStatistics([.. _standardOutputsCounts]); } }
+    public override DescriptiveStatistics OutputCounts { get { return new DescriptiveStatistics([.. _outputsCounts]); } }
     public override DescriptiveStatistics InputValues { get { return new DescriptiveStatistics([.. _inputValues]); } }
     public override DescriptiveStatistics OutputValues { get { return new DescriptiveStatistics([.. _outputValues]); } }
     public override DescriptiveStatistics SpentOutputAge { get { return new DescriptiveStatistics([.. _spentOutputsAge]); } }
+
+
+    private readonly ConcurrentBag<int> _inputsCounts = [];
+    private readonly ConcurrentBag<int> _outputsCounts = [];
+    private readonly ConcurrentBag<long> _inputValues = [];
+    private readonly ConcurrentBag<long> _outputValues = [];
+    private readonly ConcurrentBag<long> _spentOutputsAge = [];
+    private readonly ConcurrentDictionary<ScriptType, uint> _inputScriptTypeCount = GetEmptyScriptDict();
+    private readonly ConcurrentDictionary<ScriptType, uint> _outputScriptTypeCount = GetEmptyScriptDict();
+    private static ConcurrentDictionary<ScriptType, uint> GetEmptyScriptDict()
+    {
+        return new(Enum.GetValues<ScriptType>().Cast<ScriptType>().ToDictionary(x => x, x => (uint)0));
+    }
 
     public override int CoinbaseOutputsCount { init { _coinbaseOutputsCount = value; } get { return _coinbaseOutputsCount; } }
     private int _coinbaseOutputsCount;
@@ -45,37 +58,24 @@ public class Block : BlockMetadata
         _mintedBitcoins = value;
     }
 
-    private readonly ConcurrentBag<double> _inputsCounts = [];
-    public void AddInputsCount(int value)
+    public void ProfileSpentOutput(Output prevOut, long prevOutHeight)
     {
-        _inputsCounts.Add(value);
+        _inputValues.Add(prevOut.Value);
+        _inputScriptTypeCount[prevOut.ScriptPubKey.ScriptType] += 1;
+        _spentOutputsAge.Add(Height - prevOutHeight);
     }
 
-    private readonly ConcurrentBag<int> _standardOutputsCounts = [];
-    public void AddStandardOutputPerTxCount(int value)
+    public void ProfileCreatedOutput(Output output)
     {
-        _standardOutputsCounts.Add(value);
+        _outputValues.Add(output.Value);
+        _outputScriptTypeCount[output.ScriptPubKey.ScriptType] += 1;
     }
 
-    private readonly ConcurrentBag<long> _inputValues = [];
-    public void AddInputValue(long value)
+    public void ProfileTxes(int inputsCount, int outputsCount)
     {
-        _inputValues.Add(value);
-    }
-
-    private readonly ConcurrentBag<long> _outputValues = [];
-    public void AddOutputValue(long value)
-    {
-        _outputValues.Add(value);
-    }
-
-    private readonly ConcurrentBag<long> _spentOutputsAge = [];
-    public void AddSpentOutputsAge(long age)
-    {
-        _spentOutputsAge.Add(age);
-    }
-
-    private readonly ConcurrentBag<string> _outputAddresses = [];
+        _inputsCounts.Add(inputsCount);
+        _outputsCounts.Add(outputsCount);
+    }    
 
     private readonly ConcurrentDictionary<ScriptType, uint> _scriptTypeCount = 
         new(Enum.GetValues<ScriptType>()
@@ -87,29 +87,5 @@ public class Block : BlockMetadata
         {
             return _scriptTypeCount.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
-    }
-
-    public void AddOutputStatistics(string? address, ScriptType scriptType)
-    {
-        if (!string.IsNullOrEmpty(address))
-            _outputAddresses.Add(address);
-
-        _scriptTypeCount.AddOrUpdate(scriptType, 0, (k, v) => v + 1);
-    }
-
-    // TODO: this seems to be a bug, you should not added to the same property as other edge types?!
-    public void AddNonTransferOutputStatistics(ScriptType scriptType)
-    {
-        _scriptTypeCount.AddOrUpdate(scriptType, 0, (k, v) => v + 1);
-    }
-
-    // TODO: experimental 
-    public List<string> ToStringsAddresses(char delimiter)
-    {
-        var strings = new List<string>();
-        foreach (var x in _outputAddresses)
-            strings.Add($"{x}{delimiter}{Height}");
-
-        return strings;
     }
 }

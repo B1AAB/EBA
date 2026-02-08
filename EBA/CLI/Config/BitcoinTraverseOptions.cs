@@ -67,8 +67,6 @@ public class BitcoinTraverseOptions
     public string BlocksToProcessListFilename { init; get; } = "bitcoin_blocks_to_process.eba";
     public string BlocksFailedToProcessListFilename { init; get; } = "bitcoin_blocks_failed_to_process.eba";
 
-    public string PerBlockAddressesFilename { init; get; } = "addresses.tsv";
-
     public int MaxBlocksInBuffer { init; get; } = 100;
 
     // null default lets runtime decide on max concurrency which is not static and changes w.r.t the load.
@@ -78,15 +76,12 @@ public class BitcoinTraverseOptions
     public TimeSpan HttpClientTimeout { init; get; } = TimeSpan.FromMinutes(10);
 
     public int MaxTxoPerFile { init; get; } = (int)5e8;
-    public int MaxBlockAddressesPerFile { init; get; } = (int)5e8;
 
     public string TxoFilename { init; get; } = "bitcoin_txo.tsv";
 
     public bool TrackTxo { init; get; } = false;
 
     public bool SkipGraphSerialization { init; get; } = false;
-
-    public bool SkipSerializingAddresses { init; get; } = false;
 
     public bool UseLegacyGraphDbMethod { init; get; } = false;
 
