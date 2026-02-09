@@ -53,6 +53,10 @@ public enum ScriptType
     /// for paying a transaction fee.
     /// <seealso cref="https://developer.bitcoin.org/devguide/transactions.html#null-data"/>
     /// e.g., block 325001
+    /// 
+    /// An output of this type is a provably unspendable output, 
+    /// i.e. OP_RETURN outputs, exclusively used to embed data in the blockchain and 
+    /// are not meant to be spent.
     /// </summary>
     NullData,
 

@@ -28,17 +28,15 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
         new(nameof(v.Size), FieldType.Long, n => n.BlockMetadata.Size),
         new(nameof(v.Weight), FieldType.Long, n => n.BlockMetadata.Weight),
         new(nameof(v.CoinbaseOutputsCount), FieldType.Long, n => n.BlockMetadata.CoinbaseOutputsCount),
-        new(nameof(v.TxFees), FieldType.Long, n => n.BlockMetadata.TxFees),
         new(nameof(v.MintedBitcoins), FieldType.Long, n => n.BlockMetadata.MintedBitcoins),
-        new(nameof(v.SumNullDataBitcoins), FieldType.Long, n => n.BlockMetadata.SumNullDataBitcoins),
-        new(nameof(v.SumNonStandardOutputBitcoins), FieldType.Long, n => n.BlockMetadata.SumNonStandardOutputBitcoins),
 
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(nameof(v.InputCounts), n => n.BlockMetadata.InputCounts),
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(nameof(v.OutputCounts), n => n.BlockMetadata.OutputCounts),
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(nameof(v.InputValues), n => n.BlockMetadata.InputValues),
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(nameof(v.OutputValues), n => n.BlockMetadata.OutputValues),
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(nameof(v.SpentOutputAge), n => n.BlockMetadata.SpentOutputAge),
-        .. PropertyMappingFactory.ScriptTypeCounts<BlockNode>(n => n.BlockMetadata.ScriptTypeCount),
+        .. PropertyMappingFactory.ScriptTypeCounts<BlockNode>("Inputs", n => n.BlockMetadata.InputScriptTypeCount),
+        .. PropertyMappingFactory.ScriptTypeCounts<BlockNode>("Outputs", n => n.BlockMetadata.OutputScriptTypeCount),
 
         new(":LABEL", FieldType.String, _ => Label, _ => ":LABEL"),
     ];
@@ -90,17 +88,17 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
             Size = _mappingsDict[nameof(v.Size)].Deserialize<int>(props),
             Weight = _mappingsDict[nameof(v.Weight)].Deserialize<int>(props),
             CoinbaseOutputsCount = _mappingsDict[nameof(v.CoinbaseOutputsCount)].Deserialize<int>(props),
-            TxFees = _mappingsDict[nameof(v.TxFees)].Deserialize<long>(props),
             MintedBitcoins = _mappingsDict[nameof(v.MintedBitcoins)].Deserialize<long>(props),
-            SumNullDataBitcoins = _mappingsDict[nameof(v.SumNullDataBitcoins)].Deserialize<long>(props),
-            SumNonStandardOutputBitcoins = _mappingsDict[nameof(v.SumNonStandardOutputBitcoins)].Deserialize<long>(props),
 
             InputCounts = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.InputCounts)),
             OutputCounts = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.OutputCounts)),
             InputValues = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.InputValues)),
             OutputValues = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.OutputValues)),
             SpentOutputAge = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.SpentOutputAge)),
-            ScriptTypeCount = PropertyMappingFactory.ReadScriptTypeCounts(props)
+            InputScriptTypeCount = PropertyMappingFactory.ReadScriptTypeCounts("Inputs", props),
+            OutputScriptTypeCount = PropertyMappingFactory.ReadScriptTypeCounts("Outputs", props),
+            InputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Inputs", props),
+            OutputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Outputs", props)
         };
 
         return new BlockNode(

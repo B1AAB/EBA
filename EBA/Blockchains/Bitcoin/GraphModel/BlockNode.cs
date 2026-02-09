@@ -40,7 +40,7 @@ public class BlockNode(
                 return 0;
             }
 
-            return BlockMetadata.InputValues.Sum - BlockMetadata.OutputValues.Sum - BlockMetadata.TxFees;
+            return BlockMetadata.InputValues.Sum - BlockMetadata.OutputValues.Sum - BlockMetadata.Fees.Sum;
         }
     }
 
@@ -63,13 +63,13 @@ public class BlockNode(
             nameof(BlockMetadata.StrippedSize),
             nameof(BlockMetadata.Weight),
             nameof(BlockMetadata.CoinbaseOutputsCount),
-            nameof(BlockMetadata.TxFees),
             nameof(BlockMetadata.MintedBitcoins),
             .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.InputCounts)),
             .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.OutputCounts)),
             .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.InputValues)),
             .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.OutputValues)),
             .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.SpentOutputAge)),
+            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.Fees)),
             .. Node.GetFeaturesName()
         ];
     }
@@ -86,13 +86,13 @@ public class BlockNode(
             BlockMetadata.StrippedSize.ToString(),
             BlockMetadata.Weight.ToString(),
             BlockMetadata.CoinbaseOutputsCount.ToString(),
-            BlockMetadata.TxFees.ToString(),
             BlockMetadata.MintedBitcoins.ToString(),
             .. BlockMetadata.InputCounts.GetFeatures(),
             .. BlockMetadata.OutputCounts.GetFeatures(),
             .. BlockMetadata.InputValues.GetFeatures(),
             .. BlockMetadata.OutputValues.GetFeatures(),
             .. BlockMetadata.SpentOutputAge.GetFeatures(),
+            .. BlockMetadata.Fees.GetFeatures(),
             .. base.GetFeatures()
         ];
     }

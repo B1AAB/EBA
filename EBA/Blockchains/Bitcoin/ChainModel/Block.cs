@@ -10,22 +10,51 @@ public class Block : BlockMetadata
     public ConcurrentDictionary<string, Utxo> TxoLifecycle { init; get; } = [];
 
     public override DescriptiveStatistics InputCounts { get { return new DescriptiveStatistics([.. _inputsCounts]); } }
-    public override DescriptiveStatistics OutputCounts { get { return new DescriptiveStatistics([.. _outputsCounts]); } }
-    public override DescriptiveStatistics InputValues { get { return new DescriptiveStatistics([.. _inputValues]); } }
-    public override DescriptiveStatistics OutputValues { get { return new DescriptiveStatistics([.. _outputValues]); } }
-    public override DescriptiveStatistics SpentOutputAge { get { return new DescriptiveStatistics([.. _spentOutputsAge]); } }
-
-
     private readonly ConcurrentBag<int> _inputsCounts = [];
+
+    public override DescriptiveStatistics OutputCounts { get { return new DescriptiveStatistics([.. _outputsCounts]); } }
     private readonly ConcurrentBag<int> _outputsCounts = [];
+
+    public override DescriptiveStatistics InputValues { get { return new DescriptiveStatistics([.. _inputValues]); } }
     private readonly ConcurrentBag<long> _inputValues = [];
+
+    public override DescriptiveStatistics OutputValues { get { return new DescriptiveStatistics([.. _outputValues]); } }
     private readonly ConcurrentBag<long> _outputValues = [];
+
+    public override DescriptiveStatistics SpentOutputAge { get { return new DescriptiveStatistics([.. _spentOutputsAge]); } }
     private readonly ConcurrentBag<long> _spentOutputsAge = [];
-    private readonly ConcurrentDictionary<ScriptType, uint> _inputScriptTypeCount = GetEmptyScriptDict();
-    private readonly ConcurrentDictionary<ScriptType, uint> _outputScriptTypeCount = GetEmptyScriptDict();
-    private static ConcurrentDictionary<ScriptType, uint> GetEmptyScriptDict()
+
+    public override DescriptiveStatistics Fees { get { return new DescriptiveStatistics([.. _fees]); } }
+    private readonly ConcurrentBag<long> _fees = [];
+
+
+    public override Dictionary<ScriptType, long> InputScriptTypeCount
     {
-        return new(Enum.GetValues<ScriptType>().Cast<ScriptType>().ToDictionary(x => x, x => (uint)0));
+        get { return _inputScriptTypeCount.ToDictionary(kvp => kvp.Key, kvp => kvp.Value); }
+    }
+    private readonly ConcurrentDictionary<ScriptType, long> _inputScriptTypeCount = GetEmptyScriptDict();
+
+    public override Dictionary<ScriptType, long> OutputScriptTypeCount
+    {
+        get { return _outputScriptTypeCount.ToDictionary(kvp => kvp.Key, kvp => kvp.Value); }
+    }
+    private readonly ConcurrentDictionary<ScriptType, long> _outputScriptTypeCount = GetEmptyScriptDict();
+
+    public override Dictionary<ScriptType, long> InputScriptTypeValue
+    {
+        get { return _inputScriptTypeValue.ToDictionary(kvp => kvp.Key, kvp => kvp.Value); }
+    }
+    private readonly ConcurrentDictionary<ScriptType, long> _inputScriptTypeValue = GetEmptyScriptDict();
+
+    public override Dictionary<ScriptType, long> OutputScriptTypeValue
+    {
+        get { return _outputScriptTypeValue.ToDictionary(kvp => kvp.Key, kvp => kvp.Value); }
+    }
+    private readonly ConcurrentDictionary<ScriptType, long> _outputScriptTypeValue = GetEmptyScriptDict();
+
+    private static ConcurrentDictionary<ScriptType, long> GetEmptyScriptDict()
+    {
+        return new(Enum.GetValues<ScriptType>().Cast<ScriptType>().ToDictionary(x => x, x => (long)0));
     }
 
     public override int CoinbaseOutputsCount { init { _coinbaseOutputsCount = value; } get { return _coinbaseOutputsCount; } }
@@ -33,22 +62,6 @@ public class Block : BlockMetadata
     public void SetCoinbaseOutputsCount(int value)
     {
         _coinbaseOutputsCount = value;
-    }
-
-    public override long SumNullDataBitcoins
-    {
-        get => _scriptTypeCount[ScriptType.NullData];
-    }
-    public override long SumNonStandardOutputBitcoins
-    {
-        get => _scriptTypeCount[ScriptType.nonstandard];
-    }
-
-    public override long TxFees { init { _txFees = value; } get { return _txFees; } }
-    private long _txFees;
-    public void SetTxFees(long value)
-    {
-        _txFees = value;
     }
 
     public override long MintedBitcoins { init { _mintedBitcoins = value; } get { return _mintedBitcoins; } }
@@ -62,6 +75,7 @@ public class Block : BlockMetadata
     {
         _inputValues.Add(prevOut.Value);
         _inputScriptTypeCount[prevOut.ScriptPubKey.ScriptType] += 1;
+        _inputScriptTypeValue[prevOut.ScriptPubKey.ScriptType] += prevOut.Value;
         _spentOutputsAge.Add(Height - prevOutHeight);
     }
 
@@ -69,23 +83,17 @@ public class Block : BlockMetadata
     {
         _outputValues.Add(output.Value);
         _outputScriptTypeCount[output.ScriptPubKey.ScriptType] += 1;
+        _outputScriptTypeValue[output.ScriptPubKey.ScriptType] += output.Value;
     }
 
     public void ProfileTxes(int inputsCount, int outputsCount)
     {
         _inputsCounts.Add(inputsCount);
         _outputsCounts.Add(outputsCount);
-    }    
-
-    private readonly ConcurrentDictionary<ScriptType, uint> _scriptTypeCount = 
-        new(Enum.GetValues<ScriptType>()
-                .Cast<ScriptType>()
-                .ToDictionary(x => x, x => (uint)0));
-    public override Dictionary<ScriptType, uint> ScriptTypeCount
+    } 
+    
+    public void ProfileFee(long fee)
     {
-        get
-        {
-            return _scriptTypeCount.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-        }
+        _fees.Add(fee);
     }
 }

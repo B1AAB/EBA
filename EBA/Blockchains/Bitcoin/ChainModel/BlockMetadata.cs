@@ -63,23 +63,26 @@ public class BlockMetadata
     public int Weight { init; get; }
 
     public virtual int CoinbaseOutputsCount { init; get; }
-    public virtual long TxFees { init; get; }
     public virtual long MintedBitcoins { init; get; }
-
-    /// <summary>
-    /// Provably unspendable outputs, 
-    /// i.e. OP_RETURN outputs, 
-    /// which are used to embed data in the blockchain and 
-    /// are not meant to be spent.
-    /// </summary>
-    public virtual long SumNullDataBitcoins { init; get; }
-    public virtual long SumNonStandardOutputBitcoins { init; get; }
+    public long ProvablyUnspendableOutputsCount
+    {
+        get { return OutputScriptTypeCount[ScriptType.NullData]; }
+    }
+    public long ProvablyUnspendableBitcoins
+    {
+        get { return OutputScriptTypeValue[ScriptType.NullData]; }
+    }
 
     public virtual DescriptiveStatistics? InputCounts { init; get; }
     public virtual DescriptiveStatistics? OutputCounts { init; get; }
     public virtual DescriptiveStatistics? InputValues { init; get; }
     public virtual DescriptiveStatistics? OutputValues { init; get; }
     public virtual DescriptiveStatistics? SpentOutputAge { init; get; }
+    public virtual DescriptiveStatistics? Fees { init; get; }
 
-    public virtual Dictionary<ScriptType, uint> ScriptTypeCount { init; get; } = [];
+    public virtual Dictionary<ScriptType, long>? InputScriptTypeCount { init; get; }
+    public virtual Dictionary<ScriptType, long>? OutputScriptTypeCount { init; get; }
+
+    public virtual Dictionary<ScriptType, long>? InputScriptTypeValue { init; get; }
+    public virtual Dictionary<ScriptType, long>? OutputScriptTypeValue { init; get; }
 }

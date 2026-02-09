@@ -32,24 +32,11 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         Helpers.ThreadsafeAdd(ref _edgeLabelValueSum[(int)label], value);
     }
 
-    public List<ScriptNode> RewardsAddresses { set; get; } = [];
-
-    /// <summary>
-    /// Is the sum of all the tranactions fee.
-    /// </summary>
-    public long TotalFee { get { return _totalFee; } }
-    private long _totalFee;
-
-    public long MiningReward { private set; get; }
-    public long MintedCoins { private set; get; }
-
     private TxGraph _coinbaseTxGraph;
 
     private readonly ConcurrentQueue<TxGraph> _txGraphsQueue = new();
 
     private readonly ILogger<BitcoinChainAgent> _logger;
-
-    private readonly Lock _feeLock = new();
 
     private readonly ChainToGraphModel _chainToGraphModel;
 
@@ -71,26 +58,11 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     public void SetCoinbaseTx(TxGraph coinbaseTx)
     {
         _coinbaseTxGraph = coinbaseTx;
-        MiningReward = _coinbaseTxGraph.TargetScripts.Sum(x => x.Value);
         Block.SetCoinbaseOutputsCount(_coinbaseTxGraph.TargetScripts.Count);
-        
-        // TODO: change the code to set the minining graph after
-        // processing all other txes, then you have an updated fee,
-        // you can configure it then without neededing this
-        lock (_feeLock)
-        {
-            MintedCoins = MiningReward - _totalFee;
-        }
     }
 
     public void Enqueue(TxGraph g)
     {
-        lock (_feeLock)
-        {
-            _totalFee += g.Fee;
-            MintedCoins = MiningReward - _totalFee;
-        }
-
         _txGraphsQueue.Enqueue(g);
     }
 
@@ -120,15 +92,6 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         var t = Timestamp;
         var h = Block.Height;
 
-        foreach (var u in _coinbaseTxGraph.TargetScripts)
-        {
-            AddOrUpdateEdge(new T2SEdge(v, new ScriptNode(u.ScriptPubKey), u.Value, EdgeType.Rewards, t, h));
-            Block.ProfileCreatedOutput(u);
-        }      
-
-        AddOrUpdateEdge(new C2TEdge(v, MintedCoins, t, h));
-        AddOrUpdateEdge(new B2TEdge(BlockNode, v, MintedCoins, EdgeType.Contains, t, h));
-
         Parallel.ForEach(_txGraphsQueue,
             #if (DEBUG)
             parallelOptions: new ParallelOptions() { MaxDegreeOfParallelism = 1 },
@@ -143,6 +106,21 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
             if (ct.IsCancellationRequested)
             { state.Stop(); return; }
         });
+
+        // Note that the Coinbase tx is processed after all other Txes because 
+        // it relies on the fee computed from other Txes.
+        long miningReward = 0;
+        foreach (var u in _coinbaseTxGraph.TargetScripts)
+        {
+            AddOrUpdateEdge(new T2SEdge(v, new ScriptNode(u.ScriptPubKey), u.Value, EdgeType.Rewards, t, h));
+            Block.ProfileCreatedOutput(u);
+            miningReward += u.Value;
+        }
+
+        var mintedCoins = miningReward - (long)Block.Fees.Sum;
+        Block.SetMintedBitcoins(mintedCoins);
+        AddOrUpdateEdge(new C2TEdge(v, mintedCoins, t, h));
+        AddOrUpdateEdge(new B2TEdge(BlockNode, v, mintedCoins, EdgeType.Contains, t, h));
     }
 
     private void AddTxGraphToBlockGraphUsingNativeModel(TxGraph txGraph)
@@ -169,6 +147,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         }
 
         Block.ProfileTxes(txGraph.SourceScripts.Count, txGraph.TargetScripts.Count);
+        Block.ProfileFee(txGraph.Fee);
         
         AddOrUpdateEdge(new T2TEdge(v, _coinbaseTxGraph.TxNode, txGraph.Fee, EdgeType.Fee, t, h));
         AddOrUpdateEdge(new B2TEdge(BlockNode, v, txGraph.TotalInputValue, EdgeType.Contains, t, h));
@@ -178,9 +157,9 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     {
         // TODO: make sure this is addressed in the updated method
         var miningReward = _coinbaseTxGraph.TargetScripts.Sum(x => x.Value);
-        var mintedBitcoins = miningReward - TotalFee;
+        var mintedBitcoins = miningReward - (long)Block.Fees.Sum;
         Block.SetMintedBitcoins(mintedBitcoins);
-        Block.SetTxFees(TotalFee);
+        //Block.SetTxFees(TotalFee); // TEMP disable this part of the code will be deprecated soon
 
 
         AddOrUpdateEdge(new C2TEdge(_coinbaseTxGraph.TxNode, mintedBitcoins, Timestamp, Block.Height));
