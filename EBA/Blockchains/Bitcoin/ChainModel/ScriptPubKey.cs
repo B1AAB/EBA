@@ -143,7 +143,7 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
         if (address != null)
             return address.ToString();
         else
-            throw new Exception($"Cannot extract destination address unexpectedly. HEX: {Hex}");
+            return string.Empty;  // example: Height = 840000
     }
 
     public string ToBase64String()

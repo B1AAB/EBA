@@ -71,12 +71,18 @@ public class Block : BlockMetadata
         _mintedBitcoins = value;
     }
 
-    public void ProfileSpentOutput(Output prevOut, long prevOutHeight)
+    public void ProfileSpentOutput(ScriptPubKey scriptPubKey, List<PrevOut> prevOuts)
     {
-        _inputValues.Add(prevOut.Value);
-        _inputScriptTypeCount[prevOut.ScriptPubKey.ScriptType] += 1;
-        _inputScriptTypeValue[prevOut.ScriptPubKey.ScriptType] += prevOut.Value;
-        _spentOutputsAge.Add(Height - prevOutHeight);
+        long sumValues = 0;
+        foreach (var prevOut in prevOuts)
+        {
+            _spentOutputsAge.Add(Height - prevOut.Height);
+            sumValues += prevOut.Value;
+        }
+
+        _inputValues.Add(sumValues);
+        _inputScriptTypeCount[scriptPubKey.ScriptType] += 1;
+        _inputScriptTypeValue[scriptPubKey.ScriptType] += sumValues;
     }
 
     public void ProfileCreatedOutput(Output output)
@@ -84,6 +90,15 @@ public class Block : BlockMetadata
         _outputValues.Add(output.Value);
         _outputScriptTypeCount[output.ScriptPubKey.ScriptType] += 1;
         _outputScriptTypeValue[output.ScriptPubKey.ScriptType] += output.Value;
+    }
+
+    public void ProfileCreatedOutput(ScriptPubKey scriptPubKey, List<Output> outputs)
+    {
+        long sumValues = outputs.Sum(x => x.Value);
+
+        _outputValues.Add(sumValues);
+        _outputScriptTypeCount[scriptPubKey.ScriptType] += 1;
+        _outputScriptTypeValue[scriptPubKey.ScriptType] += sumValues;
     }
 
     public void ProfileTxes(int inputsCount, int outputsCount)

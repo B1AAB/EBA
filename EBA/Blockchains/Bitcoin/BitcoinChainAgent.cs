@@ -225,7 +225,7 @@ public class BitcoinChainAgent : IDisposable
         var mintingTxGraph = new TxGraph(coinbaseTx);
         foreach (var output in coinbaseTx.Outputs)
         {
-            mintingTxGraph.AddTarget(output);
+            mintingTxGraph.AddOutput(output);
 
             if (options.Traverse.TrackTxo)
             {
@@ -281,11 +281,11 @@ public class BitcoinChainAgent : IDisposable
                 throw new NotImplementedException(
                     $"Unexpected null {nameof(input.PrevOut)}; Block = {g.Block.Height}");
 
-            var prevOut = input.PrevOut.ConstructedOutput;
-            txGraph.AddSource(input.TxId, input, prevOut);
+            txGraph.AddInput(input.TxId, input);
 
             if (options.Traverse.TrackTxo)
             {
+                var prevOut = input.PrevOut.ConstructedOutput;
                 prevOut.TryGetAddress(out string? address);
 
                 var utxo = new Utxo(
@@ -309,7 +309,7 @@ public class BitcoinChainAgent : IDisposable
         {
             cT.ThrowIfCancellationRequested();
 
-            txGraph.AddTarget(output);
+            txGraph.AddOutput(output);
 
             if (output.ScriptPubKey.ScriptType != ScriptType.NullData &&
                 output.ScriptPubKey.ScriptType != ScriptType.nonstandard &&
