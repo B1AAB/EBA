@@ -1,7 +1,7 @@
 ﻿using EBA.Graph.Bitcoin;
 using EBA.Utilities;
 
-namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+namespace EBA.Graph.Bitcoin.Strategies;
 
 public class C2SEdgeStrategy(bool serializeCompressed) : S2SEdgeStrategy(serializeCompressed)
 {

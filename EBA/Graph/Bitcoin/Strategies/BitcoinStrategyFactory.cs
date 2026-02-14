@@ -1,7 +1,9 @@
 ﻿using EBA.Graph.Bitcoin;
+using EBA.Graph.Db.Neo4jDb;
+using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
 using System.IO.Compression;
 
-namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+namespace EBA.Graph.Bitcoin.Strategies;
 
 public class BitcoinStrategyFactory : IStrategyFactory
 {
