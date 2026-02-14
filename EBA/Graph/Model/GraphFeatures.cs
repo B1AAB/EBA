@@ -35,9 +35,7 @@ public class GraphFeatures
         var sourceAndTarget = new[] { "Source", "Target" };
         EdgeFeaturesHeader = [];
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinC2T, [.. sourceAndTarget, .. C2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinC2S, [.. sourceAndTarget, .. C2SEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinT2T, [.. sourceAndTarget, .. T2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinS2S, [.. sourceAndTarget, .. S2SEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinS2B, [.. sourceAndTarget, .. S2BEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinB2S, [.. sourceAndTarget, .. B2SEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(GraphComponentType.BitcoinT2B, [.. sourceAndTarget, .. T2BEdge.GetFeaturesName()]);
