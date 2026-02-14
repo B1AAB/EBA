@@ -28,18 +28,6 @@ public class EdgeFactory
             return new T2TEdge((TxNode)source, (TxNode)target, value, type, timestamp, blockHeight);
         }
         else if (
-            source.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode &&
-            target.GetGraphComponentType() == GraphComponentType.BitcoinBlockNode)
-        {
-            return new S2BEdge((ScriptNode)source, (BlockNode)target, value, type, timestamp, blockHeight);
-        }
-        else if (
-            source.GetGraphComponentType() == GraphComponentType.BitcoinBlockNode &&
-            target.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode)
-        {
-            return new B2SEdge((BlockNode)source, (ScriptNode)target, value, type, timestamp, blockHeight);
-        }
-        else if (
             source.GetGraphComponentType() == GraphComponentType.BitcoinTxNode &&
             target.GetGraphComponentType() == GraphComponentType.BitcoinBlockNode)
         {
