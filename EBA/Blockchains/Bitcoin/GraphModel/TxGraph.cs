@@ -1,4 +1,5 @@
 using EBA.Utilities;
+using NBitcoin;
 
 namespace EBA.Blockchains.Bitcoin.GraphModel;
 
@@ -43,6 +44,7 @@ public class TxGraph(Tx tx) : GraphBase()
     }
     private readonly ConcurrentDictionary<ScriptPubKey, List<Output>> _outputScripts = new();
 
+
     /// <summary>
     /// Number of outputs in the transaction.
     /// </summary>
@@ -55,11 +57,11 @@ public class TxGraph(Tx tx) : GraphBase()
     /// </summary>
     public int OutputScriptsCount { get { return _outputScripts.Keys.Count; } }
 
-    public void AddInput(string txid, Input input)
+    public void AddInput(Input input)
     {
         var prevOut = input.PrevOut;
 
-        SourceTxes.AddOrUpdate(txid, prevOut.Value, (_, oldValue) => oldValue + prevOut.Value);
+        SourceTxes.AddOrUpdate(input.TxId, prevOut.Value, (_, oldValue) => oldValue + prevOut.Value);
         Helpers.ThreadsafeAdd(ref _totalInputValue, prevOut.Value);
 
         // dev point:
@@ -79,7 +81,8 @@ public class TxGraph(Tx tx) : GraphBase()
         // dev point:
         // an example block that contains multiple outputs with the same scriptPubKey is 840000
         _outputScripts.AddOrUpdate(
-            output.ScriptPubKey, [output],
+            output.ScriptPubKey,
+            [output],
             (_, oldValue) =>
             {
                 oldValue.Add(output);

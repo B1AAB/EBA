@@ -1,6 +1,6 @@
 ﻿namespace EBA.Blockchains.Bitcoin.ChainModel;
 
-public class Input
+public class Input : IEquatable<Input>
 {
     [JsonPropertyName("coinbase")]
     public string Coinbase { set; get; } = string.Empty;
@@ -22,4 +22,22 @@ public class Input
 
     [JsonPropertyName("prevout")]
     public PrevOut? PrevOut { set; get; }
+
+    public bool Equals(Input? other)
+    {
+        if (other is null) return false;
+        return
+            TxId == other.TxId &&
+            OutputIndex == other.OutputIndex;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return Equals(obj as Input);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(TxId, OutputIndex);
+    }
 }

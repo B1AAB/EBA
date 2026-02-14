@@ -281,7 +281,7 @@ public class BitcoinChainAgent : IDisposable
                 throw new NotImplementedException(
                     $"Unexpected null {nameof(input.PrevOut)}; Block = {g.Block.Height}");
 
-            txGraph.AddInput(input.TxId, input);
+            txGraph.AddInput(input);
 
             if (options.Traverse.TrackTxo)
             {
