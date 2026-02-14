@@ -83,8 +83,6 @@ public class BitcoinTraverseOptions
 
     public bool SkipGraphSerialization { init; get; } = false;
 
-    public bool UseLegacyGraphDbMethod { init; get; } = false;
-
     public ResilienceStrategyOptions HttpClientResilienceStrategy { init; get; } = new();
 
     public ResilienceStrategyOptions BitcoinAgentResilienceStrategy { init; get; } = new()
