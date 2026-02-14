@@ -1,4 +1,4 @@
-﻿namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+﻿namespace EBA.Graph.Db.Neo4jDb;
 
 public enum FieldType
 {

@@ -126,7 +126,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         // TODO: refactor the following so that only options is passed to the buffer
 
         using var gBuffer = new PersistentGraphBuffer(
-            graphAgent: _host.Services.GetRequiredService<EBA.Graph.Bitcoin.BitcoinGraphAgent>(),
+            graphAgent: _host.Services.GetRequiredService<Graph.Bitcoin.BitcoinGraphAgent>(),
             logger: _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),
             pTxoLifeCyccleLogger: options.Bitcoin.Traverse.TrackTxo ?_host.Services.GetRequiredService<ILogger<PersistentTxoLifeCycleBuffer>>() : null,
             txoLifeCycleFilename: options.Bitcoin.Traverse.TrackTxo ? options.Bitcoin.Traverse.TxoFilename : null,

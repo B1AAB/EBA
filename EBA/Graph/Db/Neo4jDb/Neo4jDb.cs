@@ -1,7 +1,4 @@
 ﻿using EBA.Graph.Bitcoin;
-using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
-
-using Neo4j.Driver;
 
 namespace EBA.Graph.Db.Neo4jDb;
 

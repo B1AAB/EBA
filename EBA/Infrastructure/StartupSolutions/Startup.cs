@@ -1,5 +1,4 @@
 ﻿using EBA.Graph.Db.Neo4jDb;
-using EBA.Graph.Db.Neo4jDb.Bitcoin;
 
 namespace EBA.Infrastructure.StartupSolutions;
 
@@ -71,10 +70,8 @@ public class Startup
     private static void ConfigureServices(IServiceCollection services, Options options)
     {
         services.AddSingleton(options);
-        services.AddSingleton<IGraphDb<BitcoinGraph>, BitcoinNeo4jDbLegacy>(); // TODO: this is not correct because it is registring two implementations
         services.AddSingleton<IGraphDb<BitcoinGraph>, BitcoinNeo4jDb>();
-        services.AddSingleton<Blockchains.Bitcoin.BitcoinOrchestrator>();
-        //services.AddSingleton<IGraphDb<BitcoinGraph>, Neo4jDbLegacy<BitcoinGraph>>();
+        services.AddSingleton<BitcoinOrchestrator>();
         services.AddSingleton<Graph.Bitcoin.BitcoinGraphAgent>();
 
         // Passing BitcoinAgent type as the generic argument

@@ -1,4 +1,4 @@
-﻿using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+﻿using EBA.Graph.Bitcoin.Strategies;
 using EBA.Utilities;
 using INode = EBA.Graph.Model.INode;
 
@@ -22,34 +22,10 @@ public class EdgeFactory
             return new C2TEdge((TxNode)target, value, timestamp, blockHeight);
         }
         else if (
-            source.GetGraphComponentType() == GraphComponentType.BitcoinCoinbaseNode &&
-            target.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode)
-        {
-            return new C2SEdge((ScriptNode)target, value, timestamp, blockHeight);
-        }
-        else if (
             source.GetGraphComponentType() == GraphComponentType.BitcoinTxNode &&
             target.GetGraphComponentType() == GraphComponentType.BitcoinTxNode)
         {
             return new T2TEdge((TxNode)source, (TxNode)target, value, type, timestamp, blockHeight);
-        }
-        else if (
-            source.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode &&
-            target.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode)
-        {
-            return new S2SEdge((ScriptNode)source, (ScriptNode)target, value, type, timestamp, blockHeight);
-        }
-        else if (
-            source.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode &&
-            target.GetGraphComponentType() == GraphComponentType.BitcoinBlockNode)
-        {
-            return new S2BEdge((ScriptNode)source, (BlockNode)target, value, type, timestamp, blockHeight);
-        }
-        else if (
-            source.GetGraphComponentType() == GraphComponentType.BitcoinBlockNode &&
-            target.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode)
-        {
-            return new B2SEdge((BlockNode)source, (ScriptNode)target, value, type, timestamp, blockHeight);
         }
         else if (
             source.GetGraphComponentType() == GraphComponentType.BitcoinTxNode &&

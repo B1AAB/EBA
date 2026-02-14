@@ -1,7 +1,8 @@
 ﻿using EBA.Graph.Bitcoin;
+using EBA.Graph.Db.Neo4jDb;
 using EBA.Utilities;
 
-namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+namespace EBA.Graph.Bitcoin.Strategies;
 
 public static class PropertyMappingFactory
 {
