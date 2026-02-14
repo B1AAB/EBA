@@ -5,28 +5,63 @@ namespace EBA.Blockchains.Bitcoin.ChainModel;
 public class Block : BlockMetadata
 {
     [JsonPropertyName("tx")]
-    public List<Transaction> Transactions { init; get; } = [];
+    public List<Tx> Transactions { init; get; } = [];
 
     public ConcurrentDictionary<string, Utxo> TxoLifecycle { init; get; } = [];
 
     public override DescriptiveStatistics InputCounts { get { return new DescriptiveStatistics([.. _inputsCounts]); } }
+    private readonly ConcurrentBag<int> _inputsCounts = [];
+
     public override DescriptiveStatistics OutputCounts { get { return new DescriptiveStatistics([.. _outputsCounts]); } }
+    private readonly ConcurrentBag<int> _outputsCounts = [];
+
     public override DescriptiveStatistics InputValues { get { return new DescriptiveStatistics([.. _inputValues]); } }
+    private readonly ConcurrentBag<long> _inputValues = [];
+
     public override DescriptiveStatistics OutputValues { get { return new DescriptiveStatistics([.. _outputValues]); } }
+    private readonly ConcurrentBag<long> _outputValues = [];
+
     public override DescriptiveStatistics SpentOutputAge { get { return new DescriptiveStatistics([.. _spentOutputsAge]); } }
+    private readonly ConcurrentBag<long> _spentOutputsAge = [];
+
+    public override DescriptiveStatistics Fees { get { return new DescriptiveStatistics([.. _fees]); } }
+    private readonly ConcurrentBag<long> _fees = [];
+
+
+    public override Dictionary<ScriptType, long> InputScriptTypeCount
+    {
+        get { return _inputScriptTypeCount.ToDictionary(kvp => kvp.Key, kvp => kvp.Value); }
+    }
+    private readonly ConcurrentDictionary<ScriptType, long> _inputScriptTypeCount = GetEmptyScriptDict();
+
+    public override Dictionary<ScriptType, long> OutputScriptTypeCount
+    {
+        get { return _outputScriptTypeCount.ToDictionary(kvp => kvp.Key, kvp => kvp.Value); }
+    }
+    private readonly ConcurrentDictionary<ScriptType, long> _outputScriptTypeCount = GetEmptyScriptDict();
+
+    public override Dictionary<ScriptType, long> InputScriptTypeValue
+    {
+        get { return _inputScriptTypeValue.ToDictionary(kvp => kvp.Key, kvp => kvp.Value); }
+    }
+    private readonly ConcurrentDictionary<ScriptType, long> _inputScriptTypeValue = GetEmptyScriptDict();
+
+    public override Dictionary<ScriptType, long> OutputScriptTypeValue
+    {
+        get { return _outputScriptTypeValue.ToDictionary(kvp => kvp.Key, kvp => kvp.Value); }
+    }
+    private readonly ConcurrentDictionary<ScriptType, long> _outputScriptTypeValue = GetEmptyScriptDict();
+
+    private static ConcurrentDictionary<ScriptType, long> GetEmptyScriptDict()
+    {
+        return new(Enum.GetValues<ScriptType>().Cast<ScriptType>().ToDictionary(x => x, x => (long)0));
+    }
 
     public override int CoinbaseOutputsCount { init { _coinbaseOutputsCount = value; } get { return _coinbaseOutputsCount; } }
     private int _coinbaseOutputsCount;
     public void SetCoinbaseOutputsCount(int value)
     {
         _coinbaseOutputsCount = value;
-    }
-
-    public override long TxFees { init { _txFees = value; } get { return _txFees; } }
-    private long _txFees;
-    public void SetTxFees(long value)
-    {
-        _txFees = value;
     }
 
     public override long MintedBitcoins { init { _mintedBitcoins = value; } get { return _mintedBitcoins; } }
@@ -36,216 +71,44 @@ public class Block : BlockMetadata
         _mintedBitcoins = value;
     }
 
-    private readonly ConcurrentBag<double> _inputsCounts = [];
-    public void AddInputsCount(int value)
+    public void ProfileSpentOutput(ScriptPubKey scriptPubKey, List<PrevOut> prevOuts)
     {
-        _inputsCounts.Add(value);
-    }
-
-    private readonly ConcurrentBag<int> _outputsCounts = [];
-    public void AddOutputsCount(int value)
-    {
-        _outputsCounts.Add(value);
-    }
-
-    private readonly ConcurrentBag<long> _inputValues = [];
-    public void AddInputValue(long value)
-    {
-        _inputValues.Add(value);
-    }
-
-    private readonly ConcurrentBag<long> _outputValues = [];
-    public void AddOutputValue(long value)
-    {
-        _outputValues.Add(value);
-    }
-
-    private readonly ConcurrentBag<long> _spentOutputsAge = [];
-    public void AddSpentOutputsAge(long age)
-    {
-        _spentOutputsAge.Add(age);
-    }
-
-    private readonly ConcurrentBag<string> _outputAddresses = [];
-
-    private readonly ConcurrentDictionary<ScriptType, uint> _scriptTypeCount = 
-        new(Enum.GetValues<ScriptType>()
-                .Cast<ScriptType>()
-                .ToDictionary(x => x, x => (uint)0));
-    public override Dictionary<ScriptType, uint> ScriptTypeCount
-    {
-        get
+        long sumValues = 0;
+        foreach (var prevOut in prevOuts)
         {
-            return _scriptTypeCount.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            _spentOutputsAge.Add(Height - prevOut.Height);
+            sumValues += prevOut.Value;
         }
+
+        _inputValues.Add(sumValues);
+        _inputScriptTypeCount[scriptPubKey.ScriptType] += 1;
+        _inputScriptTypeValue[scriptPubKey.ScriptType] += sumValues;
     }
 
-    public void AddOutputStatistics(string? address, ScriptType scriptType)
+    public void ProfileCreatedOutput(Output output)
     {
-        if (!string.IsNullOrEmpty(address))
-            _outputAddresses.Add(address);
-
-        _scriptTypeCount.AddOrUpdate(scriptType, 0, (k, v) => v + 1);
+        _outputValues.Add(output.Value);
+        _outputScriptTypeCount[output.ScriptPubKey.ScriptType] += 1;
+        _outputScriptTypeValue[output.ScriptPubKey.ScriptType] += output.Value;
     }
 
-    // TODO: this seems to be a bug, you should not added to the same property as other edge types?!
-    public void AddNonTransferOutputStatistics(ScriptType scriptType)
+    public void ProfileCreatedOutput(ScriptPubKey scriptPubKey, List<Output> outputs)
     {
-        _scriptTypeCount.AddOrUpdate(scriptType, 0, (k, v) => v + 1);
+        long sumValues = outputs.Sum(x => x.Value);
+
+        _outputValues.Add(sumValues);
+        _outputScriptTypeCount[scriptPubKey.ScriptType] += 1;
+        _outputScriptTypeValue[scriptPubKey.ScriptType] += sumValues;
     }
 
-
-    public static string GetStatisticsHeader(char delimiter)
+    public void ProfileTxes(int inputsCount, int outputsCount)
     {
-        return string.Join(
-            delimiter,
-            [
-                "BlockHeight",
-                "Confirmations",
-                "MedianTime",
-                "Bits",
-                "Difficulty",
-                "Size",
-                "StrippedSize",
-                "Weight",
-                "TxCount",
-                "MintedBitcoins",
-                "TransactionFees",
-
-                "CoinbaseOutputsCount",
-
-                "InputsCountsSum",
-                "InputsCountsMax",
-                "InputsCountsMin",
-                "InputsCountsAvg",
-                "InputsCountsMedian",
-                "InputsCountsVariance",
-
-                "OutputsCountsSum",
-                "OutputsCountsMax",
-                "OutputsCountsMin",
-                "OutputsCountsAvg",
-                "OutputsCountsMedian",
-                "OutputsCountsVariance",
-
-                "InputsValuesSum",
-                "InputsValuesMax",
-                "InputsValuesMin",
-                "InputsValuesAvg",
-                "InputsValuesMedian",
-                "InputsValuesVariance",
-
-                "OutputsValuesSum",
-                "OutputsValuesMax",
-                "OutputsValuesMin",
-                "OutputsValuesAvg",
-                "OutputsValuesMedian",
-                "OutputsValuesVariance",
-
-                string.Join(
-                    delimiter,
-                    Enum.GetValues<ScriptType>().Select(x => $"ScriptType_{x}")),
-
-                string.Join(
-                    delimiter,
-                    Enum.GetValues<EdgeLabel>().Select(
-                        x => "BlockGraph" + x + "EdgeCount").ToArray()),
-                string.Join(
-                    delimiter,
-                    Enum.GetValues<EdgeLabel>().Select(
-                        x => "BlockGraph" + x + "EdgeValueSum").ToArray()),
-
-                "SpentOutputAgeMax",
-                "SpentOutputAgeMin",
-                "SpentOutputAgeAvg",
-                "SpentOutputAgeMedian",
-                "SpentOutputAgeVariance"
-            ]);
-    }
-    public string GetStatistics(char delimiter)
+        _inputsCounts.Add(inputsCount);
+        _outputsCounts.Add(outputsCount);
+    } 
+    
+    public void ProfileFee(long fee)
     {
-        var insCounts = _inputsCounts.DefaultIfEmpty();
-        var outsCounts = _outputsCounts.DefaultIfEmpty();
-
-        var inValues = _inputValues.DefaultIfEmpty();
-        var outValues = _outputValues.DefaultIfEmpty();
-
-        var spentTxo = _spentOutputsAge.DefaultIfEmpty();
-
-        return string.Join(
-            delimiter,
-            [
-                Height.ToString(),
-                Confirmations.ToString(),
-                MedianTime.ToString(),
-                Bits,
-                Difficulty.ToString(),
-                Size.ToString(),
-                StrippedSize.ToString(),
-                Weight.ToString(),
-                TransactionsCount.ToString(),
-                Helpers.Satoshi2BTC(MintedBitcoins).ToString(),
-                Helpers.Satoshi2BTC(TxFees).ToString(),
-
-                CoinbaseOutputsCount.ToString(),
-
-                insCounts.Sum().ToString(),
-                insCounts.Max().ToString(),
-                insCounts.Min().ToString(),
-                insCounts.Average().ToString(),
-                Helpers.GetMedian(insCounts).ToString(),
-                Helpers.GetVariance(insCounts).ToString(),
-
-                outsCounts.Sum().ToString(),
-                outsCounts.Max().ToString(),
-                outsCounts.Min().ToString(),
-                outsCounts.Average().ToString(),
-                Helpers.GetMedian(outsCounts).ToString(),
-                Helpers.GetVariance(outsCounts).ToString(),
-
-                Helpers.Satoshi2BTC(inValues.Sum()).ToString(),
-                Helpers.Satoshi2BTC(inValues.Max()).ToString(),
-                Helpers.Satoshi2BTC(inValues.Min()).ToString(),
-                Helpers.Satoshi2BTC(Helpers.Round(inValues.Average())).ToString(),
-                Helpers.Satoshi2BTC(Helpers.Round(Helpers.GetMedian(inValues))).ToString(),
-                Helpers.Satoshi2BTC(Helpers.Round(Helpers.GetVariance(inValues))).ToString(),
-
-                Helpers.Satoshi2BTC(outValues.Sum()).ToString(),
-                Helpers.Satoshi2BTC(outValues.Max()).ToString(),
-                Helpers.Satoshi2BTC(outValues.Min()).ToString(),
-                Helpers.Satoshi2BTC(Helpers.Round(outValues.Average())).ToString(),
-                Helpers.Satoshi2BTC(Helpers.Round(Helpers.GetMedian(outValues))).ToString(),
-                Helpers.Satoshi2BTC(Helpers.Round(Helpers.GetVariance(outValues))).ToString(),
-
-                string.Join(
-                    delimiter,
-                    Enum.GetValues<ScriptType>().Cast<ScriptType>().Select(e => _scriptTypeCount[e])),
-
-                /*
-                string.Join(
-                    delimiter,
-                    _edgeLabelCount.Select((v, i) => v.ToString()).ToArray()),
-
-                string.Join(
-                    delimiter,
-                    _edgeLabelValueSum.Select((v, i) => Helpers.Satoshi2BTC(v).ToString()).ToArray()),*/
-
-                spentTxo.Max().ToString(),
-                spentTxo.Min().ToString(),
-                spentTxo.Average().ToString(),
-                Helpers.GetMedian(spentTxo).ToString(),
-                Helpers.GetVariance(spentTxo).ToString(),
-            ]);
-    }
-
-
-    // TODO: experimental 
-    public List<string> ToStringsAddresses(char delimiter)
-    {
-        var strings = new List<string>();
-        foreach (var x in _outputAddresses)
-            strings.Add($"{x}{delimiter}{Height}");
-
-        return strings;
+        _fees.Add(fee);
     }
 }

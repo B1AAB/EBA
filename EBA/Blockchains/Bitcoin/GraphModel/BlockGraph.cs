@@ -32,24 +32,11 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         Helpers.ThreadsafeAdd(ref _edgeLabelValueSum[(int)label], value);
     }
 
-    public List<ScriptNode> RewardsAddresses { set; get; } = [];
+    private TxGraph _coinbaseTxGraph;
 
-    /// <summary>
-    /// Is the sum of all the tranactions fee.
-    /// </summary>
-    public long TotalFee { get { return _totalFee; } }
-    private long _totalFee;
-
-    public long MiningReward { private set; get; }
-    public long MintedCoins { private set; get; }
-
-    private TransactionGraph _coinbaseTxGraph;
-
-    private readonly ConcurrentQueue<TransactionGraph> _txGraphsQueue = new();
+    private readonly ConcurrentQueue<TxGraph> _txGraphsQueue = new();
 
     private readonly ILogger<BitcoinChainAgent> _logger;
-
-    private readonly Lock _feeLock = new();
 
     private readonly ChainToGraphModel _chainToGraphModel;
 
@@ -68,25 +55,14 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         StartStopwatch();
     }
 
-    public void SetCoinbaseTx(TransactionGraph coinbaseTx)
+    public void SetCoinbaseTx(TxGraph coinbaseTx)
     {
         _coinbaseTxGraph = coinbaseTx;
-        MiningReward = _coinbaseTxGraph.TargetScripts.Sum(x => x.Value);
-
-        lock (_feeLock)
-        {
-            MintedCoins = MiningReward - _totalFee;
-        }
+        Block.SetCoinbaseOutputsCount(coinbaseTx.OutputsCount);
     }
 
-    public void Enqueue(TransactionGraph g)
+    public void Enqueue(TxGraph g)
     {
-        lock (_feeLock)
-        {
-            _totalFee += g.Fee;
-            MintedCoins = MiningReward - _totalFee;
-        }
-
         _txGraphsQueue.Enqueue(g);
     }
 
@@ -112,19 +88,9 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 
     private void BuildGraphNativeModel(CancellationToken ct)
     {
-        foreach (var target in _coinbaseTxGraph.TargetScripts)
-        {
-            AddOrUpdateEdge(new T2SEdge(
-                _coinbaseTxGraph.TxNode,
-                target.Key,
-                target.Value,
-                EdgeType.Rewards,
-                Timestamp,
-                Block.Height));
-        }
-
-        AddOrUpdateEdge(new C2TEdge(_coinbaseTxGraph.TxNode, MintedCoins, Timestamp, Block.Height));
-        AddOrUpdateEdge(new B2TEdge(BlockNode, _coinbaseTxGraph.TxNode, MintedCoins, EdgeType.Contains, Timestamp, Block.Height));
+        var v = _coinbaseTxGraph.TxNode;
+        var t = Timestamp;
+        var h = Block.Height;
 
         Parallel.ForEach(_txGraphsQueue,
             #if (DEBUG)
@@ -140,65 +106,68 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
             if (ct.IsCancellationRequested)
             { state.Stop(); return; }
         });
+
+        // Note that the Coinbase tx is processed after all other Txes because 
+        // it relies on the fee computed from other Txes.
+        long miningReward = 0;
+        foreach(var u in _coinbaseTxGraph.OutputScripts)
+        {
+            AddOrUpdateEdge(
+                new T2SEdge(v, new ScriptNode(u.Key), EdgeType.Rewards, t, h, outputs: u.Value),
+                (newE, oldE) => T2SEdge.Merge(oldE, newE));
+
+            Block.ProfileCreatedOutput(u.Key, u.Value);
+            miningReward += u.Value.Sum(x => x.Value);
+        }
+
+        var mintedCoins = miningReward - (long)Block.Fees.Sum;
+        Block.SetMintedBitcoins(mintedCoins);
+        AddOrUpdateEdge(new C2TEdge(v, mintedCoins, t, h));
+        AddOrUpdateEdge(new B2TEdge(BlockNode, v, mintedCoins, EdgeType.Contains, t, h));
     }
 
-    private void AddTxGraphToBlockGraphUsingNativeModel(TransactionGraph txGraph)
+    private void AddTxGraphToBlockGraphUsingNativeModel(TxGraph txGraph)
     {
-        foreach (var source in txGraph.SourceScripts)
+        var v = txGraph.TxNode;
+        var h = Block.Height;
+        var t = Timestamp;
+
+        foreach (var u in txGraph.SourceTxes)
+            AddOrUpdateEdge(new T2TEdge(new TxNode(u.Key), v, u.Value, EdgeType.Transfers, t, h));
+
+        foreach (var u in txGraph.InputScripts)
         {
-            AddOrUpdateEdge(new S2TEdge(
-                source.Key,
-                txGraph.TxNode,
-                source.Value.Value,
-                EdgeType.Redeems,
-                Timestamp,
-                Block.Height,
-                source.Value.CreatedInBlockHeight));
+            var sumValue = u.Value.Sum(x => x.Value);
+            AddOrUpdateEdge(
+                new S2TEdge(new ScriptNode(u.Key), v, EdgeType.Redeems, t, h, prevOuts: u.Value),
+                (newE, oldE) => S2TEdge.Merge(oldE, newE));
+
+            Block.ProfileSpentOutput(u.Key, u.Value);
         }
 
-        foreach (var sourceTx in txGraph.SourceTxes)
+        foreach (var u in txGraph.OutputScripts)
         {
-            var txNode = new TxNode(sourceTx.Key);
-            AddOrUpdateEdge(new T2TEdge(
-                txNode,
-                txGraph.TxNode,
-                sourceTx.Value,
-                EdgeType.Transfers,
-                Timestamp,
-                Block.Height));
+            AddOrUpdateEdge(
+                new T2SEdge(v, new ScriptNode(u.Key), EdgeType.Rewards, t, h, outputs: u.Value),
+                (newE, oldE) => T2SEdge.Merge(oldE, newE));
 
-            // AddOrUpdate(new B2TEdge(BlockNode, txNode, sourceTx.Value, EdgeType.Redeems, Timestamp, Block.Height));
+            Block.ProfileCreatedOutput(u.Key, u.Value);
         }
 
-        foreach (var target in txGraph.TargetScripts)
-        {
-            AddOrUpdateEdge(new T2SEdge(
-                txGraph.TxNode,
-                target.Key,
-                target.Value,
-                EdgeType.Rewards,
-                Timestamp,
-                Block.Height));
-        }
-
-        AddOrUpdateEdge(new T2TEdge(
-            txGraph.TxNode,
-            _coinbaseTxGraph.TxNode,
-            txGraph.Fee,
-            EdgeType.Fee,
-            Timestamp,
-            Block.Height));
-
-        AddOrUpdateEdge(new B2TEdge(BlockNode, txGraph.TxNode, txGraph.TotalInputValue, EdgeType.Contains, Timestamp, Block.Height));
+        Block.ProfileTxes(txGraph.InputsCount, txGraph.OutputsCount);
+        Block.ProfileFee(txGraph.Fee);
+        
+        AddOrUpdateEdge(new T2TEdge(v, _coinbaseTxGraph.TxNode, txGraph.Fee, EdgeType.Fee, t, h));
+        AddOrUpdateEdge(new B2TEdge(BlockNode, v, txGraph.TotalInputValue, EdgeType.Contains, t, h));
     }
 
     private void BuildGraphExpandedModel(CancellationToken ct)
     {
         // TODO: make sure this is addressed in the updated method
-        var miningReward = _coinbaseTxGraph.TargetScripts.Sum(x => x.Value);
-        var mintedBitcoins = miningReward - TotalFee;
+        var miningReward = 0;//_coinbaseTxGraph.TargetScripts.Sum(x => x.Value);
+        var mintedBitcoins = miningReward - (long)Block.Fees.Sum;
         Block.SetMintedBitcoins(mintedBitcoins);
-        Block.SetTxFees(TotalFee);
+        //Block.SetTxFees(TotalFee); // TEMP disable this part of the code will be deprecated soon
 
 
         AddOrUpdateEdge(new C2TEdge(_coinbaseTxGraph.TxNode, mintedBitcoins, Timestamp, Block.Height));
@@ -224,26 +193,32 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                 { state.Stop(); return; }
             });
 
+        /*
         foreach (var item in _coinbaseTxGraph.TargetScripts)
         {
             AddOrUpdateEdge(new C2SEdge(
-                item.Key,
+                new ScriptNode(item.ScriptPubKey),
                 //Helpers.Round(item.Value * (mintedBitcoins / (double)miningReward)),
                 Helpers.Round(mintedBitcoins * (item.Value / (double)miningReward)),
                 Timestamp,
                 Block.Height));
-        }
+        }*/
     }
 
     private void AddTxGraphToBlockGraphUsingExpandedModel(
-        TransactionGraph txGraph,
-        TransactionGraph coinbaseTxG,
+        TxGraph txGraph,
+        TxGraph coinbaseTxG,
         long totalPaidToMiner,
         CancellationToken ct)
     {
         // TODO: all the AddOrUpdateEdge methods in the following are all hotspots.
         // VERY IMPORTANT TODO: THIS IS TEMPORARY UNTIL A GOOD SOLUTION IS IMPLEMENTED.
-        if (txGraph.SourceScripts.Count > 20 && txGraph.TargetScripts.Count > 20)
+
+        //var sources = txGraph.SourceScripts; // <---- original,
+        var sources = new List<Input>(); // <---- temp
+
+        /*
+        if (sources.Count > 20 && txGraph.TargetScripts.Count > 20)
         {
             _logger.LogWarning(
                 "Skipping a transaction because it contains more than 20 source and target nodes, " +
@@ -253,25 +228,27 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                 "target scripts count: {t:n0}; " +
                 "transaction hash: {tx}.",
                 Block.Height,
-                txGraph.SourceScripts.Count,
+                sources.Count,
                 txGraph.TargetScripts.Count,
                 txGraph.TxNode.Txid);
             return;
-        }
+        }*/
 
         var fee = txGraph.Fee;
         if (fee > 0.0)
         {
-            foreach (var s in txGraph.SourceScripts)
+            foreach (var s in sources)
             {
-                var sourceFeeShare = Helpers.Round(fee * (s.Value.Value / (double)(txGraph.TotalInputValue == 0 ? 1 : txGraph.TotalInputValue)));
-
+                var sourceFeeShare = Helpers.Round(fee * (s.PrevOut.Value / (double)(txGraph.TotalInputValue == 0 ? 1 : txGraph.TotalInputValue)));
+                /*
                 foreach (var minerScript in coinbaseTxG.TargetScripts)
                 {
+                    throw new NotImplementedException();
+                    /*
                     AddOrUpdateEdge(new S2SEdge(s.Key, minerScript.Key,
                         Helpers.Round(sourceFeeShare * (minerScript.Value / (double)totalPaidToMiner)),
-                        EdgeType.Fee, Timestamp, Block.Height));
-                }
+                        EdgeType.Fee, Timestamp, Block.Height));*/
+                //}
 
                 // TODO: this is temporarily disabled after changing value type and not fixed because this method will be deprecated soon.
                 // txGraph.SourceScripts.AddOrUpdate(s.Key, s.Value, (_, preV) => preV.Value - sourceFeeShare);
@@ -309,13 +286,13 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         }
         else
         {
-            foreach (var s in txGraph.SourceScripts)
+            foreach (var s in sources)
             {
                 if (ct.IsCancellationRequested)
                     return;
 
-                foreach (var t in txGraph.TargetScripts)
-                {
+                //foreach (var t in txGraph.TargetScripts)
+                //{
                     /* 
                      * See above comment for context.
                      * 
@@ -327,12 +304,14 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
                         continue;
                     */
 
+                    //throw new NotImplementedException();
+                    /*
                     AddOrUpdateEdge(new S2SEdge(
-                        s.Key, t.Key, Helpers.Round(t.Value * (s.Value.Value / (double)sumInputWithoutFee)),
+                        s.Key, t.Key, Helpers.Round(t.Value * (s.Value.PrevOut.Value / (double)sumInputWithoutFee)),
                         EdgeType.Transfers,
                         Timestamp,
-                        Block.Height));
-                }
+                        Block.Height));*/
+                //}
             }
         }
 
@@ -357,45 +336,16 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         }
     }
 
-    public new void AddOrUpdateEdge(C2TEdge edge)
+    public void AddOrUpdateEdge<T>(T edge)
+        where T: IEdge<Graph.Model.INode, Graph.Model.INode>
     {
         base.AddOrUpdateEdge(edge);
         IncrementEdgeType(edge.Label, edge.Value);
     }
 
-    public new void AddOrUpdateEdge(C2SEdge edge)
+    public void AddOrUpdateEdge(T2TEdge edge)
     {
-        base.AddOrUpdateEdge(edge);
-        IncrementEdgeType(edge.Label, edge.Value);
-    }
-
-    public new void AddOrUpdateEdge(T2TEdge edge)
-    {
-        base.AddOrUpdateEdge(edge);
-        IncrementEdgeType(edge.Label, edge.Value);
-    }
-    
-    public new void AddOrUpdateEdge(S2SEdge edge)
-    {
-        base.AddOrUpdateEdge(edge);
-        IncrementEdgeType(edge.Label, edge.Value);
-    }
-
-    public new void AddOrUpdate(S2TEdge edge)
-    {
-        base.AddOrUpdateEdge(edge);
-        IncrementEdgeType(edge.Label, edge.Value);
-    }
-
-    public new void AddOrUpdate(T2SEdge edge)
-    {
-        base.AddOrUpdateEdge(edge);
-        IncrementEdgeType(edge.Label, edge.Value);
-    }
-
-    public new void AddOrUpdate(B2TEdge edge)
-    {
-        base.AddOrUpdateEdge(edge);
+        AddOrUpdateEdge(edge, T2TEdge.Update);
         IncrementEdgeType(edge.Label, edge.Value);
     }
 

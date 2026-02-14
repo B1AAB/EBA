@@ -2,7 +2,7 @@
 
 namespace EBA.Blockchains.Bitcoin.ChainModel;
 
-public class Transaction
+public class Tx
 {
     [JsonPropertyName("blockhash")]
     public string BlockHash { set; get; } = string.Empty;

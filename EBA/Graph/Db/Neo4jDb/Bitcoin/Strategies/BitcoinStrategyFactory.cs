@@ -1,5 +1,4 @@
-﻿
-using EBA.Graph.Bitcoin;
+﻿using EBA.Graph.Bitcoin;
 using System.IO.Compression;
 
 namespace EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
@@ -24,7 +23,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
             {GraphComponentType.BitcoinT2T, new T2TEdgeStrategy(compressOutput)},
             {GraphComponentType.BitcoinS2T, new S2TEdgeStrategy(compressOutput)},
             {GraphComponentType.BitcoinT2S, new T2SEdgeStrategy(compressOutput)},
-            {GraphComponentType.BitcoinB2T, new B2TEdgeStrategy(compressOutput)}
+            {GraphComponentType.BitcoinB2T, new B2TEdgeStrategy(compressOutput)},
         };
     }
 

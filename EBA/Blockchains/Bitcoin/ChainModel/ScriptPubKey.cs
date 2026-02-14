@@ -15,7 +15,35 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
     public string Descriptor { set; get; } = string.Empty;
 
     [JsonPropertyName("hex")]
-    public string Hex { set; get; } = string.Empty;
+    public string Hex
+    {
+        set
+        {
+            _hex = value;
+            _script = Script.FromHex(_hex);
+        }
+        get { return _hex; }
+    }
+    private string _hex = string.Empty;
+    private Script _script;
+
+    public string Base64String
+    {
+        get
+        {
+            return Convert.ToBase64String(Convert.FromHexString(_hex));
+        }
+    }
+
+    public string SHA256HashString
+    {
+        get
+        {
+            byte[] rawBytes = Convert.FromHexString(_hex);
+            byte[] hashBytes = SHA256.HashData(rawBytes);
+            return Convert.ToBase64String(hashBytes);
+        }
+    }
 
     [JsonPropertyName("address")]
     public string Address
@@ -25,12 +53,6 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
         {
             if (!string.IsNullOrEmpty(_address))
                 return _address;
-
-            if (Type == "nonstandard")
-            {
-                _address = string.Empty;
-                return _address;
-            }
 
             _address = ExtractAddress();
 
@@ -48,11 +70,17 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
         {
             return
                 Enum.TryParse(
-                    Type, ignoreCase: true,
+                    Type, 
+                    ignoreCase: true,
                     out ScriptType scriptType)
                 ? scriptType : ScriptType.Unknown;
         }
     }
+
+    public bool IsMalleable
+    {
+        get { return _script.IsMalleable; }
+    }    
 
     public override string GetAddress()
     {
@@ -60,17 +88,22 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
     }
 
     private string ExtractAddress()
-    {
-        var parsedHex = Script.FromHex(Hex);
+    {        
         BitcoinAddress? address;
 
-        if (parsedHex.IsScriptType(NBitcoin.ScriptType.P2PKH))
+        if (ScriptType == ScriptType.nonstandard)
         {
-            address = parsedHex.GetDestinationAddress(Network.Main);
+            _address = string.Empty;
+            return _address;
         }
-        else if (parsedHex.IsScriptType(NBitcoin.ScriptType.P2PK))
+
+        if (_script.IsScriptType(NBitcoin.ScriptType.P2PKH))
         {
-            var pubkeys = parsedHex.GetDestinationPublicKeys();
+            address = _script.GetDestinationAddress(Network.Main);
+        }
+        else if (_script.IsScriptType(NBitcoin.ScriptType.P2PK))
+        {
+            var pubkeys = _script.GetDestinationPublicKeys();
             if (pubkeys.Length == 1)
             {
                 address = pubkeys[0].GetAddress(ScriptPubKeyType.Legacy, Network.Main);
@@ -85,7 +118,7 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
                 return string.Empty;
             }
         }
-        else if (parsedHex.IsScriptType(NBitcoin.ScriptType.MultiSig))
+        else if (_script.IsScriptType(NBitcoin.ScriptType.MultiSig))
         {
             return string.Empty;
         }
@@ -104,13 +137,13 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
             // NBitcoin.ScriptType.P2SH
             // NBitcoin.ScriptType.Witness
 
-            address = parsedHex.GetDestinationAddress(Network.Main);
+            address = _script.GetDestinationAddress(Network.Main);
         }
 
         if (address != null)
             return address.ToString();
         else
-            throw new Exception($"Cannot extract destination address unexpectedly. HEX: {Hex}");
+            return string.Empty;  // example: Height = 840000
     }
 
     public string ToBase64String()
@@ -124,5 +157,10 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
             writer.Write(Type);
         }
         return Convert.ToBase64String(stream.ToArray());
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(_hex);
     }
 }

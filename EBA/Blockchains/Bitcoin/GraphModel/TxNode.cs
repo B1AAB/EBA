@@ -24,7 +24,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
     public int? Weight { get; }
     public long? LockTime { get; }
 
-    public Transaction? Tx { get; }
+    public Tx? Tx { get; }
 
     public TxNode(string txid) : base(txid)
     {
@@ -73,7 +73,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         LockTime = lockTime;
     }
 
-    public TxNode(Transaction tx) :
+    public TxNode(Tx tx) :
         this(
             tx.Txid,
             tx.Version,

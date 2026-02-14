@@ -145,13 +145,13 @@ public class BitcoinChainAgent : IDisposable
             ?? throw new Exception("Invalid block.");
     }
 
-    public async Task<Transaction> GetTransactionAsync(
+    public async Task<Tx> GetTransactionAsync(
         string hash,
         CancellationToken cT)
     {
         await using var stream = await GetResourceAsync("tx", hash, cT);
         return
-            await JsonSerializer.DeserializeAsync<Transaction>(stream, cancellationToken: cT)
+            await JsonSerializer.DeserializeAsync<Tx>(stream, cancellationToken: cT)
             ?? throw new Exception("Invalid transaction.");
     }
 
@@ -222,38 +222,28 @@ public class BitcoinChainAgent : IDisposable
         // exception if the block is not corrupt.
         var coinbaseTx = block.Transactions.First(x => x.IsCoinbase);        
 
-        var rewardAddresses = new List<ScriptNode>();
-        var mintingTxGraph = new TransactionGraph(coinbaseTx);
+        var mintingTxGraph = new TxGraph(coinbaseTx);
         foreach (var output in coinbaseTx.Outputs)
         {
-            if (!output.IsValueTransfer)
-            {
-                // This is added for script type statistics only
-                g.Block.AddNonTransferOutputStatistics(output.GetScriptType());
-                continue;
-            }
-
-            output.TryGetAddress(out string? address);
-
-            g.Block.AddOutputStatistics(address, output.GetScriptType());
-
-            var utxo = new Utxo(
-                coinbaseTx.Txid, output.Index, address, output.Value, output.GetScriptType(),
-                isGenerated: true, createdInHeight: block.Height);
+            mintingTxGraph.AddOutput(output);
 
             if (options.Traverse.TrackTxo)
+            {
+                output.TryGetAddress(out string? address);
+                var utxo = new Utxo(
+                    output.ScriptPubKey,
+                    address,
+                    output.Value,
+                    output.ScriptPubKey.ScriptType,
+                    isGenerated: true,
+                    createdInHeight: block.Height);
                 g.Block.TxoLifecycle.TryAdd(utxo.Id, utxo);
-
-            var node = mintingTxGraph.AddTarget(utxo);
-            rewardAddresses.Add(node);
+            }
         }
 
         g.SetCoinbaseTx(mintingTxGraph);
-        g.Block.SetCoinbaseOutputsCount(rewardAddresses.Count);
 
         cT.ThrowIfCancellationRequested();
-
-        g.RewardsAddresses = rewardAddresses;
 
         var parallelOptions = new ParallelOptions()
         {
@@ -262,6 +252,7 @@ public class BitcoinChainAgent : IDisposable
             MaxDegreeOfParallelism = 1
             #endif
         };
+
         await Parallel.ForEachAsync(
             block.Transactions.Where(x => !x.IsCoinbase),
             parallelOptions,
@@ -278,102 +269,66 @@ public class BitcoinChainAgent : IDisposable
         return g;
     }
 
-    private async Task ProcessTx(BlockGraph g, Transaction tx, BitcoinOptions options, CancellationToken cT)
+    private static async Task ProcessTx(BlockGraph g, Tx tx, BitcoinOptions options, CancellationToken cT)
     {
-        var txGraph = new TransactionGraph(tx) { Fee = tx.Fee };
+        var txGraph = new TxGraph(tx) { Fee = tx.Fee };
 
         foreach (var input in tx.Inputs)
         {
             cT.ThrowIfCancellationRequested();
 
-            var id = Utxo.GetId(input.TxId, input.OutputIndex);
+            if (input.PrevOut == null)
+                throw new NotImplementedException(
+                    $"Unexpected null {nameof(input.PrevOut)}; Block = {g.Block.Height}");
 
-            Utxo? utxo = null;
+            txGraph.AddInput(input);
 
-            if (input.PrevOut != null)
+            if (options.Traverse.TrackTxo)
             {
-                input.PrevOut.ConstructedOutput.TryGetAddress(out string? address);
+                var prevOut = input.PrevOut.ConstructedOutput;
+                prevOut.TryGetAddress(out string? address);
 
-                utxo = new Utxo(
-                    txid: input.TxId,
-                    voutN: input.OutputIndex,
+                var utxo = new Utxo(
+                    input.PrevOut.ScriptPubKey,
                     address: address,
                     value: input.PrevOut.Value,
                     isGenerated: input.PrevOut.Generated,
-                    scriptType: input.PrevOut.ConstructedOutput.GetScriptType(),
+                    scriptType: input.PrevOut.ConstructedOutput.ScriptPubKey.ScriptType,
                     createdInHeight: input.PrevOut.Height,
                     spentInHeight: g.Block.Height);
 
-                if (options.Traverse.TrackTxo)
-                    g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
-                    {
-                        oldValue.SpentInBlockHeight = g.Block.Height;
-                        return oldValue;
-                    });
-
-                g.Block.AddSpentOutputsAge(g.Block.Height - input.PrevOut.Height);
-            }
-            else
-            {
-                throw new NotImplementedException($"This is not expected. Block = {g.Block.Height}");
-
-                // Extended transaction: details of the transaction are
-                // retrieved from the bitcoin client.
-                /*var exTx = await GetTransactionAsync(input.TxId, cT);
-                var vout = exTx.Outputs.First(x => x.Index == input.OutputIndex);
-                if (vout == null)
-                    throw new NotImplementedException($"{vout} not in {input.TxId}; not expected.");
-
-                vout.TryGetAddress(out string? address);
-
-                var cIn = exTx.BlockHash;
-                utxo = new Utxo(
-                    id, address, vout.Value, vout.GetScriptType(),
-                    createdInBlockHash: cIn, spentInBlockHeight: g.Block.Height.ToString());
-
-                utxos.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
+                g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
                 {
-                    oldValue.AddCreatedIn(height: string.Empty, cIn);
-                    oldValue.AddSpentIn(g.Block.Height.ToString());
+                    oldValue.SpentInBlockHeight = g.Block.Height;
                     return oldValue;
-                });*/
+                });
             }
-
-            g.Block.AddInputValue(utxo.Value);
-            txGraph.AddSource(input.TxId, utxo);
         }
 
-        var transferOutputsCount = 0;
         foreach (var output in tx.Outputs)
         {
             cT.ThrowIfCancellationRequested();
 
-            if (!output.IsValueTransfer)
+            txGraph.AddOutput(output);
+
+            if (output.ScriptPubKey.ScriptType != ScriptType.NullData &&
+                output.ScriptPubKey.ScriptType != ScriptType.nonstandard &&
+                options.Traverse.TrackTxo)
             {
-                // This is added for script type statistics only
-                g.Block.AddNonTransferOutputStatistics(output.GetScriptType());
-                continue;
-            }
+                output.TryGetAddress(out string? address);
 
-            transferOutputsCount++;
+                var utxo = new Utxo(
+                    id: Utxo.GetId(txGraph.TxNode.Txid, output.Index),
+                    address: address,
+                    value: output.Value,
+                    scriptType: output.ScriptPubKey.ScriptType,
+                    isGenerated: false,
+                    createdInBlockHeight: g.Block.Height);
 
-            output.TryGetAddress(out string? address);
-            g.Block.AddOutputStatistics(address, output.GetScriptType());
-
-            var cIn = g.Block.Hash;
-            var utxo = new Utxo(
-                tx.Txid, output.Index, address, output.Value, output.GetScriptType(),
-                isGenerated: false, createdInHeight: g.Block.Height);
-
-            txGraph.AddTarget(utxo);
-            g.Block.AddOutputValue(utxo.Value);
-
-            if (options.Traverse.TrackTxo)
                 g.Block.TxoLifecycle.TryAdd(utxo.Id, utxo);
+            }
         }
 
-        g.Block.AddInputsCount(tx.Inputs.Count);
-        g.Block.AddOutputsCount(transferOutputsCount);
         g.Enqueue(txGraph);
     }
 

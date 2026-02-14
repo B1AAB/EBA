@@ -18,17 +18,7 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
     // TODO: since there is a CoinbaseNode type, this default should change
     public ScriptType ScriptType { get; } = ScriptType.Coinbase;
 
-    public static new string Header
-    {
-        get
-        {
-            return string.Join(Delimiter, new string[]
-            {
-                Node.Header,
-                "ScriptType"
-            });
-        }
-    }
+    public string HexBase64 { get; } = string.Empty;
 
     public ScriptNode(
         string address,
@@ -66,6 +56,27 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
     {
         Address = address;
         ScriptType = scriptType;
+    }
+
+    public ScriptNode(
+        ScriptPubKey scriptPubKey,
+        double? originalIndegree = null,
+        double? originalOutdegree = null,
+        double? hopsFromRoot = null,
+        string? idInGraphDb = null) : 
+        base(id: scriptPubKey.SHA256HashString,
+             originalInDegree: originalIndegree,
+             originalOutDegree: originalOutdegree,
+             outHopsFromRoot: hopsFromRoot,
+             idInGraphDb: idInGraphDb)
+    {
+        Address = scriptPubKey.Address;
+        ScriptType = scriptPubKey.ScriptType;
+
+        if (ScriptType == ScriptType.nonstandard || ScriptType == ScriptType.NullData)
+        {
+            HexBase64 = scriptPubKey.Base64String;
+        }
     }
 
     public override string GetIdPropertyName()

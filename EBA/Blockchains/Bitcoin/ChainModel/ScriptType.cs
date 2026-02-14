@@ -39,7 +39,11 @@ public enum ScriptType
     witness_unknown,
 
     multisig,
-    nonstandard, // e.g., block #71036
+
+    /// <summary>
+    /// e.g., block 71036
+    /// </summary>
+    nonstandard,
 
     /// <summary>
     /// A script with this is often used to 
@@ -48,6 +52,11 @@ public enum ScriptType
     /// added to the block chain in exchange 
     /// for paying a transaction fee.
     /// <seealso cref="https://developer.bitcoin.org/devguide/transactions.html#null-data"/>
+    /// e.g., block 325001
+    /// 
+    /// An output of this type is a provably unspendable output, 
+    /// i.e. OP_RETURN outputs, exclusively used to embed data in the blockchain and 
+    /// are not meant to be spent.
     /// </summary>
     NullData,
 

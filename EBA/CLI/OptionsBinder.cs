@@ -18,12 +18,10 @@ internal class OptionsBinder : BinderBase<Options>
     private readonly Option<string>? _workingDirOption;
     private readonly Option<string>? _statusFilenameOption;
     private readonly Option<string>? _batchFilenameOption;
-    private readonly Option<string>? _addressesFilenameOption;
     private readonly Option<int>? _maxBlocksInBufferOption;
     private readonly Option<string>? _txoFilenameOption;
     private readonly Option<bool>? _trackTxoOption;
     private readonly Option<bool>? _skipGraphSerializationOption;
-    private readonly Option<bool>? _skipSerializingAddressesOption;
     private readonly Option<int>? _maxEntriesPerBatch;
     private readonly Option<string>? _sortedTxNodeFilenameOption;
     private readonly Option<string>? _sortedScriptNodeFilenameOption;
@@ -45,12 +43,10 @@ internal class OptionsBinder : BinderBase<Options>
         Option<string>? workingDirOption = null,
         Option<string>? statusFilenameOption = null,
         Option<string>? batchFilenameOption = null,
-        Option<string>? addressesFilenameOption = null,
         Option<int>? maxBlocksInBufferOption = null,
         Option<string>? txoFilenameOption = null,
         Option<bool>? trackTxoOption = null,
         Option<bool>? skipGraphSerializationOption = null,
-        Option<bool>? skipSerializingAddressesOption = null,
         Option<int>? maxEntriesPerBatch = null,
         Option<string>? sortedTxNodeFilenameOption = null,
         Option<string>? sortedScriptNodeFilenameOption = null)
@@ -71,12 +67,10 @@ internal class OptionsBinder : BinderBase<Options>
         _workingDirOption = workingDirOption;
         _statusFilenameOption = statusFilenameOption;
         _batchFilenameOption = batchFilenameOption;
-        _addressesFilenameOption = addressesFilenameOption;
         _maxBlocksInBufferOption = maxBlocksInBufferOption;
         _txoFilenameOption = txoFilenameOption;
         _trackTxoOption = trackTxoOption;
         _skipGraphSerializationOption = skipGraphSerializationOption;
-        _skipSerializingAddressesOption = skipSerializingAddressesOption;
         _maxEntriesPerBatch = maxEntriesPerBatch;
         _sortedTxNodeFilenameOption = sortedTxNodeFilenameOption;
         _sortedScriptNodeFilenameOption = sortedScriptNodeFilenameOption;
@@ -105,12 +99,10 @@ internal class OptionsBinder : BinderBase<Options>
             Granularity = GetValue(defs.Bitcoin.Traverse.Granularity, _granularityOption, c),
             BlocksToProcessListFilename = Path.Join(wd, defs.Bitcoin.Traverse.BlocksToProcessListFilename),
             BlocksFailedToProcessListFilename = Path.Join(wd, defs.Bitcoin.Traverse.BlocksFailedToProcessListFilename),
-            PerBlockAddressesFilename = GetValue(defs.Bitcoin.Traverse.PerBlockAddressesFilename, _addressesFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
             MaxBlocksInBuffer = GetValue(defs.Bitcoin.Traverse.MaxBlocksInBuffer, _maxBlocksInBufferOption, c),
             TxoFilename = GetValue(defs.Bitcoin.Traverse.TxoFilename, _txoFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
             TrackTxo = GetValue(defs.Bitcoin.Traverse.TrackTxo, _trackTxoOption, c),
-            SkipGraphSerialization = GetValue(defs.Bitcoin.Traverse.SkipGraphSerialization, _skipGraphSerializationOption, c),
-            SkipSerializingAddresses = GetValue(defs.Bitcoin.Traverse.SkipSerializingAddresses, _skipSerializingAddressesOption, c)
+            SkipGraphSerialization = GetValue(defs.Bitcoin.Traverse.SkipGraphSerialization, _skipGraphSerializationOption, c)
         };        
 
         var traversalAlgorithm = GetValue(defs.Bitcoin.GraphSample.TraversalAlgorithm, _graphSampleMethodOption, c);

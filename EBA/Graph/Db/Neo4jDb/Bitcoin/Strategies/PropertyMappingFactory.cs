@@ -74,12 +74,13 @@ public static class PropertyMappingFactory
     }
 
     public static PropertyMapping<T>[] ScriptTypeCounts<T>(
-        Func<T, Dictionary<ScriptType, uint>> getScriptTypeCounts)
+        string prefix, 
+        Func<T, Dictionary<ScriptType, long>> getScriptTypeCounts)
     {
         return [..
             Enum.GetValues<ScriptType>()
                 .Select(scriptType => new PropertyMapping<T>(
-                    $"ScriptType.{scriptType}",
+                    $"{prefix}.ScriptType.{scriptType}",
                     FieldType.Long,
                     x => getScriptTypeCounts(x).GetValueOrDefault(scriptType)))];
     }
@@ -114,12 +115,13 @@ public static class PropertyMappingFactory
         };
     }
 
-    public static Dictionary<ScriptType, uint> ReadScriptTypeCounts(
+    public static Dictionary<ScriptType, long> ReadScriptTypeCounts(
+        string prefix,
         IReadOnlyDictionary<string, object> properties)
     {
         return Enum.GetValues<ScriptType>()
             .ToDictionary(
                 scriptType => scriptType,
-                scriptType => (uint)(long)properties[$"ScriptType.{scriptType}"]);
+                scriptType => (long)properties[$"{prefix}.ScriptType.{scriptType}"]);
     }
 }
