@@ -1,4 +1,5 @@
-﻿using EBA.Utilities;
+﻿using EBA.Graph.Db.Neo4jDb;
+using EBA.Utilities;
 
 namespace EBA.Graph.Bitcoin.Strategies;
 

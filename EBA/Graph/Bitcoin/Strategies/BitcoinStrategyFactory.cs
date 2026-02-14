@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Bitcoin;
-using EBA.Graph.Db.Neo4jDb;
-using EBA.Graph.Db.Neo4jDb.Bitcoin.Strategies;
+﻿using EBA.Graph.Db.Neo4jDb;
 using System.IO.Compression;
 
 namespace EBA.Graph.Bitcoin.Strategies;

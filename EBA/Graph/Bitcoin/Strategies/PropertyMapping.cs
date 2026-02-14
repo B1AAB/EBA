@@ -1,4 +1,6 @@
-﻿namespace EBA.Graph.Bitcoin.Strategies;
+﻿using EBA.Graph.Db.Neo4jDb;
+
+namespace EBA.Graph.Bitcoin.Strategies;
 
 
 public class PropertyMapping<TEntity>
