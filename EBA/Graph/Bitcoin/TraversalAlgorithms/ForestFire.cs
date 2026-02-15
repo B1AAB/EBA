@@ -80,11 +80,7 @@ public class ForestFire : ITraversalAlgorithm
                     ct.ThrowIfCancellationRequested();
 
                     var graphDir = Path.Join(_options.WorkingDir, graph.Id);
-                    graph.Serialize(
-                        graphDir,
-                        perBatchLabelsFilename,
-                        serializeFeatureVectors: _options.Bitcoin.GraphSample.SerializeFeatureVectors,
-                        serializeEdges: _options.Bitcoin.GraphSample.SerializeEdges);
+                    graph.Serialize(graphDir, perBatchLabelsFilename);
 
                     _logger.LogInformation(
                         "Successfully serialized sampled graph from root {rootNodeTag}",
@@ -261,7 +257,7 @@ public class ForestFire : ITraversalAlgorithm
                 }
 
                 await ProcessHops(
-                    rootNodeLabel: BitcoinGraphAgent.ConvertGraphComponentTypeToNodeLabel(node.GetGraphComponentType()),
+                    rootNodeLabel: BitcoinGraphAgent.ConvertGraphComponentTypeToNodeLabel(node.GetType()),
                     rootNodeIdProperty: node.GetIdPropertyName(),
                     rootNodeId: node.Id,
                     hop: hop + 1,

@@ -2,13 +2,6 @@
 
 public class Node : INode
 {
-    public static GraphComponentType ComponentType
-    {
-        get { return GraphComponentType.Node; }
-    }
-
-    public virtual GraphComponentType GetGraphComponentType() { return ComponentType; }
-
     public string Id { get; }
 
     public string? IdInGraphDb { get; }

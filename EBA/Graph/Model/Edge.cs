@@ -7,9 +7,6 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
     where TSource : notnull, INode
     where TTarget : notnull, INode
 {
-    public static GraphComponentType ComponentType { get { return GraphComponentType.Edge; } }
-    public virtual GraphComponentType GetGraphComponentType() => ComponentType;
-
     public string Id { get; }
     public TSource Source { get; }
     public TTarget Target { get; }

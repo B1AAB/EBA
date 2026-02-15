@@ -14,9 +14,6 @@ namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 {
-    public new static GraphComponentType ComponentType { get { return GraphComponentType.BitcoinTxNode; } }
-    public override GraphComponentType GetGraphComponentType() { return ComponentType; }
-
     public string Txid { get; }
     public ulong? Version { get; }
     public int? Size { get; }

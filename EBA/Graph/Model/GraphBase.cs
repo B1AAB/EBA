@@ -4,14 +4,11 @@ using System.Collections.Immutable;
 
 namespace EBA.Graph.Model;
 
-public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphComponent, IDisposable
+public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
 {
     public string Id { get; } = id == null ?  Helpers.GetTimestamp() : id.Trim();
 
     private bool _disposed = false;
-
-    public static GraphComponentType ComponentType { get { return GraphComponentType.Graph; } }
-    public GraphComponentType GetGraphComponentType() => ComponentType;
 
     public int NodeCount
     {
@@ -27,20 +24,42 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
         get
         {
             return new ReadOnlyCollection<INode>(
-                _nodes.SelectMany(x => x.Value.Values).ToList());
+                [.. _nodes.SelectMany(x => x.Value.Values)]);
         }
     }
+
+    public Dictionary<Type, List<INode>> NodesByType
+    {
+        get
+        {
+            return _nodes.ToDictionary(
+                x => x.Key, 
+                x => new List<INode>(x.Value.Values));
+        }
+    }
+
+    private readonly ConcurrentDictionary<Type, ConcurrentDictionary<string, INode>> _nodes = new();
+
     public ReadOnlyCollection<IEdge<INode, INode>> Edges
     {
         get
         {
             return new ReadOnlyCollection<IEdge<INode, INode>>(
-                _edges.SelectMany(x => x.Value.Values).ToList());
+                [.. _edges.SelectMany(x => x.Value.Values)]);
         }
     }
 
-    private readonly ConcurrentDictionary<GraphComponentType, ConcurrentDictionary<string, INode>> _nodes = new();
-    private readonly ConcurrentDictionary<GraphComponentType, ConcurrentDictionary<string, IEdge<INode, INode>>> _edges = new();
+    public Dictionary<Type, List<IEdge<INode, INode>>> EdgesByType
+    {
+        get
+        {
+            return _edges.ToDictionary(
+                x => x.Key, 
+                x => new List<IEdge<INode, INode>>(x.Value.Values));
+        }
+    } 
+    
+    private readonly ConcurrentDictionary<Type, ConcurrentDictionary<string, IEdge<INode, INode>>> _edges = new();
 
     public ReadOnlyDictionary<string, string> Labels
     {
@@ -48,24 +67,24 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
     }
     private readonly Dictionary<string, string> _labels = [];
 
-    public int GetNodeCount(GraphComponentType type)
+    public int GetNodeCount(Type type)
     {
         if (_nodes.TryGetValue(type, out ConcurrentDictionary<string, INode>? value))
             return value.Values.Count;
         return 0;
     }
 
-    public ImmutableDictionary<GraphComponentType, ICollection<INode>> GetNodes()
+    public ImmutableDictionary<Type, ICollection<INode>> GetNodes()
     {
         return _nodes.ToImmutableDictionary(x => x.Key, x => x.Value.Values);
     }
 
-    public ImmutableDictionary<GraphComponentType, ICollection<IEdge<INode, INode>>> GetEdges()
+    public ImmutableDictionary<Type, ICollection<IEdge<INode, INode>>> GetEdges()
     {
         return _edges.ToImmutableDictionary(x => x.Key, x => x.Value.Values);
     }
 
-    public void GetNode(string id, out INode node, out GraphComponentType graphComponentType)
+    public void GetNode(string id, out INode node) // TODO: you can change this to return node instead of void
     {
         foreach (var nodeTypes in _nodes)
         {
@@ -73,7 +92,6 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
             if (n != null)
             {
                 node = n;
-                graphComponentType = nodeTypes.Key;
                 return;
             }
         }
@@ -81,7 +99,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
         throw new NotImplementedException();
     }
 
-    public void GetEdge(string id, out IEdge<INode, INode> edge, out GraphComponentType graphComponentType)
+    public void GetEdge(string id, out IEdge<INode, INode> edge) // TODO: you can change this to return edge instead of void
     {
         foreach (var edgeTypes in _edges)
         {
@@ -89,7 +107,6 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
             if (e != null)
             {
                 edge = e;
-                graphComponentType = edgeTypes.Key;
                 return;
             }
         }
@@ -123,34 +140,34 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
         return false;
     }
 
-    public bool TryAddNode<T>(GraphComponentType type, T node) where T : INode
+    public bool TryAddNode<T>(T node) where T : INode
     {
         var x = _nodes.GetOrAdd(
-            type,
+            node.GetType(),
             new ConcurrentDictionary<string, INode>());
 
         return x.TryAdd(node.Id, node);
     }
 
-    public T GetOrAddNode<T>(GraphComponentType type, T node) where T : INode
+    public T GetOrAddNode<T>(T node) where T : INode
     {
         var x = _nodes.GetOrAdd(
-            type,
+            node.GetType(),
             new ConcurrentDictionary<string, INode>());
 
         return (T)x.GetOrAdd(node.Id, node);
     }
 
-    public void AddNodes<T>(GraphComponentType type, IEnumerable<T> nodes) where T : INode
+    public void AddNodes<T>(IEnumerable<T> nodes) where T : INode
     {
         foreach (var node in nodes)
-            GetOrAddNode(type, node);
+            GetOrAddNode(node);
     }
 
-    public bool TryGetOrAddEdge<T>(GraphComponentType type, T edge, out T resultingEdge) where T : IEdge<INode, INode>
+    public bool TryGetOrAddEdge<T>(T edge, out T resultingEdge) where T : IEdge<INode, INode>
     {
         var x = _edges.GetOrAdd(
-            type,
+            edge.GetType(),
             new ConcurrentDictionary<string, IEdge<INode, INode>>());
 
         resultingEdge = (T)x.GetOrAdd(edge.Id, edge);
@@ -162,7 +179,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
         where T : IEdge<INode, INode>
     {
         var x = _edges.GetOrAdd(
-            edge.GetGraphComponentType(),
+            edge.GetType(),
             new ConcurrentDictionary<string, IEdge<INode, INode>>());
 
         x.AddOrUpdate(
@@ -180,16 +197,16 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
         edge.Source.AddOutgoingEdge(edge);
         edge.Target.AddIncomingEdge(edge);
 
-        TryAddNode(edge.Source.GetGraphComponentType(), edge.Source);
-        TryAddNode(edge.Target.GetGraphComponentType(), edge.Target);
+        TryAddNode(edge.Source);
+        TryAddNode(edge.Target);
     }
 
-    public List<T>? GetEdges<T>(GraphComponentType type) where T : IEdge<INode, INode>
+    public List<T>? GetEdges<T>(Type type) where T : IEdge<INode, INode>
     {
         if (!_edges.ContainsKey(type))
             return null;
 
-        return _edges[type].Cast<T>().ToList();
+        return [.. _edges[type].Cast<T>()];
     }
 
     public void AddLabel(string key, string value)
@@ -200,35 +217,12 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
     public void Serialize(
         string workingDir, 
         string perBatchLabelsFilename, 
-        bool serializeFeatureVectors = true, 
-        bool serializeEdges = false)
+        bool serializeFeatureVectors = true)
     {
         Directory.CreateDirectory(workingDir);
 
         if (serializeFeatureVectors)
             SerializeFeatures(workingDir, perBatchLabelsFilename);
-
-        if (serializeEdges)
-            SerializeEdges(workingDir);
-    }
-
-    public void SerializeEdges(string workingDir, string edgesFilename = "edges.tsv")
-    {
-        var header = new[] { "SourceId", "TargetId", "SourceNodeType", "TargetNodeType", "EdgeValue", "EdgeType" };
-
-        var edges = _edges.Values.SelectMany(ids => ids.Values).Select(
-            edges => new[]
-            {
-                edges.Source.GetIdPropertyName(),
-                edges.Target.GetIdPropertyName(),
-                edges.Source.GetGraphComponentType().ToString(),
-                edges.Target.GetGraphComponentType().ToString(),
-                edges.Value.ToString(),
-                edges.Type.ToString()
-            });
-
-        Helpers.CsvSerialize(edges, Path.Combine(workingDir, edgesFilename), header, append: true);
-        Helpers.CsvSerialize(edges, Path.Combine(workingDir, edgesFilename), header);
     }
 
     public GraphFeatures GetFeatures()
@@ -275,92 +269,6 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IGraphCompone
             [gFeatures.Labels.ToArray()],
             Path.Combine(workingDir, perGraphLabelsFilename),
             gFeatures.LabelsHeader);
-    }
-
-
-    public void DownSample(int maxNodesCount, int maxEdgesCount, int? seed = null)
-    {
-        // TODO: this sampling is not ideal;
-        // (1) it is not the fastest;
-        // (2) it may lead to having fewer nodes/edges than requested;
-        // (3) most importantly, it removes nodes/edges independent of
-        //     "path" so it may lead to turning a graph into more than one subgraphs.
-        //
-        // For a better sampling algorithm, use "Reservoir sampling". Ref: 
-        // - https://stackoverflow.com/a/48089/947889
-        // - https://en.wikipedia.org/wiki/Reservoir_sampling
-        //
-
-        Random rnd = seed == null ? new Random() : new Random((int)seed);
-        var nodesToRemoveCount = NodeCount - maxNodesCount;
-        if (nodesToRemoveCount > 0)
-        {
-            var allNodesIds = _nodes.SelectMany(x => x.Value.Select(y => new object[] { x.Key, y.Key })).ToList();
-            var nodesToRemove = allNodesIds.OrderBy(x => rnd.Next()).Take(nodesToRemoveCount);
-
-            foreach (var nodeToRemove in nodesToRemove)
-            {
-                _nodes[(GraphComponentType)nodeToRemove[0]].Remove((string)nodeToRemove[1], out var removedNode);
-
-                if (removedNode != null)
-                {
-                    foreach (var e in removedNode.IncomingEdges)
-                        _edges[e.GetGraphComponentType()].Remove(e.Id, out _);
-
-                    foreach (var e in removedNode.OutgoingEdges)
-                        _edges[e.GetGraphComponentType()].Remove(e.Id, out _);
-                }
-            }
-        }
-
-        var edgesToRemoveCount = EdgeCount - maxEdgesCount;
-        if (edgesToRemoveCount > 0)
-        {
-            var allEdgesIds = _edges.SelectMany(x => x.Value.Select(y => new object[] { x.Key, y.Key })).ToList();
-            var edgesToRemove = allEdgesIds.OrderBy(x => rnd.Next()).Take(edgesToRemoveCount);
-
-            foreach (var edgeToRemove in edgesToRemove)
-                _edges[(GraphComponentType)edgeToRemove[0]].Remove((string)edgeToRemove[1], out _);
-        }
-
-        var disconnectNodes = _nodes
-            .SelectMany(t => t.Value.Where(n => n.Value.InDegree == 0 & n.Value.OutDegree == 0)
-            .Select(x => new object[] { t.Key, x.Key }));
-
-        foreach (var node in disconnectNodes)
-            _nodes[(GraphComponentType)node[0]].Remove((string)node[1], out _);
-    }
-
-    public void DownSample(int maxEdgesCount, int? seed = null)
-    {
-        // TODO: this sampling is not ideal
-        // because it can be very slow
-        //
-        // For a better sampling algorithm, use "Reservoir sampling". Ref: 
-        // - https://stackoverflow.com/a/48089/947889
-        // - https://en.wikipedia.org/wiki/Reservoir_sampling
-        //
-
-        Random rnd = seed == null ? new Random() : new Random((int)seed);
-        var edgesToRemoveCount = EdgeCount - maxEdgesCount;
-
-        if (edgesToRemoveCount > 0)
-        {
-            var removedEdgesCounter = 0;
-            foreach(var edgeType in _edges)
-            {
-                foreach(var edge in edgeType.Value)
-                {
-
-                }
-            }
-
-            var allEdgesIds = _edges.SelectMany(x => x.Value.Select(y => new object[] { x.Key, y.Key })).ToList();
-            var edgesToRemove = allEdgesIds.OrderBy(x => rnd.Next()).Take(edgesToRemoveCount);
-
-            foreach (var edgeToRemove in edgesToRemove)
-                _edges[(GraphComponentType)edgeToRemove[0]].Remove((string)edgeToRemove[1], out _);
-        }
     }
 
     public bool Equals(GraphBase? other)

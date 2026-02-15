@@ -31,25 +31,25 @@ public abstract class StrategyBase(bool serializeCompressed) : IDisposable
         else
         {
             return _writer;
-        }        
+        }
     }
 
-    public async Task ToCsvAsync(IGraphComponent component, string filename)
+    public async Task ToCsvAsync(IGraphElement element, string filename)
     {
-        await GetStreamWriter(filename).WriteLineAsync(GetCsvRow(component));
+        await GetStreamWriter(filename).WriteLineAsync(GetCsvRow(element));
     }
 
-    public async Task ToCsvAsync<T>(IEnumerable<T> components, string filename) where T : IGraphComponent
+    public async Task ToCsvAsync<T>(IEnumerable<T> elements, string filename) where T : IGraphElement
     {
         await GetStreamWriter(filename).WriteLineAsync(
             string.Join(
                 Environment.NewLine,
-                from x in components select GetCsvRow(x)));
+                from x in elements select GetCsvRow(x)));
     }
 
     public abstract string GetCsvHeader();
 
-    public abstract string GetCsvRow(IGraphComponent component);
+    public abstract string GetCsvRow(IGraphElement element);
 
     public abstract string GetQuery(string filename);
 

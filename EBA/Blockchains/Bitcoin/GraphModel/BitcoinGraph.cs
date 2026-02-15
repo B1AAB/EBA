@@ -4,14 +4,9 @@ namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
 {
-    public new static GraphComponentType ComponentType
-    {
-        get { return GraphComponentType.BitcoinGraph; }
-    }
-
     public INode GetOrAddNode(INode node)
     {
-        return GetOrAddNode(node.GetGraphComponentType(), node);
+        return GetOrAddNode(node);
     }
 
     public IEdge<INode, INode> GetOrAddEdge(IRelationship e)
@@ -23,7 +18,7 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
     {
         var candidateEdge = EdgeFactory.CreateEdge(sourceNode, targetNode, e);
 
-        if (TryGetOrAddEdge(candidateEdge.GetGraphComponentType(), candidateEdge, out var edge))
+        if (TryGetOrAddEdge(candidateEdge, out var edge))
         {
             // edge was not in the graph, so it has been added,
             // hence the incoming/outgoing edges also need to be added.

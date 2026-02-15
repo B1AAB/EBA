@@ -126,7 +126,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         return samplingResult;
     }
 
-    public Task ImportAsync(CancellationToken ct, string batchName = "", List<GraphComponentType>? importOrder = null)
+    public Task ImportAsync(CancellationToken ct, string batchName = "")
     {
         throw new NotImplementedException();
     }
@@ -178,7 +178,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         await Task.WhenAll(tasks);
     }
 
-    private async Task<Batch> GetBatchAsync(List<GraphComponentType> types)
+    private async Task<Batch> GetBatchAsync(List<Type> types)
     {
         if (_batches.Count == 0)
             _batches = await DeserializeBatchesAsync();

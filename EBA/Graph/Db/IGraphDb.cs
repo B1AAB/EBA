@@ -16,7 +16,7 @@ public interface IGraphDb<T> : IDisposable where T : GraphBase
     /// <param name="ct">Cancellation token.</param>
     /// <returns></returns>
     public Task SerializeConstantsAndConstraintsAsync(CancellationToken ct);
-    public Task ImportAsync(CancellationToken ct, string batchName = "", List<GraphComponentType>? importOrder = null);
+    public Task ImportAsync(CancellationToken ct, string batchName = "");
     public Task SampleAsync(CancellationToken ct);
     public void ReportQueries();
 

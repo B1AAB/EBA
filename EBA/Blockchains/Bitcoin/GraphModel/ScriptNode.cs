@@ -4,15 +4,6 @@ namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
 {
-    public static GraphComponentType ComponentType
-    {
-        get { return GraphComponentType.BitcoinScriptNode; }
-    }
-    public override GraphComponentType GetGraphComponentType()
-    {
-        return GraphComponentType.BitcoinScriptNode;
-    }
-
     // TODO: since there is a CoinbaseNode type, this default should change
     public string Address { get; } = BitcoinChainAgent.Coinbase.ToString();
     // TODO: since there is a CoinbaseNode type, this default should change

@@ -1,5 +1,4 @@
-﻿using EBA.Graph.Bitcoin;
-using EBA.Graph.Db.Neo4jDb;
+﻿using EBA.Graph.Db.Neo4jDb;
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
@@ -28,7 +27,7 @@ public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(seriali
         return _mappings.GetCsvHeader();
     }
 
-    public override string GetCsvRow(IGraphComponent component)
+    public override string GetCsvRow(IGraphElement component)
     {
         return GetCsv((ScriptNode)component);
     }

@@ -5,11 +5,6 @@ namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class TxGraph(Tx tx) : GraphBase()
 {
-    public new GraphComponentType ComponentType
-    {
-        get { return GraphComponentType.BitcoinTxGraph; }
-    }
-
     public TxNode TxNode { get; } = new TxNode(tx);
 
     public long TotalInputValue { get { return _totalInputValue; } }

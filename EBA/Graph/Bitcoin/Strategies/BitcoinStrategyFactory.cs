@@ -7,25 +7,25 @@ public class BitcoinStrategyFactory : IStrategyFactory
 {
     private bool _disposed = false;
 
-    private readonly Dictionary<GraphComponentType, StrategyBase> _strategies;
+    private readonly Dictionary<Type, StrategyBase> _strategies;
 
     public BitcoinStrategyFactory(Options options)
     {
         var compressOutput = options.Neo4j.CompressOutput;
         _strategies = new()
         {
-            {GraphComponentType.BitcoinBlockNode, new BlockNodeStrategy(compressOutput)},
-            {GraphComponentType.BitcoinScriptNode, new ScriptNodeStrategy(compressOutput)},
-            {GraphComponentType.BitcoinTxNode, new TxNodeStrategy(compressOutput)},
-            {GraphComponentType.BitcoinC2T, new C2TEdgeStrategy(compressOutput)},
-            {GraphComponentType.BitcoinT2T, new T2TEdgeStrategy(compressOutput)},
-            {GraphComponentType.BitcoinS2T, new S2TEdgeStrategy(compressOutput)},
-            {GraphComponentType.BitcoinT2S, new T2SEdgeStrategy(compressOutput)},
-            {GraphComponentType.BitcoinB2T, new B2TEdgeStrategy(compressOutput)},
+            {typeof(BlockNode), new BlockNodeStrategy(compressOutput)},
+            {typeof(ScriptNode), new ScriptNodeStrategy(compressOutput)},
+            {typeof(TxNode), new TxNodeStrategy(compressOutput)},
+            {typeof(C2TEdge), new C2TEdgeStrategy(compressOutput)},
+            {typeof(T2TEdge), new T2TEdgeStrategy(compressOutput)},
+            {typeof(S2TEdge), new S2TEdgeStrategy(compressOutput)},
+            {typeof(T2SEdge), new T2SEdgeStrategy(compressOutput)},
+            {typeof(B2TEdge), new B2TEdgeStrategy(compressOutput)},
         };
     }
 
-    public StrategyBase GetStrategy(GraphComponentType type)
+    public StrategyBase GetStrategy(Type type)
     {
         return _strategies[type];
     }
@@ -46,7 +46,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
         {
             using var writer = new StreamWriter(
                 new GZipStream(
-                    File.Create(Path.Join(outputDirectory, $"header_{strategy.Key}.csv.gz")),
+                    File.Create(Path.Join(outputDirectory, $"header_{strategy.Key.Name}.csv.gz")),
                     CompressionMode.Compress));
             writer.WriteLine(strategy.Value.GetCsvHeader());
         }

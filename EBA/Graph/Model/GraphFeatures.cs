@@ -2,13 +2,11 @@
 
 public class GraphFeatures
 {
-    // TODO: make sure all the public types in the following are immutable.
+    public Dictionary<Type, List<string[]>> NodeFeatures { get; }
+    public Dictionary<Type, string[]> NodeFeaturesHeader { get; }
 
-    public Dictionary<GraphComponentType, List<string[]>> NodeFeatures { get; }
-    public Dictionary<GraphComponentType, string[]> NodeFeaturesHeader { get; }
-
-    public Dictionary<GraphComponentType, List<double[]>> EdgeFeatures { get; }
-    public Dictionary<GraphComponentType, string[]> EdgeFeaturesHeader { get; }
+    public Dictionary<Type, List<double[]>> EdgeFeatures { get; }
+    public Dictionary<Type, string[]> EdgeFeaturesHeader { get; }
 
     public ReadOnlyCollection<double[]> EdgeFeaturesOld { get; }
     public ReadOnlyCollection<string> EdgeFeaturesHeaderOld { get; }
@@ -27,22 +25,22 @@ public class GraphFeatures
         LabelsHeader = new ReadOnlyCollection<string>(["GraphID", "RootNodeId", "RootNodeIdx", "NodeCount", "EdgeCount"]);
 
         NodeFeaturesHeader = [];
-        NodeFeaturesHeader.Add(GraphComponentType.BitcoinBlockNode, ["Index", .. BlockNode.GetFeaturesName()]);
-        NodeFeaturesHeader.Add(GraphComponentType.BitcoinTxNode, ["Index", .. TxNode.GetFeaturesName()]);
-        NodeFeaturesHeader.Add(GraphComponentType.BitcoinScriptNode, ["Index", .. ScriptNode.GetFeaturesName()]);
-        NodeFeaturesHeader.Add(GraphComponentType.BitcoinCoinbaseNode, ["Index", .. CoinbaseNode.GetFeaturesName()]);
+        NodeFeaturesHeader.Add(typeof(BlockNode), ["Index", .. BlockNode.GetFeaturesName()]);
+        NodeFeaturesHeader.Add(typeof(TxNode), ["Index", .. TxNode.GetFeaturesName()]);
+        NodeFeaturesHeader.Add(typeof(ScriptNode), ["Index", .. ScriptNode.GetFeaturesName()]);
+        NodeFeaturesHeader.Add(typeof(CoinbaseNode), ["Index", .. CoinbaseNode.GetFeaturesName()]);
 
         var sourceAndTarget = new[] { "Source", "Target" };
         EdgeFeaturesHeader = [];
-        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinC2T, [.. sourceAndTarget, .. C2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinT2T, [.. sourceAndTarget, .. T2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinT2B, [.. sourceAndTarget, .. T2BEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinB2T, [.. sourceAndTarget, .. B2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinS2T, [.. sourceAndTarget, .. S2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(GraphComponentType.BitcoinT2S, [.. sourceAndTarget, .. T2SEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(typeof(C2TEdge), [.. sourceAndTarget, .. C2TEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(typeof(T2TEdge), [.. sourceAndTarget, .. T2TEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(typeof(T2BEdge), [.. sourceAndTarget, .. T2BEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(typeof(B2TEdge), [.. sourceAndTarget, .. B2TEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(typeof(S2TEdge), [.. sourceAndTarget, .. S2TEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(typeof(T2SEdge), [.. sourceAndTarget, .. T2SEdge.GetFeaturesName()]);
 
-        var nodeFeatures = new Dictionary<GraphComponentType, List<string[]>>();
-        var nodeIdToIdx = new Dictionary<GraphComponentType, Dictionary<string, int>>();
+        var nodeFeatures = new Dictionary<Type, List<string[]>>();
+        var nodeIdToIdx = new Dictionary<Type, Dictionary<string, int>>();
 
         var nodeGraphComponentTypes = NodeFeaturesHeader.Keys.ToArray();
         foreach (var nodeType in nodeGraphComponentTypes)
@@ -51,21 +49,24 @@ public class GraphFeatures
             nodeIdToIdx.Add(nodeType, []);
         }
 
-        var edgeFeatures = new Dictionary<GraphComponentType, List<double[]>>();
+        var edgeFeatures = new Dictionary<Type, List<double[]>>();
         var edgeGraphComponentTypes = EdgeFeaturesHeader.Keys.ToArray();
         foreach (var edgeType in edgeGraphComponentTypes)
         {
             edgeFeatures.Add(edgeType, []);
         }
 
-        foreach (var node in graph.Nodes)
+        foreach (var nodeType in graph.NodesByType)
         {
-            var gComponentType = node.GetGraphComponentType();
-            var nodeIndex = nodeIdToIdx[gComponentType].Count;
-            nodeIdToIdx[gComponentType].Add(node.Id, nodeIndex);
-            nodeFeatures[gComponentType].Add([nodeIndex.ToString(), .. node.GetFeatures()]);
+            foreach (var node in nodeType.Value)
+            {
+                var nodeIndex = nodeIdToIdx[nodeType.Key].Count;
+                nodeIdToIdx[nodeType.Key].Add(node.Id, nodeIndex);
+                nodeFeatures[nodeType.Key].Add([nodeIndex.ToString(), .. node.GetFeatures()]);
+            }
         }
 
+        /*
         foreach (var edge in graph.Edges)
         {
             // TODO: this is a hack to make sure that the source node of a C2T or C2S edge is a coinbase node,
@@ -83,6 +84,19 @@ public class GraphFeatures
                     nodeIdToIdx[edge.Target.GetGraphComponentType()][edge.Target.Id] }),
                 .. edge.GetFeatures(),
             ]);
+        }*/
+
+        foreach (var edgeType in graph.EdgesByType)
+        {
+            foreach (var edge in edgeType.Value)
+            {
+                edgeFeatures[edgeType.Key].Add(
+                [
+                    nodeIdToIdx[edge.Source.GetType()][edge.Source.Id],
+                    nodeIdToIdx[edge.Target.GetType()][edge.Target.Id],
+                    .. edge.GetFeatures(),
+                ]);
+            }
         }
 
         NodeFeatures = nodeFeatures;
@@ -97,8 +111,8 @@ public class GraphFeatures
             [
                 graph.Id, 
                 //gLabels["ConnectedGraph_or_Forest"], 
-                gLabels["RootNodeId"], 
-                nodeIdToIdx[GraphComponentType.BitcoinScriptNode][gLabels["RootNodeId"]].ToString(),
+                gLabels["RootNodeId"],
+                nodeIdToIdx[typeof(ScriptNode)][gLabels["RootNodeId"]].ToString(),
                 graph.Nodes.Count.ToString(),
                 graph.Edges.Count.ToString()
             ]);

@@ -16,45 +16,15 @@ public class EdgeFactory
         var blockHeight = PropertyMappingFactory.Height<IRelationship>(null!).Deserialize<long>(relationship.Properties);
         uint timestamp = 0; // TODO currently edges stored on the database do not have a timestamp
 
-        if (source.GetGraphComponentType() == GraphComponentType.BitcoinCoinbaseNode &&
-            target.GetGraphComponentType() == GraphComponentType.BitcoinTxNode)
+        return (source, target) switch
         {
-            return new C2TEdge((TxNode)target, value, timestamp, blockHeight);
-        }
-        else if (
-            source.GetGraphComponentType() == GraphComponentType.BitcoinTxNode &&
-            target.GetGraphComponentType() == GraphComponentType.BitcoinTxNode)
-        {
-            return new T2TEdge((TxNode)source, (TxNode)target, value, type, timestamp, blockHeight);
-        }
-        else if (
-            source.GetGraphComponentType() == GraphComponentType.BitcoinTxNode &&
-            target.GetGraphComponentType() == GraphComponentType.BitcoinBlockNode)
-        {
-            return new T2BEdge((TxNode)source, (BlockNode)target, value, type, timestamp, blockHeight);
-        }
-        else if (
-            source.GetGraphComponentType() == GraphComponentType.BitcoinBlockNode &&
-            target.GetGraphComponentType() == GraphComponentType.BitcoinTxNode)
-        {
-            return new B2TEdge((BlockNode)source, (TxNode)target, value, type, timestamp, blockHeight);
-        }
-        else if (
-            source.GetGraphComponentType() == GraphComponentType.BitcoinTxNode &&
-            target.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode)
-        {
-            return new T2SEdge((TxNode)source, (ScriptNode)target, value, type, timestamp, blockHeight);
-        }
-        else if (
-            source.GetGraphComponentType() == GraphComponentType.BitcoinScriptNode &&
-            target.GetGraphComponentType() == GraphComponentType.BitcoinTxNode)
-        {
-            var createdInBlockHeight = (long)relationship.Properties[nameof(S2TEdge.UTxOCreatedInBlockHeight)];
-            return new S2TEdge((ScriptNode)source, (TxNode)target, value, type, timestamp, blockHeight, createdInBlockHeight);
-        }
-        else
-        {
-            throw new ArgumentException("Invalid edge type");
-        }
+            (CoinbaseNode, TxNode v) => new C2TEdge(v, value, timestamp, blockHeight),
+            (TxNode u, TxNode v) => new T2TEdge(u, v, value, type, timestamp, blockHeight),
+            (TxNode u, BlockNode v) => new T2BEdge(u, v, value, type, timestamp, blockHeight),
+            (BlockNode u, TxNode v) => new B2TEdge(u, v, value, type, timestamp, blockHeight),
+            (TxNode u, ScriptNode v) => new T2SEdge(u, v, value, type, timestamp, blockHeight),
+            (ScriptNode u, TxNode v) => new S2TEdge(u, v, value, type, timestamp, blockHeight, (long)relationship.Properties[nameof(S2TEdge.UTxOCreatedInBlockHeight)]),
+            _ => throw new ArgumentException("Invalid edge type")
+        };
     }
 }

@@ -2,16 +2,6 @@
 
 public class T2SEdge : Edge<TxNode, ScriptNode>
 {
-    public static new GraphComponentType ComponentType
-    {
-        get { return GraphComponentType.BitcoinT2S; }
-    }
-
-    public override GraphComponentType GetGraphComponentType()
-    {
-        return GraphComponentType.BitcoinT2S;
-    }
-
     public List<Output> Outputs { get; }
 
     public T2SEdge(
