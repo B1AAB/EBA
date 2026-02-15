@@ -20,7 +20,7 @@ public class S2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
         return _mappings.GetCsvHeader();
     }
 
-    public override string GetCsvRow(IGraphComponent edge)
+    public override string GetCsvRow(IGraphElement edge)
     {
         return GetCsvRow((S2TEdge)edge);
     }

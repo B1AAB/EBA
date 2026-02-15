@@ -79,9 +79,6 @@ public class BitcoinGraphSampleOptions
     public int MaxNodeFetchFromNeighbor { init; get; } = 10000;
     public int MaxEdgesFetchFromNeighbor { init; get; } = 500000;
 
-    public bool SerializeEdges { init; get; } = false;
-    public bool SerializeFeatureVectors { init; get; } = true;
-
     public int DisjointGraph_ForestFireNodeSamplingCountAtRoot { init; get; } = 20;
     public int DisjointGraph_ForestFireMaxHops { init; get; } = 3;
     public int DisjointGraph_ForestFireQueryLimit { init; get; } = 100;

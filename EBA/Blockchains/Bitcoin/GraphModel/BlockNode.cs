@@ -16,16 +16,6 @@ public class BlockNode(
         idInGraphDb: idInGraphDb), 
     IComparable<BlockNode>, IEquatable<BlockNode>
 {
-    public static new GraphComponentType ComponentType
-    {
-        get { return GraphComponentType.BitcoinBlockNode; }
-    }
-
-    public override GraphComponentType GetGraphComponentType()
-    {
-        return ComponentType;
-    }
-
     public BlockMetadata BlockMetadata { init; get; } = blockMetadata;
 
     public uint[] EdgeLabelCount { set; get; } = [];

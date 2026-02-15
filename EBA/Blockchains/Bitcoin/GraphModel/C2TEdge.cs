@@ -2,16 +2,6 @@
 
 public class C2TEdge : T2TEdge
 {
-    public static new GraphComponentType ComponentType
-    {
-        get { return GraphComponentType.BitcoinC2T; }
-    }
-
-    public override GraphComponentType GetGraphComponentType()
-    {
-        return GraphComponentType.BitcoinC2T;
-    }
-
     public new EdgeLabel Label { get; } = EdgeLabel.C2TMinting;
 
     public C2TEdge(

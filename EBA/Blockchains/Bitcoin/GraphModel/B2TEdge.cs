@@ -2,16 +2,6 @@
 
 public class B2TEdge : Edge<BlockNode, TxNode>
 {
-    public new static GraphComponentType ComponentType
-    {
-        get { return GraphComponentType.BitcoinB2T; }
-    }
-
-    public override GraphComponentType GetGraphComponentType()
-    {
-        return GraphComponentType.BitcoinB2T;
-    }
-
     public B2TEdge(
         BlockNode source, TxNode target,
         long value, EdgeType type,

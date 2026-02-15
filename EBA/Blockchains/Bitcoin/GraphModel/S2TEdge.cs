@@ -2,16 +2,6 @@
 
 public class S2TEdge : Edge<ScriptNode, TxNode>
 {
-    public static new GraphComponentType ComponentType
-    {
-        get { return GraphComponentType.BitcoinS2T; }
-    }
-
-    public override GraphComponentType GetGraphComponentType()
-    {
-        return GraphComponentType.BitcoinS2T;
-    }
-
     public long UTxOCreatedInBlockHeight { get; }
 
     public List<PrevOut> PrevOuts { get; } = [];

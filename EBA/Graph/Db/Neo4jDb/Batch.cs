@@ -10,25 +10,25 @@ public class Batch
     public string DefaultDirectory { get; }
     private readonly bool _compressOutput;
 
-    public ImmutableDictionary<GraphComponentType, TypeInfo> TypesInfo
+    public ImmutableDictionary<Type, TypeInfo> TypesInfo
     {
         get { return _typesInfo.ToImmutableDictionary(); }
     }
-    private readonly Dictionary<GraphComponentType, TypeInfo> _typesInfo;
+    private readonly Dictionary<Type, TypeInfo> _typesInfo;
 
 
     [JsonConstructor]
     public Batch(
         string name,
         string defaultDirectory,
-        ImmutableDictionary<GraphComponentType, TypeInfo> typesInfo)
+        ImmutableDictionary<Type, TypeInfo> typesInfo)
     {
         Name = name;
         DefaultDirectory = defaultDirectory;
-        _typesInfo = new Dictionary<GraphComponentType, TypeInfo>(typesInfo);
+        _typesInfo = new Dictionary<Type, TypeInfo>(typesInfo);
     }
 
-    public Batch(string name, string defaultDirectory, List<GraphComponentType> types, bool compresseOutput)
+    public Batch(string name, string defaultDirectory, List<Type> types, bool compresseOutput)
     {
         Name = name;
         DefaultDirectory = defaultDirectory;
@@ -41,18 +41,18 @@ public class Batch
                 CreateFilename(type, timestamp, DefaultDirectory), 0));
     }
 
-    public void AddOrUpdate(GraphComponentType type, int count)
+    public void AddOrUpdate(Type type, int count)
     {
         AddOrUpdate(type, count, DefaultDirectory);
     }
 
-    public void AddOrUpdate(GraphComponentType type, int count, string directory)
+    public void AddOrUpdate(Type type, int count, string directory)
     {
         EnsureType(type, directory);
         _typesInfo[type].Count += count;
     }
 
-    public string GetFilename(GraphComponentType type)
+    public string GetFilename(Type type)
     {
         EnsureType(type, DefaultDirectory);
         return _typesInfo[type].Filename;
@@ -63,12 +63,12 @@ public class Batch
         return (from x in _typesInfo.Values select x.Count).Max();
     }
 
-    public TypeInfo GetTypeInfo(GraphComponentType type)
+    public TypeInfo GetTypeInfo(Type type)
     {
         return _typesInfo[type];
     }
 
-    private void EnsureType(GraphComponentType type, string directory)
+    private void EnsureType(Type type, string directory)
     {
         if (!_typesInfo.ContainsKey(type))
         {
@@ -77,8 +77,8 @@ public class Batch
         }
     }
 
-    private string CreateFilename(GraphComponentType type, string timestamp, string directory)
+    private string CreateFilename(Type type, string timestamp, string directory)
     {
-        return Path.Join(directory, $"{timestamp}_{type}.csv{(_compressOutput == true ? ".gz" : "")}");
+        return Path.Join(directory, $"{timestamp}_{type.Name}.csv{(_compressOutput == true ? ".gz" : "")}");
     }
 }

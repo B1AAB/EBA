@@ -1,6 +1,6 @@
 ﻿namespace EBA.Graph.Model;
 
-public interface IEdge<out TSource, out TTarget> : IGraphComponent
+public interface IEdge<out TSource, out TTarget> : IGraphElement
     where TSource : INode
     where TTarget : INode
 {

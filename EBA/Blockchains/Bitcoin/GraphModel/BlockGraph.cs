@@ -65,7 +65,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     public void BuildGraph(CancellationToken ct)
     {
         BlockNode = new BlockNode(Block);
-        TryAddNode(BlockNode.ComponentType, BlockNode);
+        TryAddNode(BlockNode);
 
         var v = _coinbaseTxGraph.TxNode;
         var t = Timestamp;
