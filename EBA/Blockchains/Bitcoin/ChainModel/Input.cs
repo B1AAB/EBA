@@ -21,7 +21,19 @@ public class Input : IEquatable<Input>
     public long Sequence { set; get; }
 
     [JsonPropertyName("prevout")]
-    public PrevOut? PrevOut { set; get; }
+    public PrevOut? NullablePrevOut { set; get; }
+
+    public PrevOut PrevOut
+    {
+        get
+        {
+            return
+                NullablePrevOut ??
+                throw new InvalidOperationException(
+                    "PrevOut is null. " +
+                    "Are you processing transactions in mempool?");
+        }
+    }
 
     public bool Equals(Input? other)
     {
