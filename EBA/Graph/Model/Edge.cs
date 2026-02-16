@@ -44,7 +44,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
         Target = target;
         Value = value;
         Relation = relation;
-        Triplet = $"{source.GetType().Name}->{target.GetType().Name}:{relation}"; // TODO: after node lable enum is defined, change this to use node label.
+        Triplet = $"{source.Kind}->{target.Kind}:{relation}";
         Timestamp = timestamp;
         BlockHeight = blockHeight;
 
