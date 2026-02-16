@@ -24,12 +24,12 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         _stopwatch.Stop();
     }
 
-    private readonly ConcurrentDictionary<string, uint> _edgeLableCount= [];
-    private readonly ConcurrentDictionary<string, long> _edgeLableValueSum = [];
+    private readonly ConcurrentDictionary<string, uint> _edgeLabelCount= [];
+    private readonly ConcurrentDictionary<string, long> _edgeLabelValueSum = [];
     public void IncrementEdgeType(string typeLabel, long value)
     {
-        _edgeLableCount.AddOrUpdate(typeLabel, 1, (_, oldValue) => oldValue + 1);
-        _edgeLableValueSum.AddOrUpdate(typeLabel, value, (_, oldValue) => oldValue + value);
+        _edgeLabelCount.AddOrUpdate(typeLabel, 1, (_, oldValue) => oldValue + 1);
+        _edgeLabelValueSum.AddOrUpdate(typeLabel, value, (_, oldValue) => oldValue + value);
     }
 
     private TxGraph _coinbaseTxGraph;
@@ -105,8 +105,8 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         AddOrUpdateEdge(new B2TEdge(BlockNode, v, mintedCoins, EdgeType.Contains, t, h));
 
 
-        BlockNode.EdgeLabelCount = _edgeLableCount.ToDictionary(kv => kv.Key, kv => kv.Value);
-        BlockNode.EdgeLabelValueSum = _edgeLableValueSum.ToDictionary(kv => kv.Key, kv => kv.Value);
+        BlockNode.EdgeLabelCount = _edgeLabelCount.ToDictionary(kv => kv.Key, kv => kv.Value);
+        BlockNode.EdgeLabelValueSum = _edgeLabelValueSum.ToDictionary(kv => kv.Key, kv => kv.Value);
     }
 
     private void AddTxGraphToBlockGraph(TxGraph txGraph)
