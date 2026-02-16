@@ -6,21 +6,24 @@ public class CoinbaseNode : Node
         Neo4j.Driver.INode node,
         double? originalOutdegree = null,
         double? hopsFromRoot = null) : 
-        base("Coinbase",
+        base(id: _kind.ToString(),
+            kind: _kind,
             originalInDegree: 0,
             originalOutDegree: originalOutdegree,
             outHopsFromRoot: hopsFromRoot,
             idInGraphDb: node.ElementId)
     { }
 
+    private static readonly NodeKind _kind = NodeKind.Coinbase;
+
     public override string GetIdPropertyName()
     {
-        return "Coinbase";
+        return _kind.ToString();
     }
 
     public static new string[] GetFeaturesName()
     {
-        return ["Coinbase"];
+        return [_kind.ToString()];
     }
 
     public override string[] GetFeatures()

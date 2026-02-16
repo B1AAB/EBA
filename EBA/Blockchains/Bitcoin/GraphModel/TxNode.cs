@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Bitcoin;
-
-namespace EBA.Blockchains.Bitcoin.GraphModel;
+﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 // A note on the nullable properties: 
 // These properties can be null when the Tx
@@ -21,9 +19,11 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
     public int? Weight { get; }
     public long? LockTime { get; }
 
+    private static readonly NodeKind _kind = NodeKind.Tx;
+
     public Tx? Tx { get; }
 
-    public TxNode(string txid) : base(txid)
+    public TxNode(string txid) : base(txid, kind: _kind)
     {
         Txid = txid;
     }
@@ -34,7 +34,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         int? size,
         int? vSize,
         int? weight,
-        long? lockTime) : base(txid)
+        long? lockTime) : base(txid, kind: _kind)
     {
         Txid = txid;
         Version = version;
@@ -57,6 +57,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         string? idInGraphDb = null) :
         base(
             txid,
+            kind: _kind,
             originalInDegree: originalIndegree,
             originalOutDegree: originalOutdegree,
             outHopsFromRoot: hopsFromRoot,
@@ -87,7 +88,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 
     public static TxNode GetCoinbaseNode()
     {
-        return new TxNode(NodeLabels.Coinbase.ToString());
+        return new TxNode(NodeKind.Coinbase.ToString());
     }
 
     public static new string[] GetFeaturesName()

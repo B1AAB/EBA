@@ -38,8 +38,8 @@ public class BitcoinStrategyFactory : IStrategyFactory
                 File.Create(Path.Join(outputDirectory, "BitcoinCoinbase.csv.gz")),
                 CompressionMode.Compress)))
         {
-            writer.WriteLine(string.Join('\t', $"{NodeLabels.Coinbase}:ID({NodeLabels.Coinbase})", ":LABEL"));
-            writer.WriteLine(string.Join('\t', $"{NodeLabels.Coinbase}", $"{NodeLabels.Coinbase}"));
+            writer.WriteLine(string.Join('\t', $"{NodeKind.Coinbase}:ID({NodeKind.Coinbase})", ":LABEL"));
+            writer.WriteLine(string.Join('\t', $"{NodeKind.Coinbase}", $"{NodeKind.Coinbase}"));
         }
 
         foreach(var strategy in _strategies)
@@ -59,29 +59,29 @@ public class BitcoinStrategyFactory : IStrategyFactory
 
         var x = PropertyMappingFactory.Address<ScriptNode>(n => n.Address).Property.Name;
         var scriptAddressUniqueness =
-            $"// Uniqueness constraint for {NodeLabels.Script}.{x} property." +
-            $"\r\nCREATE CONSTRAINT {NodeLabels.Script}_{x}_Unique " +
+            $"// Uniqueness constraint for {NodeKind.Script}.{x} property." +
+            $"\r\nCREATE CONSTRAINT {NodeKind.Script}_{x}_Unique " +
             $"\r\nIF NOT EXISTS " +
-            $"\r\nFOR (v:{NodeLabels.Script}) REQUIRE v.{x} IS UNIQUE;";
+            $"\r\nFOR (v:{NodeKind.Script}) REQUIRE v.{x} IS UNIQUE;";
         writer.WriteLine("");
         writer.WriteLine(scriptAddressUniqueness);
 
 
         var txidName = PropertyMappingFactory.TxId<TxNode>(n => n.Txid).Property.Name;
         var txidUniqueness =
-            $"// Uniqueness constraint for {NodeLabels.Tx}.{txidName} property." +
-            $"\r\nCREATE CONSTRAINT {NodeLabels.Tx}_{txidName}_Unique " +
+            $"// Uniqueness constraint for {NodeKind.Tx}.{txidName} property." +
+            $"\r\nCREATE CONSTRAINT {NodeKind.Tx}_{txidName}_Unique " +
             $"\r\nIF NOT EXISTS " +
-            $"\r\nFOR (v:{NodeLabels.Tx}) REQUIRE v.{txidName} IS UNIQUE;";
+            $"\r\nFOR (v:{NodeKind.Tx}) REQUIRE v.{txidName} IS UNIQUE;";
         writer.WriteLine("");
         writer.WriteLine(txidUniqueness);
         
         var heightName = PropertyMappingFactory.HeightProperty.Name;
         var blockHeightUniqueness =
-            $"// Uniqueness constraint for {NodeLabels.Block}.{heightName} property." +
-            $"\r\nCREATE CONSTRAINT {NodeLabels.Block}_{heightName}_Unique " +
+            $"// Uniqueness constraint for {NodeKind.Block}.{heightName} property." +
+            $"\r\nCREATE CONSTRAINT {NodeKind.Block}_{heightName}_Unique " +
             $"\r\nIF NOT EXISTS " +
-            $"\r\nFOR (v:{NodeLabels.Block}) REQUIRE v.{heightName} IS UNIQUE;";
+            $"\r\nFOR (v:{NodeKind.Block}) REQUIRE v.{heightName} IS UNIQUE;";
         writer.WriteLine("");
         writer.WriteLine(blockHeightUniqueness);
     }

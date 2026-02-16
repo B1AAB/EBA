@@ -4,7 +4,7 @@ namespace EBA.Blockchains.Bitcoin;
 
 public class BitcoinChainAgent : IDisposable
 {
-    public const NodeLabels Coinbase = NodeLabels.Coinbase;
+    public const NodeKind Coinbase = NodeKind.Coinbase;
     public const uint GenesisTimestamp = 1231006505;
 
     /// <summary>

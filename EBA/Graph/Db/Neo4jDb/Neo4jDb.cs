@@ -37,7 +37,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     }
 
     public async Task<List<IRecord>> GetRandomNodesAsync(
-        NodeLabels label,
+        NodeKind label,
         int count,
         CancellationToken ct,
         double rootNodeSelectProbability = 0.1,
@@ -65,7 +65,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
 
     public async Task<List<IRecord>> GetNeighborsAsync(
-        NodeLabels rootNodeLabel, 
+        NodeKind rootNodeLabel, 
         string rootNodeIdProperty,
         string rootNodeId,
         int queryLimit, 
@@ -157,11 +157,11 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         foreach (var type in nodes)
         {
-            batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != NodeLabels.Coinbase.ToString()));
+            batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != NodeKind.Coinbase.ToString()));
             var _strategy = _strategyFactory.GetStrategy(type.Key);
             tasks.Add(
                 _strategy.ToCsvAsync(
-                    type.Value.Where(x => x.Id != NodeLabels.Coinbase.ToString()),
+                    type.Value.Where(x => x.Id != NodeKind.Coinbase.ToString()),
                     batchInfo.GetFilename(type.Key)));
         }
 

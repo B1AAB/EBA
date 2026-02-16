@@ -6,11 +6,11 @@ public class B2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(ser
 {
     private static readonly PropertyMapping<B2TEdge>[] _mappings =
     [
-        PropertyMappingFactory.SourceId<B2TEdge>(BlockNodeStrategy.Label, e => e.Source.BlockMetadata.Height),
-        PropertyMappingFactory.TargetId<B2TEdge>(TxNodeStrategy.Label, e => e.Target.Txid),
+        PropertyMappingFactory.SourceId<B2TEdge>(BlockNodeStrategy.IdSpace, e => e.Source.BlockMetadata.Height),
+        PropertyMappingFactory.TargetId<B2TEdge>(TxNodeStrategy.IdSpace, e => e.Target.Txid),
         PropertyMappingFactory.ValueBTC<B2TEdge>(e => Helpers.Satoshi2BTC(e.Value)),
         PropertyMappingFactory.Height<B2TEdge>(e => e.BlockHeight),
-        PropertyMappingFactory.EdgeType<B2TEdge>(e => e.Type)
+        PropertyMappingFactory.EdgeType<B2TEdge>(e => e.Relation)
     ];
 
     public override string GetCsvHeader()

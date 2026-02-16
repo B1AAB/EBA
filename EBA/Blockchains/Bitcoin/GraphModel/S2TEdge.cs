@@ -10,7 +10,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         ScriptNode source,
         TxNode target,
         long value,
-        EdgeType type,
+        RelationType type,
         uint timestamp,
         long blockHeight,
         long utxoCreatedInBlockHeight) :
@@ -22,7 +22,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
     public S2TEdge(
         ScriptNode source,
         TxNode target,
-        EdgeType type,
+        RelationType type,
         uint timestamp,
         long blockHeight,
         List<PrevOut> prevOuts) :
@@ -41,7 +41,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         return new S2TEdge(
             u.Source,
             u.Target,
-            u.Type,
+            u.Relation,
             u.Timestamp,
             u.BlockHeight,
             [.. u.PrevOuts, .. v.PrevOuts]);
@@ -53,7 +53,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         return
         [
             nameof(Value),
-            nameof(Type),
+            nameof(Relation),
             nameof(BlockHeight),
             nameof(UTxOCreatedInBlockHeight),
             "UtxoAgeBlocks"

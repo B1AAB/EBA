@@ -1,5 +1,4 @@
-﻿using EBA.Graph.Bitcoin;
-using EBA.Graph.Db.Neo4jDb;
+﻿using EBA.Graph.Db.Neo4jDb;
 using EBA.Utilities;
 
 namespace EBA.Graph.Bitcoin.Strategies;
@@ -28,13 +27,13 @@ public static class PropertyMappingFactory
         return new(BTCValueProperty, x => getValue(x));
     }
 
-    public static PropertyMapping<T> SourceId<T>(NodeLabels label, Func<T, object?> getValue)
+    public static PropertyMapping<T> SourceId<T>(string idSpace, Func<T, object?> getValue)
     {
-        return new(":START_ID", FieldType.String, getValue, _ => $":START_ID({label})");
+        return new(":START_ID", FieldType.String, getValue, _ => $":START_ID({idSpace})");
     }
-    public static PropertyMapping<T> TargetId<T>(NodeLabels label, Func<T, object?> getValue)
+    public static PropertyMapping<T> TargetId<T>(string idSpace, Func<T, object?> getValue)
     {
-        return new(":END_ID", FieldType.String, getValue, _ => $":END_ID({label})");
+        return new(":END_ID", FieldType.String, getValue, _ => $":END_ID({idSpace})");
     }
     public static PropertyMapping<T> EdgeType<T>(Func<T, object?> getType)
     {

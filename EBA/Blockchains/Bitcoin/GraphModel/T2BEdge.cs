@@ -4,7 +4,7 @@ public class T2BEdge(
     TxNode source,
     BlockNode target,
     long value,
-    EdgeType type,
+    RelationType type,
     uint timestamp,
     long blockHeight) 
     : Edge<TxNode, BlockNode>(

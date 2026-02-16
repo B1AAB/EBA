@@ -14,9 +14,9 @@ public class NodeFactory
         double originalIndegree,
         double originalOutdegree,
         double outHopsFromRoot, 
-        out EBA.Graph.Model.INode createdNode)
+        out Graph.Model.INode createdNode)
     {
-        if (node.Labels.Contains(ScriptNodeStrategy.Label.ToString()))
+        if (node.Labels.Contains(NodeKind.Script.ToString()))
         {
             createdNode = ScriptNodeStrategy.Deserialize(
                 node,
@@ -26,7 +26,7 @@ public class NodeFactory
 
             return true;
         }
-        else if (node.Labels.Contains(TxNodeStrategy.Label.ToString()))
+        else if (node.Labels.Contains(NodeKind.Tx.ToString()))
         {
             createdNode = TxNodeStrategy.Deserialize(
                 node,
@@ -36,7 +36,7 @@ public class NodeFactory
 
             return !((TxNode)createdNode).HasNullFeatures();
         }
-        else if (node.Labels.Contains(BlockNodeStrategy.Label.ToString()))
+        else if (node.Labels.Contains(NodeKind.Block.ToString()))
         {
             createdNode = BlockNodeStrategy.Deserialize(
                 node,
@@ -46,7 +46,7 @@ public class NodeFactory
 
             return true;
         }
-        else if (node.Labels.Contains(BitcoinChainAgent.Coinbase.ToString()))
+        else if (node.Labels.Contains(NodeKind.Coinbase.ToString()))
         {
             createdNode = new CoinbaseNode(
                 node,

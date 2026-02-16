@@ -8,7 +8,7 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
         TxNode source,
         ScriptNode target,
         long value,
-        EdgeType type,
+        RelationType type,
         uint timestamp,
         long blockHeight) :
         base(source, target, value, type, timestamp, blockHeight)
@@ -16,7 +16,7 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
 
     public T2SEdge(TxNode source,
         ScriptNode target,
-        EdgeType type,
+        RelationType type,
         uint timestamp,
         long blockHeight,
         List<Output> outputs) :
@@ -35,7 +35,7 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
         return new T2SEdge(
             u.Source,
             u.Target,
-            u.Type,
+            u.Relation,
             u.Timestamp,
             u.BlockHeight,
             [.. u.Outputs, .. v.Outputs]);

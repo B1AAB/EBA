@@ -4,6 +4,10 @@ public class Node : INode
 {
     public string Id { get; }
 
+    public NodeKind NodeKind { get; }
+
+    public string Kind { get { return NodeKind.ToString(); } }
+
     public string? IdInGraphDb { get; }
 
     public int InDegree { get { return IncomingEdges.Count; } }
@@ -37,9 +41,10 @@ public class Node : INode
 
     public const char Delimiter = '\t';
 
-    public Node(string id, double? originalInDegree = null, double? originalOutDegree = null, double? outHopsFromRoot = null, string? idInGraphDb = null)
+    public Node(string id, NodeKind kind, double? originalInDegree = null, double? originalOutDegree = null, double? outHopsFromRoot = null, string? idInGraphDb = null)
     {
         Id = id;
+        NodeKind = kind;
         OriginalInDegree = originalInDegree;
         OriginalOutDegree = originalOutDegree;
         OutHopsFromRoot = outHopsFromRoot;

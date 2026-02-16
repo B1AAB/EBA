@@ -8,11 +8,12 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
     where TTarget : notnull, INode
 {
     public string Id { get; }
+    public string Kind => Triplet;
     public TSource Source { get; }
     public TTarget Target { get; }
     public long Value { get; }
-    public EdgeType Type { get; }
-    public string TypeLabel { get; }
+    public RelationType Relation { get; }
+    public string Triplet { get; }
     public uint Timestamp { get; }
     public long BlockHeight { get; }
 
@@ -36,14 +37,14 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
 
     public Edge(
         TSource source, TTarget target,
-        long value, EdgeType type,
+        long value, RelationType relation,
         uint timestamp, long blockHeight)
     {
         Source = source;
         Target = target;
         Value = value;
-        Type = type;
-        TypeLabel = $"{source.GetType().Name}->{target.GetType().Name}:{type}";
+        Relation = relation;
+        Triplet = $"{source.GetType().Name}->{target.GetType().Name}:{relation}"; // TODO: after node lable enum is defined, change this to use node label.
         Timestamp = timestamp;
         BlockHeight = blockHeight;
 
@@ -58,7 +59,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
         Target = target;
         Id = relationship.ElementId;
         Value = Helpers.BTC2Satoshi(PropertyMappingFactory.ValueBTC<IRelationship>(null!).Deserialize<double>(relationship.Properties));
-        Type = Enum.Parse<EdgeType>(relationship.Type);
+        Relation = Enum.Parse<RelationType>(relationship.Type);
         BlockHeight = PropertyMappingFactory.Height<IRelationship>(null!).Deserialize<long>(relationship.Properties);
     }
 
@@ -66,7 +67,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
     {
         return [
             nameof(Value),
-            nameof(Type),
+            nameof(Relation),
             nameof(BlockHeight) ];
     }
 
@@ -75,7 +76,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
         return
         [
             Helpers.Satoshi2BTC(Value),
-            (double)Type,
+            (double)Relation,
             BlockHeight
         ];
     }
@@ -83,7 +84,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
     public string GetHashCode(bool ignoreValue)
     {
         if (ignoreValue)
-            return HashCode.Combine(Source.Id, Target.Id, Type, Timestamp).ToString();
+            return HashCode.Combine(Source.Id, Target.Id, Relation, Timestamp).ToString();
         else
             return GetHashCode().ToString();
     }
@@ -91,14 +92,14 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
     public int GetHashCodeInt(bool ignoreValue)
     {
         if (ignoreValue)
-            return HashCode.Combine(Source.Id, Target.Id, Type, Timestamp);
+            return HashCode.Combine(Source.Id, Target.Id, Relation, Timestamp);
         else
             return GetHashCode();
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Source.Id, Target.Id, Value, Type, Timestamp);
+        return HashCode.Combine(Source.Id, Target.Id, Value, Relation, Timestamp);
     }
 
     public void AddValue(long value)

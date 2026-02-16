@@ -51,19 +51,19 @@ public class BitcoinGraphAgent : IGraphAgent<BitcoinGraph>, IDisposable
     /// 
     /// This is a temp utility method until the node lables and graph component types enums are unified.
     /// </summary>
-    public static NodeLabels ConvertGraphComponentTypeToNodeLabel(Type type)
+    public static NodeKind ConvertGraphComponentTypeToNodeLabel(Type type)
     {
         if (type == typeof(BlockNode))
-            return NodeLabels.Block;
+            return NodeKind.Block;
 
         if (type == typeof(ScriptNode))
-            return NodeLabels.Script;
+            return NodeKind.Script;
 
         if (type == typeof(TxNode))
-            return NodeLabels.Tx;
+            return NodeKind.Tx;
 
         if (type == typeof(CoinbaseNode))
-            return NodeLabels.Coinbase;
+            return NodeKind.Coinbase;
 
         throw new ArgumentOutOfRangeException(nameof(type), $"Not a valid node type: {type}");
     }

@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Bitcoin;
-
-namespace EBA.Graph.Db;
+﻿namespace EBA.Graph.Db;
 
 public interface IGraphDb<T> : IDisposable where T : GraphBase
 {
@@ -21,14 +19,14 @@ public interface IGraphDb<T> : IDisposable where T : GraphBase
     public void ReportQueries();
 
     public Task<List<IRecord>> GetRandomNodesAsync(
-        NodeLabels label,
+        NodeKind label,
         int count,
         CancellationToken ct,
         double rootNodeSelectProbability = 0.1,
         string nodeVariable = "randomNode");
 
     public Task<List<IRecord>> GetNeighborsAsync(
-        NodeLabels rootNodeLabel,
+        NodeKind rootNodeLabel,
         string rootNodeIdProperty,
         string rootNodeId,
         int queryLimit,

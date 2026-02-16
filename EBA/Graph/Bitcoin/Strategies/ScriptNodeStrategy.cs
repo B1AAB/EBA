@@ -4,19 +4,19 @@ namespace EBA.Graph.Bitcoin.Strategies;
 
 public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
 {
-    public const NodeLabels Label = NodeLabels.Script;
+    public static string IdSpace { get; } = NodeKind.Script.ToString();
 
     private const ScriptNode v = null!;
     private static readonly PropertyMapping<ScriptNode> _address = 
         PropertyMappingFactory.Address<ScriptNode>(
             n => n.Address, 
-            p => p.GetIdFieldCsvHeader(Label.ToString()));
+            p => p.GetIdFieldCsvHeader(IdSpace));
 
     private readonly static PropertyMapping<ScriptNode>[] _mappings =
     [
         _address,
         new(nameof(v.ScriptType), FieldType.String, n => n.ScriptType),
-        new(":LABEL", FieldType.String, _ => Label, _ => ":LABEL"),
+        new(":LABEL", FieldType.String, n => n.Kind, _ => ":LABEL"),
     ];
 
     private static readonly Dictionary<string, PropertyMapping<ScriptNode>> _mappingsDict =

@@ -4,7 +4,7 @@ public class T2TEdge : Edge<TxNode, TxNode>
 {
     public T2TEdge(
         TxNode source, TxNode target,
-        long value, EdgeType type, uint timestamp, long blockHeight) :
+        long value, RelationType type, uint timestamp, long blockHeight) :
         base(source, target, value, type, timestamp, blockHeight)
     { }
 
@@ -29,7 +29,7 @@ public class T2TEdge : Edge<TxNode, TxNode>
         return new T2TEdge(
             source, target,
             newEdge.Value,
-            newEdge.Type,
+            newEdge.Relation,
             newEdge.Timestamp,
             newEdge.BlockHeight);
     }

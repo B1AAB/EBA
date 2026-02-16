@@ -9,7 +9,7 @@ public class C2TEdge(
         TxNode.GetCoinbaseNode(),
         target,
         value,
-        EdgeType.Mints,
+        RelationType.Mints,
         timestamp,
         blockHeight)
 {

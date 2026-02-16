@@ -1,6 +1,14 @@
-﻿namespace EBA.Graph.Model;
+﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
 
-public enum EdgeType
+public enum NodeKind
+{
+    Coinbase,
+    Script,
+    Block,
+    Tx
+}
+
+public enum RelationType
 {
     Mints = 0,
     Transfers = 1,

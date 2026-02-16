@@ -79,12 +79,6 @@ public class BitcoinGraphSampleOptions
     public int MaxNodeFetchFromNeighbor { init; get; } = 10000;
     public int MaxEdgesFetchFromNeighbor { init; get; } = 500000;
 
-    public int DisjointGraph_ForestFireNodeSamplingCountAtRoot { init; get; } = 20;
-    public int DisjointGraph_ForestFireMaxHops { init; get; } = 3;
-    public int DisjointGraph_ForestFireQueryLimit { init; get; } = 100;
-    public double DisjointGraph_ForestFireNodeCountReductionFactorByHop { init; get; } = 3.0;
-    public string DisjointGraph_LabelFilters { init; get; } = $"{ScriptNodeStrategy.Label}|{BlockNodeStrategy.Label}"; //ScriptNodeStrategy.Labels;
-
 
     public double RootNodeSelectProb
     {

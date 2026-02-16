@@ -1,9 +1,9 @@
-﻿using EBA.Graph.Bitcoin;
-
-namespace EBA.Blockchains.Bitcoin.GraphModel;
+﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
 {
+    private static readonly NodeKind _kind = NodeKind.Script;
+
     // TODO: since there is a CoinbaseNode type, this default should change
     public string Address { get; } = BitcoinChainAgent.Coinbase.ToString();
     // TODO: since there is a CoinbaseNode type, this default should change
@@ -19,13 +19,14 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         string? idInGraphDb = null) :
         base(
             id: address,
+            kind: _kind,
             originalInDegree: originalIndegree,
             originalOutDegree: originalOutdegree,
             outHopsFromRoot: hopsFromRoot,
             idInGraphDb: idInGraphDb)
     { }
 
-    public ScriptNode(Utxo utxo) : base(utxo.Id)
+    public ScriptNode(Utxo utxo) : base(utxo.Id, kind: _kind)
     {
         Address = utxo.Address;
         ScriptType = utxo.ScriptType;
@@ -54,8 +55,9 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         double? originalIndegree = null,
         double? originalOutdegree = null,
         double? hopsFromRoot = null,
-        string? idInGraphDb = null) : 
+        string? idInGraphDb = null) :
         base(id: scriptPubKey.SHA256HashString,
+             kind: _kind,
              originalInDegree: originalIndegree,
              originalOutDegree: originalOutdegree,
              outHopsFromRoot: hopsFromRoot,
@@ -73,11 +75,6 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
     public override string GetIdPropertyName()
     {
         return nameof(Address);
-    }
-
-    public static ScriptNode GetCoinbaseNode()
-    {
-        return new ScriptNode(NodeLabels.Coinbase.ToString());
     }
 
     public static new string[] GetFeaturesName()
