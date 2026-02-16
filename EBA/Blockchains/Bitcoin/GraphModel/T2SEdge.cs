@@ -11,7 +11,7 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
         EdgeType type,
         uint timestamp,
         long blockHeight) :
-        base(source, target, value, type, EdgeLabel.T2STransfer, timestamp, blockHeight)
+        base(source, target, value, type, timestamp, blockHeight)
     { }
 
     public T2SEdge(TxNode source,
@@ -20,7 +20,7 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
         uint timestamp,
         long blockHeight,
         List<Output> outputs) :
-        base(source, target, outputs.Sum(x => x.Value), type, EdgeLabel.T2STransfer, timestamp, blockHeight)
+        base(source, target, outputs.Sum(x => x.Value), type, timestamp, blockHeight)
     {
         Outputs = outputs;
     }

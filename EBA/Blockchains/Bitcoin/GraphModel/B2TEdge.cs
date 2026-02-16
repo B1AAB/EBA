@@ -6,7 +6,7 @@ public class B2TEdge : Edge<BlockNode, TxNode>
         BlockNode source, TxNode target,
         long value, EdgeType type,
         uint timestamp, long blockHeight) :
-        base(source, target, value, type, EdgeLabel.B2TConfirms, timestamp, blockHeight)
+        base(source, target, value, type, timestamp, blockHeight)
     { }
 
     public B2TEdge Update(long value)

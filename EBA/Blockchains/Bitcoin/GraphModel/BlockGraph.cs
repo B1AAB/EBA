@@ -24,12 +24,12 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         _stopwatch.Stop();
     }
 
-    private readonly uint[] _edgeLabelCount = new uint[Enum.GetNames<EdgeLabel>().Length];
-    private readonly long[] _edgeLabelValueSum = new long[Enum.GetNames<EdgeLabel>().Length];
-    public void IncrementEdgeType(EdgeLabel label, long value)
+    private readonly ConcurrentDictionary<string, uint> _edgeLableCount= [];
+    private readonly ConcurrentDictionary<string, long> _edgeLableValueSum = [];
+    public void IncrementEdgeType(string typeLabel, long value)
     {
-        Interlocked.Increment(ref _edgeLabelCount[(int)label]);
-        Helpers.ThreadsafeAdd(ref _edgeLabelValueSum[(int)label], value);
+        _edgeLableCount.AddOrUpdate(typeLabel, 1, (_, oldValue) => oldValue + 1);
+        _edgeLableValueSum.AddOrUpdate(typeLabel, value, (_, oldValue) => oldValue + value);
     }
 
     private TxGraph _coinbaseTxGraph;
@@ -105,8 +105,8 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         AddOrUpdateEdge(new B2TEdge(BlockNode, v, mintedCoins, EdgeType.Contains, t, h));
 
 
-        BlockNode.EdgeLabelCount = _edgeLabelCount;
-        BlockNode.EdgeLabelValueSum = _edgeLabelValueSum;
+        BlockNode.EdgeLabelCount = _edgeLableCount.ToDictionary(kv => kv.Key, kv => kv.Value);
+        BlockNode.EdgeLabelValueSum = _edgeLableValueSum.ToDictionary(kv => kv.Key, kv => kv.Value);
     }
 
     private void AddTxGraphToBlockGraph(TxGraph txGraph)
@@ -149,13 +149,13 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         where T: IEdge<Graph.Model.INode, Graph.Model.INode>
     {
         base.AddOrUpdateEdge(edge);
-        IncrementEdgeType(edge.Label, edge.Value);
+        IncrementEdgeType(edge.TypeLabel, edge.Value);
     }
 
     public void AddOrUpdateEdge(T2TEdge edge)
     {
         AddOrUpdateEdge(edge, T2TEdge.Update);
-        IncrementEdgeType(edge.Label, edge.Value);
+        IncrementEdgeType(edge.TypeLabel, edge.Value);
     }
 
     public bool Equals(BlockGraph? other)

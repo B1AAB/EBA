@@ -12,7 +12,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
     public TTarget Target { get; }
     public long Value { get; }
     public EdgeType Type { get; }
-    public EdgeLabel Label { get; }
+    public string TypeLabel { get; }
     public uint Timestamp { get; }
     public long BlockHeight { get; }
 
@@ -36,14 +36,14 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
 
     public Edge(
         TSource source, TTarget target,
-        long value, EdgeType type, EdgeLabel label,
+        long value, EdgeType type,
         uint timestamp, long blockHeight)
     {
         Source = source;
         Target = target;
         Value = value;
         Type = type;
-        Label = label;
+        TypeLabel = $"{source.GetType().Name}->{target.GetType().Name}:{type}";
         Timestamp = timestamp;
         BlockHeight = blockHeight;
 

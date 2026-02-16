@@ -18,8 +18,8 @@ public class BlockNode(
 {
     public BlockMetadata BlockMetadata { init; get; } = blockMetadata;
 
-    public uint[] EdgeLabelCount { set; get; } = [];
-    public long[] EdgeLabelValueSum { set; get; } = [];
+    public Dictionary<string, uint> EdgeLabelCount { set; get; } = [];
+    public Dictionary<string, long> EdgeLabelValueSum { set; get; } = [];
 
     public double ResidualValue
     {

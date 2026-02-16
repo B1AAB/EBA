@@ -14,7 +14,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         uint timestamp,
         long blockHeight,
         long utxoCreatedInBlockHeight) :
-        base(source, target, value, type, EdgeLabel.S2TTransfer, timestamp, blockHeight)
+        base(source, target, value, type, timestamp, blockHeight)
     {
         UTxOCreatedInBlockHeight = utxoCreatedInBlockHeight;
     }
@@ -26,7 +26,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         uint timestamp,
         long blockHeight,
         List<PrevOut> prevOuts) :
-        base(source, target, prevOuts.Sum(x => x.Value), type, EdgeLabel.S2TTransfer, timestamp, blockHeight)
+        base(source, target, prevOuts.Sum(x => x.Value), type, timestamp, blockHeight)
     {
         PrevOuts = prevOuts;
     }
