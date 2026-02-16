@@ -47,6 +47,14 @@ const config = {
           editUrl: 'https://github.com/B1AAB/EBA/edit/main/website',
           remarkPlugins: [remarkMath],
           rehypePlugins: [rehypeKatex],
+          lastVersion: 'v1.0',
+          includeCurrentVersion: true,
+          versions: {
+            current: {
+              label: "🚀 Next",
+              path: "next",
+            },
+          },
         },
         blog: {
           blogSidebarTitle: 'Releases',
@@ -114,6 +122,10 @@ const config = {
             sidebarId: 'tutorialSidebar',
             position: 'left',
             label: 'Documentation',
+          },
+          {
+            type: 'docsVersionDropdown',
+            position: 'right',
           },
           {
             href: 'https://github.com/B1AAB/GraphStudio',

@@ -1,0 +1,8 @@
+{
+  "label": "FAQ",
+  "position": 99,
+  "link": {
+    "type": "doc",
+    "id": "faq/faq"
+  }
+}

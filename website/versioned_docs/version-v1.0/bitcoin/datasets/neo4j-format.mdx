@@ -1,0 +1,19 @@
+---
+id: neo4j-format
+title: Graph in Neo4j
+sidebar_label: Graph in Neo4j
+sidebar_position: 2
+slug: tsv
+---
+
+The dataset is organized into separate TSV files 
+for nodes and edges based on their schema. 
+The files do not contain a header line, 
+instead, a corresponding `*_header.tsv.gz` 
+file provides the column names for each node or edge type.
+All files are grouped into batches and 
+pre-formatted for Neo4j's bulk import tool. 
+
+
+The dataset consists of `1 966` files (`1.17 TB`) 
+and is available for download from [this page](/releases/data-release/v1#bitcoin-graph).
