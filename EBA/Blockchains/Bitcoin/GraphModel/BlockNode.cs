@@ -10,19 +10,19 @@ public class BlockNode(
     string? idInGraphDb = null) : 
     Node(
         id: blockMetadata.Height.ToString(),
-        kind: _kind,
         originalInDegree: originalIndegree,
         originalOutDegree: originalOutdegree,
         outHopsFromRoot: outHopsFromRoot,
         idInGraphDb: idInGraphDb), 
     IComparable<BlockNode>, IEquatable<BlockNode>
 {
-    private static readonly NodeKind _kind = NodeKind.Block;
+    public new static NodeKind Kind => NodeKind.Block;
+    public override NodeKind NodeKind => Kind;
 
     public BlockMetadata BlockMetadata { init; get; } = blockMetadata;
 
-    public Dictionary<string, uint> TripletTypeCount { set; get; } = [];
-    public Dictionary<string, long> TripletTypeValueSum { set; get; } = [];
+    public Dictionary<EdgeKind, uint> TripletTypeCount { set; get; } = [];
+    public Dictionary<EdgeKind, long> TripletTypeValueSum { set; get; } = [];
 
     public double ResidualValue
     {

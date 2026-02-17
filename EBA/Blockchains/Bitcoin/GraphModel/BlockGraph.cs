@@ -24,12 +24,12 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         _stopwatch.Stop();
     }
 
-    private readonly ConcurrentDictionary<string, uint> _edgeLabelCount= [];
-    private readonly ConcurrentDictionary<string, long> _edgeLabelValueSum = [];
-    public void IncrementEdgeType(string typeLabel, long value)
+    private readonly ConcurrentDictionary<EdgeKind, uint> _edgeLabelCount= [];
+    private readonly ConcurrentDictionary<EdgeKind, long> _edgeLabelValueSum = [];
+    public void IncrementEdgeType(EdgeKind edgeKind, long value)
     {
-        _edgeLabelCount.AddOrUpdate(typeLabel, 1, (_, oldValue) => oldValue + 1);
-        _edgeLabelValueSum.AddOrUpdate(typeLabel, value, (_, oldValue) => oldValue + value);
+        _edgeLabelCount.AddOrUpdate(edgeKind, 1, (_, oldValue) => oldValue + 1);
+        _edgeLabelValueSum.AddOrUpdate(edgeKind, value, (_, oldValue) => oldValue + value);
     }
 
     private TxGraph _coinbaseTxGraph;
@@ -104,9 +104,8 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         AddOrUpdateEdge(new C2TEdge(v, mintedCoins, t, h));
         AddOrUpdateEdge(new B2TEdge(BlockNode, v, mintedCoins, RelationType.Contains, t, h));
 
-
-        BlockNode.TripletTypeCount = _edgeLabelCount.ToDictionary(kv => kv.Key, kv => kv.Value);
-        BlockNode.TripletTypeValueSum = _edgeLabelValueSum.ToDictionary(kv => kv.Key, kv => kv.Value);
+        BlockNode.TripletTypeCount = _edgeLabelCount.ToDictionary(x => x.Key, x => x.Value);
+        BlockNode.TripletTypeValueSum = _edgeLabelValueSum.ToDictionary(x => x.Key, x => x.Value);
     }
 
     private void AddTxGraphToBlockGraph(TxGraph txGraph)

@@ -2,10 +2,23 @@
 
 public enum NodeKind
 {
-    Coinbase,
-    Script,
-    Block,
-    Tx
+    Coinbase = 0,
+    Script = 1,
+    Block = 2,
+    Tx = 3
+}
+
+public record EdgeKind(NodeKind Source, NodeKind Target, RelationType Relation)
+{
+    public override string ToString()
+    {
+        return $"{Source}-[{Relation}]->{Target}";
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Source, Target, Relation);
+    }
 }
 
 public enum RelationType

@@ -2,31 +2,16 @@
 
 public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
 {
-    private static readonly NodeKind _kind = NodeKind.Script;
+    public new static NodeKind Kind => NodeKind.Script;
+    public override NodeKind NodeKind => Kind;    
 
-    // TODO: since there is a CoinbaseNode type, this default should change
-    public string Address { get; } = BitcoinChainAgent.Coinbase.ToString();
-    // TODO: since there is a CoinbaseNode type, this default should change
-    public ScriptType ScriptType { get; } = ScriptType.Coinbase;
+    public string Address { get; }
+
+    public ScriptType ScriptType { get; }
 
     public string HexBase64 { get; } = string.Empty;
 
-    public ScriptNode(
-        string address,
-        double? originalIndegree = null,
-        double? originalOutdegree = null,
-        double? hopsFromRoot = null,
-        string? idInGraphDb = null) :
-        base(
-            id: address,
-            kind: _kind,
-            originalInDegree: originalIndegree,
-            originalOutDegree: originalOutdegree,
-            outHopsFromRoot: hopsFromRoot,
-            idInGraphDb: idInGraphDb)
-    { }
-
-    public ScriptNode(Utxo utxo) : base(utxo.Id, kind: _kind)
+    public ScriptNode(Utxo utxo) : base(utxo.Id)
     {
         Address = utxo.Address;
         ScriptType = utxo.ScriptType;
@@ -39,11 +24,11 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         double? originalOutdegree = null,
         double? hopsFromRoot = null,
         string? idInGraphDb = null) :
-        this(
-            address: address,
-            originalIndegree: originalIndegree,
-            originalOutdegree: originalOutdegree,
-            hopsFromRoot: hopsFromRoot,
+        base(
+            id: address,
+            originalInDegree: originalIndegree,
+            originalOutDegree: originalOutdegree,
+            outHopsFromRoot: hopsFromRoot,
             idInGraphDb: idInGraphDb)
     {
         Address = address;
@@ -57,7 +42,6 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         double? hopsFromRoot = null,
         string? idInGraphDb = null) :
         base(id: scriptPubKey.SHA256HashString,
-             kind: _kind,
              originalInDegree: originalIndegree,
              originalOutDegree: originalOutdegree,
              outHopsFromRoot: hopsFromRoot,

@@ -1,12 +1,11 @@
 ﻿namespace EBA.Graph.Model;
 
-public class Node : INode
+public abstract class Node : INode
 {
+    public static NodeKind Kind { get { throw new NotImplementedException(); } }
+    public abstract NodeKind NodeKind { get; }
+
     public string Id { get; }
-
-    public NodeKind NodeKind { get; }
-
-    public string Kind { get { return NodeKind.ToString(); } }
 
     public string? IdInGraphDb { get; }
 
@@ -41,10 +40,9 @@ public class Node : INode
 
     public const char Delimiter = '\t';
 
-    public Node(string id, NodeKind kind, double? originalInDegree = null, double? originalOutDegree = null, double? outHopsFromRoot = null, string? idInGraphDb = null)
+    public Node(string id, double? originalInDegree = null, double? originalOutDegree = null, double? outHopsFromRoot = null, string? idInGraphDb = null)
     {
         Id = id;
-        NodeKind = kind;
         OriginalInDegree = originalInDegree;
         OriginalOutDegree = originalOutDegree;
         OutHopsFromRoot = outHopsFromRoot;

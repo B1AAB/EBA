@@ -157,11 +157,11 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         foreach (var type in nodes)
         {
-            batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id != NodeKind.Coinbase.ToString()));
+            batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id !=  CoinbaseNode.Kind.ToString()));
             var _strategy = _strategyFactory.GetStrategy(type.Key);
             tasks.Add(
                 _strategy.ToCsvAsync(
-                    type.Value.Where(x => x.Id != NodeKind.Coinbase.ToString()),
+                    type.Value.Where(x => x.Id != CoinbaseNode.Kind.ToString()),
                     batchInfo.GetFilename(type.Key)));
         }
 

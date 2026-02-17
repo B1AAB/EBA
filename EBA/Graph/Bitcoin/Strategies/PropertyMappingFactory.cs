@@ -74,7 +74,7 @@ public static class PropertyMappingFactory
     }
 
     public static PropertyMapping<T>[] ScriptTypeCounts<T>(
-        string prefix, 
+        string prefix,
         Func<T, Dictionary<ScriptType, long>> getScriptTypeCounts)
     {
         return [..
@@ -123,5 +123,45 @@ public static class PropertyMappingFactory
             .ToDictionary(
                 scriptType => scriptType,
                 scriptType => (long)properties[$"{prefix}.ScriptType.{scriptType}"]);
+    }
+
+    public static PropertyMapping<T>[] DictionaryToColumns<T>(
+        string prefix,
+        IEnumerable<string> keys,
+        Func<T, Dictionary<string, long>> getDict)
+    {
+        return
+        [
+            ..  keys.Select(k => new PropertyMapping<T>(
+                $"{prefix}.{k}",
+                FieldType.Long,
+                n => getDict(n).TryGetValue(k, out var v) ? v : 0L))
+        ];
+    }
+
+    public static PropertyMapping<T>[] DictionaryToColumns<T>(
+        string prefix,
+        IEnumerable<string> keys,
+        Func<T, Dictionary<string, uint>> getDict)
+    {
+        return
+        [
+            ..  keys.Select(k => new PropertyMapping<T>(
+                $"{prefix}.{k}",
+                FieldType.Long,
+                n => getDict(n).TryGetValue(k, out var v) ? v : 0L))
+        ];
+    }
+
+    public static Dictionary<string, TValue> ReadDictionary<TValue>(
+        string prefix,
+        IEnumerable<string> keys,
+        IReadOnlyDictionary<string, object> properties)
+    {
+        var result = new Dictionary<string, TValue>();
+        foreach (var key in keys)
+            if (properties.TryGetValue($"{prefix}.{key}", out var val) && val is IConvertible convertible)
+                result[key] = (TValue)convertible.ToType(typeof(TValue), null);
+        return result;
     }
 }

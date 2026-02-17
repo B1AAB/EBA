@@ -8,7 +8,7 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
     /// The namespace used to resolve IDs during import by Neo4j. 
     /// It should be unique across all node and edge types in the graph.
     /// </summary>
-    public static string IdSpace { get; } = NodeKind.Tx.ToString();
+    public static string IdSpace { get; } = TxNode.Kind.ToString();
 
     private const TxNode v = null!;
     private static readonly PropertyMapping<TxNode>[] _mappings =
@@ -20,7 +20,7 @@ public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCo
         new(nameof(v.Weight), FieldType.Long, n => n.Weight),
         new(nameof(v.LockTime), FieldType.Long, n => n.LockTime),
 
-        new(":LABEL", FieldType.String, n => n.Kind, _ => ":LABEL"),
+        new(":LABEL", FieldType.String, _ => TxNode.Kind, _ => ":LABEL"),
     ];
 
     private static readonly Dictionary<string, PropertyMapping<TxNode>> _mappingsDict =

@@ -43,14 +43,14 @@ public class ForestFire : ITraversalAlgorithm
             foreach (var rootNode in rndRootNodes)
             {
                 ct.ThrowIfCancellationRequested();
-                var rootNodeLabelInLogs = $"({NodeKind.Script} {{{rootNode.GetIdPropertyName()}={rootNode.Id}}})";
+                var rootNodeLabelInLogs = $"({ScriptNode.Kind} {{{rootNode.GetIdPropertyName()}={rootNode.Id}}})";
 
                 _logger.LogInformation(
                     "Sampling neighbors for root {Index:N0}/{Total:N0}. {rootNodeTag}",
                     ++counter, rndRootNodes.Count, rootNodeLabelInLogs);
 
                 var graph = await GetNeighborsAsync(
-                    rootNodeLabel: NodeKind.Script,
+                    rootNodeLabel: ScriptNode.Kind,
                     rootNodeIdProperty: rootNode.GetIdPropertyName(),
                     rootNodeId: rootNode.Id,
                     nodeSamplingCountAtRoot: _options.Bitcoin.GraphSample.ForestFireOptions.NodeSamplingCountAtRoot,
@@ -332,7 +332,7 @@ public class ForestFire : ITraversalAlgorithm
     {
         var nodeVar = "randomNode";
         var rndRecords = await _graphDb.GetRandomNodesAsync(
-            NodeKind.Script,
+            ScriptNode.Kind,
             count,
             ct,
             _options.Bitcoin.GraphSample.RootNodeSelectProb,

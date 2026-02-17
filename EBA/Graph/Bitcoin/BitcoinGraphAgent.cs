@@ -54,16 +54,16 @@ public class BitcoinGraphAgent : IGraphAgent<BitcoinGraph>, IDisposable
     public static NodeKind ConvertGraphComponentTypeToNodeLabel(Type type)
     {
         if (type == typeof(BlockNode))
-            return NodeKind.Block;
+            return BlockNode.Kind;
 
         if (type == typeof(ScriptNode))
-            return NodeKind.Script;
+            return ScriptNode.Kind;
 
         if (type == typeof(TxNode))
-            return NodeKind.Tx;
+            return TxNode.Kind;
 
         if (type == typeof(CoinbaseNode))
-            return NodeKind.Coinbase;
+            return CoinbaseNode.Kind;
 
         throw new ArgumentOutOfRangeException(nameof(type), $"Not a valid node type: {type}");
     }

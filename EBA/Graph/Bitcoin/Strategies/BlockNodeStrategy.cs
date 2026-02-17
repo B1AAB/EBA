@@ -4,7 +4,7 @@ namespace EBA.Graph.Bitcoin.Strategies;
 
 public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
 {
-    public static string IdSpace { get; } = NodeKind.Block.ToString();
+    public static string IdSpace { get; } = BlockNode.Kind.ToString();
 
     private const Block v = null!;
     private static readonly PropertyMapping<BlockNode>[] _mappings =
@@ -37,8 +37,12 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(nameof(v.SpentOutputAge), n => n.BlockMetadata.SpentOutputAge),
         .. PropertyMappingFactory.ScriptTypeCounts<BlockNode>("Inputs", n => n.BlockMetadata.InputScriptTypeCount),
         .. PropertyMappingFactory.ScriptTypeCounts<BlockNode>("Outputs", n => n.BlockMetadata.OutputScriptTypeCount),
+        /*
+        .. PropertyMappingFactory.DictionaryToColumns(nameof(BlockNode.TripletTypeCount), _tripletKeys, n => n.TripletTypeCount),
+        .. PropertyMappingFactory.DictionaryToColumns(nameof(BlockNode.TripletTypeValueSum), _tripletKeys, n => n.TripletTypeValueSum),*/
 
-        new(":LABEL", FieldType.String, n => n.Kind, _ => ":LABEL"),
+
+        new(":LABEL", FieldType.String, _ => BlockNode.Kind, _ => ":LABEL"),
     ];
 
     private static readonly Dictionary<string, PropertyMapping<BlockNode>> _mappingsDict =
@@ -101,12 +105,20 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
             OutputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Outputs", props)
         };
 
-        return new BlockNode(
+        var blockNode = new BlockNode(
             blockMetadata: blockMetadata,
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
             outHopsFromRoot: hopsFromRoot,
             idInGraphDb: node.ElementId);
+        /*
+        blockNode.TripletTypeCount = PropertyMappingFactory.ReadDictionary<uint>(
+    nameof(blockNode.TripletTypeCount), _tripletKeys, props);
+
+        blockNode.TripletTypeValueSum = PropertyMappingFactory.ReadDictionary<long>(
+            nameof(blockNode.TripletTypeValueSum), _tripletKeys, props);*/
+
+        return blockNode;
     }
 
     public override string GetQuery(string filename)

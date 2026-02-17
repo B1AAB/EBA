@@ -16,7 +16,7 @@ public class NodeFactory
         double outHopsFromRoot, 
         out Graph.Model.INode createdNode)
     {
-        if (node.Labels.Contains(NodeKind.Script.ToString()))
+        if (node.Labels.Contains(ScriptNode.Kind.ToString()))
         {
             createdNode = ScriptNodeStrategy.Deserialize(
                 node,
@@ -26,7 +26,7 @@ public class NodeFactory
 
             return true;
         }
-        else if (node.Labels.Contains(NodeKind.Tx.ToString()))
+        else if (node.Labels.Contains(TxNode.Kind.ToString()))
         {
             createdNode = TxNodeStrategy.Deserialize(
                 node,
@@ -36,7 +36,7 @@ public class NodeFactory
 
             return !((TxNode)createdNode).HasNullFeatures();
         }
-        else if (node.Labels.Contains(NodeKind.Block.ToString()))
+        else if (node.Labels.Contains(BlockNode.Kind.ToString()))
         {
             createdNode = BlockNodeStrategy.Deserialize(
                 node,
@@ -46,7 +46,7 @@ public class NodeFactory
 
             return true;
         }
-        else if (node.Labels.Contains(NodeKind.Coinbase.ToString()))
+        else if (node.Labels.Contains(CoinbaseNode.Kind.ToString()))
         {
             createdNode = new CoinbaseNode(
                 node,

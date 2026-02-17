@@ -8,12 +8,11 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
     where TTarget : notnull, INode
 {
     public string Id { get; }
-    public string Kind => Triplet;
+    public EdgeKind Triplet { get; }
     public TSource Source { get; }
     public TTarget Target { get; }
     public long Value { get; }
     public RelationType Relation { get; }
-    public string Triplet { get; }
     public uint Timestamp { get; }
     public long BlockHeight { get; }
 
@@ -44,11 +43,12 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
         Target = target;
         Value = value;
         Relation = relation;
-        Triplet = $"{source.Kind}->{target.Kind}:{relation}";
         Timestamp = timestamp;
         BlockHeight = blockHeight;
 
         Id = GetHashCode().ToString();
+
+        Triplet = new EdgeKind(source.NodeKind, target.NodeKind, Relation);
     }
 
     public Edge(

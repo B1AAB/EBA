@@ -3,6 +3,7 @@
 public interface INode : IGraphElement
 {
     public string Id { get; }
+    public NodeKind NodeKind { get; }
     public string? IdInGraphDb { get; }
     public int InDegree { get; }
     public int OutDegree { get; }
