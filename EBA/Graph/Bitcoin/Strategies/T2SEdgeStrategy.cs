@@ -2,7 +2,7 @@
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
-public class T2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
+public class T2SEdgeStrategy(bool serializeCompressed) : BitcoinStrategyBase(serializeCompressed)
 {
     public static readonly PropertyMapping<T2SEdge>[] _mappings =
     [

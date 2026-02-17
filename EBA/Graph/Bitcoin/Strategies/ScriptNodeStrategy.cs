@@ -2,7 +2,7 @@
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
-public class ScriptNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
+public class ScriptNodeStrategy(bool serializeCompressed) : BitcoinStrategyBase(serializeCompressed)
 {
     public static string IdSpace { get; } = ScriptNode.Kind.ToString();
 

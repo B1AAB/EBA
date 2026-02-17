@@ -7,8 +7,10 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
     where TSource : notnull, INode
     where TTarget : notnull, INode
 {
+    public static EdgeKind Kind { get { throw new NotImplementedException(); } }
+    public EdgeKind EdgeKind { get; }
+
     public string Id { get; }
-    public EdgeKind Triplet { get; }
     public TSource Source { get; }
     public TTarget Target { get; }
     public long Value { get; }
@@ -48,7 +50,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
 
         Id = GetHashCode().ToString();
 
-        Triplet = new EdgeKind(source.NodeKind, target.NodeKind, Relation);
+        EdgeKind = new EdgeKind(source.NodeKind, target.NodeKind, relation);
     }
 
     public Edge(

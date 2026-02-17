@@ -2,6 +2,8 @@
 
 public class T2SEdge : Edge<TxNode, ScriptNode>
 {
+    public new static EdgeKind Kind => new(TxNode.Kind, ScriptNode.Kind, RelationType.Redeems);
+
     public List<Output> Outputs { get; }
 
     public T2SEdge(

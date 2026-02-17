@@ -1,4 +1,5 @@
-﻿using EBA.Graph.Bitcoin.Strategies;
+﻿using EBA.Graph.Bitcoin.Factories;
+using EBA.Graph.Bitcoin.Strategies;
 
 namespace EBA.Graph.Bitcoin.TraversalAlgorithms;
 

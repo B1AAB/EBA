@@ -2,7 +2,7 @@
 
 public abstract class Node : INode
 {
-    public static NodeKind Kind { get { throw new NotImplementedException(); } }
+    public static NodeKind Kind => NodeKind.Undefined;
     public abstract NodeKind NodeKind { get; }
 
     public string Id { get; }

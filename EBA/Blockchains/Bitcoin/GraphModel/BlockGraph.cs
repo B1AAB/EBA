@@ -1,6 +1,4 @@
-﻿using EBA.Utilities;
-
-namespace EBA.Blockchains.Bitcoin.GraphModel;
+﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 {
@@ -24,7 +22,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         _stopwatch.Stop();
     }
 
-    private readonly ConcurrentDictionary<EdgeKind, uint> _edgeLabelCount= [];
+    private readonly ConcurrentDictionary<EdgeKind, uint> _edgeLabelCount = [];
     private readonly ConcurrentDictionary<EdgeKind, long> _edgeLabelValueSum = [];
     public void IncrementEdgeType(EdgeKind edgeKind, long value)
     {
@@ -47,6 +45,12 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         Timestamp = block.MedianTime;
 
         _logger = logger;
+
+        foreach(var kind in Schema.EdgeKinds)
+        {
+            _edgeLabelCount.TryAdd(kind, 0);
+            _edgeLabelValueSum.TryAdd(kind, 0);
+        }
 
         StartStopwatch();
     }
@@ -143,18 +147,17 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         AddOrUpdateEdge(new B2TEdge(BlockNode, v, txGraph.TotalInputValue, RelationType.Contains, t, h));
     }
 
-
     public void AddOrUpdateEdge<T>(T edge)
         where T: IEdge<Graph.Model.INode, Graph.Model.INode>
     {
         base.AddOrUpdateEdge(edge);
-        IncrementEdgeType(edge.Triplet, edge.Value);
+        IncrementEdgeType(edge.EdgeKind, edge.Value);
     }
 
     public void AddOrUpdateEdge(T2TEdge edge)
     {
         AddOrUpdateEdge(edge, T2TEdge.Update);
-        IncrementEdgeType(edge.Triplet, edge.Value);
+        IncrementEdgeType(edge.EdgeKind, edge.Value);
     }
 
     public bool Equals(BlockGraph? other)

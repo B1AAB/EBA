@@ -2,7 +2,7 @@
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
-public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
+public class BlockNodeStrategy(bool serializeCompressed) : BitcoinStrategyBase(serializeCompressed)
 {
     public static string IdSpace { get; } = BlockNode.Kind.ToString();
 
@@ -37,9 +37,9 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(nameof(v.SpentOutputAge), n => n.BlockMetadata.SpentOutputAge),
         .. PropertyMappingFactory.ScriptTypeCounts<BlockNode>("Inputs", n => n.BlockMetadata.InputScriptTypeCount),
         .. PropertyMappingFactory.ScriptTypeCounts<BlockNode>("Outputs", n => n.BlockMetadata.OutputScriptTypeCount),
-        /*
-        .. PropertyMappingFactory.DictionaryToColumns(nameof(BlockNode.TripletTypeCount), _tripletKeys, n => n.TripletTypeCount),
-        .. PropertyMappingFactory.DictionaryToColumns(nameof(BlockNode.TripletTypeValueSum), _tripletKeys, n => n.TripletTypeValueSum),*/
+        
+        .. PropertyMappingFactory.DictionaryToColumns<BlockNode>(nameof(BlockNode.TripletTypeCount), Schema.EdgeKinds, n => n.TripletTypeCount),
+        .. PropertyMappingFactory.DictionaryToColumns<BlockNode>(nameof(BlockNode.TripletTypeValueSum), Schema.EdgeKinds, n => n.TripletTypeValueSum),
 
 
         new(":LABEL", FieldType.String, _ => BlockNode.Kind, _ => ":LABEL"),
@@ -111,12 +111,12 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
             originalOutdegree: originalOutdegree,
             outHopsFromRoot: hopsFromRoot,
             idInGraphDb: node.ElementId);
-        /*
+        
         blockNode.TripletTypeCount = PropertyMappingFactory.ReadDictionary<uint>(
-    nameof(blockNode.TripletTypeCount), _tripletKeys, props);
+            nameof(blockNode.TripletTypeCount), Schema.EdgeKinds, props);
 
         blockNode.TripletTypeValueSum = PropertyMappingFactory.ReadDictionary<long>(
-            nameof(blockNode.TripletTypeValueSum), _tripletKeys, props);*/
+            nameof(blockNode.TripletTypeValueSum), Schema.EdgeKinds, props);
 
         return blockNode;
     }

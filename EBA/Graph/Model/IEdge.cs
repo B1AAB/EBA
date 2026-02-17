@@ -8,7 +8,7 @@ public interface IEdge<out TSource, out TTarget> : IGraphElement
     public TSource Source { get; }
     public TTarget Target { get; }
     public RelationType Relation { get; }
-    public EdgeKind Triplet { get; }
+    public EdgeKind EdgeKind { get; }
     public long Value { get; }
 
     public double[] GetFeatures();

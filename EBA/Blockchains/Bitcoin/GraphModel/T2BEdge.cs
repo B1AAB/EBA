@@ -14,4 +14,6 @@ public class T2BEdge(
         type,
         timestamp,
         blockHeight)
-{ }
+{
+    public new static EdgeKind Kind => new(TxNode.Kind, BlockNode.Kind, RelationType.Contains);
+}

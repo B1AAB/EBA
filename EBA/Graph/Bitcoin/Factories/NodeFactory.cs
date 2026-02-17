@@ -1,6 +1,6 @@
 ﻿using EBA.Graph.Bitcoin.Strategies;
 
-namespace EBA.Blockchains.Bitcoin.GraphModel;
+namespace EBA.Graph.Bitcoin.Factories;
 
 public class NodeFactory
 {
@@ -14,7 +14,7 @@ public class NodeFactory
         double originalIndegree,
         double originalOutdegree,
         double outHopsFromRoot, 
-        out Graph.Model.INode createdNode)
+        out Model.INode createdNode)
     {
         if (node.Labels.Contains(ScriptNode.Kind.ToString()))
         {

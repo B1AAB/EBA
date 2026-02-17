@@ -127,8 +127,8 @@ public static class PropertyMappingFactory
 
     public static PropertyMapping<T>[] DictionaryToColumns<T>(
         string prefix,
-        IEnumerable<string> keys,
-        Func<T, Dictionary<string, long>> getDict)
+        IEnumerable<EdgeKind> keys,
+        Func<T, Dictionary<EdgeKind, long>> getDict)
     {
         return
         [
@@ -141,8 +141,8 @@ public static class PropertyMappingFactory
 
     public static PropertyMapping<T>[] DictionaryToColumns<T>(
         string prefix,
-        IEnumerable<string> keys,
-        Func<T, Dictionary<string, uint>> getDict)
+        IEnumerable<EdgeKind> keys,
+        Func<T, Dictionary<EdgeKind, uint>> getDict)
     {
         return
         [
@@ -153,15 +153,16 @@ public static class PropertyMappingFactory
         ];
     }
 
-    public static Dictionary<string, TValue> ReadDictionary<TValue>(
+    public static Dictionary<EdgeKind, TValue> ReadDictionary<TValue>(
         string prefix,
-        IEnumerable<string> keys,
+        IEnumerable<EdgeKind> keys,
         IReadOnlyDictionary<string, object> properties)
     {
-        var result = new Dictionary<string, TValue>();
+        var result = new Dictionary<EdgeKind, TValue>();
         foreach (var key in keys)
             if (properties.TryGetValue($"{prefix}.{key}", out var val) && val is IConvertible convertible)
                 result[key] = (TValue)convertible.ToType(typeof(TValue), null);
+
         return result;
     }
 }

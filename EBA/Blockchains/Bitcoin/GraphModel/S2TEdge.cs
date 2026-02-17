@@ -2,6 +2,8 @@
 
 public class S2TEdge : Edge<ScriptNode, TxNode>
 {
+    public static EdgeKind Kind => new(ScriptNode.Kind, TxNode.Kind, RelationType.Redeems);
+
     public long UTxOCreatedInBlockHeight { get; }
 
     public List<PrevOut> PrevOuts { get; } = [];
@@ -22,7 +24,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
     public S2TEdge(
         ScriptNode source,
         TxNode target,
-        RelationType type,
+        RelationType type, // TODO: this is also not needed
         uint timestamp,
         long blockHeight,
         List<PrevOut> prevOuts) :

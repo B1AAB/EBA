@@ -8,6 +8,9 @@ public class T2TEdge : Edge<TxNode, TxNode>
         base(source, target, value, type, timestamp, blockHeight)
     { }
 
+    public static EdgeKind KindTransfers => new(TxNode.Kind, TxNode.Kind, RelationType.Transfers);
+    public static EdgeKind KindFee => new(TxNode.Kind, TxNode.Kind, RelationType.Fee);
+
     public static T2TEdge Update(T2TEdge oldEdge, T2TEdge newEdge)
     {
         var source = new TxNode(
