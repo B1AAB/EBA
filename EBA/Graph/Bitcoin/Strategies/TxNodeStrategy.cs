@@ -1,23 +1,26 @@
-﻿using EBA.Graph.Bitcoin;
-using EBA.Graph.Db.Neo4jDb;
+﻿using EBA.Graph.Db.Neo4jDb;
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
-public class TxNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
+public class TxNodeStrategy(bool serializeCompressed) : BitcoinStrategyBase(serializeCompressed)
 {
-    public const NodeLabels Label = NodeLabels.Tx;
+    /// <summary>
+    /// The namespace used to resolve IDs during import by Neo4j. 
+    /// It should be unique across all node and edge types in the graph.
+    /// </summary>
+    public static string IdSpace { get; } = TxNode.Kind.ToString();
 
     private const TxNode v = null!;
     private static readonly PropertyMapping<TxNode>[] _mappings =
     [
-        PropertyMappingFactory.TxId<TxNode>(n => n.Txid, p => p.GetIdFieldCsvHeader(Label.ToString())),
+        PropertyMappingFactory.TxId<TxNode>(n => n.Txid, p => p.GetIdFieldCsvHeader(IdSpace)),
         new(nameof(v.Version), FieldType.Long, n => n.Version),
         new(nameof(v.Size), FieldType.Long, n => n.Size),
         new(nameof(v.VSize), FieldType.Long, n => n.VSize),
         new(nameof(v.Weight), FieldType.Long, n => n.Weight),
         new(nameof(v.LockTime), FieldType.Long, n => n.LockTime),
 
-        new(":LABEL", FieldType.String, _ => Label, _ => ":LABEL"),
+        new(":LABEL", FieldType.String, _ => TxNode.Kind, _ => ":LABEL"),
     ];
 
     private static readonly Dictionary<string, PropertyMapping<TxNode>> _mappingsDict =

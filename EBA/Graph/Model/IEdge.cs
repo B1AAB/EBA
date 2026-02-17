@@ -7,8 +7,8 @@ public interface IEdge<out TSource, out TTarget> : IGraphElement
     public string Id { get; }
     public TSource Source { get; }
     public TTarget Target { get; }
-    public EdgeType Type { get; }
-    public EdgeLabel Label { get; } // TODO: label and type redundancy?
+    public RelationType Relation { get; }
+    public EdgeKind EdgeKind { get; }
     public long Value { get; }
 
     public double[] GetFeatures();

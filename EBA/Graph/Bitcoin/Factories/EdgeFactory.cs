@@ -2,7 +2,7 @@
 using EBA.Utilities;
 using INode = EBA.Graph.Model.INode;
 
-namespace EBA.Blockchains.Bitcoin.GraphModel;
+namespace EBA.Graph.Bitcoin.Factories;
 
 public class EdgeFactory
 {
@@ -12,7 +12,7 @@ public class EdgeFactory
         IRelationship relationship)
     {
         var value = Helpers.BTC2Satoshi(PropertyMappingFactory.ValueBTC<IRelationship>(null!).Deserialize<double>(relationship.Properties));
-        var type = Enum.Parse<EdgeType>(relationship.Type);
+        var type = Enum.Parse<RelationType>(relationship.Type);
         var blockHeight = PropertyMappingFactory.Height<IRelationship>(null!).Deserialize<long>(relationship.Properties);
         uint timestamp = 0; // TODO currently edges stored on the database do not have a timestamp
 

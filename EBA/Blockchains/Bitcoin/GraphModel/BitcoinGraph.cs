@@ -1,4 +1,5 @@
-﻿using INode = EBA.Graph.Model.INode;
+﻿using EBA.Graph.Bitcoin.Factories;
+using INode = EBA.Graph.Model.INode;
 
 namespace EBA.Blockchains.Bitcoin.GraphModel;
 

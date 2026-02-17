@@ -1,29 +1,15 @@
-﻿using EBA.Graph.Bitcoin;
-
-namespace EBA.Blockchains.Bitcoin.GraphModel;
+﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
 {
-    // TODO: since there is a CoinbaseNode type, this default should change
-    public string Address { get; } = BitcoinChainAgent.Coinbase.ToString();
-    // TODO: since there is a CoinbaseNode type, this default should change
-    public ScriptType ScriptType { get; } = ScriptType.Coinbase;
+    public new static NodeKind Kind => NodeKind.Script;
+    public override NodeKind NodeKind => Kind;    
+
+    public string Address { get; }
+
+    public ScriptType ScriptType { get; }
 
     public string HexBase64 { get; } = string.Empty;
-
-    public ScriptNode(
-        string address,
-        double? originalIndegree = null,
-        double? originalOutdegree = null,
-        double? hopsFromRoot = null,
-        string? idInGraphDb = null) :
-        base(
-            id: address,
-            originalInDegree: originalIndegree,
-            originalOutDegree: originalOutdegree,
-            outHopsFromRoot: hopsFromRoot,
-            idInGraphDb: idInGraphDb)
-    { }
 
     public ScriptNode(Utxo utxo) : base(utxo.Id)
     {
@@ -38,11 +24,11 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         double? originalOutdegree = null,
         double? hopsFromRoot = null,
         string? idInGraphDb = null) :
-        this(
-            address: address,
-            originalIndegree: originalIndegree,
-            originalOutdegree: originalOutdegree,
-            hopsFromRoot: hopsFromRoot,
+        base(
+            id: address,
+            originalInDegree: originalIndegree,
+            originalOutDegree: originalOutdegree,
+            outHopsFromRoot: hopsFromRoot,
             idInGraphDb: idInGraphDb)
     {
         Address = address;
@@ -54,7 +40,7 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         double? originalIndegree = null,
         double? originalOutdegree = null,
         double? hopsFromRoot = null,
-        string? idInGraphDb = null) : 
+        string? idInGraphDb = null) :
         base(id: scriptPubKey.SHA256HashString,
              originalInDegree: originalIndegree,
              originalOutDegree: originalOutdegree,
@@ -73,11 +59,6 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
     public override string GetIdPropertyName()
     {
         return nameof(Address);
-    }
-
-    public static ScriptNode GetCoinbaseNode()
-    {
-        return new ScriptNode(NodeLabels.Coinbase.ToString());
     }
 
     public static new string[] GetFeaturesName()

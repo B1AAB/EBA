@@ -1,5 +1,4 @@
-﻿using EBA.Graph.Bitcoin;
-using EBA.Graph.Db.Neo4jDb;
+﻿using EBA.Graph.Db.Neo4jDb;
 using EBA.Utilities;
 
 namespace EBA.Graph.Bitcoin.Strategies;
@@ -28,13 +27,13 @@ public static class PropertyMappingFactory
         return new(BTCValueProperty, x => getValue(x));
     }
 
-    public static PropertyMapping<T> SourceId<T>(NodeLabels label, Func<T, object?> getValue)
+    public static PropertyMapping<T> SourceId<T>(string idSpace, Func<T, object?> getValue)
     {
-        return new(":START_ID", FieldType.String, getValue, _ => $":START_ID({label})");
+        return new(":START_ID", FieldType.String, getValue, _ => $":START_ID({idSpace})");
     }
-    public static PropertyMapping<T> TargetId<T>(NodeLabels label, Func<T, object?> getValue)
+    public static PropertyMapping<T> TargetId<T>(string idSpace, Func<T, object?> getValue)
     {
-        return new(":END_ID", FieldType.String, getValue, _ => $":END_ID({label})");
+        return new(":END_ID", FieldType.String, getValue, _ => $":END_ID({idSpace})");
     }
     public static PropertyMapping<T> EdgeType<T>(Func<T, object?> getType)
     {
@@ -75,7 +74,7 @@ public static class PropertyMappingFactory
     }
 
     public static PropertyMapping<T>[] ScriptTypeCounts<T>(
-        string prefix, 
+        string prefix,
         Func<T, Dictionary<ScriptType, long>> getScriptTypeCounts)
     {
         return [..
@@ -124,5 +123,46 @@ public static class PropertyMappingFactory
             .ToDictionary(
                 scriptType => scriptType,
                 scriptType => (long)properties[$"{prefix}.ScriptType.{scriptType}"]);
+    }
+
+    public static PropertyMapping<T>[] DictionaryToColumns<T>(
+        string prefix,
+        IEnumerable<EdgeKind> keys,
+        Func<T, Dictionary<EdgeKind, long>> getDict)
+    {
+        return
+        [
+            ..  keys.Select(k => new PropertyMapping<T>(
+                $"{prefix}.{k}",
+                FieldType.Long,
+                n => getDict(n).TryGetValue(k, out var v) ? v : 0L))
+        ];
+    }
+
+    public static PropertyMapping<T>[] DictionaryToColumns<T>(
+        string prefix,
+        IEnumerable<EdgeKind> keys,
+        Func<T, Dictionary<EdgeKind, uint>> getDict)
+    {
+        return
+        [
+            ..  keys.Select(k => new PropertyMapping<T>(
+                $"{prefix}.{k}",
+                FieldType.Long,
+                n => getDict(n).TryGetValue(k, out var v) ? v : 0L))
+        ];
+    }
+
+    public static Dictionary<EdgeKind, TValue> ReadDictionary<TValue>(
+        string prefix,
+        IEnumerable<EdgeKind> keys,
+        IReadOnlyDictionary<string, object> properties)
+    {
+        var result = new Dictionary<EdgeKind, TValue>();
+        foreach (var key in keys)
+            if (properties.TryGetValue($"{prefix}.{key}", out var val) && val is IConvertible convertible)
+                result[key] = (TValue)convertible.ToType(typeof(TValue), null);
+
+        return result;
     }
 }

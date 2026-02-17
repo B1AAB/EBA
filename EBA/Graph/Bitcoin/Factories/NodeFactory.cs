@@ -1,6 +1,6 @@
 ﻿using EBA.Graph.Bitcoin.Strategies;
 
-namespace EBA.Blockchains.Bitcoin.GraphModel;
+namespace EBA.Graph.Bitcoin.Factories;
 
 public class NodeFactory
 {
@@ -14,9 +14,9 @@ public class NodeFactory
         double originalIndegree,
         double originalOutdegree,
         double outHopsFromRoot, 
-        out EBA.Graph.Model.INode createdNode)
+        out Model.INode createdNode)
     {
-        if (node.Labels.Contains(ScriptNodeStrategy.Label.ToString()))
+        if (node.Labels.Contains(ScriptNode.Kind.ToString()))
         {
             createdNode = ScriptNodeStrategy.Deserialize(
                 node,
@@ -26,7 +26,7 @@ public class NodeFactory
 
             return true;
         }
-        else if (node.Labels.Contains(TxNodeStrategy.Label.ToString()))
+        else if (node.Labels.Contains(TxNode.Kind.ToString()))
         {
             createdNode = TxNodeStrategy.Deserialize(
                 node,
@@ -36,7 +36,7 @@ public class NodeFactory
 
             return !((TxNode)createdNode).HasNullFeatures();
         }
-        else if (node.Labels.Contains(BlockNodeStrategy.Label.ToString()))
+        else if (node.Labels.Contains(BlockNode.Kind.ToString()))
         {
             createdNode = BlockNodeStrategy.Deserialize(
                 node,
@@ -46,7 +46,7 @@ public class NodeFactory
 
             return true;
         }
-        else if (node.Labels.Contains(BitcoinChainAgent.Coinbase.ToString()))
+        else if (node.Labels.Contains(CoinbaseNode.Kind.ToString()))
         {
             createdNode = new CoinbaseNode(
                 node,

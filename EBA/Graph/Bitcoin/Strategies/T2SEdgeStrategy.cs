@@ -2,15 +2,15 @@
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
-public class T2SEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
+public class T2SEdgeStrategy(bool serializeCompressed) : BitcoinStrategyBase(serializeCompressed)
 {
     public static readonly PropertyMapping<T2SEdge>[] _mappings =
     [
-        PropertyMappingFactory.SourceId<T2SEdge>(TxNodeStrategy.Label, e => e.Source.Txid),
-        PropertyMappingFactory.TargetId<T2SEdge>(ScriptNodeStrategy.Label, e => e.Target.Address),
+        PropertyMappingFactory.SourceId<T2SEdge>(TxNodeStrategy.IdSpace, e => e.Source.Txid),
+        PropertyMappingFactory.TargetId<T2SEdge>(ScriptNodeStrategy.IdSpace, e => e.Target.Address),
         PropertyMappingFactory.ValueBTC<T2SEdge>(e => Helpers.Satoshi2BTC(e.Value)),
         PropertyMappingFactory.Height<T2SEdge>(e => e.BlockHeight),
-        PropertyMappingFactory.EdgeType<T2SEdge>(e => e.Type)
+        PropertyMappingFactory.EdgeType<T2SEdge>(e => e.Relation)
     ];
 
     public override string GetCsvHeader()

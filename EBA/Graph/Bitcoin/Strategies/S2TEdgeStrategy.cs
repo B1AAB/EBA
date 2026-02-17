@@ -3,16 +3,16 @@ using EBA.Utilities;
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
-public class S2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
+public class S2TEdgeStrategy(bool serializeCompressed) : BitcoinStrategyBase(serializeCompressed)
 {
     private static readonly PropertyMapping<S2TEdge>[] _mappings =
     [
-        PropertyMappingFactory.SourceId<S2TEdge>(ScriptNodeStrategy.Label, e => e.Source.Address),
-        PropertyMappingFactory.TargetId<S2TEdge>(TxNodeStrategy.Label, e => e.Target.Txid),
+        PropertyMappingFactory.SourceId<S2TEdge>(ScriptNodeStrategy.IdSpace, e => e.Source.Address),
+        PropertyMappingFactory.TargetId<S2TEdge>(TxNodeStrategy.IdSpace, e => e.Target.Txid),
         PropertyMappingFactory.ValueBTC<S2TEdge>(e => Helpers.Satoshi2BTC(e.Value)),
         PropertyMappingFactory.Height<S2TEdge>(e => e.BlockHeight),
         new(nameof(S2TEdge.UTxOCreatedInBlockHeight), FieldType.Long, e => e.UTxOCreatedInBlockHeight),
-        PropertyMappingFactory.EdgeType<S2TEdge>(e => e.Type)
+        PropertyMappingFactory.EdgeType<S2TEdge>(e => e.Relation)
     ];
 
     public override string GetCsvHeader()

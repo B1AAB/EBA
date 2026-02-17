@@ -1,16 +1,15 @@
-﻿using EBA.Graph.Bitcoin;
-using EBA.Graph.Db.Neo4jDb;
+﻿using EBA.Graph.Db.Neo4jDb;
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
-public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializeCompressed)
+public class BlockNodeStrategy(bool serializeCompressed) : BitcoinStrategyBase(serializeCompressed)
 {
-    public const NodeLabels Label = NodeLabels.Block;
+    public static string IdSpace { get; } = BlockNode.Kind.ToString();
 
     private const Block v = null!;
     private static readonly PropertyMapping<BlockNode>[] _mappings =
     [
-        PropertyMappingFactory.Height<BlockNode>(n => n.BlockMetadata.Height, p => p.GetIdFieldCsvHeader(Label.ToString())),
+        PropertyMappingFactory.Height<BlockNode>(n => n.BlockMetadata.Height, p => p.GetIdFieldCsvHeader(IdSpace.ToString())),
         new(nameof(v.Hash), FieldType.String, n => n.BlockMetadata.Hash),
         new(nameof(v.Confirmations), FieldType.Long, n => n.BlockMetadata.Confirmations),
         new(nameof(v.Version), FieldType.Long, n => n.BlockMetadata.Version),
@@ -38,8 +37,12 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(nameof(v.SpentOutputAge), n => n.BlockMetadata.SpentOutputAge),
         .. PropertyMappingFactory.ScriptTypeCounts<BlockNode>("Inputs", n => n.BlockMetadata.InputScriptTypeCount),
         .. PropertyMappingFactory.ScriptTypeCounts<BlockNode>("Outputs", n => n.BlockMetadata.OutputScriptTypeCount),
+        
+        .. PropertyMappingFactory.DictionaryToColumns<BlockNode>(nameof(BlockNode.TripletTypeCount), Schema.EdgeKinds, n => n.TripletTypeCount),
+        .. PropertyMappingFactory.DictionaryToColumns<BlockNode>(nameof(BlockNode.TripletTypeValueSum), Schema.EdgeKinds, n => n.TripletTypeValueSum),
 
-        new(":LABEL", FieldType.String, _ => Label, _ => ":LABEL"),
+
+        new(":LABEL", FieldType.String, _ => BlockNode.Kind, _ => ":LABEL"),
     ];
 
     private static readonly Dictionary<string, PropertyMapping<BlockNode>> _mappingsDict =
@@ -102,12 +105,20 @@ public class BlockNodeStrategy(bool serializeCompressed) : StrategyBase(serializ
             OutputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Outputs", props)
         };
 
-        return new BlockNode(
+        var blockNode = new BlockNode(
             blockMetadata: blockMetadata,
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
             outHopsFromRoot: hopsFromRoot,
             idInGraphDb: node.ElementId);
+        
+        blockNode.TripletTypeCount = PropertyMappingFactory.ReadDictionary<uint>(
+            nameof(blockNode.TripletTypeCount), Schema.EdgeKinds, props);
+
+        blockNode.TripletTypeValueSum = PropertyMappingFactory.ReadDictionary<long>(
+            nameof(blockNode.TripletTypeValueSum), Schema.EdgeKinds, props);
+
+        return blockNode;
     }
 
     public override string GetQuery(string filename)

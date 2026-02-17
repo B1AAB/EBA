@@ -16,10 +16,13 @@ public class BlockNode(
         idInGraphDb: idInGraphDb), 
     IComparable<BlockNode>, IEquatable<BlockNode>
 {
+    public new static NodeKind Kind => NodeKind.Block;
+    public override NodeKind NodeKind => Kind;
+
     public BlockMetadata BlockMetadata { init; get; } = blockMetadata;
 
-    public uint[] EdgeLabelCount { set; get; } = [];
-    public long[] EdgeLabelValueSum { set; get; } = [];
+    public Dictionary<EdgeKind, uint> TripletTypeCount { set; get; } = [];
+    public Dictionary<EdgeKind, long> TripletTypeValueSum { set; get; } = [];
 
     public double ResidualValue
     {

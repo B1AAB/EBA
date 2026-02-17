@@ -2,25 +2,27 @@
 
 public class T2SEdge : Edge<TxNode, ScriptNode>
 {
+    public new static EdgeKind Kind => new(TxNode.Kind, ScriptNode.Kind, RelationType.Redeems);
+
     public List<Output> Outputs { get; }
 
     public T2SEdge(
         TxNode source,
         ScriptNode target,
         long value,
-        EdgeType type,
+        RelationType type,
         uint timestamp,
         long blockHeight) :
-        base(source, target, value, type, EdgeLabel.T2STransfer, timestamp, blockHeight)
+        base(source, target, value, type, timestamp, blockHeight)
     { }
 
     public T2SEdge(TxNode source,
         ScriptNode target,
-        EdgeType type,
+        RelationType type,
         uint timestamp,
         long blockHeight,
         List<Output> outputs) :
-        base(source, target, outputs.Sum(x => x.Value), type, EdgeLabel.T2STransfer, timestamp, blockHeight)
+        base(source, target, outputs.Sum(x => x.Value), type, timestamp, blockHeight)
     {
         Outputs = outputs;
     }
@@ -35,7 +37,7 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
         return new T2SEdge(
             u.Source,
             u.Target,
-            u.Type,
+            u.Relation,
             u.Timestamp,
             u.BlockHeight,
             [.. u.Outputs, .. v.Outputs]);

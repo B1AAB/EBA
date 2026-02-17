@@ -1,7 +1,10 @@
 ﻿namespace EBA.Graph.Model;
 
-public class Node : INode
+public abstract class Node : INode
 {
+    public static NodeKind Kind => NodeKind.Undefined;
+    public abstract NodeKind NodeKind { get; }
+
     public string Id { get; }
 
     public string? IdInGraphDb { get; }

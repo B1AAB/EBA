@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Bitcoin;
-
-namespace EBA.Blockchains.Bitcoin.GraphModel;
+﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 // A note on the nullable properties: 
 // These properties can be null when the Tx
@@ -14,6 +12,9 @@ namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 {
+    public new static NodeKind Kind => NodeKind.Tx;
+    public override NodeKind NodeKind => Kind;
+
     public string Txid { get; }
     public ulong? Version { get; }
     public int? Size { get; }
@@ -87,7 +88,7 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 
     public static TxNode GetCoinbaseNode()
     {
-        return new TxNode(NodeLabels.Coinbase.ToString());
+        return new TxNode(CoinbaseNode.Kind.ToString());
     }
 
     public static new string[] GetFeaturesName()

@@ -1,17 +1,18 @@
-﻿using EBA.Graph.Bitcoin;
-using EBA.Utilities;
+﻿using EBA.Utilities;
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
-public class C2TEdgeStrategy(bool serializeCompressed) : BitcoinEdgeStrategy(serializeCompressed)
+public class C2TEdgeStrategy(bool serializeCompressed) : BitcoinStrategyBase(serializeCompressed)
 {
+    public static string IdSpaceCoinbase { get; } = CoinbaseNode.Kind.ToString();
+
     public static readonly PropertyMapping<C2TEdge>[] _mappings =
     [
-        PropertyMappingFactory.SourceId<C2TEdge>(NodeLabels.Coinbase, _ => NodeLabels.Coinbase),
-        PropertyMappingFactory.TargetId<C2TEdge>(TxNodeStrategy.Label, e => e.Target.Txid),
+        PropertyMappingFactory.SourceId<C2TEdge>(IdSpaceCoinbase, _ => CoinbaseNode.Kind),
+        PropertyMappingFactory.TargetId<C2TEdge>(TxNodeStrategy.IdSpace, e => e.Target.Txid),
         PropertyMappingFactory.ValueBTC<C2TEdge>(e => Helpers.Satoshi2BTC(e.Value)),
         PropertyMappingFactory.Height<C2TEdge>(e => e.BlockHeight),
-        PropertyMappingFactory.EdgeType<C2TEdge>(e => e.Type)
+        PropertyMappingFactory.EdgeType<C2TEdge>(e => e.Relation)
     ];
 
     public override string GetCsvHeader()

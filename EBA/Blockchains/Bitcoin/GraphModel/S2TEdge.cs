@@ -2,6 +2,8 @@
 
 public class S2TEdge : Edge<ScriptNode, TxNode>
 {
+    public static EdgeKind Kind => new(ScriptNode.Kind, TxNode.Kind, RelationType.Redeems);
+
     public long UTxOCreatedInBlockHeight { get; }
 
     public List<PrevOut> PrevOuts { get; } = [];
@@ -10,11 +12,11 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         ScriptNode source,
         TxNode target,
         long value,
-        EdgeType type,
+        RelationType type,
         uint timestamp,
         long blockHeight,
         long utxoCreatedInBlockHeight) :
-        base(source, target, value, type, EdgeLabel.S2TTransfer, timestamp, blockHeight)
+        base(source, target, value, type, timestamp, blockHeight)
     {
         UTxOCreatedInBlockHeight = utxoCreatedInBlockHeight;
     }
@@ -22,11 +24,11 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
     public S2TEdge(
         ScriptNode source,
         TxNode target,
-        EdgeType type,
+        RelationType type, // TODO: this is also not needed
         uint timestamp,
         long blockHeight,
         List<PrevOut> prevOuts) :
-        base(source, target, prevOuts.Sum(x => x.Value), type, EdgeLabel.S2TTransfer, timestamp, blockHeight)
+        base(source, target, prevOuts.Sum(x => x.Value), type, timestamp, blockHeight)
     {
         PrevOuts = prevOuts;
     }
@@ -41,7 +43,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         return new S2TEdge(
             u.Source,
             u.Target,
-            u.Type,
+            u.Relation,
             u.Timestamp,
             u.BlockHeight,
             [.. u.PrevOuts, .. v.PrevOuts]);
@@ -53,7 +55,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         return
         [
             nameof(Value),
-            nameof(Type),
+            nameof(Relation),
             nameof(BlockHeight),
             nameof(UTxOCreatedInBlockHeight),
             "UtxoAgeBlocks"
