@@ -60,6 +60,5 @@ public enum ScriptType
     /// </summary>
     NullData,
 
-    Coinbase,
     Unknown
 }
