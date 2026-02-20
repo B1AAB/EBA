@@ -77,21 +77,33 @@ node files.
     For performance reasons, 
     EBA does not attempt to ensure uniqueness in the `Tx` and `Script` files 
     during the initial traversal. 
-    Instead, it writes nodes as it encounters them. 
+    Instead, it writes Tx and Script nodes as it encounters them. 
     A `Tx` node is created once when the block containing the transaction is parsed, 
-    and again every time that transaction is referenced as a `txin` in subsequent blocks. 
+    and again every time that transaction is referenced as a `txin` in subsequent blocks.
     The same applies to `Script` nodes. 
     Consequently, the `Tx` and `Script` nodes files contain a high degree of duplication.
 
+    _Why create a node for every reference instead of only the first appearance?_
+    Since EBA allows starting traversal from any arbitrary block, 
+    a block within your chosen window may point to a transaction or script 
+    created prior to that window. 
+    If we only recorded nodes at their point of origin, 
+    these references would point to non-existent source nodes, 
+    resulting in a broken graph with dangling edges.
+
+    We experimented with using an intermediate database 
+    to track uniqueness during traversal 
+    (only writing a node if it hadn't been defined yet), 
+    but this significantly throttled performance and 
+    introduced the overhead of managing a database instance. 
 
     Crucially, the instance of the node created where the transaction 
     originated contains detailed information, 
     whereas references in subsequent blocks contain minimal information. 
     This means some duplicate entries are rich in data while others 
     are missing feature values. 
-    Therefore, we must deduplicate the files by "merging" duplicates 
+    Therefore, we must deduplicate the files by _merging_ duplicates 
     into a single node that retains values for all features.
-
 
     This step is critical for the Neo4j import process. 
     While the Neo4j admin tool offers a `--skip-duplicate-nodes` flag, 
@@ -109,11 +121,11 @@ node files.
 2.  Combine the files:
 
     ```shell
-    zcat [0-9]*_BitcoinTxNode.csv.gz > combined_BitcoinTxNode.csv
+    zcat [0-9]*_TxNode.csv.gz > combined_TxNode.csv
     ```
 
     ```shell
-    zcat [0-9]*_BitcoinScriptNode.csv.gz > combined_BitcoinScriptNode.csv
+    zcat [0-9]*_ScriptNode.csv.gz > combined_ScriptNode.csv
     ```
 
 3.  Sort the files. 
@@ -125,15 +137,15 @@ node files.
 
 
     ```shell
-    LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_BitcoinTxNode.csv > sorted_BitcoinTxNode.csv
+    LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_TxNode.csv > sorted_TxNode.csv
     ```
 
     ```shell
-    LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_BitcoinScriptNode.csv > sorted_BitcoinScriptNode.csv
+    LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_ScriptNode.csv > sorted_ScriptNode.csv
     ```
 
 4.  Run the following command to deduplicate the files:
 
     ```shell
-    .\eba.exe bitcoin dedup --sorted-script-nodes-file sorted_BitcoinScriptNode.csv --sorted-tx-nodes-file sorted_BitcoinTxNode.csv
+    .\eba.exe bitcoin dedup --sorted-script-nodes-file sorted_ScriptNode.csv --sorted-tx-nodes-file sorted_TxNode.csv
     ```

@@ -87,3 +87,6 @@
   font-weight: 600;
 }
 
+.theme-doc-version-badge {
+  display: none;
+}

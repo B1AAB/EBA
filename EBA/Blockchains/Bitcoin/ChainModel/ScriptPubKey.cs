@@ -21,6 +21,10 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
         {
             _hex = value;
             _script = Script.FromHex(_hex);
+
+            byte[] rawBytes = Convert.FromHexString(_hex);
+            byte[] hashBytes = SHA256.HashData(rawBytes);
+            SHA256Hash = EBA.Utilities.Encoder.Base58(hashBytes);
         }
         get { return _hex; }
     }
@@ -35,15 +39,7 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
         }
     }
 
-    public string SHA256HashString
-    {
-        get
-        {
-            byte[] rawBytes = Convert.FromHexString(_hex);
-            byte[] hashBytes = SHA256.HashData(rawBytes);
-            return Convert.ToBase64String(hashBytes);
-        }
-    }
+    public string SHA256Hash { private set; get; }
 
     [JsonPropertyName("address")]
     public string Address

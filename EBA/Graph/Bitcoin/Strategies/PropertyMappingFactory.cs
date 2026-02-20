@@ -11,9 +11,9 @@ public static class PropertyMappingFactory
         return new(HeightProperty, x => getValue(x), headerOverride);
     }
 
-    public static PropertyMapping<T> Address<T>(Func<T, string?> getValue, Func<Property, string>? headerOverride = null)
+    public static PropertyMapping<T> ScriptSHA256HashString<T>(Func<T, string?> getValue, Func<Property, string>? headerOverride = null)
     {
-        return new(nameof(ScriptNode.Address), FieldType.String, x => getValue(x), headerOverride);
+        return new(nameof(ScriptNode.SHA256Hash), FieldType.String, x => getValue(x), headerOverride);
     }
 
     public static PropertyMapping<T> TxId<T>(Func<T, string> getValue, Func<Property, string>? headerOverride = null)
@@ -130,12 +130,13 @@ public static class PropertyMappingFactory
         IEnumerable<EdgeKind> keys,
         Func<T, Dictionary<EdgeKind, long>> getDict)
     {
+        // Make sure to keep EdgeKind string representation compatible with neo4j header requirements. 
         return
         [
             ..  keys.Select(k => new PropertyMapping<T>(
-                $"{prefix}.{k}",
+                $"{prefix}.{k.Source}_{k.Relation}_{k.Target}",
                 FieldType.Long,
-                n => getDict(n).TryGetValue(k, out var v) ? v : 0L))
+                n => getDict(n).TryGetValue(k, out var v) ? v : 0))
         ];
     }
 
@@ -144,12 +145,13 @@ public static class PropertyMappingFactory
         IEnumerable<EdgeKind> keys,
         Func<T, Dictionary<EdgeKind, uint>> getDict)
     {
+        // Make sure to keep EdgeKind string representation compatible with neo4j header requirements. 
         return
         [
             ..  keys.Select(k => new PropertyMapping<T>(
-                $"{prefix}.{k}",
+                $"{prefix}.{k.Source}_{k.Relation}_{k.Target}",
                 FieldType.Long,
-                n => getDict(n).TryGetValue(k, out var v) ? v : 0L))
+                n => getDict(n).TryGetValue(k, out var v) ? v : 0))
         ];
     }
 

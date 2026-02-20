@@ -41,7 +41,7 @@ public class Utxo
         long createdInHeight,
         long? spentInHeight = null) :
     this(
-        scriptPubKey.SHA256HashString,
+        scriptPubKey.SHA256Hash,
         address,
         value,
         scriptType,

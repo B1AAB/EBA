@@ -57,7 +57,7 @@ public record EdgeKind(NodeKind Source, NodeKind Target, RelationType Relation)
 {
     public override string ToString()
     {
-        return $"{Source}-[{Relation}]->{Target}";
+        return $"{Source}-{Relation}-{Target}";
     }
 
     public override int GetHashCode()

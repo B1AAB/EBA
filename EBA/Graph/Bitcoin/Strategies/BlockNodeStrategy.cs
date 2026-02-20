@@ -1,4 +1,5 @@
 ﻿using EBA.Graph.Db.Neo4jDb;
+using NBitcoin.Protocol;
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
@@ -40,7 +41,6 @@ public class BlockNodeStrategy(bool serializeCompressed) : BitcoinStrategyBase(s
         
         .. PropertyMappingFactory.DictionaryToColumns<BlockNode>(nameof(BlockNode.TripletTypeCount), Schema.EdgeKinds, n => n.TripletTypeCount),
         .. PropertyMappingFactory.DictionaryToColumns<BlockNode>(nameof(BlockNode.TripletTypeValueSum), Schema.EdgeKinds, n => n.TripletTypeValueSum),
-
 
         new(":LABEL", FieldType.String, _ => BlockNode.Kind, _ => ":LABEL"),
     ];

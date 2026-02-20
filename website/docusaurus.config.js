@@ -52,8 +52,8 @@ const config = {
           versions: {
             current: {
               label: "🚀 Next",
-              path: "next",
-            },
+              path: "next"
+            }
           },
         },
         blog: {

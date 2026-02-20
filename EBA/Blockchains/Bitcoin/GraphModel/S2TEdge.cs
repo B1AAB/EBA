@@ -12,11 +12,10 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         ScriptNode source,
         TxNode target,
         long value,
-        RelationType type,
         uint timestamp,
         long blockHeight,
         long utxoCreatedInBlockHeight) :
-        base(source, target, value, type, timestamp, blockHeight)
+        base(source, target, value, RelationType.Redeems, timestamp, blockHeight)
     {
         UTxOCreatedInBlockHeight = utxoCreatedInBlockHeight;
     }
@@ -24,11 +23,10 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
     public S2TEdge(
         ScriptNode source,
         TxNode target,
-        RelationType type, // TODO: this is also not needed
         uint timestamp,
         long blockHeight,
         List<PrevOut> prevOuts) :
-        base(source, target, prevOuts.Sum(x => x.Value), type, timestamp, blockHeight)
+        base(source, target, prevOuts.Sum(x => x.Value), RelationType.Redeems, timestamp, blockHeight)
     {
         PrevOuts = prevOuts;
     }
@@ -43,7 +41,6 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         return new S2TEdge(
             u.Source,
             u.Target,
-            u.Relation,
             u.Timestamp,
             u.BlockHeight,
             [.. u.PrevOuts, .. v.PrevOuts]);

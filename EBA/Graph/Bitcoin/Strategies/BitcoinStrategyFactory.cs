@@ -35,10 +35,10 @@ public class BitcoinStrategyFactory : IStrategyFactory
         // Serialize Coinbase Node
         using (var writer = new StreamWriter(
             new GZipStream(
-                File.Create(Path.Join(outputDirectory, "BitcoinCoinbase.csv.gz")),
+                File.Create(Path.Join(outputDirectory, $"{CoinbaseNode.Kind}.csv.gz")),
                 CompressionMode.Compress)))
         {
-            writer.WriteLine(string.Join('\t', $"{CoinbaseNode.Kind}:ID({ CoinbaseNode.Kind})", ":LABEL"));
+            writer.WriteLine(string.Join('\t', $"{CoinbaseNode.Kind}:ID({CoinbaseNode.Kind})", ":LABEL"));
             writer.WriteLine(string.Join('\t', $"{CoinbaseNode.Kind}", $"{CoinbaseNode.Kind}"));
         }
 
@@ -57,7 +57,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
         using var writer = new StreamWriter(File.Create(Path.Join(outputDirectory, "schema.cypher")));
         writer.WriteLine("// EBA Bitcoin Graph Schema");
 
-        var x = PropertyMappingFactory.Address<ScriptNode>(n => n.Address).Property.Name;
+        var x = PropertyMappingFactory.ScriptSHA256HashString<ScriptNode>(n => n.SHA256Hash).Property.Name;
         var scriptAddressUniqueness =
             $"// Uniqueness constraint for {ScriptNode.Kind}.{x} property." +
             $"\r\nCREATE CONSTRAINT {ScriptNode.Kind}_{x}_Unique " +
