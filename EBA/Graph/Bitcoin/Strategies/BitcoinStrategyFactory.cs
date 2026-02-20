@@ -25,9 +25,12 @@ public class BitcoinStrategyFactory : IStrategyFactory
         };
     }
 
-    public StrategyBase GetStrategy(Type type)
+    public StrategyBase? GetStrategy(Type type)
     {
-        return _strategies[type];
+        if (_strategies.TryGetValue(type, out var strategy))
+            return strategy;
+        else
+            return null;
     }
 
     public async Task SerializeConstantsAsync(string outputDirectory, CancellationToken ct)

@@ -1,5 +1,4 @@
 ﻿using EBA.Graph.Db.Neo4jDb;
-using NBitcoin.Protocol;
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
