@@ -85,8 +85,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
 
     public void AddValue(long value)
     {
-        // TODO: check when this can happen
-        //throw new NotImplementedException();
+        throw new NotImplementedException();
     }
 
     public string GetHashCode(bool ignoreValue)
@@ -107,7 +106,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Source.Id, Target.Id, Value, Relation, Timestamp);
+        return HashCode.Combine(Source.GetHashCode(), Target.GetHashCode(), Value, Relation, Timestamp);
     }
 
     public bool Equals(Edge<TSource, TTarget>? other)
@@ -119,5 +118,10 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
             && Value == other.Value
             && Relation == other.Relation
             && Timestamp == other.Timestamp;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return Equals(obj as Edge<TSource, TTarget>);
     }
 }
