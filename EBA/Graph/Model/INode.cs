@@ -1,6 +1,6 @@
 ﻿namespace EBA.Graph.Model;
 
-public interface INode : IGraphElement
+public interface INode : IGraphElement, IEquatable<INode>
 {
     public string Id { get; }
     public NodeKind NodeKind { get; }

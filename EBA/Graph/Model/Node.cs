@@ -109,4 +109,11 @@ public abstract class Node : INode
     {
         return string.Join(Delimiter, [Id]);
     }
+
+    public bool Equals(INode? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return Id == other.Id;
+    }
 }

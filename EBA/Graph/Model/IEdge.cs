@@ -1,4 +1,6 @@
-﻿namespace EBA.Graph.Model;
+﻿using System.Runtime.CompilerServices;
+
+namespace EBA.Graph.Model;
 
 public interface IEdge<out TSource, out TTarget> : IGraphElement
     where TSource : INode
