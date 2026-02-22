@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Bitcoin;
-
-namespace EBA.Blockchains.Bitcoin;
+﻿namespace EBA.Blockchains.Bitcoin;
 
 public class BitcoinChainAgent : IDisposable
 {

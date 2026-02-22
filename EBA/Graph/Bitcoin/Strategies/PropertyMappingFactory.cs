@@ -21,7 +21,7 @@ public static class PropertyMappingFactory
         return new(nameof(TxNode.Txid), FieldType.String, x => getValue(x), headerOverride);
     }
 
-    public static Property BTCValueProperty { get; } = new("Value", FieldType.Float);
+    public static Property BTCValueProperty { get; } = new("Value", FieldType.Double);
     public static PropertyMapping<T> ValueBTC<T>(Func<T, double> getValue)
     {
         return new(BTCValueProperty, x => getValue(x));
@@ -144,7 +144,7 @@ public static class PropertyMappingFactory
         [
             ..  keys.Select(k => new PropertyMapping<T>(
                 $"{prefix}.{k.Source}_{k.Relation}_{k.Target}",
-                FieldType.Long,
+                FieldType.Double,
                 n => C(getDict(n).TryGetValue(k, out var v) ? v : 0)))
         ];
     }
