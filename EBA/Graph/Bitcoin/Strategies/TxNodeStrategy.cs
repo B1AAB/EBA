@@ -4,7 +4,7 @@ namespace EBA.Graph.Bitcoin.Strategies;
 
 public class TxNodeStrategy(bool serializeCompressed) 
     : BitcoinStrategyBase(
-        $"{TxNode.Kind}_nodes.csv",
+        $"nodes_{TxNode.Kind}",
         serializeCompressed)
 {
     /// <summary>

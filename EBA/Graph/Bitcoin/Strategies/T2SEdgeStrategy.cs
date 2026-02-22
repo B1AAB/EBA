@@ -4,7 +4,7 @@ namespace EBA.Graph.Bitcoin.Strategies;
 
 public class T2SEdgeStrategy(bool serializeCompressed) 
     : BitcoinStrategyBase(
-        $"{T2SEdge.Kind.Source}_{T2SEdge.Kind.Relation}_{T2SEdge.Kind.Target}_edges.csv",
+        $"edges_{T2SEdge.Kind.Source}_{T2SEdge.Kind.Relation}_{T2SEdge.Kind.Target}",
         serializeCompressed)
 {
     public static readonly PropertyMapping<T2SEdge>[] _mappings =

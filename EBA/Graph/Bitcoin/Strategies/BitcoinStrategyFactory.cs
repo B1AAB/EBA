@@ -55,7 +55,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
         {
             using var writer = new StreamWriter(
                 new GZipStream(
-                    File.Create(Path.Join(outputDirectory, $"header_{strategy.Value.DefaultBaseFilename}.csv.gz")),
+                    File.Create(Path.Join(outputDirectory, $"header_{strategy.Value.DefaultFilename}")),
                     CompressionMode.Compress));
             writer.WriteLine(strategy.Value.GetCsvHeader());
         }

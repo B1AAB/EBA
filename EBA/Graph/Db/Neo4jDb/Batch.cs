@@ -30,13 +30,11 @@ public class Batch
         var timestamp = Helpers.GetUnixTimeSeconds();
 
         _typesInfo = [];
-        var compressExt = _compressOutput == true ? ".gz" : "";
-
         foreach (var strategy in strategies)
             _typesInfo.Add(
                 strategy.Key,
                 new TypeInfo(
-                    Path.Join(DefaultDirectory, $"{timestamp}_{strategy.Value.DefaultBaseFilename}.csv{compressExt}"),
+                    Path.Join(DefaultDirectory, $"{timestamp}_{strategy.Value.DefaultFilename}"),
                     0));
     }
 
