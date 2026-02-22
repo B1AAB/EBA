@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Bitcoin;
-
-namespace EBA.Graph.Db.Neo4jDb;
+﻿namespace EBA.Graph.Db.Neo4jDb;
 
 public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 {
@@ -62,7 +60,6 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         return rndRecords;
     }
-
 
     public async Task<List<IRecord>> GetNeighborsAsync(
         NodeKind rootNodeLabel, 
@@ -159,6 +156,9 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         {
             batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id !=  CoinbaseNode.Kind.ToString()));
             var _strategy = _strategyFactory.GetStrategy(type.Key);
+            if (_strategy == null) 
+                continue;
+
             tasks.Add(
                 _strategy.ToCsvAsync(
                     type.Value.Where(x => x.Id != CoinbaseNode.Kind.ToString()),
@@ -169,6 +169,9 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         {
             batchInfo.AddOrUpdate(type.Key, type.Value.Count);
             var _strategy = _strategyFactory.GetStrategy(type.Key);
+            if (_strategy == null) 
+                continue;
+
             tasks.Add(
                 _strategy.ToCsvAsync(
                     type.Value,

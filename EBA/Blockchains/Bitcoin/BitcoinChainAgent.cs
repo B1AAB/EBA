@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Bitcoin;
-
-namespace EBA.Blockchains.Bitcoin;
+﻿namespace EBA.Blockchains.Bitcoin;
 
 public class BitcoinChainAgent : IDisposable
 {
@@ -10,7 +8,7 @@ public class BitcoinChainAgent : IDisposable
     /// The amount of satoshis in one BTC.
     /// Based-on: https://github.com/bitcoin/bitcoin/blob/35bf426e02210c1bbb04926f4ca2e0285fbfcd11/src/consensus/amount.h#L15
     /// </summary>
-    public const ulong Coin = 100000000;
+    public const ulong Coin = 100_000_000;
 
     private readonly HttpClient _client;
     private readonly ILogger<BitcoinChainAgent> _logger;

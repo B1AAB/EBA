@@ -28,12 +28,12 @@ public class BlockNode(
     {
         get
         {
-            if (BlockMetadata.InputValues is null || BlockMetadata.OutputValues is null)
+            if (BlockMetadata.InputValuesStats is null || BlockMetadata.OutputValuesStats is null)
             {
                 return 0;
             }
 
-            return BlockMetadata.InputValues.Sum - BlockMetadata.OutputValues.Sum - BlockMetadata.Fees.Sum;
+            return BlockMetadata.InputValuesStats.Sum - BlockMetadata.OutputValuesStats.Sum - BlockMetadata.FeesStats.Sum;
         }
     }
 
@@ -57,12 +57,12 @@ public class BlockNode(
             nameof(BlockMetadata.Weight),
             nameof(BlockMetadata.CoinbaseOutputsCount),
             nameof(BlockMetadata.MintedBitcoins),
-            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.InputCounts)),
-            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.OutputCounts)),
-            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.InputValues)),
-            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.OutputValues)),
-            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.SpentOutputAge)),
-            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.Fees)),
+            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.InputCountsStats)),
+            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.OutputCountsStats)),
+            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.InputValuesStats)),
+            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.OutputValuesStats)),
+            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.SpentOutputAgeStats)),
+            .. DescriptiveStatistics.GetFeaturesName(nameof(BlockMetadata.FeesStats)),
             .. Node.GetFeaturesName()
         ];
     }
@@ -80,12 +80,12 @@ public class BlockNode(
             BlockMetadata.Weight.ToString(),
             BlockMetadata.CoinbaseOutputsCount.ToString(),
             BlockMetadata.MintedBitcoins.ToString(),
-            .. BlockMetadata.InputCounts.GetFeatures(),
-            .. BlockMetadata.OutputCounts.GetFeatures(),
-            .. BlockMetadata.InputValues.GetFeatures(),
-            .. BlockMetadata.OutputValues.GetFeatures(),
-            .. BlockMetadata.SpentOutputAge.GetFeatures(),
-            .. BlockMetadata.Fees.GetFeatures(),
+            .. BlockMetadata.InputCountsStats.GetFeatures(),
+            .. BlockMetadata.OutputCountsStats.GetFeatures(),
+            .. BlockMetadata.InputValuesStats.GetFeatures(),
+            .. BlockMetadata.OutputValuesStats.GetFeatures(),
+            .. BlockMetadata.SpentOutputAgeStats.GetFeatures(),
+            .. BlockMetadata.FeesStats.GetFeatures(),
             .. base.GetFeatures()
         ];
     }

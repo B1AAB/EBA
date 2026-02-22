@@ -11,21 +11,19 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
 
     public string HexBase64 { get; } = string.Empty;
 
-    public ScriptNode(Utxo utxo) : base(utxo.Id)
-    {
-        Address = utxo.Address;
-        ScriptType = utxo.ScriptType;
-    }
+    public string SHA256Hash { get; }
 
     public ScriptNode(
         string address,
         ScriptType scriptType,
+        string sha256Hash,
+        string hexBase64 = "",
         double? originalIndegree = null,
         double? originalOutdegree = null,
         double? hopsFromRoot = null,
         string? idInGraphDb = null) :
         base(
-            id: address,
+            id: sha256Hash,
             originalInDegree: originalIndegree,
             originalOutDegree: originalOutdegree,
             outHopsFromRoot: hopsFromRoot,
@@ -33,6 +31,8 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
     {
         Address = address;
         ScriptType = scriptType;
+        SHA256Hash = sha256Hash;
+        HexBase64 = hexBase64;
     }
 
     public ScriptNode(
@@ -41,7 +41,7 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         double? originalOutdegree = null,
         double? hopsFromRoot = null,
         string? idInGraphDb = null) :
-        base(id: scriptPubKey.SHA256HashString,
+        base(id: scriptPubKey.SHA256HashBase58,
              originalInDegree: originalIndegree,
              originalOutDegree: originalOutdegree,
              outHopsFromRoot: hopsFromRoot,
@@ -49,26 +49,27 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
     {
         Address = scriptPubKey.Address;
         ScriptType = scriptPubKey.ScriptType;
+        SHA256Hash = scriptPubKey.SHA256HashBase58;
 
         if (ScriptType == ScriptType.nonstandard || ScriptType == ScriptType.NullData)
         {
-            HexBase64 = scriptPubKey.Base64String;
+            HexBase64 = scriptPubKey.HexBase58;
         }
     }
 
     public override string GetIdPropertyName()
     {
-        return nameof(Address);
+        return nameof(SHA256Hash); // todo: this is not correct
     }
 
     public static new string[] GetFeaturesName()
     {
-        return [nameof(Address), nameof(ScriptType), .. Node.GetFeaturesName()];
+        return [nameof(SHA256Hash), nameof(ScriptType), .. Node.GetFeaturesName()];
     }
 
     public override string[] GetFeatures()
     {
-        return [Address, ((double)ScriptType).ToString(), .. base.GetFeatures()];
+        return [SHA256Hash, ((double)ScriptType).ToString(), .. base.GetFeatures()];
     }
 
     public override bool HasNullFeatures()

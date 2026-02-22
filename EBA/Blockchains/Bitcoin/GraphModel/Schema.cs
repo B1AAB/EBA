@@ -25,7 +25,6 @@ public static class Schema
                 B2TEdge.Kind,
                 C2TEdge.Kind,
                 S2TEdge.Kind,
-                T2BEdge.Kind,
                 T2SEdge.Kind,
                 T2TEdge.KindTransfers,
                 T2TEdge.KindFee

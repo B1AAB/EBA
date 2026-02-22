@@ -73,12 +73,12 @@ public class BlockMetadata
         get { return OutputScriptTypeValue[ScriptType.NullData]; }
     }
 
-    public virtual DescriptiveStatistics? InputCounts { init; get; }
-    public virtual DescriptiveStatistics? OutputCounts { init; get; }
-    public virtual DescriptiveStatistics? InputValues { init; get; }
-    public virtual DescriptiveStatistics? OutputValues { init; get; }
-    public virtual DescriptiveStatistics? SpentOutputAge { init; get; }
-    public virtual DescriptiveStatistics? Fees { init; get; }
+    public virtual DescriptiveStatistics? InputCountsStats { init; get; }
+    public virtual DescriptiveStatistics? OutputCountsStats { init; get; }
+    public virtual DescriptiveStatistics? InputValuesStats { init; get; }
+    public virtual DescriptiveStatistics? OutputValuesStats { init; get; }
+    public virtual DescriptiveStatistics? SpentOutputAgeStats { init; get; }
+    public virtual DescriptiveStatistics? FeesStats { init; get; }
 
     public virtual Dictionary<ScriptType, long>? InputScriptTypeCount { init; get; }
     public virtual Dictionary<ScriptType, long>? OutputScriptTypeCount { init; get; }

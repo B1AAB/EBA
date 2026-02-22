@@ -11,12 +11,12 @@ slug: /bitcoin/etl/import
 **Yes,**
 if you need to modify the graph structure or append new data that is not included in 
 [our release](/releases/tags/data-releases). 
-*Note: This is highly resource-intensive and can take 2-3 weeks on a high-end desktop computer.*
+*Note: This step is highly resource-intensive and can take weeks.*
 
 **No,** 
 if you simply want to explore the graph or 
 [sample communities](/docs/bitcoin/sampling/overview) from the dataset. 
-In this case, [restore database dump](./restore) instead; it bypasses the weeks-long processing time required for the bulk import described on this page. 
+In this case, [restore database dump](./restore) instead. 
 :::
 
 

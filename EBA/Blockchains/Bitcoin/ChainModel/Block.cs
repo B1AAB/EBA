@@ -9,22 +9,22 @@ public class Block : BlockMetadata
 
     public ConcurrentDictionary<string, Utxo> TxoLifecycle { init; get; } = [];
 
-    public override DescriptiveStatistics InputCounts { get { return new DescriptiveStatistics([.. _inputsCounts]); } }
+    public override DescriptiveStatistics InputCountsStats { get { return new DescriptiveStatistics([.. _inputsCounts]); } }
     private readonly ConcurrentBag<int> _inputsCounts = [];
 
-    public override DescriptiveStatistics OutputCounts { get { return new DescriptiveStatistics([.. _outputsCounts]); } }
+    public override DescriptiveStatistics OutputCountsStats { get { return new DescriptiveStatistics([.. _outputsCounts]); } }
     private readonly ConcurrentBag<int> _outputsCounts = [];
 
-    public override DescriptiveStatistics InputValues { get { return new DescriptiveStatistics([.. _inputValues]); } }
+    public override DescriptiveStatistics InputValuesStats { get { return new DescriptiveStatistics([.. _inputValues]); } }
     private readonly ConcurrentBag<long> _inputValues = [];
 
-    public override DescriptiveStatistics OutputValues { get { return new DescriptiveStatistics([.. _outputValues]); } }
+    public override DescriptiveStatistics OutputValuesStats { get { return new DescriptiveStatistics([.. _outputValues]); } }
     private readonly ConcurrentBag<long> _outputValues = [];
 
-    public override DescriptiveStatistics SpentOutputAge { get { return new DescriptiveStatistics([.. _spentOutputsAge]); } }
+    public override DescriptiveStatistics SpentOutputAgeStats { get { return new DescriptiveStatistics([.. _spentOutputsAge]); } }
     private readonly ConcurrentBag<long> _spentOutputsAge = [];
 
-    public override DescriptiveStatistics Fees { get { return new DescriptiveStatistics([.. _fees]); } }
+    public override DescriptiveStatistics FeesStats { get { return new DescriptiveStatistics([.. _fees]); } }
     private readonly ConcurrentBag<long> _fees = [];
 
 

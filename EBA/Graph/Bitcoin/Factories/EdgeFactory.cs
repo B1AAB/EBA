@@ -20,10 +20,9 @@ public class EdgeFactory
         {
             (CoinbaseNode, TxNode v) => new C2TEdge(v, value, timestamp, blockHeight),
             (TxNode u, TxNode v) => new T2TEdge(u, v, value, type, timestamp, blockHeight),
-            (TxNode u, BlockNode v) => new T2BEdge(u, v, value, type, timestamp, blockHeight),
-            (BlockNode u, TxNode v) => new B2TEdge(u, v, value, type, timestamp, blockHeight),
-            (TxNode u, ScriptNode v) => new T2SEdge(u, v, value, type, timestamp, blockHeight),
-            (ScriptNode u, TxNode v) => new S2TEdge(u, v, value, type, timestamp, blockHeight, (long)relationship.Properties[nameof(S2TEdge.UTxOCreatedInBlockHeight)]),
+            (BlockNode u, TxNode v) => new B2TEdge(u, v, value, timestamp, blockHeight),
+            (TxNode u, ScriptNode v) => new T2SEdge(u, v, value, timestamp, blockHeight),
+            (ScriptNode u, TxNode v) => new S2TEdge(u, v, value, timestamp, blockHeight, (long)relationship.Properties[nameof(S2TEdge.UTxOCreatedInBlockHeight)]),
             _ => throw new ArgumentException("Invalid edge type")
         };
     }

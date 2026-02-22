@@ -1,6 +1,6 @@
 ﻿namespace EBA.Graph.Model;
 
-public interface INode : IGraphElement
+public interface INode : IGraphElement, IEquatable<INode>
 {
     public string Id { get; }
     public NodeKind NodeKind { get; }
@@ -16,7 +16,7 @@ public interface INode : IGraphElement
     public bool HasNullFeatures();
 
     /// <summary>
-    /// this can return ID, or any unique label (e.g., script address, or tx hash).
+    /// this can return ID, or any unique label (e.g., script SHA256, or tx hash).
     /// The goal of this method is to return unique label that would be more intuitive 
     /// for the user than ID (such as Neo4j ID). 
     /// </summary>

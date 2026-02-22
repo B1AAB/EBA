@@ -1,16 +1,22 @@
 ﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
 
-public class CoinbaseNode(
-    Neo4j.Driver.INode node,
-    double? originalOutdegree = null,
-    double? hopsFromRoot = null) 
-    : Node(
-        id: Kind.ToString(),
-        originalInDegree: 0,
-        originalOutDegree: originalOutdegree,
-        outHopsFromRoot: hopsFromRoot,
-        idInGraphDb: node.ElementId)
+public class CoinbaseNode : Node
 {
+    public CoinbaseNode() : base(id: Kind.ToString()) 
+    { }
+
+    public CoinbaseNode(
+        Neo4j.Driver.INode node,
+        double? originalOutdegree = null,
+        double? hopsFromRoot = null)
+        : base(
+            id: Kind.ToString(),
+            originalInDegree: 0,
+            originalOutDegree: originalOutdegree,
+            outHopsFromRoot: hopsFromRoot,
+            idInGraphDb: node.ElementId)
+    { }
+
     public new static NodeKind Kind => NodeKind.Coinbase;
     public override NodeKind NodeKind => Kind;
 

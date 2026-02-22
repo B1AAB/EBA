@@ -86,11 +86,6 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         return nameof(Txid);
     }
 
-    public static TxNode GetCoinbaseNode()
-    {
-        return new TxNode(CoinbaseNode.Kind.ToString());
-    }
-
     public static new string[] GetFeaturesName()
     {
         return

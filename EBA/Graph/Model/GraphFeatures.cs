@@ -34,7 +34,6 @@ public class GraphFeatures
         EdgeFeaturesHeader = [];
         EdgeFeaturesHeader.Add(typeof(C2TEdge), [.. sourceAndTarget, .. C2TEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(typeof(T2TEdge), [.. sourceAndTarget, .. T2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(typeof(T2BEdge), [.. sourceAndTarget, .. T2BEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(typeof(B2TEdge), [.. sourceAndTarget, .. B2TEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(typeof(S2TEdge), [.. sourceAndTarget, .. S2TEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(typeof(T2SEdge), [.. sourceAndTarget, .. T2SEdge.GetFeaturesName()]);

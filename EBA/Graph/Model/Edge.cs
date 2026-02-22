@@ -3,7 +3,7 @@ using EBA.Utilities;
 
 namespace EBA.Graph.Model;
 
-public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
+public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<TSource, TTarget>>
     where TSource : notnull, INode
     where TTarget : notnull, INode
 {
@@ -83,6 +83,11 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
         ];
     }
 
+    public void AddValue(long value)
+    {
+        throw new NotImplementedException();
+    }
+
     public string GetHashCode(bool ignoreValue)
     {
         if (ignoreValue)
@@ -101,11 +106,22 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Source.Id, Target.Id, Value, Relation, Timestamp);
+        return HashCode.Combine(Source.GetHashCode(), Target.GetHashCode(), Value, Relation, Timestamp);
     }
 
-    public void AddValue(long value)
+    public bool Equals(Edge<TSource, TTarget>? other)
     {
-        throw new NotImplementedException();
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return Source.Id == other.Source.Id
+            && Target.Id == other.Target.Id
+            && Value == other.Value
+            && Relation == other.Relation
+            && Timestamp == other.Timestamp;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return Equals(obj as Edge<TSource, TTarget>);
     }
 }
