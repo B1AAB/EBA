@@ -31,19 +31,19 @@ public class BlockNodeStrategy(bool serializeCompressed) : BitcoinStrategyBase(s
         new(nameof(v.MintedBitcoins), FieldType.Long, n => n.BlockMetadata.MintedBitcoins),
 
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.InputCounts), n => n.BlockMetadata.InputCounts),
+            nameof(v.InputCountsStats), n => n.BlockMetadata.InputCountsStats),
 
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.OutputCounts), n => n.BlockMetadata.OutputCounts),
+            nameof(v.OutputCountsStats), n => n.BlockMetadata.OutputCountsStats),
 
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.InputValues), n => n.BlockMetadata.InputValues, PropertyMappingFactory.SatoshiToBTC),
+            nameof(v.InputValuesStats), n => n.BlockMetadata.InputValuesStats, PropertyMappingFactory.SatoshiToBTC),
 
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.OutputValues), n => n.BlockMetadata.OutputValues, PropertyMappingFactory.SatoshiToBTC),
+            nameof(v.OutputValuesStats), n => n.BlockMetadata.OutputValuesStats, PropertyMappingFactory.SatoshiToBTC),
 
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.SpentOutputAge), n => n.BlockMetadata.SpentOutputAge),
+            nameof(v.SpentOutputAgeStats), n => n.BlockMetadata.SpentOutputAgeStats),
 
         .. PropertyMappingFactory.ScriptTypeCounts<BlockNode>(
             "Inputs", n => n.BlockMetadata.InputScriptTypeCount),
@@ -109,11 +109,11 @@ public class BlockNodeStrategy(bool serializeCompressed) : BitcoinStrategyBase(s
             CoinbaseOutputsCount = _mappingsDict[nameof(v.CoinbaseOutputsCount)].Deserialize<int>(props),
             MintedBitcoins = _mappingsDict[nameof(v.MintedBitcoins)].Deserialize<long>(props),
 
-            InputCounts = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.InputCounts)),
-            OutputCounts = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.OutputCounts)),
-            InputValues = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.InputValues)),
-            OutputValues = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.OutputValues)),
-            SpentOutputAge = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.SpentOutputAge)),
+            InputCountsStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.InputCountsStats)),
+            OutputCountsStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.OutputCountsStats)),
+            InputValuesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.InputValuesStats)),
+            OutputValuesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.OutputValuesStats)),
+            SpentOutputAgeStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.SpentOutputAgeStats)),
             InputScriptTypeCount = PropertyMappingFactory.ReadScriptTypeCounts("Inputs", props),
             OutputScriptTypeCount = PropertyMappingFactory.ReadScriptTypeCounts("Outputs", props),
             InputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Inputs", props),

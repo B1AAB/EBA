@@ -103,7 +103,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
             miningReward += u.Value.Sum(x => x.Value);
         }
 
-        var mintedCoins = miningReward - (long)Block.Fees.Sum;
+        var mintedCoins = miningReward - (long)Block.FeesStats.Sum;
         Block.SetMintedBitcoins(mintedCoins);
         AddOrUpdateEdge(new C2TEdge(v, mintedCoins, t, h));
         AddOrUpdateEdge(new B2TEdge(BlockNode, v, mintedCoins, t, h));
