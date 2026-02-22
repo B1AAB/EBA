@@ -41,7 +41,7 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         double? originalOutdegree = null,
         double? hopsFromRoot = null,
         string? idInGraphDb = null) :
-        base(id: scriptPubKey.SHA256Hash,
+        base(id: scriptPubKey.SHA256HashBase58,
              originalInDegree: originalIndegree,
              originalOutDegree: originalOutdegree,
              outHopsFromRoot: hopsFromRoot,
@@ -49,11 +49,11 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
     {
         Address = scriptPubKey.Address;
         ScriptType = scriptPubKey.ScriptType;
-        SHA256Hash = scriptPubKey.SHA256Hash;
+        SHA256Hash = scriptPubKey.SHA256HashBase58;
 
         if (ScriptType == ScriptType.nonstandard || ScriptType == ScriptType.NullData)
         {
-            HexBase64 = scriptPubKey.Base64String;
+            HexBase64 = scriptPubKey.HexBase58;
         }
     }
 

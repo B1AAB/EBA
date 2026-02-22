@@ -2,7 +2,7 @@
 
 public class S2TEdge : Edge<ScriptNode, TxNode>
 {
-    public static EdgeKind Kind => new(ScriptNode.Kind, TxNode.Kind, RelationType.Redeems);
+    public static new EdgeKind Kind => new(ScriptNode.Kind, TxNode.Kind, RelationType.Redeems);
 
     public long UTxOCreatedInBlockHeight { get; }
 
