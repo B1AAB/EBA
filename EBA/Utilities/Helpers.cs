@@ -46,6 +46,11 @@ internal class Helpers
         return satoshi / (double)BitcoinChainAgent.Coin;
     }
 
+    public static double Satoshi2BTC(double satoshi)
+    {
+        return satoshi / BitcoinChainAgent.Coin;
+    }
+
     public static long Round(double input)
     {
         // Read the following post on the motivation behind this rounding.

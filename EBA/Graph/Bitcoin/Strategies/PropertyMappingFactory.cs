@@ -47,30 +47,66 @@ public static class PropertyMappingFactory
 
     public static PropertyMapping<T>[] DescriptiveStats<T>(
         string prefix,
-        Func<T, DescriptiveStatistics?> getStats)
+        Func<T, DescriptiveStatistics?> getStats,
+        Func<double?, double>? converter = null)
     {
         // dummy variables to help with nameof expressions
         DescriptiveStatistics d = null!;
         DescriptiveStatistics.Percentile p = null!;
 
+        var C = converter ?? (x => x ?? double.NaN);
+
         return
         [
-            new($"{prefix}.{nameof(d.Sum)}", FieldType.Double, s => getStats(s)?.Sum),
-            new($"{prefix}.{nameof(d.Count)}", FieldType.Double, s => getStats(s)?.Count),
-            new($"{prefix}.{nameof(d.Min)}", FieldType.Double, s => getStats(s)?.Min),
-            new($"{prefix}.{nameof(d.Max)}", FieldType.Double, s => getStats(s)?.Max),
-            new($"{prefix}.{nameof(d.Mean)}", FieldType.Double, s => getStats(s)?.Mean),
-            new($"{prefix}.{nameof(d.Variance)}", FieldType.Double, s => getStats(s)?.Variance),
-            new($"{prefix}.{nameof(d.Skewness)}", FieldType.Double, s => getStats(s)?.Skewness),
-            new($"{prefix}.{nameof(d.Kurtosis)}", FieldType.Double, s => getStats(s)?.Kurtosis),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P01)}", FieldType.Double, s => getStats(s)?.Percentiles.P01),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P05)}", FieldType.Double, s => getStats(s)?.Percentiles.P05),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P25)}", FieldType.Double, s => getStats(s)?.Percentiles.P25),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P50)}", FieldType.Double, s => getStats(s)?.Percentiles.P50),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P75)}", FieldType.Double, s => getStats(s)?.Percentiles.P75),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P95)}", FieldType.Double, s => getStats(s)?.Percentiles.P95),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P99)}", FieldType.Double, s => getStats(s)?.Percentiles.P99),
+            new($"{prefix}.{nameof(d.Sum)}", FieldType.Double, s => C(getStats(s)?.Sum)),
+            new($"{prefix}.{nameof(d.Count)}", FieldType.Double, s => C(getStats(s)?.Count)),
+            new($"{prefix}.{nameof(d.Min)}", FieldType.Double, s => C(getStats(s)?.Min)),
+            new($"{prefix}.{nameof(d.Max)}", FieldType.Double, s => C(getStats(s)?.Max)),
+            new($"{prefix}.{nameof(d.Mean)}", FieldType.Double, s => C(getStats(s)?.Mean)),
+            new($"{prefix}.{nameof(d.Variance)}", FieldType.Double, s => C(getStats(s)?.Variance)),
+            new($"{prefix}.{nameof(d.Skewness)}", FieldType.Double, s => C(getStats(s)?.Skewness)),
+            new($"{prefix}.{nameof(d.Kurtosis)}", FieldType.Double, s => C(getStats(s)?.Kurtosis)),
+            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P01)}", FieldType.Double, s => C(getStats(s)?.Percentiles.P01)),
+            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P05)}", FieldType.Double, s => C(getStats(s)?.Percentiles.P05)),
+            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P25)}", FieldType.Double, s => C(getStats(s)?.Percentiles.P25)),
+            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P50)}", FieldType.Double, s => C(getStats(s)?.Percentiles.P50)),
+            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P75)}", FieldType.Double, s => C(getStats(s)?.Percentiles.P75)),
+            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P95)}", FieldType.Double, s => C(getStats(s)?.Percentiles.P95)),
+            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P99)}", FieldType.Double, s => C(getStats(s)?.Percentiles.P99)),
         ];
+    }
+
+    public static DescriptiveStatistics ReadDescriptiveStats(
+        IReadOnlyDictionary<string, object> properties,
+        string prefix,
+        Func<double, double>? converter = null)
+    {
+        DescriptiveStatistics d = null!;
+        DescriptiveStatistics.Percentile p = null!;
+
+        var C = converter ?? (x => x);
+
+        return new DescriptiveStatistics
+        {
+            Sum = C((double)properties[$"{prefix}.{nameof(d.Sum)}"]),
+            Count = C((double)properties[$"{prefix}.{nameof(d.Count)}"]),
+            Min = C((double)properties[$"{prefix}.{nameof(d.Min)}"]),
+            Max = C((double)properties[$"{prefix}.{nameof(d.Max)}"]),
+            Mean = C((double)properties[$"{prefix}.{nameof(d.Mean)}"]),
+            Variance = C((double)properties[$"{prefix}.{nameof(d.Variance)}"]),
+            Skewness = C((double)properties[$"{prefix}.{nameof(d.Skewness)}"]),
+            Kurtosis = C((double)properties[$"{prefix}.{nameof(d.Kurtosis)}"]),
+            Percentiles = new DescriptiveStatistics.Percentile
+            {
+                P01 = C((double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P01)}"]),
+                P05 = C((double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P05)}"]),
+                P25 = C((double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P25)}"]),
+                P50 = C((double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P50)}"]),
+                P75 = C((double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P75)}"]),
+                P95 = C((double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P95)}"]),
+                P99 = C((double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P99)}"]),
+            }
+        };
     }
 
     public static PropertyMapping<T>[] ScriptTypeCounts<T>(
@@ -83,36 +119,6 @@ public static class PropertyMappingFactory
                     $"{prefix}.ScriptType.{scriptType}",
                     FieldType.Long,
                     x => getScriptTypeCounts(x).GetValueOrDefault(scriptType)))];
-    }
-
-    public static DescriptiveStatistics ReadDescriptiveStats(
-        IReadOnlyDictionary<string, object> properties,
-        string prefix)
-    {
-        DescriptiveStatistics d = null!;
-        DescriptiveStatistics.Percentile p = null!;
-
-        return new DescriptiveStatistics
-        {
-            Sum = (double)properties[$"{prefix}.{nameof(d.Sum)}"],
-            Count = (double)properties[$"{prefix}.{nameof(d.Count)}"],
-            Min = (double)properties[$"{prefix}.{nameof(d.Min)}"],
-            Max = (double)properties[$"{prefix}.{nameof(d.Max)}"],
-            Mean = (double)properties[$"{prefix}.{nameof(d.Mean)}"],
-            Variance = (double)properties[$"{prefix}.{nameof(d.Variance)}"],
-            Skewness = (double)properties[$"{prefix}.{nameof(d.Skewness)}"],
-            Kurtosis = (double)properties[$"{prefix}.{nameof(d.Kurtosis)}"],
-            Percentiles = new DescriptiveStatistics.Percentile
-            {
-                P01 = (double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P01)}"],
-                P05 = (double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P05)}"],
-                P25 = (double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P25)}"],
-                P50 = (double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P50)}"],
-                P75 = (double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P75)}"],
-                P95 = (double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P95)}"],
-                P99 = (double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P99)}"],
-            }
-        };
     }
 
     public static Dictionary<ScriptType, long> ReadScriptTypeCounts(
@@ -128,15 +134,18 @@ public static class PropertyMappingFactory
     public static PropertyMapping<T>[] DictionaryToColumns<T>(
         string prefix,
         IEnumerable<EdgeKind> keys,
-        Func<T, Dictionary<EdgeKind, long>> getDict)
+        Func<T, Dictionary<EdgeKind, long>> getDict,
+        Func<double?, double>? converter = null)
     {
+        var C = converter ?? (x => x ?? double.NaN);
+
         // Make sure to keep EdgeKind string representation compatible with neo4j header requirements. 
         return
         [
             ..  keys.Select(k => new PropertyMapping<T>(
                 $"{prefix}.{k.Source}_{k.Relation}_{k.Target}",
                 FieldType.Long,
-                n => getDict(n).TryGetValue(k, out var v) ? v : 0))
+                n => C(getDict(n).TryGetValue(k, out var v) ? v : 0)))
         ];
     }
 
@@ -167,4 +176,7 @@ public static class PropertyMappingFactory
 
         return result;
     }
+
+    public static Func<double?, double> SatoshiToBTC => 
+        x => x == null ? double.NaN : Helpers.Satoshi2BTC((double)x);
 }
