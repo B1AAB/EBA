@@ -2,7 +2,10 @@
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
-public class C2TEdgeStrategy(bool serializeCompressed) : BitcoinStrategyBase(serializeCompressed)
+public class C2TEdgeStrategy(bool serializeCompressed) 
+    : BitcoinStrategyBase(
+        $"edges_{C2TEdge.Kind.Source}_{C2TEdge.Kind.Relation}_{C2TEdge.Kind.Target}",
+        serializeCompressed)
 {
     public static string IdSpaceCoinbase { get; } = CoinbaseNode.Kind.ToString();
 

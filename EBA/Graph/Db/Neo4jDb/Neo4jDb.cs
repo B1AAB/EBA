@@ -148,46 +148,45 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     {
         var nodes = g.GetNodes();
         var edges = g.GetEdges();
-        var batchInfo = await GetBatchAsync([.. nodes.Keys, .. edges.Keys]);
+        var batchInfo = await GetBatchAsync();
 
         var tasks = new List<Task>();
 
-        foreach (var type in nodes)
+        foreach (var type in nodes.Where(x => _strategyFactory.IsSerializable(x.Key)))
         {
-            batchInfo.AddOrUpdate(type.Key, type.Value.Count(x => x.Id !=  CoinbaseNode.Kind.ToString()));
+            batchInfo.Update(type.Key, type.Value.Count);
             var _strategy = _strategyFactory.GetStrategy(type.Key);
             if (_strategy == null) 
                 continue;
 
-            tasks.Add(
-                _strategy.ToCsvAsync(
-                    type.Value.Where(x => x.Id != CoinbaseNode.Kind.ToString()),
-                    batchInfo.GetFilename(type.Key)));
+            tasks.Add(_strategy.ToCsvAsync(type.Value, batchInfo.GetFilename(type.Key)));
         }
 
-        foreach (var type in edges)
+        foreach (var type in edges.Where(x => _strategyFactory.IsSerializable(x.Key)))
         {
-            batchInfo.AddOrUpdate(type.Key, type.Value.Count);
+            batchInfo.Update(type.Key, type.Value.Count);
             var _strategy = _strategyFactory.GetStrategy(type.Key);
-            if (_strategy == null) 
+            if (_strategy == null)
                 continue;
 
-            tasks.Add(
-                _strategy.ToCsvAsync(
-                    type.Value,
-                    batchInfo.GetFilename(type.Key)));
+            tasks.Add(_strategy.ToCsvAsync(type.Value, batchInfo.GetFilename(type.Key)));
         }
 
         await Task.WhenAll(tasks);
     }
 
-    private async Task<Batch> GetBatchAsync(List<Type> types)
+    private async Task<Batch> GetBatchAsync()
     {
         if (_batches.Count == 0)
             _batches = await DeserializeBatchesAsync();
 
+
         if (_batches.Count == 0 || _batches[^1].GetMaxCount() >= _options.Neo4j.MaxEntitiesPerBatch)
-            _batches.Add(new Batch(_batches.Count.ToString(), _options.WorkingDir, types, _options.Neo4j.CompressOutput));
+            _batches.Add(new Batch(
+                _batches.Count.ToString(),
+                _options.WorkingDir,
+                _strategyFactory.Strategies,
+                _options.Neo4j.CompressOutput));
 
         return _batches[^1];
     }

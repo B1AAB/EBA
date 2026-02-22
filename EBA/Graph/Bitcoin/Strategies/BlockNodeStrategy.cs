@@ -2,7 +2,10 @@
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
-public class BlockNodeStrategy(bool serializeCompressed) : BitcoinStrategyBase(serializeCompressed)
+public class BlockNodeStrategy(bool serializeCompressed) 
+    : BitcoinStrategyBase(
+        $"nodes_{BlockNode.Kind}",
+        serializeCompressed)
 {
     public static string IdSpace { get; } = BlockNode.Kind.ToString();
 

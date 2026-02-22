@@ -2,14 +2,22 @@
 
 namespace EBA.Graph.Db.Neo4jDb;
 
-public abstract class StrategyBase(bool serializeCompressed) : IDisposable
+public abstract class StrategyBase : IDisposable
 {
+    public string DefaultFilename { get; }
+
     private string? _filename;
     private StreamWriter? _writer;
     private bool _disposed = false;
-    private readonly bool _serializeCompressed = serializeCompressed;
+    private readonly bool _serializeCompressed;
 
     public const string csvDelimiter = "\t";
+
+    public StrategyBase(string defaultFilename, bool serializeCompressed)
+    {
+        _serializeCompressed = serializeCompressed;
+        DefaultFilename = defaultFilename + (_serializeCompressed ? ".csv.gz" : ".csv");
+    }
 
     private StreamWriter GetStreamWriter(string filename)
     {

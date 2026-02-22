@@ -2,5 +2,6 @@
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
-public abstract class BitcoinStrategyBase(bool serializeCompressed) : StrategyBase(serializeCompressed)
+public abstract class BitcoinStrategyBase(string defaultBaseFilename, bool serializeCompressed) 
+    : StrategyBase(defaultBaseFilename, serializeCompressed)
 { }

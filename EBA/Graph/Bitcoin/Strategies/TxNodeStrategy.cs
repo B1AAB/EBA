@@ -2,7 +2,10 @@
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
-public class TxNodeStrategy(bool serializeCompressed) : BitcoinStrategyBase(serializeCompressed)
+public class TxNodeStrategy(bool serializeCompressed) 
+    : BitcoinStrategyBase(
+        $"nodes_{TxNode.Kind}",
+        serializeCompressed)
 {
     /// <summary>
     /// The namespace used to resolve IDs during import by Neo4j. 

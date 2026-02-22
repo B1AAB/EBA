@@ -3,7 +3,10 @@ using EBA.Utilities;
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
-public class S2TEdgeStrategy(bool serializeCompressed) : BitcoinStrategyBase(serializeCompressed)
+public class S2TEdgeStrategy(bool serializeCompressed)
+    : BitcoinStrategyBase(
+        $"edges_{S2TEdge.Kind.Source}_{S2TEdge.Kind.Relation}_{S2TEdge.Kind.Target}",
+        serializeCompressed)
 {
     private static readonly PropertyMapping<S2TEdge>[] _mappings =
     [
