@@ -6,6 +6,8 @@ public interface IStrategyFactory : IDisposable
 
     public StrategyBase? GetStrategy(Type type);
 
+    public bool IsSerializable(Type type);
+
     public Task SerializeConstantsAsync(string outputDirectory, CancellationToken ct);
 
     /// <summary>

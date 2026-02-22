@@ -34,6 +34,11 @@ public class BitcoinStrategyFactory : IStrategyFactory
             return null;
     }
 
+    public bool IsSerializable(Type type)
+    {
+        return Strategies.ContainsKey(type);
+    }
+
     public async Task SerializeConstantsAsync(string outputDirectory, CancellationToken ct)
     {
         // Serialize Coinbase Node

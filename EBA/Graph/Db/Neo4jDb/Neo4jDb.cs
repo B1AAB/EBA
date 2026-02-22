@@ -152,7 +152,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         var tasks = new List<Task>();
 
-        foreach (var type in nodes)
+        foreach (var type in nodes.Where(x => _strategyFactory.IsSerializable(x.Key)))
         {
             batchInfo.Update(type.Key, type.Value.Count);
             var _strategy = _strategyFactory.GetStrategy(type.Key);
@@ -162,17 +162,14 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             tasks.Add(_strategy.ToCsvAsync(type.Value, batchInfo.GetFilename(type.Key)));
         }
 
-        foreach (var type in edges)
+        foreach (var type in edges.Where(x => _strategyFactory.IsSerializable(x.Key)))
         {
             batchInfo.Update(type.Key, type.Value.Count);
             var _strategy = _strategyFactory.GetStrategy(type.Key);
-            if (_strategy == null) 
+            if (_strategy == null)
                 continue;
 
-            tasks.Add(
-                _strategy.ToCsvAsync(
-                    type.Value,
-                    batchInfo.GetFilename(type.Key)));
+            tasks.Add(_strategy.ToCsvAsync(type.Value, batchInfo.GetFilename(type.Key)));
         }
 
         await Task.WhenAll(tasks);
