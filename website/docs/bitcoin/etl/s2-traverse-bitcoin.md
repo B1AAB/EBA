@@ -66,8 +66,8 @@ the specifics of such a deployment are not currently covered.
 ## Deduplicate Nodes
 
 This step deduplicates the 
-`Tx` (`[0-9]*_BitcoinTxNode.csv.gz`) and 
-`Script` (`[0-9]*_BitcoinScriptNode.csv.gz`) 
+`Tx` (`[0-9]*_nodes_Tx.csv.gz`) and 
+`Script` (`[0-9]*_nodes_Script.csv.gz`) 
 node files.
 
 <details>
@@ -121,11 +121,11 @@ node files.
 2.  Combine the files:
 
     ```shell
-    zcat [0-9]*_TxNode.csv.gz > combined_TxNode.csv
+    zcat [0-9]*_nodes_Tx.csv.gz > combined_nodes_Tx.csv
     ```
 
     ```shell
-    zcat [0-9]*_ScriptNode.csv.gz > combined_ScriptNode.csv
+    zcat [0-9]*_nodes_Script.csv.gz > combined_nodes_Script.csv
     ```
 
 3.  Sort the files. 
@@ -137,15 +137,15 @@ node files.
 
 
     ```shell
-    LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_TxNode.csv > sorted_TxNode.csv
+    LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_nodes_Tx.csv > sorted_nodes_Tx.csv
     ```
 
     ```shell
-    LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_ScriptNode.csv > sorted_ScriptNode.csv
+    LC_ALL=C sort --buffer-size=32G --parallel=16 --temporary-directory=. -t$'\t' -k1,1 combined_nodes_Script.csv > sorted_nodes_Script.csv
     ```
 
 4.  Run the following command to deduplicate the files:
 
     ```shell
-    .\eba.exe bitcoin dedup --sorted-script-nodes-file sorted_ScriptNode.csv --sorted-tx-nodes-file sorted_TxNode.csv
+    .\eba.exe bitcoin dedup --sorted-script-nodes-file sorted_nodes_Script.csv --sorted-tx-nodes-file sorted_nodes_Tx.csv
     ```
