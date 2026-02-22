@@ -2,6 +2,8 @@
 
 public interface IStrategyFactory : IDisposable
 {
+    public IReadOnlyDictionary<Type, StrategyBase> Strategies { get; }
+
     public StrategyBase? GetStrategy(Type type);
 
     public Task SerializeConstantsAsync(string outputDirectory, CancellationToken ct);

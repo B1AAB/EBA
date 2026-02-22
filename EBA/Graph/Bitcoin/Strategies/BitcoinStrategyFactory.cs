@@ -7,12 +7,13 @@ public class BitcoinStrategyFactory : IStrategyFactory
 {
     private bool _disposed = false;
 
-    private readonly Dictionary<Type, StrategyBase> _strategies;
+    public IReadOnlyDictionary<Type, StrategyBase> Strategies { get; }
 
     public BitcoinStrategyFactory(Options options)
     {
         var compressOutput = options.Neo4j.CompressOutput;
-        _strategies = new()
+
+        Strategies = new Dictionary<Type, StrategyBase>
         {
             {typeof(BlockNode), new BlockNodeStrategy(compressOutput)},
             {typeof(ScriptNode), new ScriptNodeStrategy(compressOutput)},
@@ -27,7 +28,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
 
     public StrategyBase? GetStrategy(Type type)
     {
-        if (_strategies.TryGetValue(type, out var strategy))
+        if (Strategies.TryGetValue(type, out var strategy))
             return strategy;
         else
             return null;
@@ -45,11 +46,11 @@ public class BitcoinStrategyFactory : IStrategyFactory
             writer.WriteLine(string.Join('\t', $"{CoinbaseNode.Kind}", $"{CoinbaseNode.Kind}"));
         }
 
-        foreach(var strategy in _strategies)
+        foreach(var strategy in Strategies)
         {
             using var writer = new StreamWriter(
                 new GZipStream(
-                    File.Create(Path.Join(outputDirectory, $"header_{strategy.Key.Name}.csv.gz")),
+                    File.Create(Path.Join(outputDirectory, $"header_{strategy.Value.DefaultBaseFilename}.csv.gz")),
                     CompressionMode.Compress));
             writer.WriteLine(strategy.Value.GetCsvHeader());
         }
@@ -100,7 +101,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
         {
             if (disposing)
             {
-                foreach (var x in _strategies)
+                foreach (var x in Strategies)
                 {
                     x.Value.Dispose();
                 }

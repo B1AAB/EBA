@@ -2,8 +2,10 @@
 
 namespace EBA.Graph.Db.Neo4jDb;
 
-public abstract class StrategyBase(bool serializeCompressed) : IDisposable
+public abstract class StrategyBase(string defaultBaseFilename, bool serializeCompressed) : IDisposable
 {
+    public string DefaultBaseFilename { get; } = defaultBaseFilename;
+
     private string? _filename;
     private StreamWriter? _writer;
     private bool _disposed = false;
