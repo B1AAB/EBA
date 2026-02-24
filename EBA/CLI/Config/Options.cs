@@ -4,7 +4,7 @@ public class Options
 {
     public long Timestamp { init; get; } = _timestamp;
     public string WorkingDir { init; get; } = _wd;
-    public string StatusFile { init; get; } = Path.Join(_wd, $"status_{_timestamp}.json");
+    public string StatusFile { init; get; } = Path.Join(_wd, $"{_timestamp}_status.json");
 
     /// <summary>
     /// The value of this parameter should be set based on the performance of the 
@@ -27,7 +27,7 @@ public class Options
             LogFilename = Path.Join(_wd, $"{new LoggerOptions().RepoName}_.log")
         };
 
-    public BitcoinOptions Bitcoin { init; get; } = new();
+    public BitcoinOptions Bitcoin { init; get; } = new(_timestamp);
     public Neo4jOptions Neo4j { init; get; } = new();
 
     public const char CsvDelimiter = '\t';

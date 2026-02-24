@@ -1,6 +1,6 @@
 ﻿namespace EBA.CLI.Config;
 
-public class BitcoinTraverseOptions
+public class BitcoinTraverseOptions(long timestamp)
 {
     public Uri ClientUri
     {
@@ -64,8 +64,8 @@ public class BitcoinTraverseOptions
     }
     private int _granularity = 1;
 
-    public string BlocksToProcessListFilename { init; get; } = "bitcoin_blocks_to_process.eba";
-    public string BlocksFailedToProcessListFilename { init; get; } = "bitcoin_blocks_failed_to_process.eba";
+    public string BlocksToProcessListFilename { init; get; } = $"{timestamp}_bitcoin_blocks_to_process.eba";
+    public string BlocksFailedToProcessListFilename { init; get; } = $"{timestamp}_bitcoin_blocks_failed_to_process.eba";
 
     public int MaxBlocksInBuffer { init; get; } = 100;
 

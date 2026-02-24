@@ -91,7 +91,7 @@ internal class OptionsBinder : BinderBase<Options>
 
         var wd = GetValue(defs.WorkingDir, _workingDirOption, c);
 
-        var bitcoinTraverseOptions = new BitcoinTraverseOptions()
+        var bitcoinTraverseOptions = new BitcoinTraverseOptions(defs.Timestamp)
         {
             ClientUri = GetValue(defs.Bitcoin.Traverse.ClientUri, _bitcoinClientUri, c),
             From = GetValue(defs.Bitcoin.Traverse.From, _fromOption, c),
@@ -144,7 +144,7 @@ internal class OptionsBinder : BinderBase<Options>
             SortedTxNodesFilename = GetValue(defs.Bitcoin.Dedup.SortedTxNodesFilename, _sortedTxNodeFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); })
         };
 
-        var bitcoinOps = new BitcoinOptions()
+        var bitcoinOps = new BitcoinOptions(defs.Timestamp)
         {
             Traverse = bitcoinTraverseOptions,
             Dedup = bitcoinDedupOps,
