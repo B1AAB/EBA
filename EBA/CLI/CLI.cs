@@ -49,10 +49,9 @@ internal class Cli
                 }
                 else
                 {
-                    string wd;
                     try
                     {
-                        wd = Path.GetFullPath(value);
+                        _ = Path.GetFullPath(value);
                     }
                     catch (Exception e) when (
                         e is ArgumentException ||
@@ -279,7 +278,9 @@ internal class Cli
         },
         new OptionsBinder(
             sortedScriptNodeFilenameOption: scriptNodesFileOption,
-            sortedTxNodeFilenameOption: txNodesFileOption));
+            sortedTxNodeFilenameOption: txNodesFileOption,
+            workingDirOption: _workingDirOption,
+            statusFilenameOption: _statusFilenameOption));
 
         return cmd;
     }
