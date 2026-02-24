@@ -136,14 +136,16 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             ct: cT);
 
         _logger.LogInformation(
-            "Traversing blocks [{from:n0}, {to:n0}).",
-            options.Bitcoin.Traverse.From,
-            options.Bitcoin.Traverse.To);
+            "Traversing blocks [{from:n0}, {to:n0}].",
+            blocksQueue.Min(),
+            blocksQueue.Max());
+
+        var numPreviouslyProcessedBlocks = options.Bitcoin.Traverse.To - options.Bitcoin.Traverse.From - blocksQueue.Count;
 
         _logger.LogInformation(
             "{count:n0} blocks to process; {processed:n0} blocks are previously processed.",
             blocksQueue.Count,
-            options.Bitcoin.Traverse.To - options.Bitcoin.Traverse.From - blocksQueue.Count);
+            Math.Max(0, numPreviouslyProcessedBlocks ?? 0));
 
         var parallelOptions = new ParallelOptions() { CancellationToken = cT };
         if (options.Bitcoin.Traverse.MaxConcurrentBlocks != null)
