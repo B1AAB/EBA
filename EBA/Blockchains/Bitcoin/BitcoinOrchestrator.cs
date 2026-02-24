@@ -199,6 +199,8 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
                     _loopCancellationToken.ThrowIfCancellationRequested();
                 });
+
+            await gBuffer.WaitForBufferToEmptyAsync();
         }
         catch (Exception)
         {
