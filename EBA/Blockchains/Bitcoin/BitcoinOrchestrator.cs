@@ -28,9 +28,15 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         _logger.LogInformation("Head of the chain is at block {block:n0}.", chainInfo.Blocks);
         options.Bitcoin.Traverse.To ??= chainInfo.Blocks;
 
-        var blockHeightQueue = SetupBlocksQueue(options);
-        var failedBlocksQueue = GetPersistentBlocksQueue(options.Bitcoin.Traverse.BlocksFailedToProcessListFilename);
+        SetupPersistedQueues(options, out var blockHeightQueue, out var failedBlocksQueue);
+
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, cT);
+
+        if (blockHeightQueue.Count == 0)
+        {
+            _logger.LogInformation("No blocks to process.");
+            return;
+        }
 
         cT.ThrowIfCancellationRequested();
         var stopwatch = new Stopwatch();
@@ -74,8 +80,10 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         _logger.LogInformation("Successfully finished deduplication.");
     }
 
-    private static PersistentConcurrentQueue SetupBlocksQueue(
-        Options options)
+    private void SetupPersistedQueues(
+        Options options,
+        out PersistentConcurrentQueue blocksToProcessQueue,
+        out PersistentConcurrentQueue failedBlocksQueue)
     {
         var heights = new List<long>();
         for (int h = options.Bitcoin.Traverse.From;
@@ -83,26 +91,64 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             h += options.Bitcoin.Traverse.Granularity)
             heights.Add(h);
 
-        return GetPersistentBlocksQueue(options.Bitcoin.Traverse.BlocksToProcessListFilename, heights);
-    }
-
-    private static PersistentConcurrentQueue GetPersistentBlocksQueue(
-        string filename, 
-        List<long>? init = null)
-    {
-        PersistentConcurrentQueue blockHeightQueue;
-        if (!File.Exists(filename))
+        var qFilename = options.Bitcoin.Traverse.BlocksToProcessListFilename;
+        if (!File.Exists(qFilename))
         {
-            init ??= [];
-            blockHeightQueue = new PersistentConcurrentQueue(filename, init);
-            blockHeightQueue.Serialize();
+            blocksToProcessQueue = new PersistentConcurrentQueue(qFilename, heights);
+            blocksToProcessQueue.Serialize();
+
+            _logger.LogInformation(
+                "File {f} not found, and initialized with {n:n0} blocks to process. ",
+                qFilename,
+                blocksToProcessQueue.Count);
         }
         else
         {
-            blockHeightQueue = PersistentConcurrentQueue.Deserialize(filename);
+            blocksToProcessQueue = PersistentConcurrentQueue.Deserialize(qFilename);
+            _logger.LogInformation(
+                "File {f} found, and deserialized a queue of {n:n0} blocks to process. " +
+                "This overrides the list of {x:n0} blocks set by the traverse options.",
+                qFilename,
+                blocksToProcessQueue.Count,
+                heights.Count);
         }
 
-        return blockHeightQueue;
+
+        var fqFilename = options.Bitcoin.Traverse.BlocksFailedToProcessListFilename;
+        if (!File.Exists(fqFilename))
+        {
+            failedBlocksQueue = new PersistentConcurrentQueue(fqFilename, []);
+            failedBlocksQueue.Serialize();
+
+            _logger.LogInformation(
+                "File {f} not found, and initialized to an empty queue.",
+                fqFilename);
+        }
+        else
+        {
+            failedBlocksQueue = PersistentConcurrentQueue.Deserialize(fqFilename);
+
+            _logger.LogInformation(
+                "File {f} found, and deserialized a queue of {n:n0} previously failed blocks.",
+                fqFilename,
+                failedBlocksQueue.Count);
+        }
+
+        if (failedBlocksQueue.Count > 0)
+        {
+            foreach (var failedBlock in failedBlocksQueue)
+                blocksToProcessQueue.Enqueue(failedBlock);
+
+            var preClearCount = failedBlocksQueue.Count;
+            failedBlocksQueue.Clear();
+            blocksToProcessQueue.Serialize();
+            failedBlocksQueue.Serialize();
+
+            _logger.LogInformation(
+                "The {n:n0} previously failed blocks to process are added to the queue, " +
+                "and the failed blocks queue is cleared.",
+                preClearCount);
+        }
     }
 
     private async Task TraverseBlocksAsync(
