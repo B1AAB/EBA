@@ -86,6 +86,14 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         return _blocksHeightsInBuffer.Count;
     }
 
+    public async Task WaitForBufferToEmptyAsync()
+    {
+        // TODO: this is a naive implementation and
+        // need a more efficient re-implementation. 
+        while (GetBufferSize() > 0)
+            await Task.Delay(50);
+    }
+
     public new void Dispose()
     {
         Dispose(true);
