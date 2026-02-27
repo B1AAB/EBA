@@ -2,7 +2,7 @@
 
 public class T2SEdge : Edge<TxNode, ScriptNode>
 {
-    public new static EdgeKind Kind => new(TxNode.Kind, ScriptNode.Kind, RelationType.Rewards);
+    public new static EdgeKind Kind => new(TxNode.Kind, ScriptNode.Kind, RelationType.Credits);
 
     public List<Output> Outputs { get; }
 
@@ -12,7 +12,7 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
         long value,
         uint timestamp,
         long blockHeight) :
-        base(source, target, value, RelationType.Rewards, timestamp, blockHeight)
+        base(source, target, value, Kind.Relation, timestamp, blockHeight)
     { }
 
     public T2SEdge(TxNode source,
@@ -20,7 +20,7 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
         uint timestamp,
         long blockHeight,
         List<Output> outputs) :
-        base(source, target, outputs.Sum(x => x.Value), RelationType.Rewards, timestamp, blockHeight)
+        base(source, target, outputs.Sum(x => x.Value), Kind.Relation, timestamp, blockHeight)
     {
         Outputs = outputs;
     }
