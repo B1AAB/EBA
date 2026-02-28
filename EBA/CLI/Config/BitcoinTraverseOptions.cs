@@ -50,6 +50,8 @@ public class BitcoinTraverseOptions(long timestamp)
     }
     private int? _to = null;
 
+    public string? BlocksListFile { init; get; }
+
     public int Granularity
     {
         init
