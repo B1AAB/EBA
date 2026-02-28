@@ -4,6 +4,7 @@ internal class OptionsBinder : BinderBase<Options>
 {
     private readonly Option<int>? _fromOption;
     private readonly Option<int?>? _toOption;
+    private readonly Option<string?>? _blocksListFileOption;
     private readonly Option<int>? _granularityOption;
     private readonly Option<Uri>? _bitcoinClientUri;
     private readonly Option<int>? _graphSampleCountOption;
@@ -29,6 +30,7 @@ internal class OptionsBinder : BinderBase<Options>
     public OptionsBinder(
         Option<int>? fromOption = null,
         Option<int?>? toOption = null,
+        Option<string?>? blocksListFileOption = null,
         Option<int>? granularityOption = null,
         Option<Uri>? bitcoinClientUri = null,
         Option<int>? graphSampleCountOption = null,
@@ -53,6 +55,7 @@ internal class OptionsBinder : BinderBase<Options>
     {
         _fromOption = fromOption;
         _toOption = toOption;
+        _blocksListFileOption = blocksListFileOption;
         _granularityOption = granularityOption;
         _bitcoinClientUri = bitcoinClientUri;
         _graphSampleCountOption = graphSampleCountOption;
@@ -97,6 +100,7 @@ internal class OptionsBinder : BinderBase<Options>
             From = GetValue(defs.Bitcoin.Traverse.From, _fromOption, c),
             To = GetValue(defs.Bitcoin.Traverse.To, _toOption, c),
             Granularity = GetValue(defs.Bitcoin.Traverse.Granularity, _granularityOption, c),
+            BlocksListFile = GetValue(defs.Bitcoin.Traverse.BlocksListFile, _blocksListFileOption, c),
             BlocksToProcessListFilename = Path.Join(wd, defs.Bitcoin.Traverse.BlocksToProcessListFilename),
             BlocksFailedToProcessListFilename = Path.Join(wd, defs.Bitcoin.Traverse.BlocksFailedToProcessListFilename),
             MaxBlocksInBuffer = GetValue(defs.Bitcoin.Traverse.MaxBlocksInBuffer, _maxBlocksInBufferOption, c),

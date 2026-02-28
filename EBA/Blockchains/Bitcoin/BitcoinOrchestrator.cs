@@ -86,10 +86,39 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         out PersistentConcurrentQueue failedBlocksQueue)
     {
         var heights = new List<long>();
-        for (int h = options.Bitcoin.Traverse.From;
-            h <= options.Bitcoin.Traverse.To;
-            h += options.Bitcoin.Traverse.Granularity)
-            heights.Add(h);
+
+        if (options.Bitcoin.Traverse.BlocksListFile != null)
+        {
+            using var reader = new StreamReader(options.Bitcoin.Traverse.BlocksListFile);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (long.TryParse(line, out var h))
+                    heights.Add(h);
+                else
+                    _logger.LogWarning("Ignoring malformed line: {line}", line);
+            }
+
+            _logger.LogInformation(
+                "Read {n:n0} block heights from file {f}.",
+                heights.Count,
+                options.Bitcoin.Traverse.BlocksListFile);
+        }
+        else
+        {
+            for (int h = options.Bitcoin.Traverse.From;
+                h <= options.Bitcoin.Traverse.To;
+                h += options.Bitcoin.Traverse.Granularity)
+                heights.Add(h);
+
+            _logger.LogInformation(
+                "Initialized the list of blocks to process using the traverse options, " +
+                "with {n:n0} blocks to process in range [{from:n0}, {to:n0}] with granularity {g}.",
+                heights.Count,
+                options.Bitcoin.Traverse.From,
+                options.Bitcoin.Traverse.To,
+                options.Bitcoin.Traverse.Granularity);
+        }
 
         var qFilename = options.Bitcoin.Traverse.BlocksToProcessListFilename;
         if (!File.Exists(qFilename))
@@ -182,16 +211,10 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             ct: cT);
 
         _logger.LogInformation(
-            "Traversing blocks [{from:n0}, {to:n0}].",
+            "Traversing {count:n0} blocks in range [{from:n0}, {to:n0}].",
+            blocksQueue.Count,
             blocksQueue.Min(),
             blocksQueue.Max());
-
-        var numPreviouslyProcessedBlocks = options.Bitcoin.Traverse.To - options.Bitcoin.Traverse.From - blocksQueue.Count;
-
-        _logger.LogInformation(
-            "{count:n0} blocks to process; {processed:n0} blocks are previously processed.",
-            blocksQueue.Count,
-            Math.Max(0, numPreviouslyProcessedBlocks ?? 0));
 
         var parallelOptions = new ParallelOptions() { CancellationToken = cT };
         if (options.Bitcoin.Traverse.MaxConcurrentBlocks != null)

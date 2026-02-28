@@ -156,15 +156,22 @@ internal class Cli
     {
         var fromOption = new Option<int>(
             name: "--from",
+            getDefaultValue: () => 0,
             description: "The height of the block where the " +
             "traverse should start. If not provided, starts from the " +
-            "genesis block (i.e., the first block on the blockchain).");
+            "first block on the blockchain.");
 
         var toOption = new Option<int?>(
             name: "--to",
             description: "The height of the block where the " +
             "traverse should end. If not provided, proceeds " +
             "until the last of block on the chain when the process starts.");
+
+        var blocksListFile = new Option<string?>(
+            name: "--blocks-list-file",
+            description: "A text file containing the list of block heights to traverse, " +
+            "with one block per line. " +
+            "If provided, it will override the --from and --to options.");
 
         var granularityOption = new Option<int>(
             name: "--granularity",
@@ -222,6 +229,7 @@ internal class Cli
         {
             fromOption,
             toOption,
+            blocksListFile,
             granularityOption,
             clientUriOption,
             maxBlocksInBufferOption,
@@ -231,6 +239,40 @@ internal class Cli
             maxEntriesPerBatch
         };
 
+        cmd.AddValidator(commandResult =>
+        {
+            var errors = new List<string>();
+            var fromValue = commandResult.GetValueForOption(fromOption);
+            var toValue = commandResult.GetValueForOption(toOption);
+            var blocksListFileValue = commandResult.GetValueForOption(blocksListFile);
+
+            var fromResult = commandResult.FindResultFor(fromOption);
+            var toResult = commandResult.FindResultFor(toOption);
+            var blocksListFileResult = commandResult.FindResultFor(blocksListFile);
+
+            bool fromProvidedByUser = fromResult is not null && !fromResult.IsImplicit;
+            bool toProvidedByUser = toResult is not null && !toResult.IsImplicit;
+            bool blocksListDirProvidedByUser = blocksListFileResult is not null && !blocksListFileResult.IsImplicit;
+
+            if (blocksListDirProvidedByUser && (fromProvidedByUser || toProvidedByUser))
+                errors.Add($"Options --{fromOption.Name} and --{toOption.Name} cannot be used together with --{blocksListFile.Name}.");
+            
+            if (fromValue < 0)
+                errors.Add($"Option --{fromOption.Name} must be a non-negative integer.");
+            
+            if (toValue is not null && toValue < 0)
+                errors.Add($"Option --{toOption.Name} must be a non-negative integer.");
+            
+            if (toValue is not null && fromValue > toValue)
+                errors.Add($"Option --{fromOption.Name} cannot be greater than option --{toOption.Name}.");
+
+            if (blocksListDirProvidedByUser && !File.Exists(blocksListFileValue))
+                errors.Add($"The file specified in --{blocksListFile.Name} does not exist: {blocksListFileValue}.");
+
+            if (errors.Count > 0)
+                commandResult.ErrorMessage = string.Join(Environment.NewLine, errors);
+        });
+
         cmd.SetHandler(async (options) =>
         {
             await handlerAsync(options);
@@ -238,6 +280,7 @@ internal class Cli
         new OptionsBinder(
             fromOption: fromOption,
             toOption: toOption,
+            blocksListFileOption: blocksListFile,
             granularityOption: granularityOption,
             bitcoinClientUri: clientUriOption,
             workingDirOption: _workingDirOption,
