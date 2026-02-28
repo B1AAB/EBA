@@ -14,11 +14,11 @@ public class TxGraph(Tx tx) : GraphBase()
 
     public ConcurrentDictionary<string, long> SourceTxes { set; get; } = new();
 
-    public ReadOnlyDictionary<ScriptPubKey, List<PrevOut>> InputScripts
+    public ReadOnlyDictionary<ScriptPubKey, List<Input>> InputScripts
     {
-        get { return new ReadOnlyDictionary<ScriptPubKey, List<PrevOut>>(_inputScripts); }
+        get { return new ReadOnlyDictionary<ScriptPubKey, List<Input>>(_inputScripts); }
     }
-    private readonly ConcurrentDictionary<ScriptPubKey, List<PrevOut>> _inputScripts = new();
+    private readonly ConcurrentDictionary<ScriptPubKey, List<Input>> _inputScripts = new();
 
     /// <summary>
     /// Number of inputs in the transaction.
@@ -63,10 +63,10 @@ public class TxGraph(Tx tx) : GraphBase()
         // an example block that contains multiple inputs with the same scriptPubKey is 320700
         _inputScripts.AddOrUpdate(
             prevOut.ScriptPubKey,
-            [input.PrevOut],
+            [input],
             (_, oldValue) =>
             {
-                oldValue.Add(input.PrevOut);
+                oldValue.Add(input);
                 return oldValue;
             });
     }

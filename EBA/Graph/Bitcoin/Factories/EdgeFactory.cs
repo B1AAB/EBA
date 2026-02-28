@@ -22,7 +22,9 @@ public class EdgeFactory
             (TxNode u, TxNode v) => new T2TEdge(u, v, value, type, timestamp, blockHeight),
             (BlockNode u, TxNode v) => new B2TEdge(u, v, value, timestamp, blockHeight),
             (TxNode u, ScriptNode v) => new T2SEdge(u, v, value, timestamp, blockHeight),
-            (ScriptNode u, TxNode v) => new S2TEdge(u, v, value, timestamp, blockHeight, (long)relationship.Properties[nameof(S2TEdge.UTxOCreatedInBlockHeight)]),
+            (ScriptNode u, TxNode v) => new S2TEdge(
+                source: u, target: v, timestamp: timestamp, blockHeight: blockHeight,
+                spentUTxOs: [.. PropertyMappingFactory.ReadSpentUtxos(relationship.Properties, nameof(S2TEdge.SpentUTxOs))]),
             _ => throw new ArgumentException("Invalid edge type")
         };
     }

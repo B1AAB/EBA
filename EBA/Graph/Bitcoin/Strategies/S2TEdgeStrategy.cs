@@ -1,5 +1,4 @@
-﻿using EBA.Graph.Db.Neo4jDb;
-using EBA.Utilities;
+﻿using EBA.Utilities;
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
@@ -14,7 +13,7 @@ public class S2TEdgeStrategy(bool serializeCompressed)
         PropertyMappingFactory.TargetId<S2TEdge>(TxNodeStrategy.IdSpace, e => e.Target.Txid),
         PropertyMappingFactory.ValueBTC<S2TEdge>(e => Helpers.Satoshi2BTC(e.Value)),
         PropertyMappingFactory.Height<S2TEdge>(e => e.BlockHeight),
-        new(nameof(S2TEdge.UTxOCreatedInBlockHeight), FieldType.Long, e => e.UTxOCreatedInBlockHeight),
+        PropertyMappingFactory.SpentUtxos<S2TEdge>(nameof(S2TEdge.SpentUTxOs), e => e.SpentUTxOs),
         PropertyMappingFactory.EdgeType<S2TEdge>(e => e.Relation)
     ];
 

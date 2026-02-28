@@ -2,7 +2,7 @@
 
 public class B2TEdge : Edge<BlockNode, TxNode>
 {
-    public new static EdgeKind Kind => new(BlockNode.Kind, TxNode.Kind, RelationType.Contains);
+    public new static EdgeKind Kind => new(BlockNode.Kind, TxNode.Kind, RelationType.Confirms);
 
     public B2TEdge(
         BlockNode source, TxNode target,

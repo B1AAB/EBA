@@ -79,7 +79,5 @@ public enum RelationType
     /// The difference between this and Mints is that, 
     /// this includes both fee and minted coins.
     /// </summary>
-    Rewards = 6,
-
-    Contains = 7
+    Rewards = 6
 }

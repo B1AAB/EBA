@@ -9,7 +9,7 @@ public class Input : IEquatable<Input>
     public string TxId { set; get; } = string.Empty;
 
     [JsonPropertyName("vout")]
-    public int OutputIndex { set; get; }
+    public int Vout { set; get; }
 
     [JsonPropertyName("scriptSig")]
     public ScriptSig? ScriptSig { set; get; }
@@ -40,7 +40,7 @@ public class Input : IEquatable<Input>
         if (other is null) return false;
         return
             TxId == other.TxId &&
-            OutputIndex == other.OutputIndex;
+            Vout == other.Vout;
     }
 
     public override bool Equals(object? obj)
@@ -50,6 +50,6 @@ public class Input : IEquatable<Input>
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(TxId, OutputIndex);
+        return HashCode.Combine(TxId, Vout);
     }
 }

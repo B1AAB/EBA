@@ -18,7 +18,21 @@ public class Property
         Name = name;
         CsvHeader = csvHeader ?? Name;
         Type = type;
-        TypeAnnotatedCsvHeader = $"{Name}:{type.ToString().ToLower()}";
+
+        switch (type)
+        {
+            case FieldType.String:
+            case FieldType.Int:
+            case FieldType.Long:
+            case FieldType.Float:
+            case FieldType.Double:
+                TypeAnnotatedCsvHeader = $"{Name}:{type.ToString().ToLower()}";
+                break;
+
+            case FieldType.StringArray:
+                TypeAnnotatedCsvHeader = $"{Name}:{FieldType.String.ToString().ToLower()}[]";
+                break;
+        }
     }
 
     public string GetIdFieldCsvHeader(string idGroup)

@@ -5,6 +5,8 @@ namespace EBA.Graph.Bitcoin.Strategies;
 
 public static class PropertyMappingFactory
 {
+    public static char PropertyDelimiter { get; } = '-';
+
     public static Property HeightProperty { get; } = new(nameof(Block.Height), FieldType.Long);
     public static PropertyMapping<T> Height<T>(Func<T, long> getValue, Func<Property, string>? headerOverride = null)
     {
@@ -177,6 +179,39 @@ public static class PropertyMappingFactory
         return result;
     }
 
-    public static Func<double?, double> SatoshiToBTC => 
+    public static Func<double?, double> SatoshiToBTC =>
         x => x == null ? double.NaN : Helpers.Satoshi2BTC((double)x);
+
+    public static PropertyMapping<T> SpentUtxos<T>(
+        string propertyName,
+        Func<T, IEnumerable<SpentUTxO>> getUtxos)
+    {
+        return new(
+            propertyName,
+            FieldType.StringArray,
+            x => getUtxos(x).Select(
+                u => string.Join(PropertyDelimiter, u.Txid, u.Vout, u.Generated, u.Value, u.Height)));
+    }
+
+    public static SpentUTxO[] ReadSpentUtxos(
+        IReadOnlyDictionary<string, object> properties,
+        string propertyName)
+    {
+        if (!properties.TryGetValue(propertyName, out var raw) || raw is not string s || s.Length == 0)
+            return [];
+
+        return
+            [
+                .. s.Split(';').Select(entry =>
+                {
+                    var parts = entry.Split(PropertyDelimiter);
+                    return new SpentUTxO(
+                        parts[0],
+                        int.Parse(parts[1]),
+                        bool.Parse(parts[2]),
+                        long.Parse(parts[3]),
+                        long.Parse(parts[4]));
+                })
+            ];
+    }
 }
