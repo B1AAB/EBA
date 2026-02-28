@@ -184,7 +184,7 @@ public static class PropertyMappingFactory
 
     public static PropertyMapping<T> SpentUtxos<T>(
         string propertyName,
-        Func<T, IEnumerable<SpentUtxo>> getUtxos)
+        Func<T, IEnumerable<SpentUTxO>> getUtxos)
     {
         return new(
             propertyName,
@@ -193,7 +193,7 @@ public static class PropertyMappingFactory
                 u => string.Join(PropertyDelimiter, u.Txid, u.Vout, u.Generated, u.Value, u.Height)));
     }
 
-    public static SpentUtxo[] ReadSpentUtxos(
+    public static SpentUTxO[] ReadSpentUtxos(
         IReadOnlyDictionary<string, object> properties,
         string propertyName)
     {
@@ -205,7 +205,7 @@ public static class PropertyMappingFactory
                 .. s.Split(';').Select(entry =>
                 {
                     var parts = entry.Split(PropertyDelimiter);
-                    return new SpentUtxo(
+                    return new SpentUTxO(
                         parts[0],
                         int.Parse(parts[1]),
                         bool.Parse(parts[2]),

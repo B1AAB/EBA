@@ -1,6 +1,6 @@
 ﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
 
-public record SpentUtxo
+public record SpentUTxO
 {
     public string Txid { get; init; }
     public int Vout { get; init; }
@@ -8,7 +8,7 @@ public record SpentUtxo
     public long Value { get; init; }
     public long Height { get; init; }
 
-    public SpentUtxo(string txid, int vout, bool generated, long value, long height)
+    public SpentUTxO(string txid, int vout, bool generated, long value, long height)
     {
         Txid = txid;
         Vout = vout;
@@ -17,7 +17,7 @@ public record SpentUtxo
         Height = height;
     }
 
-    public SpentUtxo(Input input)
+    public SpentUTxO(Input input)
     {
         Txid = input.TxId;
         Vout = input.Vout;

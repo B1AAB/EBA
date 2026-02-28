@@ -124,7 +124,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         foreach (var u in txGraph.InputScripts)
         {
             var sumValue = u.Value.Sum(x => x.PrevOut.Value);
-            var spentUtxos = u.Value.Select(x => new SpentUtxo(x)).ToList();
+            var spentUtxos = u.Value.Select(x => new SpentUTxO(x)).ToList();
             AddOrUpdateEdge(
                 new S2TEdge(new ScriptNode(u.Key), v, t, h, spentUTxOs: spentUtxos),
                 (newE, oldE) => S2TEdge.Merge(oldE, newE));

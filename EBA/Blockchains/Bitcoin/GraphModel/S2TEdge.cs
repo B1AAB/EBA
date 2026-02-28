@@ -6,14 +6,14 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
 
     public long UTxOCreatedInBlockHeight { get; }
 
-    public List<SpentUtxo> SpentUTxOs { get; } = [];
+    public List<SpentUTxO> SpentUTxOs { get; } = [];
 
     public S2TEdge(
         ScriptNode source,
         TxNode target,
         uint timestamp,
         long blockHeight,
-        List<SpentUtxo> spentUTxOs) :
+        List<SpentUTxO> spentUTxOs) :
         base(source, target, spentUTxOs.Sum(x => x.Value), Kind.Relation, timestamp, blockHeight)
     {
         SpentUTxOs = spentUTxOs;
