@@ -71,13 +71,13 @@ public class Block : BlockMetadata
         _mintedBitcoins = value;
     }
 
-    public void ProfileSpentOutput(ScriptPubKey scriptPubKey, List<PrevOut> prevOuts)
+    public void ProfileSpentOutput(ScriptPubKey scriptPubKey, List<Input> inputs)
     {
         long sumValues = 0;
-        foreach (var prevOut in prevOuts)
+        foreach (var input in inputs)
         {
-            _spentOutputsAge.Add(Height - prevOut.Height);
-            sumValues += prevOut.Value;
+            _spentOutputsAge.Add(Height - input.PrevOut.Height);
+            sumValues += input.PrevOut.Value;
         }
 
         _inputValues.Add(sumValues);

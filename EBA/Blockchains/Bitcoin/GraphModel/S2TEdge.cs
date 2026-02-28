@@ -6,29 +6,17 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
 
     public long UTxOCreatedInBlockHeight { get; }
 
-    public List<PrevOut> PrevOuts { get; } = [];
-
-    public S2TEdge(
-        ScriptNode source,
-        TxNode target,
-        long value,
-        uint timestamp,
-        long blockHeight,
-        long utxoCreatedInBlockHeight) :
-        base(source, target, value, RelationType.Redeems, timestamp, blockHeight)
-    {
-        UTxOCreatedInBlockHeight = utxoCreatedInBlockHeight;
-    }
+    public List<SpentUtxo> SpentUTxOs { get; } = [];
 
     public S2TEdge(
         ScriptNode source,
         TxNode target,
         uint timestamp,
         long blockHeight,
-        List<PrevOut> prevOuts) :
-        base(source, target, prevOuts.Sum(x => x.Value), RelationType.Redeems, timestamp, blockHeight)
+        List<SpentUtxo> spentUTxOs) :
+        base(source, target, spentUTxOs.Sum(x => x.Value), Kind.Relation, timestamp, blockHeight)
     {
-        PrevOuts = prevOuts;
+        SpentUTxOs = spentUTxOs;
     }
 
     /// <summary>
@@ -43,12 +31,14 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
             u.Target,
             u.Timestamp,
             u.BlockHeight,
-            [.. u.PrevOuts, .. v.PrevOuts]);
+            [.. u.SpentUTxOs, .. v.SpentUTxOs]);
     }
 
     // TODO: maybe a better alternative is to override the base or get from it but now that is static
     public static new string[] GetFeaturesName()
     {
+        throw new NotImplementedException();
+        /*
         return
         [
             nameof(Value),
@@ -56,16 +46,18 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
             nameof(BlockHeight),
             nameof(UTxOCreatedInBlockHeight),
             "UtxoAgeBlocks"
-        ];
+        ];*/
     }
 
     public override double[] GetFeatures()
     {
+        throw new NotImplementedException();
+        /*
         return
         [
             .. base.GetFeatures(),
             UTxOCreatedInBlockHeight,
             BlockHeight - UTxOCreatedInBlockHeight
-        ];
+        ];*/
     }
 }
