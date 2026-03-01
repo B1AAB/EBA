@@ -190,7 +190,7 @@ public static class PropertyMappingFactory
             propertyName,
             FieldType.StringArray,
             x => getUtxos(x).Select(
-                u => string.Join(PropertyDelimiter, u.Txid, u.Vout, u.Generated, u.Value, u.Height)));
+                u => string.Join(PropertyDelimiter, u.Txid, u.Vout, u.Generated, Helpers.Satoshi2BTC(u.Value), u.Height)));
     }
 
     public static SpentUTxO[] ReadSpentUtxos(
@@ -206,11 +206,11 @@ public static class PropertyMappingFactory
                 {
                     var parts = entry.Split(PropertyDelimiter);
                     return new SpentUTxO(
-                        parts[0],
-                        int.Parse(parts[1]),
-                        bool.Parse(parts[2]),
-                        long.Parse(parts[3]),
-                        long.Parse(parts[4]));
+                        txid: parts[0],
+                        vout: int.Parse(parts[1]),
+                        generated: bool.Parse(parts[2]),
+                        value: Helpers.BTC2Satoshi(double.Parse(parts[3])),
+                        height: long.Parse(parts[4]));
                 })
             ];
     }
