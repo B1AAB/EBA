@@ -4,7 +4,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
 {
     public static new EdgeKind Kind => new(ScriptNode.Kind, TxNode.Kind, RelationType.Redeems);
 
-    public long UTxOCreatedInBlockHeight { get; }
+    public int SpentUTxOsCount { get { return SpentUTxOs.Count; } }
 
     public List<SpentUTxO> SpentUTxOs { get; } = [];
 
