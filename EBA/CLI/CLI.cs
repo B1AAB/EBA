@@ -272,10 +272,6 @@ internal class Cli
 
             if (blocksListDirProvidedByUser && !File.Exists(blocksListFileValue))
                 commandResult.AddError($"The file specified in --{blocksListFile.Name} does not exist: {blocksListFileValue}.");
-
-            /*
-            if (errors.Count > 0)
-                commandResult.ErrorMessage = string.Join(Environment.NewLine, errors);*/
         });
 
         cmd.SetAction(async (parseResult, cancellationToken) =>
