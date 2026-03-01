@@ -96,45 +96,6 @@ internal class Cli
                 break;
             }
         }
-
-        // This is required to allow using options without specifying any of the subcommands. 
-        //_rootCmd.SetHandler(x => { })
-
-        /*
-        _parser = new CommandLineBuilder(_rootCmd)
-            //.UseDefaults() // Do NOT add this since it will cause issues with handling exceptions.
-            // System.CommandLine does not let exceptions to propogate from 
-            // a handler (a method called from `InvokeAsync`) to the caller
-            // of `InvokeAsync`. Which makes its configuration a bit
-            // counter-intuitive by requiring using `UseExceptionHandler` as 
-            // the following. Hopefully this will get fixed in the future 
-            // and this call can be simplified. See this issue: 
-            // https://github.com/dotnet/command-line-api/issues/796
-            .UseExceptionHandler((e, context) =>
-            {
-                exceptionHandler(e, context);
-            }, 1)
-            .UseHelp(context =>
-            {
-                context.HelpBuilder.CustomizeLayout(
-                    x =>
-                    {
-                        if (x.ParseResult.Errors.Any())
-                            return [];
-
-                        return HelpBuilder.Default.GetLayout().Prepend(
-                       _ => AnsiConsole.Write(
-                           new FigletText("EBA").Color(Color.Purple_1)));
-                    });
-            })
-            .UseEnvironmentVariableDirective()
-            .UseParseDirective()
-            .UseSuggestDirective()
-            .RegisterWithDotnetSuggest()
-            .UseTypoCorrections()
-            .UseParseErrorReporting()
-            .CancelOnProcessTermination()
-            .Build();*/
     }
 
     public async Task<int> InvokeAsync(string[] args)
@@ -198,7 +159,7 @@ internal class Cli
             Description =
                 "A text file containing the list of block heights to traverse, " +
                 "with one block per line. " +
-                $"If provided, it will override the --{fromOption.Name} and --{toOption.Name} options."
+                $"If provided, it will override the {fromOption.Name} and {toOption.Name} options."
         };
 
         var granularityOption = new Option<int>("--granularity")
@@ -206,7 +167,7 @@ internal class Cli
             DefaultValueFactory = _ => defaultOptions.Bitcoin.Traverse.Granularity,
             Description =
                 "Set the blockchain traversal granularity." +
-                "For instance, if set to `10`, it implies processing every 10 blocks in the blockchain."
+                "For instance, if set to 10, it implies processing every 10 blocks in the blockchain."
         };
 
         var clientUriOption = new Option<Uri>("--client-uri")
@@ -333,7 +294,15 @@ internal class Cli
                 txoFilenameOption: txoFilenameOption,
                 skipGraphSerializationOption: skipGraphSerialization,
                 maxEntriesPerBatch: maxEntriesPerBatch);
-            await handlerAsync(options);
+
+            try
+            {
+                await handlerAsync(options);
+            }
+            catch (Exception e)
+            {
+                _exceptionHandler(e, parseResult);
+            }
         });
 
         return cmd;
@@ -371,7 +340,14 @@ internal class Cli
                 workingDirOption: _workingDirOption,
                 statusFilenameOption: _statusFilenameOption);
 
-            await handlerAsync(options);
+            try
+            {
+                await handlerAsync(options);
+            }
+            catch (Exception e)
+            {
+                _exceptionHandler(e, parseResult);
+            }
         });
 
         return cmd;
@@ -403,7 +379,14 @@ internal class Cli
                 workingDirOption: _workingDirOption,
                 statusFilenameOption: _statusFilenameOption);
 
-            await handlerAsync(options);
+            try
+            {
+                await handlerAsync(options);
+            }
+            catch (Exception e)
+            {
+                _exceptionHandler(e, parseResult);
+            }
         });
 
         return cmd;
@@ -422,7 +405,14 @@ internal class Cli
                 workingDirOption: _workingDirOption,
                 statusFilenameOption: _statusFilenameOption);
 
-            await handlerAsync(options);
+            try
+            {
+                await handlerAsync(options);
+            }
+            catch (Exception e)
+            {
+                _exceptionHandler(e, parseResult);
+            }
         });
 
         return cmd;
@@ -571,7 +561,14 @@ internal class Cli
                 workingDirOption: _workingDirOption,
                 statusFilenameOption: _statusFilenameOption);
 
-            await handlerAsync(options);
+            try
+            {
+                await handlerAsync(options);
+            }
+            catch (Exception e)
+            {
+                _exceptionHandler(e, parseResult);
+            }
         });
 
         return cmd;
@@ -602,7 +599,14 @@ internal class Cli
                 parseResult,
                 txoFilenameOption: addressesFilenameOption);
 
-            await handlerAsync(options);
+            try
+            {
+                await handlerAsync(options);
+            }
+            catch (Exception e)
+            {
+                _exceptionHandler(e, parseResult);
+            }
         });
 
         return cmd;
