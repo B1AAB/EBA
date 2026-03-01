@@ -23,7 +23,7 @@ public static class ArraySerializer
         {
             int len = checked((int)(stream.Length / Unsafe.SizeOf<T>())), read;
             items = new T[len];
-            var bytes = MemoryMarshal.Cast<T, byte>(items);
+            var bytes = MemoryMarshal.Cast<T, byte>(items.AsSpan());
             while (!bytes.IsEmpty && (read = stream.Read(bytes)) > 0)
                 bytes = bytes[read..];
         }

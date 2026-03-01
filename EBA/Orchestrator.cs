@@ -23,7 +23,7 @@ public class Orchestrator : IDisposable
             bitcoinImportCmdHandlerAsync: BitcoinImportGraphAsync,
             bitcoinAddressStatsHandlerAsync: BitcoinAddressStatsAsync,
             bitcoinImportCypherQueriesAsync: BitcoinImportCypherQueriesAsync,
-            exceptionHandler: (e, c) =>
+            exceptionHandler: (e, _) =>
             {
                 if (_logger != null)
                     _logger.LogCritical("{error}", e.Message);
