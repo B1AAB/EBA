@@ -32,6 +32,10 @@ public class Property
             case FieldType.StringArray:
                 TypeAnnotatedCsvHeader = $"{Name}:{FieldType.String.ToString().ToLower()}[]";
                 break;
+
+            case FieldType.DoubleArray:
+                TypeAnnotatedCsvHeader = $"{Name}:{FieldType.Double.ToString().ToLower()}[]";
+                break;
         }
     }
 
