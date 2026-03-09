@@ -4,7 +4,8 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
 {
     public new static EdgeKind Kind => new(TxNode.Kind, ScriptNode.Kind, RelationType.Credits);
 
-    public List<Output> Outputs { get; }
+    public List<long> TxOValues { get; }
+    public int TxOCount { get { return TxOValues.Count; } }
 
     public T2SEdge(
         TxNode source,
@@ -13,16 +14,29 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
         uint timestamp,
         long blockHeight) :
         base(source, target, value, Kind.Relation, timestamp, blockHeight)
-    { }
+    {
+        // TODO: remove this constructor.
+        throw new NotImplementedException();
+    }
 
-    public T2SEdge(TxNode source,
+    public T2SEdge(
+        TxNode source,
         ScriptNode target,
         uint timestamp,
         long blockHeight,
         List<Output> outputs) :
-        base(source, target, outputs.Sum(x => x.Value), Kind.Relation, timestamp, blockHeight)
+        this(source, target, timestamp, blockHeight, outputs.Select(x => x.Value).ToList())
+    { }
+
+    public T2SEdge(
+        TxNode source,
+        ScriptNode target,
+        uint timestamp,
+        long blockHeight,
+        List<long> values) :
+        base(source, target, values.Sum(), Kind.Relation, timestamp, blockHeight)
     {
-        Outputs = outputs;
+        TxOValues = values;
     }
 
     /// <summary>
@@ -37,6 +51,6 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
             u.Target,
             u.Timestamp,
             u.BlockHeight,
-            [.. u.Outputs, .. v.Outputs]);
+            [.. u.TxOValues, .. v.TxOValues]);
     }
 }
