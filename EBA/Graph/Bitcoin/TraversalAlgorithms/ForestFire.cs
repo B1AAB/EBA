@@ -194,7 +194,6 @@ public class ForestFire : ITraversalAlgorithm
                 continue; // node is not selected to be kept
             }
 
-            // todo: see if you can make this simpler
             IEdge<Model.INode, Model.INode> candidateEdge =
                 edge.StartNodeElementId == rootNode.IdInGraphDb ?
                 EdgeFactory.Create(rootNode, subjectNode, edge):

@@ -195,28 +195,16 @@ public static class PropertyMappingFactory
             propertyName,
             FieldType.StringArray,
             x => getUtxos(x).Select(
-                u => string.Join(PropertyDelimiter, u.Txid, u.Vout, u.Generated, Helpers.Satoshi2BTC(u.Value), u.Height)));
-    }
-
-    public static SpentUTxO[] ReadSpentUtxos(
-        IReadOnlyDictionary<string, object> properties,
-        string propertyName)
-    {
-        if (!properties.TryGetValue(propertyName, out var raw) || raw is not string s || s.Length == 0)
-            return [];
-
-        return
-            [
-                .. s.Split(';').Select(entry =>
-                {
-                    var parts = entry.Split(PropertyDelimiter);
-                    return new SpentUTxO(
-                        txid: parts[0],
-                        vout: int.Parse(parts[1]),
-                        generated: bool.Parse(parts[2]),
-                        value: Helpers.BTC2Satoshi(double.Parse(parts[3])),
-                        height: long.Parse(parts[4]));
-                })
-            ];
+                u => string.Join(PropertyDelimiter, u.Txid, u.Vout, u.Generated, Helpers.Satoshi2BTC(u.Value), u.Height)),
+            deserializer: v => ((IList<object>)v!).Select(obj =>
+            {
+                var parts = ((string)obj).Split(PropertyDelimiter);
+                return new SpentUTxO(
+                    txid: parts[0],
+                    vout: int.Parse(parts[1]),
+                    generated: bool.Parse(parts[2]),
+                    value: Helpers.BTC2Satoshi(double.Parse(parts[3])),
+                    height: long.Parse(parts[4]));
+            }).ToArray());
     }
 }

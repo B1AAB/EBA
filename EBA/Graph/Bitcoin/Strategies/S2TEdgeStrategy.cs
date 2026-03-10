@@ -42,7 +42,7 @@ public class S2TEdgeStrategy(bool serializeCompressed)
             target: target,
             timestamp: 0,
             blockHeight: _mappings.Get(Factory.HeightProperty.Name).Deserialize<long>(relationship.Properties),
-            spentUTxOs: _mappings.Get(nameof(S2TEdge.SpentUTxOsCount)).Deserialize<List<SpentUTxO>>(relationship.Properties) ?? []);
+            spentUTxOs: [.. _mappings.Get(nameof(S2TEdge.SpentUTxOs)).Deserialize<SpentUTxO[]>(relationship.Properties) ?? []]);
     }
 
     public override string GetQuery(string filename)

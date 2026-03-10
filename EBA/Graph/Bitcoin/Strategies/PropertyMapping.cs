@@ -61,8 +61,7 @@ public class PropertyMapping<T>
 
     public V? Deserialize<V>(IReadOnlyDictionary<string, object> properties)
     {
-        object? value = properties.GetValueOrDefault(Property.Name);
-        if (value == null)
+        if (!properties.TryGetValue(Property.Name, out var value))
             return default;
 
         if (_deserializer != null)
@@ -76,17 +75,18 @@ public class PropertyMapping<T>
 
         if (value is IList list && typeof(V).IsArray)
         {
-            // This is trying to avoid creating a collection that contains null items.
-
             var elementType = typeof(V).GetElementType()!;
-            var buffer = new List<object>(list.Count);
-            foreach (var item in list)
-                if (item is not null)
-                    buffer.Add(Convert.ChangeType(item, elementType));
 
-            var array = Array.CreateInstance(elementType, buffer.Count);
-            for (int i = 0; i < buffer.Count; i++)
-                array.SetValue(buffer[i], i);
+            int count = 0;
+            for (int i = 0; i < list.Count; i++)
+                if (list[i] is not null) 
+                    count++;
+
+            var array = Array.CreateInstance(elementType, count);
+            int idx = 0;
+            for (int i = 0; i < list.Count; i++)
+                if (list[i] is not null)
+                    array.SetValue(Convert.ChangeType(list[i], elementType), idx++);
 
             return (V)(object)array;
         }
