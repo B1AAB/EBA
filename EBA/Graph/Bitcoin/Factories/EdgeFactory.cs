@@ -1,30 +1,22 @@
 ﻿using EBA.Graph.Bitcoin.Strategies;
-using EBA.Utilities;
 using INode = EBA.Graph.Model.INode;
 
 namespace EBA.Graph.Bitcoin.Factories;
 
 public class EdgeFactory
 {
-    public static IEdge<INode, INode> CreateEdge(
+    public static IEdge<INode, INode> Create(
         INode source,
         INode target,
         IRelationship relationship)
     {
-        var value = Helpers.BTC2Satoshi(PropertyMappingFactory.ValueBTC<IRelationship>(null!).Deserialize<double>(relationship.Properties));
-        var type = Enum.Parse<RelationType>(relationship.Type);
-        var blockHeight = PropertyMappingFactory.Height<IRelationship>(null!).Deserialize<long>(relationship.Properties);
-        uint timestamp = 0; // TODO currently edges stored on the database do not have a timestamp
-
         return (source, target) switch
         {
-            (CoinbaseNode, TxNode v) => new C2TEdge(v, value, timestamp, blockHeight),
-            (TxNode u, TxNode v) => new T2TEdge(u, v, value, type, timestamp, blockHeight),
-            (BlockNode u, TxNode v) => new B2TEdge(u, v, value, timestamp, blockHeight),
-            (TxNode u, ScriptNode v) => new T2SEdge(u, v, value, timestamp, blockHeight),
-            (ScriptNode u, TxNode v) => new S2TEdge(
-                source: u, target: v, timestamp: timestamp, blockHeight: blockHeight,
-                spentUTxOs: [.. PropertyMappingFactory.ReadSpentUtxos(relationship.Properties, nameof(S2TEdge.SpentUTxOs))]),
+            (CoinbaseNode, TxNode v) => C2TEdgeStrategy.Deserialize(v, relationship),
+            (TxNode u, TxNode v) => T2TEdgeStrategy.Deserialize(u, v, relationship),
+            (BlockNode u, TxNode v) => B2TEdgeStrategy.Deserialize(u, v, relationship),
+            (TxNode u, ScriptNode v) => T2SEdgeStrategy.Deserialize(u, v, relationship),
+            (ScriptNode u, TxNode v) => S2TEdgeStrategy.Deserialize(u, v, relationship),
             _ => throw new ArgumentException("Invalid edge type")
         };
     }

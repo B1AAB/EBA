@@ -172,7 +172,15 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
 
         resultingEdge = (T)x.GetOrAdd(edge.Id, edge);
 
-        return ReferenceEquals(resultingEdge, edge);
+        if (ReferenceEquals(resultingEdge, edge))
+        {
+            edge.Source.AddOutgoingEdge(resultingEdge);
+            edge.Target.AddIncomingEdge(resultingEdge);
+
+            return true;
+        }
+
+        return false;
     }
 
     public void AddOrUpdateEdge<T>(T edge, Func<T, T, T>? updateFunc = null)

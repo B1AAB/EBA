@@ -1,35 +1,7 @@
-﻿using EBA.Graph.Bitcoin.Factories;
-using INode = EBA.Graph.Model.INode;
-
-namespace EBA.Blockchains.Bitcoin.GraphModel;
+﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
 {
-    public INode GetOrAddNode(INode node)
-    {
-        return GetOrAddNode(node);
-    }
-
-    public IEdge<INode, INode> GetOrAddEdge(IRelationship e)
-    {
-        throw new NotImplementedException();
-    }
-
-    public IEdge<INode, INode> GetOrAddEdge(IRelationship e, INode sourceNode, INode targetNode)
-    {
-        var candidateEdge = EdgeFactory.CreateEdge(sourceNode, targetNode, e);
-
-        if (TryGetOrAddEdge(candidateEdge, out var edge))
-        {
-            // edge was not in the graph, so it has been added,
-            // hence the incoming/outgoing edges also need to be added.
-            sourceNode.AddOutgoingEdge(edge);
-            targetNode.AddIncomingEdge(edge);
-        }
-
-        return edge;
-    }
-
     public bool Equals(BitcoinGraph? other)
     {
         if (other == null)

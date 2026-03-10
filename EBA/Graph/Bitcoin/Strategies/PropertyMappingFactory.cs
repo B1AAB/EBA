@@ -23,10 +23,13 @@ public static class PropertyMappingFactory
         return new(nameof(TxNode.Txid), FieldType.String, x => getValue(x), headerOverride);
     }
 
-    public static Property BTCValueProperty { get; } = new("Value", FieldType.Double);
-    public static PropertyMapping<T> ValueBTC<T>(Func<T, double> getValue)
+    public static Property ValueProperty { get; } = new("Value", FieldType.Double);
+    public static PropertyMapping<T> Value<T>(Func<T, long> getValue)
     {
-        return new(BTCValueProperty, x => getValue(x));
+        return new(
+            ValueProperty, 
+            x => Helpers.Satoshi2BTC(getValue(x)),
+            deserializer: v => Helpers.BTC2Satoshi((double)v!));
     }
 
     public static PropertyMapping<T> SourceId<T>(string idSpace, Func<T, object?> getValue)
@@ -37,9 +40,11 @@ public static class PropertyMappingFactory
     {
         return new(":END_ID", FieldType.String, getValue, _ => $":END_ID({idSpace})");
     }
+
+    public static string TypePropertyName { get; } = ":TYPE";
     public static PropertyMapping<T> EdgeType<T>(Func<T, object?> getType)
     {
-        return new(":TYPE", FieldType.String, getType, _ => ":TYPE");
+        return new(TypePropertyName, FieldType.String, getType, _ => TypePropertyName);
     }
 
     public static PropertyMapping<T> Label<T>(object label)

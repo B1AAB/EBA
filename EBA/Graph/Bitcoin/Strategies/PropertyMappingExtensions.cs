@@ -18,4 +18,13 @@ public static class PropertyMappingExtensions
             Options.CsvDelimiter,
             mappings.Select(m => m.SerializeValue(source)));
     }
+
+    public static PropertyMapping<T> Get<T>(this PropertyMapping<T>[] mappings, string propertyName)
+    {
+        foreach (var m in mappings)
+            if (m.Property.Name == propertyName)
+                return m;
+
+        throw new KeyNotFoundException($"No mapping found for property '{propertyName}'.");
+    }
 }
