@@ -1,5 +1,4 @@
-﻿using EBA.Utilities;
-using EBA.Graph.Db.Neo4jDb;
+﻿using EBA.Graph.Db.Neo4jDb;
 
 using Factory = EBA.Graph.Bitcoin.Strategies.PropertyMappingFactory;
 
@@ -16,9 +15,11 @@ public class T2SEdgeStrategy(bool serializeCompressed)
         Factory.TargetId<T2SEdge>(ScriptNodeStrategy.IdSpace, e => e.Target.Id),
         Factory.Value<T2SEdge>(e => e.Value),
         new(nameof(T2SEdge.TxOValues), 
-            FieldType.DoubleArray,
-            e => e.TxOValues.Select(Helpers.Satoshi2BTC),
-            deserializer: v => ((IList<object>)v!).Select(x => Helpers.BTC2Satoshi((double)x)).ToArray()),
+            FieldType.LongArray,
+            e => e.TxOValues,
+            deserializer: v => 
+            
+            ((IList<object>)v!).Select(x => (long)x).ToArray()), // TODO: check if this can be simplified, not sure if you need that additional casting, maybe you can just let the base deserializer do its job
         new(nameof(T2SEdge.TxOCount), FieldType.Long, n => n.TxOCount),
         Factory.Height<T2SEdge>(e => e.BlockHeight),
         Factory.EdgeType<T2SEdge>(e => e.Relation),
