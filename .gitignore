@@ -419,7 +419,10 @@ FodyWeavers.xsd
 /EBA/Properties/launchSettings.json
 publish/
 build/
+builds/
 
 .idea/
 
 !website/releases/
+
+
