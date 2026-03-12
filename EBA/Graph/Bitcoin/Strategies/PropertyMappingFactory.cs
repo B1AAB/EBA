@@ -193,9 +193,6 @@ public static class PropertyMappingFactory
         return result;
     }
 
-    public static Func<double?, double> SatoshiToBTC =>
-        x => x == null ? double.NaN : Helpers.Satoshi2BTC((double)x);
-
     public static PropertyMapping<T> SpentUtxos<T>(
         string propertyName,
         Func<T, IEnumerable<SpentUTxO>> getUtxos)

@@ -41,4 +41,30 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
             u.BlockHeight,
             [.. u.TxOValues, .. v.TxOValues]);
     }
+
+    public static new string[] GetFeaturesName()
+    {
+        return
+        [
+            .. Edge<TxNode, ScriptNode>.GetFeaturesName(),
+
+            nameof(TxOCount),
+            "TxOValueMin",
+            "TxOValueMax",
+            "TxOValueAvg"
+        ];
+    }
+
+    public override double[] GetFeatures()
+    {
+        return
+        [
+            .. base.GetFeatures(),
+
+            TxOCount,
+            TxOValues.Min(),
+            TxOValues.Max(),
+            TxOValues.Average()
+        ];
+    }
 }

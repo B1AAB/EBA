@@ -73,16 +73,19 @@ public class BlockMetadata
         get { return OutputScriptTypeValue[ScriptType.NullData]; }
     }
 
-    public virtual DescriptiveStatistics? InputCountsStats { init; get; }
-    public virtual DescriptiveStatistics? OutputCountsStats { init; get; }
-    public virtual DescriptiveStatistics? InputValuesStats { init; get; }
-    public virtual DescriptiveStatistics? OutputValuesStats { init; get; }
-    public virtual DescriptiveStatistics? SpentOutputAgeStats { init; get; }
-    public virtual DescriptiveStatistics? FeesStats { init; get; }
+    public virtual DescriptiveStatistics InputCountsStats { init; get; } = new DescriptiveStatistics();
+    public virtual DescriptiveStatistics OutputCountsStats { init; get; } = new DescriptiveStatistics();
+    public virtual DescriptiveStatistics InputValuesStats { init; get; } = new DescriptiveStatistics();
+    public virtual DescriptiveStatistics OutputValuesStats { init; get; } = new DescriptiveStatistics();
+    public virtual DescriptiveStatistics SpentOutputAgeStats { init; get; } = new DescriptiveStatistics();
+    public virtual DescriptiveStatistics FeesStats { init; get; } = new DescriptiveStatistics();
 
-    public virtual Dictionary<ScriptType, long>? InputScriptTypeCount { init; get; }
-    public virtual Dictionary<ScriptType, long>? OutputScriptTypeCount { init; get; }
 
-    public virtual Dictionary<ScriptType, long>? InputScriptTypeValue { init; get; }
-    public virtual Dictionary<ScriptType, long>? OutputScriptTypeValue { init; get; }
+    private static readonly ScriptType[] CachedScriptTypes = Enum.GetValues<ScriptType>();
+
+    public virtual Dictionary<ScriptType, long> InputScriptTypeCount { init; get; } = CachedScriptTypes.ToDictionary(k => k, v => 0L);
+    public virtual Dictionary<ScriptType, long> OutputScriptTypeCount { init; get; } = CachedScriptTypes.ToDictionary(k => k, v => 0L);
+
+    public virtual Dictionary<ScriptType, long> InputScriptTypeValue { init; get; } = CachedScriptTypes.ToDictionary(k => k, v => 0L);
+    public virtual Dictionary<ScriptType, long> OutputScriptTypeValue { init; get; } = CachedScriptTypes.ToDictionary(k => k, v => 0L);
 }

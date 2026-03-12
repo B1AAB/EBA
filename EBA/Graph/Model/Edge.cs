@@ -67,17 +67,19 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
 
     public static string[] GetFeaturesName()
     {
-        return [
+        return
+        [
             nameof(Value),
             nameof(Relation),
-            nameof(BlockHeight) ];
+            nameof(BlockHeight)
+        ];
     }
 
     public virtual double[] GetFeatures()
     {
         return
         [
-            Helpers.Satoshi2BTC(Value),
+            Value,
             (double)Relation,
             BlockHeight
         ];

@@ -36,6 +36,13 @@ public class Property
             case FieldType.DoubleArray:
                 TypeAnnotatedCsvHeader = $"{Name}:{FieldType.Double.ToString().ToLower()}[]";
                 break;
+
+            case FieldType.LongArray:
+                TypeAnnotatedCsvHeader = $"{Name}:{FieldType.Long.ToString().ToLower()}[]";
+                break;
+
+            default:
+                throw new ArgumentException($"Unsupported field type: {type}");
         }
     }
 

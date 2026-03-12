@@ -40,13 +40,16 @@ public class BlockNodeStrategy(bool serializeCompressed)
             nameof(v.OutputCountsStats), n => n.BlockMetadata.OutputCountsStats),
 
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.InputValuesStats), n => n.BlockMetadata.InputValuesStats, PropertyMappingFactory.SatoshiToBTC),
+            nameof(v.InputValuesStats), n => n.BlockMetadata.InputValuesStats),
 
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.OutputValuesStats), n => n.BlockMetadata.OutputValuesStats, PropertyMappingFactory.SatoshiToBTC),
+            nameof(v.OutputValuesStats), n => n.BlockMetadata.OutputValuesStats),
 
         .. PropertyMappingFactory.DescriptiveStats<BlockNode>(
             nameof(v.SpentOutputAgeStats), n => n.BlockMetadata.SpentOutputAgeStats),
+
+        .. PropertyMappingFactory.DescriptiveStats<BlockNode>(
+            nameof(v.FeesStats), n => n.BlockMetadata.FeesStats),
 
         .. PropertyMappingFactory.ScriptTypeCounts<BlockNode>(
             "Inputs", n => n.BlockMetadata.InputScriptTypeCount),
@@ -58,7 +61,7 @@ public class BlockNodeStrategy(bool serializeCompressed)
             nameof(BlockNode.TripletTypeCount), Schema.EdgeKinds, n => n.TripletTypeCount),
 
         .. PropertyMappingFactory.DictionaryToColumns<BlockNode>(
-            nameof(BlockNode.TripletTypeValueSum), Schema.EdgeKinds, n => n.TripletTypeValueSum, PropertyMappingFactory.SatoshiToBTC),
+            nameof(BlockNode.TripletTypeValueSum), Schema.EdgeKinds, n => n.TripletTypeValueSum),
 
         new(":LABEL", FieldType.String, _ => BlockNode.Kind, _ => ":LABEL"),
     ];
@@ -117,6 +120,7 @@ public class BlockNodeStrategy(bool serializeCompressed)
             InputValuesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.InputValuesStats)),
             OutputValuesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.OutputValuesStats)),
             SpentOutputAgeStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.SpentOutputAgeStats)),
+            FeesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.FeesStats)),
             InputScriptTypeCount = PropertyMappingFactory.ReadScriptTypeCounts("Inputs", props),
             OutputScriptTypeCount = PropertyMappingFactory.ReadScriptTypeCounts("Outputs", props),
             InputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Inputs", props),
