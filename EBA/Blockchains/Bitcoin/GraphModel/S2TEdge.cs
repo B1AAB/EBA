@@ -34,30 +34,36 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
             [.. u.SpentUTxOs, .. v.SpentUTxOs]);
     }
 
-    // TODO: maybe a better alternative is to override the base or get from it but now that is static
     public static new string[] GetFeaturesName()
     {
-        throw new NotImplementedException();
-        /*
         return
         [
-            nameof(Value),
-            nameof(Relation),
-            nameof(BlockHeight),
-            nameof(UTxOCreatedInBlockHeight),
-            "UtxoAgeBlocks"
-        ];*/
+            .. Edge<ScriptNode, TxNode>.GetFeaturesName(),
+
+            nameof(SpentUTxOsCount),
+            "SpentUTxOsValueMin",
+            "SpentUTxOsValueMax",
+            "SpentUTxOsValueAvg",
+            "SpentUTxOsAgeMin",
+            "SpentUTxOsAgeMax",
+            "SpentUTxOsAgeAvg",
+            "SpentUTxOsGeneratedCount"
+        ];
     }
 
     public override double[] GetFeatures()
     {
-        throw new NotImplementedException();
-        /*
         return
         [
             .. base.GetFeatures(),
-            UTxOCreatedInBlockHeight,
-            BlockHeight - UTxOCreatedInBlockHeight
-        ];*/
+            SpentUTxOsCount,
+            SpentUTxOs.Min(x => x.Value),
+            SpentUTxOs.Max(x => x.Value),
+            SpentUTxOs.Average(x => x.Value),
+            SpentUTxOs.Min(x => x.Height),
+            SpentUTxOs.Max(x => x.Height),
+            SpentUTxOs.Average(x => x.Height),
+            SpentUTxOs.Count(x => x.Generated)
+        ];
     }
 }

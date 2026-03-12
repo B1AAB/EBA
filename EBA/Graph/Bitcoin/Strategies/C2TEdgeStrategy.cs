@@ -1,4 +1,4 @@
-﻿using EBA.Utilities;
+﻿using Factory = EBA.Graph.Bitcoin.Strategies.PropertyMappingFactory;
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
@@ -11,11 +11,11 @@ public class C2TEdgeStrategy(bool serializeCompressed)
 
     public static readonly PropertyMapping<C2TEdge>[] _mappings =
     [
-        PropertyMappingFactory.SourceId<C2TEdge>(IdSpaceCoinbase, _ => CoinbaseNode.Kind),
-        PropertyMappingFactory.TargetId<C2TEdge>(TxNodeStrategy.IdSpace, e => e.Target.Txid),
-        PropertyMappingFactory.ValueBTC<C2TEdge>(e => Helpers.Satoshi2BTC(e.Value)),
-        PropertyMappingFactory.Height<C2TEdge>(e => e.BlockHeight),
-        PropertyMappingFactory.EdgeType<C2TEdge>(e => e.Relation)
+        Factory.SourceId<C2TEdge>(IdSpaceCoinbase, _ => CoinbaseNode.Kind),
+        Factory.TargetId<C2TEdge>(TxNodeStrategy.IdSpace, e => e.Target.Txid),
+        Factory.Value<C2TEdge>(e => e.Value),
+        Factory.Height<C2TEdge>(e => e.BlockHeight),
+        Factory.EdgeType<C2TEdge>(e => e.Relation)
     ];
 
     public override string GetCsvHeader()
@@ -31,6 +31,15 @@ public class C2TEdgeStrategy(bool serializeCompressed)
     public static string GetCsv(C2TEdge edge)
     {
         return _mappings.GetCsv(edge);
+    }
+
+    public static C2TEdge Deserialize(TxNode target, IRelationship relationship)
+    {
+        return new C2TEdge(
+            target: target,
+            value: _mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties),
+            timestamp: 0,
+            blockHeight: _mappings.Get(Factory.HeightProperty.Name).Deserialize<long>(relationship.Properties));
     }
 
     public override string GetQuery(string csvFilename)

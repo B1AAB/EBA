@@ -45,7 +45,7 @@ public class DescriptiveStatistics
         if (data.Count > 0)
         {
             Sum = data.Sum();
-            Count = data.Count();
+            Count = data.Count;
             Min = data.Min();
             Max = data.Max();
             Mean = Count > 0 ? (double)Sum / Count : 0;

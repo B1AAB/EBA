@@ -1,22 +1,23 @@
-﻿using EBA.Utilities;
-using EBA.Graph.Db.Neo4jDb;
+﻿using EBA.Graph.Db.Neo4jDb;
+
+using Factory = EBA.Graph.Bitcoin.Strategies.PropertyMappingFactory;
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
-public class T2SEdgeStrategy(bool serializeCompressed) 
+public class T2SEdgeStrategy(bool serializeCompressed)
     : BitcoinStrategyBase(
         $"edges_{T2SEdge.Kind.Source}_{T2SEdge.Kind.Relation}_{T2SEdge.Kind.Target}",
         serializeCompressed)
 {
     public static readonly PropertyMapping<T2SEdge>[] _mappings =
     [
-        PropertyMappingFactory.SourceId<T2SEdge>(TxNodeStrategy.IdSpace, e => e.Source.Txid),
-        PropertyMappingFactory.TargetId<T2SEdge>(ScriptNodeStrategy.IdSpace, e => e.Target.Id),
-        PropertyMappingFactory.ValueBTC<T2SEdge>(e => Helpers.Satoshi2BTC(e.Value)),
-        new(nameof(T2SEdge.TxOValues), FieldType.DoubleArray, e => e.TxOValues.Select(Helpers.Satoshi2BTC)),
+        Factory.SourceId<T2SEdge>(TxNodeStrategy.IdSpace, e => e.Source.Txid),
+        Factory.TargetId<T2SEdge>(ScriptNodeStrategy.IdSpace, e => e.Target.Id),
+        Factory.Value<T2SEdge>(e => e.Value),
+        new(nameof(T2SEdge.TxOValues), FieldType.LongArray, e => e.TxOValues),
         new(nameof(T2SEdge.TxOCount), FieldType.Long, n => n.TxOCount),
-        PropertyMappingFactory.Height<T2SEdge>(e => e.BlockHeight),
-        PropertyMappingFactory.EdgeType<T2SEdge>(e => e.Relation),
+        Factory.Height<T2SEdge>(e => e.BlockHeight),
+        Factory.EdgeType<T2SEdge>(e => e.Relation),
     ];
 
     public override string GetCsvHeader()
@@ -32,6 +33,16 @@ public class T2SEdgeStrategy(bool serializeCompressed)
     public static string GetCsv(T2SEdge edge)
     {
         return _mappings.GetCsv(edge);
+    }
+
+    public static T2SEdge Deserialize(TxNode source, ScriptNode target, IRelationship relationship)
+    {
+        return new T2SEdge(
+            source: source,
+            target: target,
+            timestamp: 0,
+            blockHeight: _mappings.Get(Factory.HeightProperty.Name).Deserialize<long>(relationship.Properties),
+            values: [.. _mappings.Get(nameof(T2SEdge.TxOValues)).Deserialize<long[]>(relationship.Properties) ?? []]);
     }
 
     public override string GetQuery(string filename)

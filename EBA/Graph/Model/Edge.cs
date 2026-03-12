@@ -60,24 +60,26 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
         Source = source;
         Target = target;
         Id = relationship.ElementId;
-        Value = Helpers.BTC2Satoshi(PropertyMappingFactory.ValueBTC<IRelationship>(null!).Deserialize<double>(relationship.Properties));
+        Value = PropertyMappingFactory.Value<IRelationship>(null!).Deserialize<long>(relationship.Properties);
         Relation = Enum.Parse<RelationType>(relationship.Type);
         BlockHeight = PropertyMappingFactory.Height<IRelationship>(null!).Deserialize<long>(relationship.Properties);
     }
 
     public static string[] GetFeaturesName()
     {
-        return [
+        return
+        [
             nameof(Value),
             nameof(Relation),
-            nameof(BlockHeight) ];
+            nameof(BlockHeight)
+        ];
     }
 
     public virtual double[] GetFeatures()
     {
         return
         [
-            Helpers.Satoshi2BTC(Value),
+            Value,
             (double)Relation,
             BlockHeight
         ];

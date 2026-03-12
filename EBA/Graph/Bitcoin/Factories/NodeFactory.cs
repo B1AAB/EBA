@@ -9,7 +9,7 @@ public class NodeFactory
     /// </summary>
     /// <returns> true if the node was successfully converted 
     /// to a strongly-typed graph node; otherwise, false.</returns>
-    public static bool TryCreateNode(
+    public static bool TryCreate(
         Neo4j.Driver.INode node,
         double originalIndegree,
         double originalOutdegree,

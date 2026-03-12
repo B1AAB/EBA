@@ -10,18 +10,6 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
     public T2SEdge(
         TxNode source,
         ScriptNode target,
-        long value,
-        uint timestamp,
-        long blockHeight) :
-        base(source, target, value, Kind.Relation, timestamp, blockHeight)
-    {
-        // TODO: remove this constructor.
-        throw new NotImplementedException();
-    }
-
-    public T2SEdge(
-        TxNode source,
-        ScriptNode target,
         uint timestamp,
         long blockHeight,
         List<Output> outputs) :
@@ -52,5 +40,31 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
             u.Timestamp,
             u.BlockHeight,
             [.. u.TxOValues, .. v.TxOValues]);
+    }
+
+    public static new string[] GetFeaturesName()
+    {
+        return
+        [
+            .. Edge<TxNode, ScriptNode>.GetFeaturesName(),
+
+            nameof(TxOCount),
+            "TxOValueMin",
+            "TxOValueMax",
+            "TxOValueAvg"
+        ];
+    }
+
+    public override double[] GetFeatures()
+    {
+        return
+        [
+            .. base.GetFeatures(),
+
+            TxOCount,
+            TxOValues.Min(),
+            TxOValues.Max(),
+            TxOValues.Average()
+        ];
     }
 }

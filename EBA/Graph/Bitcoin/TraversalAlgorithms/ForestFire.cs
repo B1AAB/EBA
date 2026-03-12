@@ -117,17 +117,6 @@ public class ForestFire : ITraversalAlgorithm
         BitcoinGraph g,
         CancellationToken ct)
     {
-        static bool TryUnpackDict(IDictionary<string, object> dict, double hop, out Model.INode? v)
-        {
-            v = null;
-            var node = dict["node"].As<Neo4j.Driver.INode>();
-            var inDegree = Convert.ToDouble(dict["inDegree"]);
-            var outDegree = Convert.ToDouble(dict["outDegree"]);
-            if (node is null) 
-                return false;
-            return NodeFactory.TryCreateNode(node, inDegree, outDegree, hop, out v);
-        }
-
         var nodesAddedToGraph = new List<Model.INode>();
         if (samplingResult.Count == 0)
             return nodesAddedToGraph;
@@ -137,7 +126,7 @@ public class ForestFire : ITraversalAlgorithm
         var edges = new List<IRelationship>();
 
         var rootList = samplingResult[0]["root"].As<List<object>>();
-        if (!TryUnpackDict(rootList[0].As<IDictionary<string, object>>(), hop, out var builtRootNode) || builtRootNode == null)
+        if (!TryUnpackNodeDict(rootList[0].As<IDictionary<string, object>>(), hop, out var builtRootNode) || builtRootNode == null)
             return nodesAddedToGraph;
 
         Model.INode rootNode = g.GetOrAddNode(builtRootNode);
@@ -150,7 +139,7 @@ public class ForestFire : ITraversalAlgorithm
             var r = samplingResult[i];
             foreach (var nodeObject in r["nodes"].As<List<object>>())
             {
-                if (!TryUnpackDict(nodeObject.As<IDictionary<string, object>>(), hop, out var node)
+                if (!TryUnpackNodeDict(nodeObject.As<IDictionary<string, object>>(), hop, out var node)
                     || node == null
                     || node.IdInGraphDb == null)
                     continue;
@@ -203,12 +192,13 @@ public class ForestFire : ITraversalAlgorithm
             else
             {
                 continue; // node is not selected to be kept
-            }          
-            
-            if (edge.StartNodeElementId == rootNode.IdInGraphDb)
-                g.GetOrAddEdge(edge, rootNode, subjectNode);
-            else
-                g.GetOrAddEdge(edge, subjectNode, rootNode);
+            }
+
+            IEdge<Model.INode, Model.INode> candidateEdge =
+                edge.StartNodeElementId == rootNode.IdInGraphDb ?
+                EdgeFactory.Create(rootNode, subjectNode, edge):
+                EdgeFactory.Create(subjectNode, rootNode, edge);
+            g.TryGetOrAddEdge(candidateEdge, out candidateEdge);
         }
 
         return nodesAddedToGraph;
@@ -344,5 +334,16 @@ public class ForestFire : ITraversalAlgorithm
             rndNodes.Add(ScriptNodeStrategy.Deserialize(n.Values[nodeVar].As<Neo4j.Driver.INode>(), 0, 0, 0));
 
         return rndNodes;
+    }
+
+    private static bool TryUnpackNodeDict(IDictionary<string, object> dict, double hop, out Model.INode? v)
+    {
+        v = null;
+        var node = dict["node"].As<Neo4j.Driver.INode>();
+        var inDegree = Convert.ToDouble(dict["inDegree"]);
+        var outDegree = Convert.ToDouble(dict["outDegree"]);
+        if (node is null)
+            return false;
+        return NodeFactory.TryCreate(node, inDegree, outDegree, hop, out v);
     }
 }

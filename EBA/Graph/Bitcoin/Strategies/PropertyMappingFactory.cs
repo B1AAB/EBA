@@ -23,10 +23,22 @@ public static class PropertyMappingFactory
         return new(nameof(TxNode.Txid), FieldType.String, x => getValue(x), headerOverride);
     }
 
-    public static Property BTCValueProperty { get; } = new("Value", FieldType.Double);
-    public static PropertyMapping<T> ValueBTC<T>(Func<T, double> getValue)
+    public static Property ValueProperty { get; } = new("Value", FieldType.Long);
+    public static PropertyMapping<T> Value<T>(Func<T, long> getValue)
     {
-        return new(BTCValueProperty, x => getValue(x));
+        return new(
+            ValueProperty,
+            x => getValue(x),
+            deserializer: v => (long)v!);
+
+        /* you may use the following if you need to convert between Satoshi and BTC, 
+         * but be aware that this will make the deserialization more complex 
+         * and may lead to precision issues if not handled carefully.
+         * 
+        return new(
+            ValueProperty, 
+            x => Helpers.Satoshi2BTC(getValue(x)),
+            deserializer: v => Helpers.BTC2Satoshi((double)v!));*/
     }
 
     public static PropertyMapping<T> SourceId<T>(string idSpace, Func<T, object?> getValue)
@@ -37,9 +49,11 @@ public static class PropertyMappingFactory
     {
         return new(":END_ID", FieldType.String, getValue, _ => $":END_ID({idSpace})");
     }
+
+    public static string TypePropertyName { get; } = ":TYPE";
     public static PropertyMapping<T> EdgeType<T>(Func<T, object?> getType)
     {
-        return new(":TYPE", FieldType.String, getType, _ => ":TYPE");
+        return new(TypePropertyName, FieldType.String, getType, _ => TypePropertyName);
     }
 
     public static PropertyMapping<T> Label<T>(object label)
@@ -179,9 +193,6 @@ public static class PropertyMappingFactory
         return result;
     }
 
-    public static Func<double?, double> SatoshiToBTC =>
-        x => x == null ? double.NaN : Helpers.Satoshi2BTC((double)x);
-
     public static PropertyMapping<T> SpentUtxos<T>(
         string propertyName,
         Func<T, IEnumerable<SpentUTxO>> getUtxos)
@@ -190,28 +201,16 @@ public static class PropertyMappingFactory
             propertyName,
             FieldType.StringArray,
             x => getUtxos(x).Select(
-                u => string.Join(PropertyDelimiter, u.Txid, u.Vout, u.Generated, Helpers.Satoshi2BTC(u.Value), u.Height)));
-    }
-
-    public static SpentUTxO[] ReadSpentUtxos(
-        IReadOnlyDictionary<string, object> properties,
-        string propertyName)
-    {
-        if (!properties.TryGetValue(propertyName, out var raw) || raw is not string s || s.Length == 0)
-            return [];
-
-        return
-            [
-                .. s.Split(';').Select(entry =>
-                {
-                    var parts = entry.Split(PropertyDelimiter);
-                    return new SpentUTxO(
-                        txid: parts[0],
-                        vout: int.Parse(parts[1]),
-                        generated: bool.Parse(parts[2]),
-                        value: Helpers.BTC2Satoshi(double.Parse(parts[3])),
-                        height: long.Parse(parts[4]));
-                })
-            ];
+                u => string.Join(PropertyDelimiter, u.Txid, u.Vout, u.Generated, u.Value, u.Height)),
+            deserializer: v => ((IList<object>)v!).Select(obj =>
+            {
+                var parts = ((string)obj).Split(PropertyDelimiter);
+                return new SpentUTxO(
+                    txid: parts[0],
+                    vout: int.Parse(parts[1]),
+                    generated: bool.Parse(parts[2]),
+                    value: long.Parse(parts[3]),
+                    height: long.Parse(parts[4]));
+            }).ToArray());
     }
 }
