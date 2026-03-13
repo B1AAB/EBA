@@ -2,12 +2,12 @@
 
 using Factory = PropertyMappingFactory;
 
-public class T2TEdgeStrategy(bool serializeCompressed) 
+public class T2TEdgeStrategy(EdgeKind kind, bool serializeCompressed) 
     : BitcoinStrategyBase(
         $"edges_" +
-        $"{T2TEdge.KindTransfers.Source}_" +
-        $"{T2TEdge.KindTransfers.Relation}_and_{T2TEdge.KindFee.Relation}_" +
-        $"{T2TEdge.KindTransfers.Target}",
+        $"{kind.Source}_" +
+        $"{kind.Relation}_" +
+        $"{kind.Target}",
         serializeCompressed)
 {
     private static readonly PropertyMapping<T2TEdge>[] _mappings =

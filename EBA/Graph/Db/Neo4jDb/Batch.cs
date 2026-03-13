@@ -8,21 +8,25 @@ public class Batch
     public string DefaultDirectory { get; }
     private readonly bool _compressOutput;
 
-    public IReadOnlyDictionary<Type, TypeInfo> Types => _typesInfo;
-    private readonly Dictionary<Type, TypeInfo> _typesInfo;
+    private readonly Dictionary<string, TypeInfo> _typesInfo;
 
     [JsonConstructor]
     public Batch(
         string name,
         string defaultDirectory,
-        IDictionary<Type, TypeInfo> typesInfo)
+        IDictionary<string, TypeInfo> typesInfo)
     {
         Name = name;
         DefaultDirectory = defaultDirectory;
-        _typesInfo = new Dictionary<Type, TypeInfo>(typesInfo);
+        _typesInfo = new Dictionary<string, TypeInfo>(typesInfo);
     }
 
-    public Batch(string name, string defaultDirectory, IReadOnlyDictionary<Type, StrategyBase> strategies, bool compresseOutput)
+    public Batch(
+        string name,
+        string defaultDirectory,
+        IReadOnlyDictionary<NodeKind, StrategyBase> nodeStrategies,
+        IReadOnlyDictionary<EdgeKind, StrategyBase> edgeStrategies,
+        bool compresseOutput)
     {
         Name = name;
         DefaultDirectory = defaultDirectory;
@@ -30,22 +34,43 @@ public class Batch
         var timestamp = Helpers.GetUnixTimeSeconds();
 
         _typesInfo = [];
-        foreach (var strategy in strategies)
+        foreach (var strategy in nodeStrategies)
+        {
             _typesInfo.Add(
-                strategy.Key,
+                strategy.Key.ToString(),
                 new TypeInfo(
                     Path.Join(DefaultDirectory, $"{timestamp}_{strategy.Value.DefaultFilename}"),
                     0));
+        }
+
+        foreach (var strategy in edgeStrategies)
+        {
+            _typesInfo.Add(
+                strategy.Key.ToString(),
+                new TypeInfo(
+                    Path.Join(DefaultDirectory, $"{timestamp}_{strategy.Value.DefaultFilename}"),
+                    0));
+        }
     }
 
-    public void Update(Type type, int count)
+    public void Update(NodeKind kind, int count)
     {
-        _typesInfo[type].Count += count;
+        _typesInfo[kind.ToString()].Count += count;
     }
 
-    public string GetFilename(Type type)
+    public void Update(EdgeKind kind, int count)
     {
-        return _typesInfo[type].Filename;
+        _typesInfo[kind.ToString()].Count += count;
+    }
+
+    public string GetFilename(NodeKind kind)
+    {
+        return _typesInfo[kind.ToString()].Filename;
+    }
+
+    public string GetFilename(EdgeKind kind)
+    {
+        return _typesInfo[kind.ToString()].Filename;
     }
 
     public int GetMaxCount()

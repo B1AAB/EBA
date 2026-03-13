@@ -2,11 +2,14 @@
 
 public interface IStrategyFactory : IDisposable
 {
-    public IReadOnlyDictionary<Type, StrategyBase> Strategies { get; }
+    public IReadOnlyDictionary<NodeKind, StrategyBase> NodeStrategies { get; }
+    public IReadOnlyDictionary<EdgeKind, StrategyBase> EdgeStrategies { get; }
 
-    public StrategyBase? GetStrategy(Type type);
+    public StrategyBase? GetStrategy(NodeKind kind);
+    public StrategyBase? GetStrategy(EdgeKind kind);
 
-    public bool IsSerializable(Type type);
+    public bool IsSerializable(NodeKind kind);
+    public bool IsSerializable(EdgeKind kind);
 
     public Task SerializeConstantsAsync(string outputDirectory, CancellationToken ct);
 

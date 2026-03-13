@@ -152,24 +152,24 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         var tasks = new List<Task>();
 
-        foreach (var type in nodes.Where(x => _strategyFactory.IsSerializable(x.Key)))
+        foreach (var nodeGroup in nodes.Where(x => _strategyFactory.IsSerializable(x.Key)))
         {
-            batchInfo.Update(type.Key, type.Value.Count);
-            var _strategy = _strategyFactory.GetStrategy(type.Key);
+            batchInfo.Update(nodeGroup.Key, nodeGroup.Value.Count);
+            var _strategy = _strategyFactory.GetStrategy(nodeGroup.Key);
             if (_strategy == null) 
                 continue;
 
-            tasks.Add(_strategy.ToCsvAsync(type.Value, batchInfo.GetFilename(type.Key)));
+            tasks.Add(_strategy.ToCsvAsync(nodeGroup.Value, batchInfo.GetFilename(nodeGroup.Key)));
         }
 
-        foreach (var type in edges.Where(x => _strategyFactory.IsSerializable(x.Key)))
+        foreach (var edgeGroup in edges.Where(x => _strategyFactory.IsSerializable(x.Key)))
         {
-            batchInfo.Update(type.Key, type.Value.Count);
-            var _strategy = _strategyFactory.GetStrategy(type.Key);
+            batchInfo.Update(edgeGroup.Key, edgeGroup.Value.Count);
+            var _strategy = _strategyFactory.GetStrategy(edgeGroup.Key);
             if (_strategy == null)
                 continue;
 
-            tasks.Add(_strategy.ToCsvAsync(type.Value, batchInfo.GetFilename(type.Key)));
+            tasks.Add(_strategy.ToCsvAsync(edgeGroup.Value, batchInfo.GetFilename(edgeGroup.Key)));
         }
 
         await Task.WhenAll(tasks);
@@ -185,7 +185,8 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             _batches.Add(new Batch(
                 _batches.Count.ToString(),
                 _options.WorkingDir,
-                _strategyFactory.Strategies,
+                _strategyFactory.NodeStrategies,
+                _strategyFactory.EdgeStrategies,
                 _options.Neo4j.CompressOutput));
 
         return _batches[^1];

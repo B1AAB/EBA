@@ -28,7 +28,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
         }
     }
 
-    public Dictionary<Type, List<INode>> NodesByType
+    public Dictionary<NodeKind, List<INode>> NodesByType
     {
         get
         {
@@ -38,7 +38,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
         }
     }
 
-    private readonly ConcurrentDictionary<Type, ConcurrentDictionary<string, INode>> _nodes = new();
+    private readonly ConcurrentDictionary<NodeKind, ConcurrentDictionary<string, INode>> _nodes = new();
 
     public ReadOnlyCollection<IEdge<INode, INode>> Edges
     {
@@ -49,7 +49,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
         }
     }
 
-    public Dictionary<Type, List<IEdge<INode, INode>>> EdgesByType
+    public Dictionary<EdgeKind, List<IEdge<INode, INode>>> EdgesByType
     {
         get
         {
@@ -59,7 +59,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
         }
     } 
     
-    private readonly ConcurrentDictionary<Type, ConcurrentDictionary<string, IEdge<INode, INode>>> _edges = new();
+    private readonly ConcurrentDictionary<EdgeKind, ConcurrentDictionary<string, IEdge<INode, INode>>> _edges = new();
 
     public ReadOnlyDictionary<string, string> Labels
     {
@@ -67,19 +67,12 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
     }
     private readonly Dictionary<string, string> _labels = [];
 
-    public int GetNodeCount(Type type)
-    {
-        if (_nodes.TryGetValue(type, out ConcurrentDictionary<string, INode>? value))
-            return value.Values.Count;
-        return 0;
-    }
-
-    public ImmutableDictionary<Type, ICollection<INode>> GetNodes()
+    public ImmutableDictionary<NodeKind, ICollection<INode>> GetNodes()
     {
         return _nodes.ToImmutableDictionary(x => x.Key, x => x.Value.Values);
     }
 
-    public ImmutableDictionary<Type, ICollection<IEdge<INode, INode>>> GetEdges()
+    public ImmutableDictionary<EdgeKind, ICollection<IEdge<INode, INode>>> GetEdges()
     {
         return _edges.ToImmutableDictionary(x => x.Key, x => x.Value.Values);
     }
@@ -143,7 +136,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
     public bool TryAddNode<T>(T node) where T : INode
     {
         var x = _nodes.GetOrAdd(
-            node.GetType(),
+            node.NodeKind,
             new ConcurrentDictionary<string, INode>());
 
         return x.TryAdd(node.Id, node);
@@ -152,7 +145,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
     public T GetOrAddNode<T>(T node) where T : INode
     {
         var x = _nodes.GetOrAdd(
-            node.GetType(),
+            node.NodeKind,
             new ConcurrentDictionary<string, INode>());
 
         return (T)x.GetOrAdd(node.Id, node);
@@ -167,7 +160,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
     public bool TryGetOrAddEdge<T>(T edge, out T resultingEdge) where T : IEdge<INode, INode>
     {
         var x = _edges.GetOrAdd(
-            edge.GetType(),
+            edge.EdgeKind,
             new ConcurrentDictionary<string, IEdge<INode, INode>>());
 
         resultingEdge = (T)x.GetOrAdd(edge.Id, edge);
@@ -187,7 +180,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
         where T : IEdge<INode, INode>
     {
         var x = _edges.GetOrAdd(
-            edge.GetType(),
+            edge.EdgeKind,
             new ConcurrentDictionary<string, IEdge<INode, INode>>());
 
         x.AddOrUpdate(
@@ -207,14 +200,6 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
 
         TryAddNode(edge.Source);
         TryAddNode(edge.Target);
-    }
-
-    public List<T>? GetEdges<T>(Type type) where T : IEdge<INode, INode>
-    {
-        if (!_edges.ContainsKey(type))
-            return null;
-
-        return [.. _edges[type].Cast<T>()];
     }
 
     public void AddLabel(string key, string value)
