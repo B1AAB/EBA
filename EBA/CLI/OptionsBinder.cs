@@ -74,7 +74,6 @@ internal class OptionsBinder
         var gsample = new BitcoinGraphSampleOptions()
         {
             Count = GetValue(defs.Bitcoin.GraphSample.Count, graphSampleCountOption, c),
-            Hops = GetValue(defs.Bitcoin.GraphSample.Hops, graphSampleHopOption, c),
             TraversalAlgorithm = traversalAlgorithm,
             ForestFireOptions = forestFireOptions,
             MinNodeCount = GetValue(defs.Bitcoin.GraphSample.MinNodeCount, graphSampleMinNodeCount, c),

@@ -248,7 +248,7 @@ public class ForestFire : ITraversalAlgorithm
                 }
 
                 await ProcessHops(
-                    rootNodeLabel: BitcoinGraphAgent.ConvertGraphComponentTypeToNodeLabel(node.GetType()),
+                    rootNodeLabel: node.NodeKind,
                     rootNodeIdProperty: node.GetIdPropertyName(),
                     rootNodeId: node.Id,
                     hop: hop + 1,

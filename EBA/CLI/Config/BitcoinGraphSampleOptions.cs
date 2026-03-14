@@ -1,26 +1,4 @@
-using EBA.Graph.Bitcoin.Strategies;
-
 namespace EBA.CLI.Config;
-
-public enum GraphSampleMode
-{
-    /// <summary>
-    /// Graph is a single connected component.
-    /// </summary>
-    ConnectedGraph,
-
-    /// <summary>
-    /// Graph is a forest of connected components, i.e., a collection of disjoint graphs.
-    /// </summary>
-    ConnectedGraphAndForest
-}
-
-public enum CoinbaseSelectionMode
-{
-    CoinbaseOnly,
-    IncludeCoinbase,
-    ExcludeCoinbase
-}
 
 public enum GraphTraversal
 {
@@ -44,41 +22,15 @@ public enum GraphTraversal
     FFS
 }
 
-public enum GraphProjection
-{
-    Bipartite
-}
-
-public enum EdgeTypes
-{
-    S2S,
-    ALL
-}
-
 public class BitcoinGraphSampleOptions
 {
     public int Count { init; get; }
-    public int Hops { init; get; }
-    public GraphSampleMode Mode { init; get; } = GraphSampleMode.ConnectedGraphAndForest;
-    public CoinbaseSelectionMode CoinbaseMode { init; get; } = CoinbaseSelectionMode.ExcludeCoinbase;
     public GraphTraversal TraversalAlgorithm { init; get; } = GraphTraversal.FFS;
-    public GraphProjection TargetSchema { init; get; } = GraphProjection.Bipartite;
-    public EdgeTypes[] IncludeEdgeTypes { init; get; } = [EdgeTypes.S2S];
     public int MinNodeCount { init; get; } = 500;
     public int MaxNodeCount { init; get; } = 1000;
     public int MinEdgeCount { init; get; } = 499;
     public int MaxEdgeCount { init; get; } = 10000;
     public int MaxAttempts { init; get; } = 25;
-
-    // TODO: the following two are confusing and not clear how they 
-    // support/match the above max/min node/edge counts. 
-    // Also the value of these configs should be far more than the 
-    // above (see where they are used in the queries).
-    // Try to consilidate the following and the above into more 
-    // intuitive settings. 
-    public int MaxNodeFetchFromNeighbor { init; get; } = 10000;
-    public int MaxEdgesFetchFromNeighbor { init; get; } = 500000;
-
 
     public double RootNodeSelectProb
     {
