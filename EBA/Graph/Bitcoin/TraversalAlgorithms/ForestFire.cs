@@ -60,7 +60,7 @@ public class ForestFire : ITraversalAlgorithm
                     nodeCountReductionFactorByHop: _options.Bitcoin.GraphSample.ForestFireOptions.NodeCountReductionFactorByHop,
                     ct: ct);
 
-                var perBatchLabelsFilename = Path.Join(_options.WorkingDir, "Labels.tsv");
+                var perBatchLabelsFilename = Path.Join(_options.WorkingDir, "labels.tsv");
 
                 if (graph.NodeCount < _options.Bitcoin.GraphSample.MinNodeCount ||
                     graph.EdgeCount < _options.Bitcoin.GraphSample.MinEdgeCount)

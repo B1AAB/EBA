@@ -237,7 +237,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
 
             Helpers.CsvSerialize(
                 nodeType.Value,
-                Path.Join(workingDir, nodeType.Key + ".tsv"),
+                Path.Join(workingDir, $"node_features_{nodeType.Key.ToString().ToLower().Replace('-', '_')}.tsv"),
                 gFeatures.NodeFeaturesHeader[nodeType.Key]);
         }
 
@@ -248,7 +248,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
 
             Helpers.CsvSerialize(
                 edgeType.Value,
-                Path.Join(workingDir, edgeType.Key + ".tsv"),
+                Path.Join(workingDir, $"edge_features_{edgeType.Key.ToString().ToLower().Replace('-', '_')}.tsv"),
                 gFeatures.EdgeFeaturesHeader[edgeType.Key]);
         }
 
