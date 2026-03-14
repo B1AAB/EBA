@@ -7,7 +7,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
     where TSource : notnull, INode
     where TTarget : notnull, INode
 {
-    public static EdgeKind Kind { get { throw new NotImplementedException(); } }
+    public static EdgeKind Kind { get { throw new NotImplementedException($"Edge {nameof(Kind)} not defined"); } }
     public EdgeKind EdgeKind { get; }
 
     public string Id { get; }

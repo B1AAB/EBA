@@ -7,36 +7,55 @@ public class BitcoinStrategyFactory : IStrategyFactory
 {
     private bool _disposed = false;
 
-    public IReadOnlyDictionary<Type, StrategyBase> Strategies { get; }
+    public IReadOnlyDictionary<NodeKind, StrategyBase> NodeStrategies { get; }
+    public IReadOnlyDictionary<EdgeKind, StrategyBase> EdgeStrategies { get; }
 
     public BitcoinStrategyFactory(Options options)
     {
         var compressOutput = options.Neo4j.CompressOutput;
 
-        Strategies = new Dictionary<Type, StrategyBase>
+        NodeStrategies = new Dictionary<NodeKind, StrategyBase>
         {
-            {typeof(BlockNode), new BlockNodeStrategy(compressOutput)},
-            {typeof(ScriptNode), new ScriptNodeStrategy(compressOutput)},
-            {typeof(TxNode), new TxNodeStrategy(compressOutput)},
-            {typeof(C2TEdge), new C2TEdgeStrategy(compressOutput)},
-            {typeof(T2TEdge), new T2TEdgeStrategy(compressOutput)},
-            {typeof(S2TEdge), new S2TEdgeStrategy(compressOutput)},
-            {typeof(T2SEdge), new T2SEdgeStrategy(compressOutput)},
-            {typeof(B2TEdge), new B2TEdgeStrategy(compressOutput)},
+            { BlockNode.Kind, new BlockNodeStrategy(compressOutput) },
+            { ScriptNode.Kind, new ScriptNodeStrategy(compressOutput) },
+            { TxNode.Kind, new TxNodeStrategy(compressOutput) }
+        };
+
+        EdgeStrategies = new Dictionary<EdgeKind, StrategyBase>
+        {
+            { C2TEdge.Kind, new C2TEdgeStrategy(compressOutput) },
+            { T2TEdge.KindTransfers, new T2TEdgeStrategy(T2TEdge.KindTransfers, compressOutput) },
+            { T2TEdge.KindFee, new T2TEdgeStrategy(T2TEdge.KindFee, compressOutput) },
+            { S2TEdge.Kind, new S2TEdgeStrategy(compressOutput) },
+            { T2SEdge.Kind, new T2SEdgeStrategy(compressOutput) },
+            { B2TEdge.Kind, new B2TEdgeStrategy(compressOutput) }
         };
     }
 
-    public StrategyBase? GetStrategy(Type type)
+    public StrategyBase? GetStrategy(NodeKind kind)
     {
-        if (Strategies.TryGetValue(type, out var strategy))
+        if (NodeStrategies.TryGetValue(kind, out var strategy))
             return strategy;
         else
             return null;
     }
 
-    public bool IsSerializable(Type type)
+    public StrategyBase? GetStrategy(EdgeKind kind)
     {
-        return Strategies.ContainsKey(type);
+        if (EdgeStrategies.TryGetValue(kind, out var strategy))
+            return strategy;
+        else
+            return null;
+    }
+
+    public bool IsSerializable(NodeKind kind)
+    {
+        return NodeStrategies.ContainsKey(kind);
+    }
+
+    public bool IsSerializable(EdgeKind kind)
+    {
+        return EdgeStrategies.ContainsKey(kind);
     }
 
     public async Task SerializeConstantsAsync(string outputDirectory, CancellationToken ct)
@@ -51,13 +70,14 @@ public class BitcoinStrategyFactory : IStrategyFactory
             writer.WriteLine(string.Join('\t', $"{CoinbaseNode.Kind}", $"{CoinbaseNode.Kind}"));
         }
 
-        foreach(var strategy in Strategies)
+        var strategies = NodeStrategies.Values.Concat(EdgeStrategies.Values);
+        foreach (var strategy in strategies)
         {
             using var writer = new StreamWriter(
                 new GZipStream(
-                    File.Create(Path.Join(outputDirectory, $"header_{strategy.Value.DefaultFilename}")),
+                    File.Create(Path.Join(outputDirectory, $"header_{strategy.DefaultFilename}")),
                     CompressionMode.Compress));
-            writer.WriteLine(strategy.Value.GetCsvHeader());
+            writer.WriteLine(strategy.GetCsvHeader());
         }
     }
 
@@ -106,10 +126,11 @@ public class BitcoinStrategyFactory : IStrategyFactory
         {
             if (disposing)
             {
-                foreach (var x in Strategies)
-                {
+                foreach (var x in NodeStrategies)
                     x.Value.Dispose();
-                }
+
+                foreach(var x in EdgeStrategies)
+                    x.Value.Dispose();
             }
 
             _disposed = true;

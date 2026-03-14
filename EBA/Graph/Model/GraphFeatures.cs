@@ -2,11 +2,11 @@
 
 public class GraphFeatures
 {
-    public Dictionary<Type, List<string[]>> NodeFeatures { get; }
-    public Dictionary<Type, string[]> NodeFeaturesHeader { get; }
+    public Dictionary<NodeKind, List<string[]>> NodeFeatures { get; }
+    public Dictionary<NodeKind, string[]> NodeFeaturesHeader { get; }
 
-    public Dictionary<Type, List<double[]>> EdgeFeatures { get; }
-    public Dictionary<Type, string[]> EdgeFeaturesHeader { get; }
+    public Dictionary<EdgeKind, List<double[]>> EdgeFeatures { get; }
+    public Dictionary<EdgeKind, string[]> EdgeFeaturesHeader { get; }
 
     public ReadOnlyCollection<double[]> EdgeFeaturesOld { get; }
     public ReadOnlyCollection<string> EdgeFeaturesHeaderOld { get; }
@@ -25,21 +25,22 @@ public class GraphFeatures
         LabelsHeader = new ReadOnlyCollection<string>(["GraphID", "RootNodeId", "RootNodeIdx", "NodeCount", "EdgeCount"]);
 
         NodeFeaturesHeader = [];
-        NodeFeaturesHeader.Add(typeof(BlockNode), ["Index", .. BlockNode.GetFeaturesName()]);
-        NodeFeaturesHeader.Add(typeof(TxNode), ["Index", .. TxNode.GetFeaturesName()]);
-        NodeFeaturesHeader.Add(typeof(ScriptNode), ["Index", .. ScriptNode.GetFeaturesName()]);
-        NodeFeaturesHeader.Add(typeof(CoinbaseNode), ["Index", .. CoinbaseNode.GetFeaturesName()]);
+        NodeFeaturesHeader.Add(BlockNode.Kind, ["Index", .. BlockNode.GetFeaturesName()]);
+        NodeFeaturesHeader.Add(TxNode.Kind, ["Index", .. TxNode.GetFeaturesName()]);
+        NodeFeaturesHeader.Add(ScriptNode.Kind, ["Index", .. ScriptNode.GetFeaturesName()]);
+        NodeFeaturesHeader.Add(CoinbaseNode.Kind, ["Index", .. CoinbaseNode.GetFeaturesName()]);
 
         var sourceAndTarget = new[] { "Source", "Target" };
         EdgeFeaturesHeader = [];
-        EdgeFeaturesHeader.Add(typeof(C2TEdge), [.. sourceAndTarget, .. C2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(typeof(T2TEdge), [.. sourceAndTarget, .. T2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(typeof(B2TEdge), [.. sourceAndTarget, .. B2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(typeof(S2TEdge), [.. sourceAndTarget, .. S2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(typeof(T2SEdge), [.. sourceAndTarget, .. T2SEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(C2TEdge.Kind, [.. sourceAndTarget, .. C2TEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(B2TEdge.Kind, [.. sourceAndTarget, .. B2TEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(S2TEdge.Kind, [.. sourceAndTarget, .. S2TEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(T2SEdge.Kind, [.. sourceAndTarget, .. T2SEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(T2TEdge.KindFee, [.. sourceAndTarget, .. T2TEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(T2TEdge.KindTransfers, [.. sourceAndTarget, .. T2TEdge.GetFeaturesName()]);
 
-        var nodeFeatures = new Dictionary<Type, List<string[]>>();
-        var nodeIdToIdx = new Dictionary<Type, Dictionary<string, int>>();
+        var nodeFeatures = new Dictionary<NodeKind, List<string[]>>();
+        var nodeIdToIdx = new Dictionary<NodeKind, Dictionary<string, int>>();
 
         var nodeGraphComponentTypes = NodeFeaturesHeader.Keys.ToArray();
         foreach (var nodeType in nodeGraphComponentTypes)
@@ -48,11 +49,11 @@ public class GraphFeatures
             nodeIdToIdx.Add(nodeType, []);
         }
 
-        var edgeFeatures = new Dictionary<Type, List<double[]>>();
+        var edgeFeatures = new Dictionary<EdgeKind, List<double[]>>();
         var edgeGraphComponentTypes = EdgeFeaturesHeader.Keys.ToArray();
-        foreach (var edgeType in edgeGraphComponentTypes)
+        foreach (var edgeKind in edgeGraphComponentTypes)
         {
-            edgeFeatures.Add(edgeType, []);
+            edgeFeatures.Add(edgeKind, []);
         }
 
         foreach (var nodeType in graph.NodesByType)
@@ -85,14 +86,14 @@ public class GraphFeatures
             ]);
         }*/
 
-        foreach (var edgeType in graph.EdgesByType)
+        foreach (var edgeKind in graph.EdgesByType)
         {
-            foreach (var edge in edgeType.Value)
+            foreach (var edge in edgeKind.Value)
             {
-                edgeFeatures[edgeType.Key].Add(
+                edgeFeatures[edgeKind.Key].Add(
                 [
-                    nodeIdToIdx[edge.Source.GetType()][edge.Source.Id],
-                    nodeIdToIdx[edge.Target.GetType()][edge.Target.Id],
+                    nodeIdToIdx[edge.Source.NodeKind][edge.Source.Id],
+                    nodeIdToIdx[edge.Target.NodeKind][edge.Target.Id],
                     .. edge.GetFeatures(),
                 ]);
             }
@@ -111,7 +112,7 @@ public class GraphFeatures
                 graph.Id, 
                 //gLabels["ConnectedGraph_or_Forest"], 
                 gLabels["RootNodeId"],
-                nodeIdToIdx[typeof(ScriptNode)][gLabels["RootNodeId"]].ToString(),
+                nodeIdToIdx[ScriptNode.Kind][gLabels["RootNodeId"]].ToString(),
                 graph.Nodes.Count.ToString(),
                 graph.Edges.Count.ToString()
             ]);

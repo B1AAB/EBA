@@ -71,9 +71,6 @@ public abstract class PersistentObjectBase<T> : IDisposable
                     "Exception occurred persisting an instance of type `{o}`. {e}",
                     obj, e.Message);
 
-                // TODO: This is temporary only to get details of errors to reproduce/debug them.
-                _logger.LogDebug("Exception details: {e}", e);
-
                 // TODO: re-throwing exception here has no impact.
                 // fixing it requires a bit of reengineering how this method is used.
                 // The exception does not propogate because the caller does not 
