@@ -1,12 +1,5 @@
 namespace EBA.CLI.Config;
 
-public enum CoinbaseSelectionMode
-{
-    CoinbaseOnly,
-    IncludeCoinbase,
-    ExcludeCoinbase
-}
-
 public enum GraphTraversal
 {
     // path search algorithm
@@ -43,7 +36,6 @@ public enum EdgeTypes
 public class BitcoinGraphSampleOptions
 {
     public int Count { init; get; }
-    public CoinbaseSelectionMode CoinbaseMode { init; get; } = CoinbaseSelectionMode.ExcludeCoinbase;
     public GraphTraversal TraversalAlgorithm { init; get; } = GraphTraversal.FFS;
     public GraphProjection TargetSchema { init; get; } = GraphProjection.Bipartite;
     public EdgeTypes[] IncludeEdgeTypes { init; get; } = [EdgeTypes.S2S];
