@@ -58,7 +58,6 @@ public enum EdgeTypes
 public class BitcoinGraphSampleOptions
 {
     public int Count { init; get; }
-    public int Hops { init; get; }
     public GraphSampleMode Mode { init; get; } = GraphSampleMode.ConnectedGraphAndForest;
     public CoinbaseSelectionMode CoinbaseMode { init; get; } = CoinbaseSelectionMode.ExcludeCoinbase;
     public GraphTraversal TraversalAlgorithm { init; get; } = GraphTraversal.FFS;
