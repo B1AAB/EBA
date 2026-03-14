@@ -1,19 +1,4 @@
-using EBA.Graph.Bitcoin.Strategies;
-
 namespace EBA.CLI.Config;
-
-public enum GraphSampleMode
-{
-    /// <summary>
-    /// Graph is a single connected component.
-    /// </summary>
-    ConnectedGraph,
-
-    /// <summary>
-    /// Graph is a forest of connected components, i.e., a collection of disjoint graphs.
-    /// </summary>
-    ConnectedGraphAndForest
-}
 
 public enum CoinbaseSelectionMode
 {
@@ -58,7 +43,6 @@ public enum EdgeTypes
 public class BitcoinGraphSampleOptions
 {
     public int Count { init; get; }
-    public GraphSampleMode Mode { init; get; } = GraphSampleMode.ConnectedGraphAndForest;
     public CoinbaseSelectionMode CoinbaseMode { init; get; } = CoinbaseSelectionMode.ExcludeCoinbase;
     public GraphTraversal TraversalAlgorithm { init; get; } = GraphTraversal.FFS;
     public GraphProjection TargetSchema { init; get; } = GraphProjection.Bipartite;
