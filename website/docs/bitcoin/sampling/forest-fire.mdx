@@ -38,16 +38,32 @@ This command sets the method to `sample`,
 aiming for `100` communities using the `ffs` (forest-fire sampling) strategy 
 at a maximum depth of `6` hops from the root nodes.
 
-:::tip You can provide arguments via a JSON file
-In addition to passing arguments via the command line, you can supply them using a JSON file.
-See [this page](./overview) for an example.
-:::
+Alternatively, you may set the options using a JSON file as the following. 
 
+```powershell
+> cat inputs.json
+{
+  "Bitcoin": {
+    "GraphSample": {
+      "Count": 10,
+      "TraversalAlgorithm": 0,
+      "MinNodeCount": 500,
+      "MaxNodeCount": 1000,
+      "MinEdgeCount": 499,
+      "MaxEdgeCount": 10000,
+      "MaxAttempts": 25,
+      "RootNodeSelectProb": 0.3,
+      "ForestFireOptions": {
+        "maxHops": 6,
+        "queryLimit": 1000,
+        "reductionFactor": 4,
+        "nodeCountAtRoot": 100
+      }
+    }
+  }
+}
 
-You may run the following command to view documentation for common arguments of the `sample` command:
-
-```bash
-.\eba.exe bitcoin sample --help
+> .\eba.exe bitcoin sample --status-filename inputs.json
 ```
 
 FFS-specific arguments are documented below.
