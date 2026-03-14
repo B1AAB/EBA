@@ -32,15 +32,6 @@ public class BitcoinGraphSampleOptions
     public int MaxEdgeCount { init; get; } = 10000;
     public int MaxAttempts { init; get; } = 25;
 
-    // TODO: the following two are confusing and not clear how they 
-    // support/match the above max/min node/edge counts. 
-    // Also the value of these configs should be far more than the 
-    // above (see where they are used in the queries).
-    // Try to consilidate the following and the above into more 
-    // intuitive settings. 
-    public int MaxNodeFetchFromNeighbor { init; get; } = 10000;
-    public int MaxEdgesFetchFromNeighbor { init; get; } = 500000;
-
 
     public double RootNodeSelectProb
     {
