@@ -27,18 +27,11 @@ public enum GraphProjection
     Bipartite
 }
 
-public enum EdgeTypes
-{
-    S2S,
-    ALL
-}
-
 public class BitcoinGraphSampleOptions
 {
     public int Count { init; get; }
     public GraphTraversal TraversalAlgorithm { init; get; } = GraphTraversal.FFS;
     public GraphProjection TargetSchema { init; get; } = GraphProjection.Bipartite;
-    public EdgeTypes[] IncludeEdgeTypes { init; get; } = [EdgeTypes.S2S];
     public int MinNodeCount { init; get; } = 500;
     public int MaxNodeCount { init; get; } = 1000;
     public int MinEdgeCount { init; get; } = 499;
