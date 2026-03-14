@@ -32,7 +32,6 @@ public class BitcoinGraphSampleOptions
     public int MaxEdgeCount { init; get; } = 10000;
     public int MaxAttempts { init; get; } = 25;
 
-
     public double RootNodeSelectProb
     {
         init

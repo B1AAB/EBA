@@ -2,7 +2,10 @@
 
 public class BitcoinOptions(long timestamp)
 {
-    public BitcoinTraverseOptions Traverse { init; get; } = new(timestamp);
+    [JsonConstructor]
+    public BitcoinOptions() : this(DateTimeOffset.Now.ToUnixTimeSeconds()) { }
+
+    public BitcoinTraverseOptions Traverse { init; get; } = new BitcoinTraverseOptions(timestamp);
     public BitcoinDedupOptions Dedup { init; get; } = new();
     public BitcoinGraphSampleOptions GraphSample { init; get; } = new();
 }
