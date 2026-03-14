@@ -1,44 +1,29 @@
 #!/bin/bash
 
-PROJECT_PATH="EBA.sln"
-OUTPUT_BASE="./builds"
+PROJ="EBA/EBA.csproj"
+OUT="./.builds"
+RIDS=("win-x64" "osx-x64" "osx-arm64" "linux-x64")
 
-PLATFORMS=("win-x64" "osx-x64" "osx-arm64" "linux-x64")
+# If $1 is "-h", show RIDs. If $1 is a RID, use it. Otherwise, use ALL.
+[[ "$1" == "-h" ]] && echo "Platforms: ${RIDS[*]}" && exit
+TARGETS=${1:-"${RIDS[@]}"}
 
-echo "Starting production build for $PROJECT_PATH..."
+# Set WARN="" to see warnings. Default is quiet.
+WARN="-p:NoWarn=0000-9999 --verbosity quiet"
+[[ "$*" == *"-w"* ]] && WARN=""
 
-rm -rf "$OUTPUT_BASE"
-mkdir -p "$OUTPUT_BASE"
+echo "Building: $TARGETS"
 
-for RID in "${PLATFORMS[@]}"
-do
-  echo "---------------------------------------------------"
-  echo "Publishing for: $RID..."  
+for RID in $TARGETS; do
+  [[ "$RID" == "-w" ]] && continue
 
-  TARGET_DIR="$OUTPUT_BASE/$RID"
+  DIR="$OUT/$RID"
+  rm -rf "$DIR"
 
-  dotnet publish "$PROJECT_PATH" \
-    -c Release \
-    -r "$RID" \
-    --output "$TARGET_DIR" \
-    --self-contained true \
-    -p:PublishSingleFile=true \
-    -p:PublishTrimmed=true \
-    -p:TrimMode=CopyUsed \
-    -p:EnableCompressionInSingleFile=true
+  dotnet publish "$PROJ" -c Release -r "$RID" -o "$DIR" \
+    --self-contained true $WARN \
+    -p:PublishSingleFile=true -p:PublishTrimmed=true || exit 1
 
-  if [ -d "$TARGET_DIR" ]; then
-    echo "Compressing $RID..."
-    
-    # using subshell to jump in, zip, and jump out without changing the script's WD
-    # The zip is placed one level up (in ./builds/)
-    (cd "$TARGET_DIR" && zip -q -r "../${RID}.zip" .)
-    
-    echo "Done: ${RID}.zip and /$RID/ folder are ready."
-  else
-    echo "Error: Build failed for $RID."
-  fi
+  (cd "$DIR" && zip -q -r "../$RID.zip" .)
+  echo "✓ Created $RID.zip"
 done
-
-echo "---------------------------------------------------"
-echo "Build process complete. Everything is in $OUTPUT_BASE"
