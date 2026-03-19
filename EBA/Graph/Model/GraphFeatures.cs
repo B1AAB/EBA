@@ -38,6 +38,7 @@ public class GraphFeatures
         EdgeFeaturesHeader.Add(T2SEdge.Kind, [.. sourceAndTarget, .. T2SEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(T2TEdge.KindFee, [.. sourceAndTarget, .. T2TEdge.GetFeaturesName()]);
         EdgeFeaturesHeader.Add(T2TEdge.KindTransfers, [.. sourceAndTarget, .. T2TEdge.GetFeaturesName()]);
+        EdgeFeaturesHeader.Add(B2BEdge.Kind, [.. sourceAndTarget, .. B2BEdge.GetFeaturesName()]);
 
         var nodeFeatures = new Dictionary<NodeKind, List<string[]>>();
         var nodeIdToIdx = new Dictionary<NodeKind, Dictionary<string, int>>();

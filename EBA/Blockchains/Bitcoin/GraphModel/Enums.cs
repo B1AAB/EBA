@@ -73,5 +73,6 @@ public enum RelationType
     Fee = 2,
     Redeems = 3,
     Confirms = 4,
-    Credits = 5
+    Credits = 5,
+    Follows = 6,
 }
