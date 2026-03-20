@@ -17,6 +17,7 @@ public class EdgeFactory
             (BlockNode u, TxNode v) => B2TEdgeStrategy.Deserialize(u, v, relationship),
             (TxNode u, ScriptNode v) => T2SEdgeStrategy.Deserialize(u, v, relationship),
             (ScriptNode u, TxNode v) => S2TEdgeStrategy.Deserialize(u, v, relationship),
+            (BlockNode u, BlockNode v) => B2BEdgeStrategy.Deserialize(u, v, relationship),
             _ => throw new ArgumentException("Invalid edge type")
         };
     }

@@ -113,6 +113,14 @@ public class BitcoinStrategyFactory : IStrategyFactory
             $"\r\nFOR (v:{BlockNode.Kind}) REQUIRE v.{heightName} IS UNIQUE;";
         writer.WriteLine("");
         writer.WriteLine(blockHeightUniqueness);
+
+        var followsEdge = 
+            $"// Create edge (Block)-[{RelationType.Follows}]->(Block)" +
+            $"\r\nMATCH (target:Block), (source:Block)" +
+            $"\r\nWHERE toInteger(target.{heightName}) + 1 = toInteger(source.{heightName})" +
+            $"\r\nMERGE (target)-[:{RelationType.Follows}]->(source)";
+        writer.WriteLine("");
+        writer.WriteLine(followsEdge);
     }
 
     public void Dispose()
