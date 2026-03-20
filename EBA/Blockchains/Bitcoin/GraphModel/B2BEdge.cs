@@ -6,4 +6,14 @@ public class B2BEdge(
     : Edge<BlockNode, BlockNode>(source, target, 0, Kind.Relation, 0, 0)
 {
     public static new EdgeKind Kind => new(BlockNode.Kind, BlockNode.Kind, RelationType.Follows);
+
+    public new static string[] GetFeaturesName()
+    {
+        return [];
+    }
+
+    public override double[] GetFeatures()
+    {
+        return [];
+    }
 }
