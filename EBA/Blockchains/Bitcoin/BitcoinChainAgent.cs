@@ -172,7 +172,7 @@ public class BitcoinChainAgent : IDisposable
         {
             CancellationToken = cT,
             #if (DEBUG)
-            //MaxDegreeOfParallelism = 1
+            MaxDegreeOfParallelism = 1
             #endif
         };
 

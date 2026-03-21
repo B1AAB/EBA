@@ -118,7 +118,7 @@ public class MarketMapper(BitcoinChainAgent agent, ILogger<BitcoinOrchestrator> 
 
         _logger.LogInformation(
             "Finished matching block metadata with market data. " +
-            "Total matched blocks: {Count}",
+            "Total matched blocks: {Count:n0}",
             matchedBlockMarket.Count);
 
         return matchedBlockMarket;

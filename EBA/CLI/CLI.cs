@@ -400,7 +400,7 @@ internal class Cli
             Required = true
         };
 
-        var outputFilenameOption = new Option<string>("--ohlcv-output-filename")
+        var outputFilenameOption = new Option<string>("--block-market-output-filename")
         {
             Description =
                 "The output TSV file containing block metadata (height, median time) " +
