@@ -168,17 +168,9 @@ public class BitcoinChainAgent : IDisposable
 
         var blocksMetadata = new ConcurrentBag<BlockMetadata>();
 
-        var parallelOptions = new ParallelOptions()
-        {
-            CancellationToken = cT,
-            #if (DEBUG)
-            MaxDegreeOfParallelism = 1
-            #endif
-        };
-
         await Parallel.ForEachAsync(
             pages,
-            parallelOptions,
+            new ParallelOptions() { CancellationToken = cT },
             async (page, _loopCancellationToken) =>
             {
                 _loopCancellationToken.ThrowIfCancellationRequested();
@@ -192,6 +184,10 @@ public class BitcoinChainAgent : IDisposable
 
                 foreach (var block in blocks)
                     blocksMetadata.Add(block);
+
+                _logger.LogInformation(
+                    "Finished Getting block metadata for blocks {start:n0} to {end:n0}.",
+                    page[0], page[0] + blocks.Count - 1);
             });
 
         _logger.LogInformation("Finished Getting block metadata for blocks {start:n0} to {end:n0}.",

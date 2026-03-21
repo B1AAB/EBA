@@ -80,10 +80,10 @@ public class MarketMapper(BitcoinChainAgent agent, ILogger<BitcoinOrchestrator> 
             "Matching block metadata with market data from {MarketDataFilename}",
             marketDataFilename);
 
-        for (int i = 0; i < sortedBlocks.Count - 1; i++)
+        for (int i = 1; i < sortedBlocks.Count; i++)
         {
-            var startTime = sortedBlocks[i].MedianTime;
-            var endTime = sortedBlocks[i + 1].MedianTime;
+            var startTime = sortedBlocks[i - 1].MedianTime;
+            var endTime = sortedBlocks[i].MedianTime;
 
             var data = new List<OHLCV>();
 
