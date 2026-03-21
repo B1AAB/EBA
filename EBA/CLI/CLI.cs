@@ -394,21 +394,23 @@ internal class Cli
 
     private Command GetBitcoinMapMarketCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
-        var marketDataFilenameOption = new Option<string>("--market-data-filename")
+        var marketDataFilenameOption = new Option<string>("--ohlcv-source-filename")
         {
-            Description = "OHLC and should be sorted",
+            Description = "A CSV file containing sorted OHLCV (Open, High, Low, Close, Volume) candle data.",
             Required = true
         };
 
-        var outputFilenameOption = new Option<string>("--output-filename")
+        var outputFilenameOption = new Option<string>("--ohlcv-output-filename")
         {
-            Description = "The output file containing the mapping between block timestamps and market data.",
+            Description =
+                "The output TSV file containing block metadata (height, median time) " +
+                "mapped to aggregated OHLCV market data.",
             Required = true
         };
 
         var cmd = new Command(
             name: "map-market",
-            description: "...")
+            description: "Maps OHLCV market data to block metadata.")
         {
             marketDataFilenameOption,
             outputFilenameOption

@@ -46,9 +46,9 @@ public class MarketMapper(BitcoinChainAgent agent, ILogger<BitcoinOrchestrator> 
         var chainInfo = await _agent.AssertChainAsync(cT);
         var blocks = await _agent.GetBlockMetadataAsync(0, chainInfo.Blocks, cT);
 
-        var matchedBlockMarket = MatchBlockAndMarketData(blocks, options.Bitcoin.MapMarket.MarketDataFilename);
+        var matchedBlockMarket = MatchBlockAndMarketData(blocks, options.Bitcoin.MapMarket.OhlcvSourceFilename);
 
-        using var writer = new StreamWriter(options.Bitcoin.MapMarket.MappedOutputFilename);
+        using var writer = new StreamWriter(options.Bitcoin.MapMarket.BlockOhlcvMappedFilename);
         foreach (var x in matchedBlockMarket)
             writer.WriteLine(
                 string.Join(
@@ -63,7 +63,7 @@ public class MarketMapper(BitcoinChainAgent agent, ILogger<BitcoinOrchestrator> 
 
         _logger.LogInformation(
             "Finished writing mapped block and market data to {MappedOutputFilename}",
-            options.Bitcoin.MapMarket.MappedOutputFilename);
+            options.Bitcoin.MapMarket.BlockOhlcvMappedFilename);
     }
 
     private List<BlockOHLC> MatchBlockAndMarketData(List<BlockMetadata> blocks, string marketDataFilename)

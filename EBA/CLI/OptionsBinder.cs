@@ -99,8 +99,8 @@ internal class OptionsBinder
 
         var bitcoinMapMarketOps = new BitcoinMapMarketOptions()
         {
-            MarketDataFilename = GetValue(defs.Bitcoin.MapMarket.MarketDataFilename, marketDataFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
-            MappedOutputFilename = GetValue(defs.Bitcoin.MapMarket.MappedOutputFilename, outputFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); })
+            OhlcvSourceFilename = GetValue(defs.Bitcoin.MapMarket.OhlcvSourceFilename, marketDataFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
+            BlockOhlcvMappedFilename = GetValue(defs.Bitcoin.MapMarket.BlockOhlcvMappedFilename, outputFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); })
         };
 
         var bitcoinOps = new BitcoinOptions(defs.Timestamp)

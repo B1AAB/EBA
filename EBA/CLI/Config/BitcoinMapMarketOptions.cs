@@ -2,6 +2,6 @@
 
 public class BitcoinMapMarketOptions
 {
-    public string MarketDataFilename { init; get; }
-    public string MappedOutputFilename { init; get; }
+    public string OhlcvSourceFilename { init; get; }
+    public string BlockOhlcvMappedFilename { init; get; }
 }
