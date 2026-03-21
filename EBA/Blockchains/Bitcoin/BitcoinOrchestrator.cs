@@ -80,6 +80,12 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         _logger.LogInformation("Successfully finished deduplication.");
     }
 
+    public async Task MapMarketAsync(Options options, CancellationToken cT)
+    {
+        var mapper = new MarketMapper(_agent, _logger);
+        await mapper.MapAsync(options, cT);
+    }
+
     private void SetupPersistedQueues(
         Options options,
         out PersistentConcurrentQueue blocksToProcessQueue,

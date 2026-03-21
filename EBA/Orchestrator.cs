@@ -23,6 +23,7 @@ public class Orchestrator : IDisposable
             bitcoinImportCmdHandlerAsync: BitcoinImportGraphAsync,
             bitcoinAddressStatsHandlerAsync: BitcoinAddressStatsAsync,
             bitcoinImportCypherQueriesAsync: BitcoinImportCypherQueriesAsync,
+            bitcoinMapMarketHandlerAsync: BitcoinMarketMapAsync,
             exceptionHandler: (e, _) =>
             {
                 if (_logger != null)
@@ -59,6 +60,13 @@ public class Orchestrator : IDisposable
         var host = await SetupAndGetHostAsync(options);
         var bitcoinOrchestrator = host.Services.GetRequiredService<BitcoinOrchestrator>();
         await bitcoinOrchestrator.DeDupAsync(options, _cT);
+    }
+
+    private async Task BitcoinMarketMapAsync(Options options)
+    {
+        var host = await SetupAndGetHostAsync(options);
+        var bitcoinOrchestrator = host.Services.GetRequiredService<BitcoinOrchestrator>();
+        await bitcoinOrchestrator.MapMarketAsync(options, _cT);
     }
 
     private async Task BitcoinImportGraphAsync(Options options)
