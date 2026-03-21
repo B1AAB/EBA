@@ -32,25 +32,16 @@ public class TxGraph(Tx tx) : GraphBase()
     /// </summary>
     public int InputScriptsCount { get { return _inputScripts.Keys.Count; } }
 
-
-    public ReadOnlyDictionary<ScriptPubKey, List<Output>> OutputScripts
+    public ReadOnlyCollection<Output> Outputs
     {
-        get { return new ReadOnlyDictionary<ScriptPubKey, List<Output>>(_outputScripts); }
+        get { return new ReadOnlyCollection<Output>([.. _outputs]); }
     }
-    private readonly ConcurrentDictionary<ScriptPubKey, List<Output>> _outputScripts = new();
-
+    private readonly ConcurrentBag<Output> _outputs = [];
 
     /// <summary>
     /// Number of outputs in the transaction.
     /// </summary>
-    public int OutputsCount { get { return _outputScripts.Values.Sum(x => x.Count); } }
-
-    /// <summary>
-    /// Unique ScriptPubKeys count in the outputs of the transaction.
-    /// Note that a transaction can have multiple outputs with the same ScriptPubKey,
-    /// so this is not necessarily equal to the total number of outputs.
-    /// </summary>
-    public int OutputScriptsCount { get { return _outputScripts.Keys.Count; } }
+    public int OutputsCount { get { return _outputs.Count; } }
 
     public void AddInput(Input input)
     {
@@ -73,15 +64,6 @@ public class TxGraph(Tx tx) : GraphBase()
 
     public void AddOutput(Output output)
     {
-        // dev point:
-        // an example block that contains multiple outputs with the same scriptPubKey is 840000
-        _outputScripts.AddOrUpdate(
-            output.ScriptPubKey,
-            [output],
-            (_, oldValue) =>
-            {
-                oldValue.Add(output);
-                return oldValue;
-            });
+        _outputs.Add(output);
     }
 }

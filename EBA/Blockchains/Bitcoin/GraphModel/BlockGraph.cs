@@ -93,14 +93,12 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         // Note that the Coinbase tx is processed after all other Txes because 
         // it relies on the fee computed from other Txes.
         long miningReward = 0;
-        foreach (var u in _coinbaseTxGraph.OutputScripts)
+        foreach (var u in _coinbaseTxGraph.Outputs)
         {
-            AddOrUpdateEdge(
-                new T2SEdge(v, new ScriptNode(u.Key), t, h, outputs: u.Value),
-                (newE, oldE) => T2SEdge.Merge(oldE, newE));
+            TryGetOrAddEdge(new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, output: u), out var edge);
 
-            Block.ProfileCreatedOutput(u.Key, u.Value);
-            miningReward += u.Value.Sum(x => x.Value);
+            Block.ProfileCreatedOutput(u);
+            miningReward += u.Value;
         }
 
         var mintedCoins = miningReward - (long)Block.FeesStats.Sum;
@@ -132,13 +130,11 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
             Block.ProfileSpentOutput(u.Key, u.Value);
         }
 
-        foreach (var u in txGraph.OutputScripts)
+        foreach (var u in txGraph.Outputs)
         {
-            AddOrUpdateEdge(
-                new T2SEdge(v, new ScriptNode(u.Key), t, h, outputs: u.Value),
-                (newE, oldE) => T2SEdge.Merge(oldE, newE));
+            TryGetOrAddEdge(new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, output: u), out var edge);
 
-            Block.ProfileCreatedOutput(u.Key, u.Value);
+            Block.ProfileCreatedOutput(u);
         }
 
         Block.ProfileTxes(txGraph.InputsCount, txGraph.OutputsCount);

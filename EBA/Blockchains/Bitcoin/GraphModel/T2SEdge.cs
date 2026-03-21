@@ -4,67 +4,33 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
 {
     public new static EdgeKind Kind => new(TxNode.Kind, ScriptNode.Kind, RelationType.Credits);
 
-    public List<long> TxOValues { get; }
-    public int TxOCount { get { return TxOValues.Count; } }
+    public int OutputIndex { get; }
 
     public T2SEdge(
         TxNode source,
         ScriptNode target,
         uint timestamp,
         long blockHeight,
-        List<Output> outputs) :
-        this(source, target, timestamp, blockHeight, outputs.Select(x => x.Value).ToList())
-    { }
+        Output output)
+        : base(source, target, output.Value, Kind.Relation, timestamp, blockHeight)
+    {
+        OutputIndex = output.Index;
+    }
 
     public T2SEdge(
         TxNode source,
         ScriptNode target,
         uint timestamp,
         long blockHeight,
-        List<long> values) :
-        base(source, target, values.Sum(), Kind.Relation, timestamp, blockHeight)
+        long value,
+        int outputIndex) :
+        base(source, target, value, Kind.Relation, timestamp, blockHeight)
     {
-        TxOValues = values;
+        OutputIndex = outputIndex;
     }
 
-    /// <summary>
-    /// Use this method when you're sure the two edges are identical 
-    /// (e.g., same source and destination) to merge only their outputs list 
-    /// and sum of value.
-    /// </summary>
-    public static T2SEdge Merge(T2SEdge u, T2SEdge v)
+    public override int GetHashCode()
     {
-        return new T2SEdge(
-            u.Source,
-            u.Target,
-            u.Timestamp,
-            u.BlockHeight,
-            [.. u.TxOValues, .. v.TxOValues]);
-    }
-
-    public static new string[] GetFeaturesName()
-    {
-        return
-        [
-            .. Edge<TxNode, ScriptNode>.GetFeaturesName(),
-
-            nameof(TxOCount),
-            "TxOValueMin",
-            "TxOValueMax",
-            "TxOValueAvg"
-        ];
-    }
-
-    public override double[] GetFeatures()
-    {
-        return
-        [
-            .. base.GetFeatures(),
-
-            TxOCount,
-            TxOValues.Min(),
-            TxOValues.Max(),
-            TxOValues.Average()
-        ];
+        return HashCode.Combine(base.GetHashCode(), OutputIndex);
     }
 }
