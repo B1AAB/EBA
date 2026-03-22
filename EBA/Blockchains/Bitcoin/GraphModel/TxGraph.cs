@@ -1,5 +1,4 @@
 using EBA.Utilities;
-using NBitcoin;
 
 namespace EBA.Blockchains.Bitcoin.GraphModel;
 
