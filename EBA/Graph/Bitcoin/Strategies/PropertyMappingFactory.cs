@@ -192,25 +192,4 @@ public static class PropertyMappingFactory
 
         return result;
     }
-
-    public static PropertyMapping<T> SpentUtxos<T>(
-        string propertyName,
-        Func<T, IEnumerable<SpentUTxO>> getUtxos)
-    {
-        return new(
-            propertyName,
-            FieldType.StringArray,
-            x => getUtxos(x).Select(
-                u => string.Join(PropertyDelimiter, u.Txid, u.Vout, u.Generated, u.Value, u.Height)),
-            deserializer: v => ((IList<object>)v!).Select(obj =>
-            {
-                var parts = ((string)obj).Split(PropertyDelimiter);
-                return new SpentUTxO(
-                    txid: parts[0],
-                    vout: int.Parse(parts[1]),
-                    generated: bool.Parse(parts[2]),
-                    value: long.Parse(parts[3]),
-                    height: long.Parse(parts[4]));
-            }).ToArray());
-    }
 }
