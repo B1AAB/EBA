@@ -147,6 +147,9 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
             edge.Source.AddOutgoingEdge(resultingEdge);
             edge.Target.AddIncomingEdge(resultingEdge);
 
+            TryAddNode(edge.Source);
+            TryAddNode(edge.Target);
+
             return true;
         }
 
