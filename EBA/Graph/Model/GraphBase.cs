@@ -156,7 +156,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
         return false;
     }
 
-    public void AddOrUpdateEdge<T>(T edge, Func<T, T, T>? updateFunc = null)  // TODO: should not need this
+    public void AddOrUpdateEdge<T>(T edge, Func<T, T, T>? updateFunc = null)
         where T : IEdge<INode, INode>
     {
         var x = _edges.GetOrAdd(
