@@ -16,21 +16,27 @@ public class TxGraph(Tx tx) : GraphBase()
 
     public ReadOnlyDictionary<ScriptPubKey, List<Input>> InputScripts
     {
-        get { return new ReadOnlyDictionary<ScriptPubKey, List<Input>>(_inputScripts); }
+        get { return new ReadOnlyDictionary<ScriptPubKey, List<Input>>(_inputScripts__Old); }
     }
-    private readonly ConcurrentDictionary<ScriptPubKey, List<Input>> _inputScripts = new();
+    private readonly ConcurrentDictionary<ScriptPubKey, List<Input>> _inputScripts__Old = new();
+
+    public ReadOnlyCollection<Input> Inputs
+    {
+        get { return new ReadOnlyCollection<Input>([.. _inputs]); }
+    }
+    private readonly ConcurrentBag<Input> _inputs = [];
 
     /// <summary>
     /// Number of inputs in the transaction.
     /// </summary>
-    public int InputsCount { get { return _inputScripts.Values.Sum(x => x.Count); } }
+    public int InputsCount { get { return _inputScripts__Old.Values.Sum(x => x.Count); } }
 
     /// <summary>
     /// Unique ScriptPubKeys count in the inputs of the transaction. 
     /// Note that a transaction can have multiple inputs with the same ScriptPubKey, 
     /// so this is not necessarily equal to the total number of inputs.
     /// </summary>
-    public int InputScriptsCount { get { return _inputScripts.Keys.Count; } }
+    public int InputScriptsCount { get { return _inputScripts__Old.Keys.Count; } }
 
     public ReadOnlyCollection<Output> Outputs
     {
@@ -50,16 +56,7 @@ public class TxGraph(Tx tx) : GraphBase()
         SourceTxes.AddOrUpdate(input.TxId, prevOut.Value, (_, oldValue) => oldValue + prevOut.Value);
         Helpers.ThreadsafeAdd(ref _totalInputValue, prevOut.Value);
 
-        // dev point:
-        // an example block that contains multiple inputs with the same scriptPubKey is 320700
-        _inputScripts.AddOrUpdate(
-            prevOut.ScriptPubKey,
-            [input],
-            (_, oldValue) =>
-            {
-                oldValue.Add(input);
-                return oldValue;
-            });
+        _inputs.Add(input);
     }
 
     public void AddOutput(Output output)

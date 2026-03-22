@@ -85,6 +85,15 @@ public class Block : BlockMetadata
         _inputScriptTypeValue[scriptPubKey.ScriptType] += sumValues;
     }
 
+    public void ProfileSpentOutput(Input input)
+    {
+        _spentOutputsAge.Add(Height - input.PrevOut.Height);
+
+        _inputValues.Add(input.PrevOut.Value);
+        _inputScriptTypeCount[input.PrevOut.ScriptPubKey.ScriptType] += 1;
+        _inputScriptTypeValue[input.PrevOut.ScriptPubKey.ScriptType] += input.PrevOut.Value;
+    }
+
     public void ProfileCreatedOutput(Output output)
     {
         _outputValues.Add(output.Value);

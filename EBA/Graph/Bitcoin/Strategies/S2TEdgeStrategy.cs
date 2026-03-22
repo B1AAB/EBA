@@ -15,9 +15,10 @@ public class S2TEdgeStrategy(bool serializeCompressed)
         Factory.TargetId<S2TEdge>(TxNodeStrategy.IdSpace, e => e.Target.Txid),
         Factory.Value<S2TEdge>(e => e.Value),
         Factory.Height<S2TEdge>(e => e.BlockHeight),
-        new(nameof(S2TEdge.SpentUTxOsCount), FieldType.Long, n => n.SpentUTxOsCount),
-        Factory.SpentUtxos<S2TEdge>(nameof(S2TEdge.SpentUTxOs), e => e.SpentUTxOs),
-        Factory.EdgeType<S2TEdge>(e => e.Relation)
+        Factory.EdgeType<S2TEdge>(e => e.Relation),
+        new(nameof(S2TEdge.TxId), FieldType.String, e => e.TxId),
+        new(nameof(S2TEdge.Vout), FieldType.Int, e => e.Vout),
+        new(nameof(S2TEdge.Generated), FieldType.Boolean, e => e.Generated),
     ];
 
     public override string GetCsvHeader()
@@ -42,7 +43,11 @@ public class S2TEdgeStrategy(bool serializeCompressed)
             target: target,
             timestamp: 0,
             blockHeight: _mappings.Get(Factory.HeightProperty.Name).Deserialize<long>(relationship.Properties),
-            spentUTxOs: [.. _mappings.Get(nameof(S2TEdge.SpentUTxOs)).Deserialize<SpentUTxO[]>(relationship.Properties) ?? []]);
+            value: _mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties),
+            txid: _mappings.Get(nameof(S2TEdge.TxId)).Deserialize<string>(relationship.Properties),
+            vout: _mappings.Get(nameof(S2TEdge.Vout)).Deserialize<int>(relationship.Properties),
+            generated: _mappings.Get(nameof(S2TEdge.Generated)).Deserialize<bool>(relationship.Properties)
+        );
     }
 
     public override string GetQuery(string filename)
