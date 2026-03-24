@@ -80,7 +80,6 @@ public class BlockMetadata
     public virtual DescriptiveStatistics SpentOutputAgeStats { init; get; } = new DescriptiveStatistics();
     public virtual DescriptiveStatistics FeesStats { init; get; } = new DescriptiveStatistics();
 
-
     private static readonly ScriptType[] CachedScriptTypes = Enum.GetValues<ScriptType>();
 
     public virtual Dictionary<ScriptType, long> InputScriptTypeCount { init; get; } = CachedScriptTypes.ToDictionary(k => k, v => 0L);
@@ -88,4 +87,7 @@ public class BlockMetadata
 
     public virtual Dictionary<ScriptType, long> InputScriptTypeValue { init; get; } = CachedScriptTypes.ToDictionary(k => k, v => 0L);
     public virtual Dictionary<ScriptType, long> OutputScriptTypeValue { init; get; } = CachedScriptTypes.ToDictionary(k => k, v => 0L);
+
+    public long? TotalSupply { set; get; } = null;
+    public long? TotalSupplyNominal { set; get; } = null;
 }

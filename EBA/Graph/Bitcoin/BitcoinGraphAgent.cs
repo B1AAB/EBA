@@ -46,6 +46,12 @@ public class BitcoinGraphAgent : IGraphAgent<BitcoinGraph>, IDisposable
         await _db.SerializeAsync(g, ct);
     }
 
+    public async Task PostProcessAsync(CancellationToken ct)
+    {
+        var postProcess = new PostProcess(_options, _db, _logger);
+        await postProcess.Run();
+    }
+
     public void Dispose()
     {
         Dispose(true);

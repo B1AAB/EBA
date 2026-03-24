@@ -9,10 +9,12 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     private List<Batch> _batches = [];
 
     private bool _disposed = false;
+    private readonly ILogger<Neo4jDb<T>> _logger;
 
-    public Neo4jDb(Options options, IStrategyFactory strategyFactory)
+    public Neo4jDb(Options options, ILogger<Neo4jDb<T>> logger, IStrategyFactory strategyFactory)
     {
         _options = options;
+        _logger = logger;
         _strategyFactory = strategyFactory;
 
         // As per suggestions at https://neo4j.com/blog/developer/neo4j-driver-best-practices
@@ -53,6 +55,29 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 $"WITH {nodeVariable} " +
                 $"ORDER BY rand() " +
                 $"LIMIT {count} " +
+                $"RETURN {nodeVariable}");
+
+            return await result.ToListAsync(cancellationToken: ct);
+        });
+
+        return rndRecords;
+    }
+
+    public async Task<List<IRecord>> GetNodesAsync(
+        NodeKind label, 
+        CancellationToken ct, 
+        string nodeVariable = "n",
+        int? count=null)
+    {
+        await VerifyConnectivityAsync(ct);
+
+        using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+
+        var rndRecords = await session.ExecuteReadAsync(async x =>
+        {
+            var result = await x.RunAsync(
+                $"MATCH ({nodeVariable}:{label}) " +
+                (count.HasValue ? $"LIMIT {count.Value} " : "") +
                 $"RETURN {nodeVariable}");
 
             return await result.ToListAsync(cancellationToken: ct);
@@ -214,5 +239,66 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
             _disposed = true;
         }
+    }
+
+    public async Task BulkUpdateNodePropertiesAsync(
+        NodeKind label,
+        string idProperty,
+        IReadOnlyList<Dictionary<string, object?>> updates,
+        CancellationToken ct)
+    {
+        if (updates.Count == 0)
+            return;
+
+        await VerifyConnectivityAsync(ct);
+
+        var setClause = string.Join(", ", updates[0].Keys
+            .Where(k => k != idProperty)
+            .Select(k => $"n.{k} = row.{k}"));
+
+        var innerQuery =
+            $"MATCH (n:{label} {{{idProperty}: row.{idProperty}}}) " +
+            $"SET {setClause}";
+
+        var chunkIndex = 0;
+        foreach (var chunk in updates.Chunk(_options.Neo4j.MaxEntitiesPerBatch))
+        {
+            ct.ThrowIfCancellationRequested();
+
+            // Wrap the inner query in apoc.periodic.iterate for
+            // server-side batching and parallel execution.
+            // Ref: https://neo4j.com/blog/nodes/nodes-2019-best-practices-to-make-large-updates-in-neo4j
+            var apocQuery =
+                "CALL apoc.periodic.iterate(" +
+                "'UNWIND $batch AS row RETURN row', " +
+                $"'{innerQuery}', " +
+                "{batchSize: 5000, parallel: true, params: {batch: $batch}}" +
+                ") YIELD batches, total, timeTaken, errorMessages " +
+                "RETURN batches, total, timeTaken, errorMessages";
+
+            using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
+            var cursor = await session.RunAsync(apocQuery, new Dictionary<string, object>
+            {
+                ["batch"] = chunk
+            });
+
+            var record = await cursor.SingleAsync();
+            var total = record["total"].As<long>();
+            var timeTaken = record["timeTaken"].As<long>();
+            var errorMessages = record["errorMessages"].As<IDictionary<string, object>>();
+            
+            if (errorMessages.Count > 0)
+                _logger.LogError("Chunk {chunk}: {total:n0} nodes in {time}s with errors: {errors}",
+                    chunkIndex, total, timeTaken, string.Join("; ", errorMessages));
+            else
+                _logger.LogInformation("Chunk {chunk}: updated {total:n0} nodes in {time}s.",
+                    chunkIndex, total, timeTaken);
+
+            chunkIndex++;
+        }
+
+        _logger.LogInformation(
+            "Completed bulk update of {total:n0} nodes with label {label}.",
+            updates.Count, label);
     }
 }

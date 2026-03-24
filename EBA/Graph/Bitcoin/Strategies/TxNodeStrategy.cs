@@ -46,9 +46,9 @@ public class TxNodeStrategy(bool serializeCompressed)
 
     public static TxNode Deserialize(
         Neo4j.Driver.INode node,
-        double originalIndegree,
-        double originalOutdegree,
-        double hopsFromRoot)
+        double? originalIndegree,
+        double? originalOutdegree,
+        double? hopsFromRoot)
     {
         return new TxNode(
             txid: _mappingsDict[nameof(v.Txid)].Deserialize<string>(node.Properties) ?? 

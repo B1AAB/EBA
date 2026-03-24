@@ -11,10 +11,10 @@ public class NodeFactory
     /// to a strongly-typed graph node; otherwise, false.</returns>
     public static bool TryCreate(
         Neo4j.Driver.INode node,
-        double originalIndegree,
-        double originalOutdegree,
-        double outHopsFromRoot, 
-        out Model.INode createdNode)
+        out Model.INode createdNode,
+        double? originalIndegree = null,
+        double? originalOutdegree = null,
+        double? outHopsFromRoot = null)
     {
         if (node.Labels.Contains(ScriptNode.Kind.ToString()))
         {

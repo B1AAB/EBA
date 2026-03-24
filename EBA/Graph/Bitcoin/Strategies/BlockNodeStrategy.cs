@@ -87,9 +87,9 @@ public class BlockNodeStrategy(bool serializeCompressed)
 
     public static BlockNode Deserialize(
         Neo4j.Driver.INode node,
-        double originalIndegree,
-        double originalOutdegree,
-        double hopsFromRoot)
+        double? originalIndegree,
+        double? originalOutdegree,
+        double? hopsFromRoot)
     {
         var props = node.Properties;
         var blockMetadata = new BlockMetadata
