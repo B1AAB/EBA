@@ -256,43 +256,35 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             .Where(k => k != idProperty)
             .Select(k => $"n.{k} = row.{k}"));
 
-        var innerQuery =
-            $"MATCH (n:{label} {{{idProperty}: row.{idProperty}}}) " +
-            $"SET {setClause}";
-
         var chunkIndex = 0;
         foreach (var chunk in updates.Chunk(_options.Neo4j.MaxEntitiesPerBatch))
         {
             ct.ThrowIfCancellationRequested();
 
-            // Wrap the inner query in apoc.periodic.iterate for
-            // server-side batching and parallel execution.
-            // Ref: https://neo4j.com/blog/nodes/nodes-2019-best-practices-to-make-large-updates-in-neo4j
-            var apocQuery =
-                "CALL apoc.periodic.iterate(" +
-                "'UNWIND $batch AS row RETURN row', " +
-                $"'{innerQuery}', " +
-                "{batchSize: 5000, parallel: true, params: {batch: $batch}}" +
-                ") YIELD batches, total, timeTaken, errorMessages " +
-                "RETURN batches, total, timeTaken, errorMessages";
+            // Use toString() on the id property to match the string-typed
+            // :ID column created by neo4j-admin import.
+            var query =
+                "UNWIND $batch AS row " +
+                $"MATCH (n:{label} {{{idProperty}: toString(row.{idProperty})}}) " +
+                $"SET {setClause}";
 
-            using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
-            var cursor = await session.RunAsync(apocQuery, new Dictionary<string, object>
+            await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
+            var summary = await session.ExecuteWriteAsync(async tx =>
             {
-                ["batch"] = chunk
+                var cursor = await tx.RunAsync(query, new Dictionary<string, object>
+                {
+                    ["batch"] = chunk
+                });
+                return await cursor.ConsumeAsync();
             });
 
-            var record = await cursor.SingleAsync();
-            var total = record["total"].As<long>();
-            var timeTaken = record["timeTaken"].As<long>();
-            var errorMessages = record["errorMessages"].As<IDictionary<string, object>>();
-            
-            if (errorMessages.Count > 0)
-                _logger.LogError("Chunk {chunk}: {total:n0} nodes in {time}s with errors: {errors}",
-                    chunkIndex, total, timeTaken, string.Join("; ", errorMessages));
+            var counters = summary.Counters;
+            if (counters.PropertiesSet == 0)
+                _logger.LogWarning("Chunk {chunk}: 0 properties set (MATCH may have found no nodes).",
+                    chunkIndex);
             else
-                _logger.LogInformation("Chunk {chunk}: updated {total:n0} nodes in {time}s.",
-                    chunkIndex, total, timeTaken);
+                _logger.LogInformation("Chunk {chunk}: set {props:n0} properties on nodes.",
+                    chunkIndex, counters.PropertiesSet);
 
             chunkIndex++;
         }
