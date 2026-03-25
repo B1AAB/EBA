@@ -1,5 +1,4 @@
 using EBA.Utilities;
-using NBitcoin;
 
 namespace EBA.Blockchains.Bitcoin.GraphModel;
 
@@ -14,43 +13,27 @@ public class TxGraph(Tx tx) : GraphBase()
 
     public ConcurrentDictionary<string, long> SourceTxes { set; get; } = new();
 
-    public ReadOnlyDictionary<ScriptPubKey, List<Input>> InputScripts
+    public ReadOnlyCollection<Input> Inputs
     {
-        get { return new ReadOnlyDictionary<ScriptPubKey, List<Input>>(_inputScripts); }
+        get { return new ReadOnlyCollection<Input>([.. _inputs]); }
     }
-    private readonly ConcurrentDictionary<ScriptPubKey, List<Input>> _inputScripts = new();
+    private readonly ConcurrentBag<Input> _inputs = [];
 
     /// <summary>
     /// Number of inputs in the transaction.
     /// </summary>
-    public int InputsCount { get { return _inputScripts.Values.Sum(x => x.Count); } }
+    public int InputsCount { get { return _inputs.Count; } }
 
-    /// <summary>
-    /// Unique ScriptPubKeys count in the inputs of the transaction. 
-    /// Note that a transaction can have multiple inputs with the same ScriptPubKey, 
-    /// so this is not necessarily equal to the total number of inputs.
-    /// </summary>
-    public int InputScriptsCount { get { return _inputScripts.Keys.Count; } }
-
-
-    public ReadOnlyDictionary<ScriptPubKey, List<Output>> OutputScripts
+    public ReadOnlyCollection<Output> Outputs
     {
-        get { return new ReadOnlyDictionary<ScriptPubKey, List<Output>>(_outputScripts); }
+        get { return new ReadOnlyCollection<Output>([.. _outputs]); }
     }
-    private readonly ConcurrentDictionary<ScriptPubKey, List<Output>> _outputScripts = new();
-
+    private readonly ConcurrentBag<Output> _outputs = [];
 
     /// <summary>
     /// Number of outputs in the transaction.
     /// </summary>
-    public int OutputsCount { get { return _outputScripts.Values.Sum(x => x.Count); } }
-
-    /// <summary>
-    /// Unique ScriptPubKeys count in the outputs of the transaction.
-    /// Note that a transaction can have multiple outputs with the same ScriptPubKey,
-    /// so this is not necessarily equal to the total number of outputs.
-    /// </summary>
-    public int OutputScriptsCount { get { return _outputScripts.Keys.Count; } }
+    public int OutputsCount { get { return _outputs.Count; } }
 
     public void AddInput(Input input)
     {
@@ -59,29 +42,11 @@ public class TxGraph(Tx tx) : GraphBase()
         SourceTxes.AddOrUpdate(input.TxId, prevOut.Value, (_, oldValue) => oldValue + prevOut.Value);
         Helpers.ThreadsafeAdd(ref _totalInputValue, prevOut.Value);
 
-        // dev point:
-        // an example block that contains multiple inputs with the same scriptPubKey is 320700
-        _inputScripts.AddOrUpdate(
-            prevOut.ScriptPubKey,
-            [input],
-            (_, oldValue) =>
-            {
-                oldValue.Add(input);
-                return oldValue;
-            });
+        _inputs.Add(input);
     }
 
     public void AddOutput(Output output)
     {
-        // dev point:
-        // an example block that contains multiple outputs with the same scriptPubKey is 840000
-        _outputScripts.AddOrUpdate(
-            output.ScriptPubKey,
-            [output],
-            (_, oldValue) =>
-            {
-                oldValue.Add(output);
-                return oldValue;
-            });
+        _outputs.Add(output);
     }
 }

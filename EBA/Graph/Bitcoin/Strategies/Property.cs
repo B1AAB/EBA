@@ -26,6 +26,7 @@ public class Property
             case FieldType.Long:
             case FieldType.Float:
             case FieldType.Double:
+            case FieldType.Boolean:
                 TypeAnnotatedCsvHeader = $"{Name}:{type.ToString().ToLower()}";
                 break;
 

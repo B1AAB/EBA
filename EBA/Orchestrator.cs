@@ -1,5 +1,5 @@
 using EBA.CLI;
-
+using EBA.Graph.Bitcoin;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace EBA;
@@ -24,6 +24,7 @@ public class Orchestrator : IDisposable
             bitcoinAddressStatsHandlerAsync: BitcoinAddressStatsAsync,
             bitcoinImportCypherQueriesAsync: BitcoinImportCypherQueriesAsync,
             bitcoinMapMarketHandlerAsync: BitcoinMarketMapAsync,
+            bitcoinPostProcessGraphHandlerAsync: BitcoinPostProcessGraph,
             exceptionHandler: (e, _) =>
             {
                 if (_logger != null)
@@ -87,14 +88,22 @@ public class Orchestrator : IDisposable
         graphDb.ReportQueries();
     }
 
+    private async Task BitcoinPostProcessGraph(Options options)
+    {
+        var host = await SetupAndGetHostAsync(options);
+        await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
+
+        var bitcoinGraphAgent = host.Services.GetRequiredService<BitcoinGraphAgent>();
+        await bitcoinGraphAgent.PostProcessAsync(_cT);
+    }
+
     private async Task BitcoinSampleGraphAsync(Options options)
     {
         var host = await SetupAndGetHostAsync(options);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
 
-        var bitcoinGraphAgent = host.Services.GetRequiredService<Graph.Bitcoin.BitcoinGraphAgent>();
+        var bitcoinGraphAgent = host.Services.GetRequiredService<BitcoinGraphAgent>();
         await bitcoinGraphAgent.SampleAsync(_cT);
-
     }
 
     private async Task BitcoinAddressStatsAsync(Options options)

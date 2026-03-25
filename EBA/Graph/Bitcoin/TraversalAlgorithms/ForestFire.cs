@@ -110,10 +110,10 @@ public class ForestFire : ITraversalAlgorithm
     /// The number of nodes sampled at each hop decreases linearly based on the specified reduction factor.
     /// </summary>
     private List<Model.INode> ProcessQueriedNeighborhood(
-        List<IRecord> samplingResult, 
+        List<IRecord> samplingResult,
         int hop,
-        int nodeSamplingCountAtRoot, 
-        double nodeCountReductionFactorByHop, 
+        int nodeSamplingCountAtRoot,
+        double nodeCountReductionFactorByHop,
         BitcoinGraph g,
         CancellationToken ct)
     {
@@ -196,7 +196,7 @@ public class ForestFire : ITraversalAlgorithm
 
             IEdge<Model.INode, Model.INode> candidateEdge =
                 edge.StartNodeElementId == rootNode.IdInGraphDb ?
-                EdgeFactory.Create(rootNode, subjectNode, edge):
+                EdgeFactory.Create(rootNode, subjectNode, edge) :
                 EdgeFactory.Create(subjectNode, rootNode, edge);
             g.TryGetOrAddEdge(candidateEdge, out candidateEdge);
         }
@@ -344,6 +344,11 @@ public class ForestFire : ITraversalAlgorithm
         var outDegree = Convert.ToDouble(dict["outDegree"]);
         if (node is null)
             return false;
-        return NodeFactory.TryCreate(node, inDegree, outDegree, hop, out v);
+        return NodeFactory.TryCreate(
+            node,
+            out v,
+            originalIndegree: inDegree,
+            originalOutdegree: outDegree,
+            outHopsFromRoot: hop);
     }
 }

@@ -14,8 +14,7 @@ public class T2SEdgeStrategy(bool serializeCompressed)
         Factory.SourceId<T2SEdge>(TxNodeStrategy.IdSpace, e => e.Source.Txid),
         Factory.TargetId<T2SEdge>(ScriptNodeStrategy.IdSpace, e => e.Target.Id),
         Factory.Value<T2SEdge>(e => e.Value),
-        new(nameof(T2SEdge.TxOValues), FieldType.LongArray, e => e.TxOValues),
-        new(nameof(T2SEdge.TxOCount), FieldType.Long, n => n.TxOCount),
+        new(nameof(T2SEdge.OutputIndex), FieldType.Int, e => e.OutputIndex),
         Factory.Height<T2SEdge>(e => e.BlockHeight),
         Factory.EdgeType<T2SEdge>(e => e.Relation),
     ];
@@ -42,7 +41,8 @@ public class T2SEdgeStrategy(bool serializeCompressed)
             target: target,
             timestamp: 0,
             blockHeight: _mappings.Get(Factory.HeightProperty.Name).Deserialize<long>(relationship.Properties),
-            values: [.. _mappings.Get(nameof(T2SEdge.TxOValues)).Deserialize<long[]>(relationship.Properties) ?? []]);
+            value: _mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties),
+            outputIndex: _mappings.Get(nameof(T2SEdge.OutputIndex)).Deserialize<int>(relationship.Properties));
     }
 
     public override string GetQuery(string filename)

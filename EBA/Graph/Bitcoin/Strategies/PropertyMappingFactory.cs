@@ -170,11 +170,10 @@ public static class PropertyMappingFactory
         IEnumerable<EdgeKind> keys,
         Func<T, Dictionary<EdgeKind, uint>> getDict)
     {
-        // Make sure to keep EdgeKind string representation compatible with neo4j header requirements. 
         return
         [
             ..  keys.Select(k => new PropertyMapping<T>(
-                $"{prefix}.{k.Source}_{k.Relation}_{k.Target}",
+                $"{prefix}.{EdgeKindToPropertyName(k)}",
                 FieldType.Long,
                 n => getDict(n).TryGetValue(k, out var v) ? v : 0))
         ];
@@ -187,30 +186,15 @@ public static class PropertyMappingFactory
     {
         var result = new Dictionary<EdgeKind, TValue>();
         foreach (var key in keys)
-            if (properties.TryGetValue($"{prefix}.{key}", out var val) && val is IConvertible convertible)
+            if (properties.TryGetValue($"{prefix}.{EdgeKindToPropertyName(key)}", out var val) && val is IConvertible convertible)
                 result[key] = (TValue)convertible.ToType(typeof(TValue), null);
 
         return result;
     }
 
-    public static PropertyMapping<T> SpentUtxos<T>(
-        string propertyName,
-        Func<T, IEnumerable<SpentUTxO>> getUtxos)
+    private static string EdgeKindToPropertyName(EdgeKind edgeKind)
     {
-        return new(
-            propertyName,
-            FieldType.StringArray,
-            x => getUtxos(x).Select(
-                u => string.Join(PropertyDelimiter, u.Txid, u.Vout, u.Generated, u.Value, u.Height)),
-            deserializer: v => ((IList<object>)v!).Select(obj =>
-            {
-                var parts = ((string)obj).Split(PropertyDelimiter);
-                return new SpentUTxO(
-                    txid: parts[0],
-                    vout: int.Parse(parts[1]),
-                    generated: bool.Parse(parts[2]),
-                    value: long.Parse(parts[3]),
-                    height: long.Parse(parts[4]));
-            }).ToArray());
+        // Make sure to keep EdgeKind string representation compatible with neo4j header requirements. 
+        return $"{edgeKind.Source}_{edgeKind.Relation}_{edgeKind.Target}";
     }
 }

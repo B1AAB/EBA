@@ -59,7 +59,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
         }
     } 
     
-    private readonly ConcurrentDictionary<EdgeKind, ConcurrentDictionary<string, IEdge<INode, INode>>> _edges = new();
+    private readonly ConcurrentDictionary<EdgeKind, ConcurrentDictionary<int, IEdge<INode, INode>>> _edges = new();
 
     public ReadOnlyDictionary<string, string> Labels
     {
@@ -92,21 +92,6 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
         throw new NotImplementedException();
     }
 
-    public void GetEdge(string id, out IEdge<INode, INode> edge) // TODO: you can change this to return edge instead of void
-    {
-        foreach (var edgeTypes in _edges)
-        {
-            edgeTypes.Value.TryGetValue(id, out var e);
-            if (e != null)
-            {
-                edge = e;
-                return;
-            }
-        }
-
-        throw new NotImplementedException();
-    }
-
     public bool ContainsNode(string id)
     {
         foreach (var nodeTypes in _nodes)
@@ -122,14 +107,6 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
             if (nodeTypes.Value.TryGetValue(id, out node))
                 return true;
         node = null;
-        return false;
-    }
-
-    public bool ContainsEdge(string id)
-    {
-        foreach (var edgeTypes in _edges)
-            if (edgeTypes.Value.ContainsKey(id))
-                return true;
         return false;
     }
 
@@ -161,14 +138,17 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
     {
         var x = _edges.GetOrAdd(
             edge.EdgeKind,
-            new ConcurrentDictionary<string, IEdge<INode, INode>>());
+            new ConcurrentDictionary<int, IEdge<INode, INode>>());
 
-        resultingEdge = (T)x.GetOrAdd(edge.Id, edge);
+        resultingEdge = (T)x.GetOrAdd(edge.GetHashCode(), edge);
 
         if (ReferenceEquals(resultingEdge, edge))
         {
             edge.Source.AddOutgoingEdge(resultingEdge);
             edge.Target.AddIncomingEdge(resultingEdge);
+
+            TryAddNode(edge.Source);
+            TryAddNode(edge.Target);
 
             return true;
         }
@@ -181,10 +161,10 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
     {
         var x = _edges.GetOrAdd(
             edge.EdgeKind,
-            new ConcurrentDictionary<string, IEdge<INode, INode>>());
+            new ConcurrentDictionary<int, IEdge<INode, INode>>());
 
         x.AddOrUpdate(
-            edge.Id,
+            edge.GetHashCode(),
             edge,
             (_, oldEdge) =>
             {
