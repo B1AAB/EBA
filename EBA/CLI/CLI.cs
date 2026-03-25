@@ -20,6 +20,7 @@ internal class Cli
         Func<Options, Task> bitcoinImportCmdHandlerAsync,
         Func<Options, Task> bitcoinAddressStatsHandlerAsync,
         Func<Options, Task> bitcoinImportCypherQueriesAsync,
+        Func<Options, Task> bitcoinPostProcessGraphHandlerAsync,
         Action<Exception, ParseResult> exceptionHandler)
     {
         _exceptionHandler = exceptionHandler;
@@ -85,7 +86,8 @@ internal class Cli
                 bitcoinImportCmdHandlerAsync,
                 bitcoinSampleCmdHandlerAsync,
                 bitcoinAddressStatsHandlerAsync,
-                bitcoinImportCypherQueriesAsync)
+                bitcoinImportCypherQueriesAsync,
+                bitcoinPostProcessGraphHandlerAsync)
         };
 
         for (int i = 0; i < _rootCmd.Options.Count; i++)
@@ -119,7 +121,8 @@ internal class Cli
         Func<Options, Task> importHandlerAsync,
         Func<Options, Task> sampleHandlerAsync,
         Func<Options, Task> addressStatsHandlerAsync,
-        Func<Options, Task> importCypherQueriesAsync)
+        Func<Options, Task> importCypherQueriesAsync,
+        Func<Options, Task> postProcessGraphHandlerAsync)
     {
         var cmd = new Command(
             name: "bitcoin",
@@ -130,7 +133,8 @@ internal class Cli
             GetBitcoinImportCmd(defaultOptions, importHandlerAsync),
             GetBitcoinImportCypherQueriesCmd(defaultOptions, importCypherQueriesAsync),
             GetBitcoinSampleCmd(defaultOptions, sampleHandlerAsync),
-            GetBitcoinAddressStatsCmd(defaultOptions, addressStatsHandlerAsync)
+            GetBitcoinAddressStatsCmd(defaultOptions, addressStatsHandlerAsync),
+            GetPostProcessGraphCmd(defaultOptions, postProcessGraphHandlerAsync)
         };
         return cmd;
     }
@@ -385,6 +389,27 @@ internal class Cli
             }
         });
 
+        return cmd;
+    }
+
+    private Command GetPostProcessGraphCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    {
+        var cmd = new Command(name: "post-process-graph");
+        cmd.SetAction(async (parseResult, cancellationToken) =>
+        {
+            var options = OptionsBinder.Build(
+                parseResult,
+                workingDirOption: _workingDirOption,
+                statusFilenameOption: _statusFilenameOption);
+            try
+            {
+                await handlerAsync(options);
+            }
+            catch (Exception e)
+            {
+                _exceptionHandler(e, parseResult);
+            }
+        });
         return cmd;
     }
 

@@ -9,10 +9,12 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     private List<Batch> _batches = [];
 
     private bool _disposed = false;
+    private readonly ILogger<Neo4jDb<T>> _logger;
 
-    public Neo4jDb(Options options, IStrategyFactory strategyFactory)
+    public Neo4jDb(Options options, ILogger<Neo4jDb<T>> logger, IStrategyFactory strategyFactory)
     {
         _options = options;
+        _logger = logger;
         _strategyFactory = strategyFactory;
 
         // As per suggestions at https://neo4j.com/blog/developer/neo4j-driver-best-practices
@@ -53,6 +55,29 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 $"WITH {nodeVariable} " +
                 $"ORDER BY rand() " +
                 $"LIMIT {count} " +
+                $"RETURN {nodeVariable}");
+
+            return await result.ToListAsync(cancellationToken: ct);
+        });
+
+        return rndRecords;
+    }
+
+    public async Task<List<IRecord>> GetNodesAsync(
+        NodeKind label, 
+        CancellationToken ct, 
+        string nodeVariable = "n",
+        int? count=null)
+    {
+        await VerifyConnectivityAsync(ct);
+
+        using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+
+        var rndRecords = await session.ExecuteReadAsync(async x =>
+        {
+            var result = await x.RunAsync(
+                $"MATCH ({nodeVariable}:{label}) " +
+                (count.HasValue ? $"LIMIT {count.Value} " : "") +
                 $"RETURN {nodeVariable}");
 
             return await result.ToListAsync(cancellationToken: ct);
@@ -214,5 +239,60 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
             _disposed = true;
         }
+    }
+
+    public async Task BulkUpdateNodePropertiesAsync(
+        NodeKind label,
+        string idProperty,
+        IReadOnlyList<Dictionary<string, object?>> updates,
+        CancellationToken ct)
+    {
+        if (updates.Count == 0)
+            return;
+
+        await VerifyConnectivityAsync(ct);
+
+        var setClause = string.Join(
+            ", ", 
+            updates[0].Keys
+            .Where(k => k != idProperty)
+            .Select(k => $"n.{k} = row.{k}"));
+
+        // using toString() on the id property to match the string-typed
+        // :ID column created by neo4j-admin import.
+        var query =
+            "UNWIND $batch AS row " +
+            $"MATCH (n:{label} {{{idProperty}: toString(row.{idProperty})}}) " +
+            $"SET {setClause}";
+
+        var chunkIndex = 0;
+        foreach (var chunk in updates.Chunk(_options.Neo4j.MaxEntitiesPerBatch))
+        {
+            ct.ThrowIfCancellationRequested();
+
+            await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
+            var summary = await session.ExecuteWriteAsync(async tx =>
+            {
+                var cursor = await tx.RunAsync(
+                    query,
+                    new Dictionary<string, object> { ["batch"] = chunk });
+
+                return await cursor.ConsumeAsync();
+            });
+
+            var counters = summary.Counters;
+            if (counters.PropertiesSet == 0)
+                _logger.LogWarning("Chunk {chunk}: 0 properties set (MATCH may have found no nodes).",
+                    chunkIndex);
+            else
+                _logger.LogInformation("Chunk {chunk}: set {props:n0} properties on nodes.",
+                    chunkIndex, counters.PropertiesSet);
+
+            chunkIndex++;
+        }
+
+        _logger.LogInformation(
+            "Completed bulk update of {total:n0} nodes with label {label}.",
+            updates.Count, label);
     }
 }

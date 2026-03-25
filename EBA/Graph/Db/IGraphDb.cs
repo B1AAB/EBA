@@ -18,6 +18,13 @@ public interface IGraphDb<T> : IDisposable where T : GraphBase
     public Task SampleAsync(CancellationToken ct);
     public void ReportQueries();
 
+
+    public Task BulkUpdateNodePropertiesAsync(
+        NodeKind label,
+        string idProperty,
+        IReadOnlyList<Dictionary<string, object?>> updates,
+        CancellationToken ct);
+
     public Task<List<IRecord>> GetRandomNodesAsync(
         NodeKind label,
         int count,
@@ -34,4 +41,10 @@ public interface IGraphDb<T> : IDisposable where T : GraphBase
         bool useBFS,
         CancellationToken ct,
         string relationshipFilter = "");
+
+    public Task<List<IRecord>> GetNodesAsync(
+        NodeKind label,
+        CancellationToken ct,
+        string nodeVariable = "n",
+        int? count = null);
 }

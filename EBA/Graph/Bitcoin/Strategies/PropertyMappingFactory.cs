@@ -170,11 +170,10 @@ public static class PropertyMappingFactory
         IEnumerable<EdgeKind> keys,
         Func<T, Dictionary<EdgeKind, uint>> getDict)
     {
-        // Make sure to keep EdgeKind string representation compatible with neo4j header requirements. 
         return
         [
             ..  keys.Select(k => new PropertyMapping<T>(
-                $"{prefix}.{k.Source}_{k.Relation}_{k.Target}",
+                $"{prefix}.{EdgeKindToPropertyName(k)}",
                 FieldType.Long,
                 n => getDict(n).TryGetValue(k, out var v) ? v : 0))
         ];
@@ -187,9 +186,15 @@ public static class PropertyMappingFactory
     {
         var result = new Dictionary<EdgeKind, TValue>();
         foreach (var key in keys)
-            if (properties.TryGetValue($"{prefix}.{key}", out var val) && val is IConvertible convertible)
+            if (properties.TryGetValue($"{prefix}.{EdgeKindToPropertyName(key)}", out var val) && val is IConvertible convertible)
                 result[key] = (TValue)convertible.ToType(typeof(TValue), null);
 
         return result;
+    }
+
+    private static string EdgeKindToPropertyName(EdgeKind edgeKind)
+    {
+        // Make sure to keep EdgeKind string representation compatible with neo4j header requirements. 
+        return $"{edgeKind.Source}_{edgeKind.Relation}_{edgeKind.Target}";
     }
 }
