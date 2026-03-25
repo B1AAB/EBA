@@ -18,6 +18,7 @@ internal class Cli
         Func<Options, Task> bitcoinDeDupCmdHandlerAsync,
         Func<Options, Task> bitcoinSampleCmdHandlerAsync,
         Func<Options, Task> bitcoinImportCmdHandlerAsync,
+        Func<Options, Task> bitcoinMapMarketHandlerAsync,
         Func<Options, Task> bitcoinAddressStatsHandlerAsync,
         Func<Options, Task> bitcoinImportCypherQueriesAsync,
         Func<Options, Task> bitcoinPostProcessGraphHandlerAsync,
@@ -88,6 +89,14 @@ internal class Cli
                 bitcoinAddressStatsHandlerAsync,
                 bitcoinImportCypherQueriesAsync,
                 bitcoinPostProcessGraphHandlerAsync)
+                defaultOptions: defOps,
+                traverseHandlerAsync: bitcoinTraverseCmdHandlerAsync,
+                dedupHandlerAsync: bitcoinDeDupCmdHandlerAsync,
+                importHandlerAsync: bitcoinImportCmdHandlerAsync,
+                sampleHandlerAsync: bitcoinSampleCmdHandlerAsync,
+                mapMarketHandlerAsync: bitcoinMapMarketHandlerAsync,
+                addressStatsHandlerAsync: bitcoinAddressStatsHandlerAsync,
+                importCypherQueriesAsync: bitcoinImportCypherQueriesAsync)
         };
 
         for (int i = 0; i < _rootCmd.Options.Count; i++)
@@ -120,6 +129,7 @@ internal class Cli
         Func<Options, Task> dedupHandlerAsync,
         Func<Options, Task> importHandlerAsync,
         Func<Options, Task> sampleHandlerAsync,
+        Func<Options, Task> mapMarketHandlerAsync,
         Func<Options, Task> addressStatsHandlerAsync,
         Func<Options, Task> importCypherQueriesAsync,
         Func<Options, Task> postProcessGraphHandlerAsync)
@@ -132,6 +142,7 @@ internal class Cli
             GetBitcoinDedupCmd(defaultOptions, dedupHandlerAsync),
             GetBitcoinImportCmd(defaultOptions, importHandlerAsync),
             GetBitcoinImportCypherQueriesCmd(defaultOptions, importCypherQueriesAsync),
+            GetBitcoinMapMarketCmd(defaultOptions, mapMarketHandlerAsync),
             GetBitcoinSampleCmd(defaultOptions, sampleHandlerAsync),
             GetBitcoinAddressStatsCmd(defaultOptions, addressStatsHandlerAsync),
             GetPostProcessGraphCmd(defaultOptions, postProcessGraphHandlerAsync)
@@ -379,6 +390,51 @@ internal class Cli
                 workingDirOption: _workingDirOption,
                 statusFilenameOption: _statusFilenameOption);
 
+            try
+            {
+                await handlerAsync(options);
+            }
+            catch (Exception e)
+            {
+                _exceptionHandler(e, parseResult);
+            }
+        });
+
+        return cmd;
+    }
+
+    private Command GetBitcoinMapMarketCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    {
+        var marketDataFilenameOption = new Option<string>("--ohlcv-source-filename")
+        {
+            Description = "A CSV file containing sorted OHLCV (Open, High, Low, Close, Volume) candle data.",
+            Required = true
+        };
+
+        var outputFilenameOption = new Option<string>("--block-market-output-filename")
+        {
+            Description =
+                "The output TSV file containing block metadata (height, median time) " +
+                "mapped to aggregated OHLCV market data.",
+            Required = true
+        };
+
+        var cmd = new Command(
+            name: "map-market",
+            description: "Maps OHLCV market data to block metadata.")
+        {
+            marketDataFilenameOption,
+            outputFilenameOption
+        };
+
+        cmd.SetAction(async (parseResult, cancellationToken) =>
+        {
+            var options = OptionsBinder.Build(
+                parseResult,
+                workingDirOption: _workingDirOption,
+                statusFilenameOption: _statusFilenameOption,
+                marketDataFilenameOption: marketDataFilenameOption,
+                outputFilenameOption: outputFilenameOption);
             try
             {
                 await handlerAsync(options);

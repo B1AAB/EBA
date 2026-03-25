@@ -152,6 +152,50 @@ public class BitcoinChainAgent : IDisposable
             ?? throw new Exception("Invalid transaction.");
     }
 
+    public async Task<List<BlockMetadata>> GetBlockMetadataAsync(
+        long startBlockHeight,
+        long endBlockHeight,
+        CancellationToken cT)
+    {
+        _logger.LogInformation(
+            "Getting block metadata for blocks {start:n0} to {end:n0}.",
+            startBlockHeight, endBlockHeight);
+
+        var pageSize = 2000;
+        var pages = new List<long[]>();
+        for (var i = startBlockHeight; i <= endBlockHeight; i += pageSize)
+            pages.Add([i, i + pageSize < endBlockHeight ? pageSize : endBlockHeight - i + 1]);
+
+        var blocksMetadata = new ConcurrentBag<BlockMetadata>();
+
+        await Parallel.ForEachAsync(
+            pages,
+            new ParallelOptions() { CancellationToken = cT },
+            async (page, _loopCancellationToken) =>
+            {
+                _loopCancellationToken.ThrowIfCancellationRequested();
+
+                var startBlockHash = await GetBlockHashAsync(page[0], cT);
+
+                await using var stream = await GetStreamAsync($"headers/{startBlockHash}.json?count={page[1]}", cT);
+                var blocks = await JsonSerializer.DeserializeAsync<List<BlockMetadata>>(
+                    stream, cancellationToken: cT)
+                    ?? throw new Exception("Invalid block metadata.");
+
+                foreach (var block in blocks)
+                    blocksMetadata.Add(block);
+
+                _logger.LogInformation(
+                    "Finished Getting block metadata for blocks {start:n0} to {end:n0}.",
+                    page[0], page[0] + blocks.Count - 1);
+            });
+
+        _logger.LogInformation("Finished Getting block metadata for blocks {start:n0} to {end:n0}.",
+            startBlockHeight, endBlockHeight);
+
+        return [.. blocksMetadata];
+    }
+
     public async Task<BlockGraph?> GetGraph(
         long height,
         IAsyncPolicy strategy,

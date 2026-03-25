@@ -27,7 +27,9 @@ internal class OptionsBinder
         Option<bool>? skipGraphSerializationOption = null,
         Option<int>? maxEntriesPerBatch = null,
         Option<string>? sortedTxNodeFilenameOption = null,
-        Option<string>? sortedScriptNodeFilenameOption = null)
+        Option<string>? sortedScriptNodeFilenameOption = null,
+        Option<string>? marketDataFilenameOption = null,
+        Option<string>? outputFilenameOption = null)
     {
         if (statusFilenameOption != null && c.GetResult(statusFilenameOption) is not null)
         {
@@ -95,11 +97,18 @@ internal class OptionsBinder
             SortedTxNodesFilename = GetValue(defs.Bitcoin.Dedup.SortedTxNodesFilename, sortedTxNodeFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); })
         };
 
+        var bitcoinMapMarketOps = new BitcoinMapMarketOptions()
+        {
+            OhlcvSourceFilename = GetValue(defs.Bitcoin.MapMarket.OhlcvSourceFilename, marketDataFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
+            BlockOhlcvMappedFilename = GetValue(defs.Bitcoin.MapMarket.BlockOhlcvMappedFilename, outputFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); })
+        };
+
         var bitcoinOps = new BitcoinOptions(defs.Timestamp)
         {
             Traverse = bitcoinTraverseOptions,
             Dedup = bitcoinDedupOps,
-            GraphSample = gsample
+            GraphSample = gsample,
+            MapMarket = bitcoinMapMarketOps
         };
 
         var options = new Options()
