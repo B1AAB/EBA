@@ -252,29 +252,31 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         await VerifyConnectivityAsync(ct);
 
-        var setClause = string.Join(", ", updates[0].Keys
+        var setClause = string.Join(
+            ", ", 
+            updates[0].Keys
             .Where(k => k != idProperty)
             .Select(k => $"n.{k} = row.{k}"));
+
+        // using toString() on the id property to match the string-typed
+        // :ID column created by neo4j-admin import.
+        var query =
+            "UNWIND $batch AS row " +
+            $"MATCH (n:{label} {{{idProperty}: toString(row.{idProperty})}}) " +
+            $"SET {setClause}";
 
         var chunkIndex = 0;
         foreach (var chunk in updates.Chunk(_options.Neo4j.MaxEntitiesPerBatch))
         {
             ct.ThrowIfCancellationRequested();
 
-            // Use toString() on the id property to match the string-typed
-            // :ID column created by neo4j-admin import.
-            var query =
-                "UNWIND $batch AS row " +
-                $"MATCH (n:{label} {{{idProperty}: toString(row.{idProperty})}}) " +
-                $"SET {setClause}";
-
             await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Write));
             var summary = await session.ExecuteWriteAsync(async tx =>
             {
-                var cursor = await tx.RunAsync(query, new Dictionary<string, object>
-                {
-                    ["batch"] = chunk
-                });
+                var cursor = await tx.RunAsync(
+                    query,
+                    new Dictionary<string, object> { ["batch"] = chunk });
+
                 return await cursor.ConsumeAsync();
             });
 
