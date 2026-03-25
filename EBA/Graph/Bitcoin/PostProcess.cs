@@ -50,8 +50,8 @@ public class PostProcess
         for (var i = 1; i < blocks.Count; i++)
         {
             blocks[i].BlockMetadata.TotalSupply =
-                blocks[i - 1].BlockMetadata.TotalSupply + 
-                blocks[i].BlockMetadata.MintedBitcoins -
+                blocks[i - 1].BlockMetadata.TotalSupply +
+                blocks[i].TripletTypeValueSum[C2TEdge.Kind] -
                 blocks[i].BlockMetadata.ProvablyUnspendableBitcoins;
 
             blocks[i].BlockMetadata.TotalSupplyNominal = 
