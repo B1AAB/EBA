@@ -117,7 +117,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
         var followsEdge = 
             $"// Create edge (Block)-[{RelationType.Follows}]->(Block)" +
             $"\r\nMATCH (target:Block), (source:Block)" +
-            $"\r\nWHERE toInteger(target.{heightName}) + 1 = toInteger(source.{heightName})" +
+            $"\r\nWHERE target.{heightName} + 1 = source.{heightName}" +
             $"\r\nMERGE (target)-[:{RelationType.Follows}]->(source)";
         writer.WriteLine("");
         writer.WriteLine(followsEdge);
