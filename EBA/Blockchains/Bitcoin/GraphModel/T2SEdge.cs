@@ -4,7 +4,7 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
 {
     public new static EdgeKind Kind => new(TxNode.Kind, ScriptNode.Kind, RelationType.Credits);
 
-    public int OutputIndex { get; }
+    public int Vout { get; }
 
     public long SpentInBlockHeight { get; }
 
@@ -17,7 +17,7 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
         long spentInBlockHeight = long.MaxValue)
         : base(source, target, output.Value, Kind.Relation, timestamp, blockHeight)
     {
-        OutputIndex = output.Index;
+        Vout = output.N;
         SpentInBlockHeight = spentInBlockHeight;
     }
 
@@ -31,12 +31,12 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
         long spentInBlockHeight = long.MaxValue) :
         base(source, target, value, Kind.Relation, timestamp, blockHeight)
     {
-        OutputIndex = outputIndex;
+        Vout = outputIndex;
         SpentInBlockHeight = spentInBlockHeight;
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(base.GetHashCode(), OutputIndex);
+        return HashCode.Combine(base.GetHashCode(), Vout);
     }
 }
