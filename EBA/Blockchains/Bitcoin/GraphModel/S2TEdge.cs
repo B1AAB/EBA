@@ -4,7 +4,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
 {
     public static new EdgeKind Kind => new(ScriptNode.Kind, TxNode.Kind, RelationType.Redeems);
 
-    public string TxId { get; }
+    public string Txid { get; }
     public int Vout { get; }
     public bool Generated { get; }
 
@@ -36,7 +36,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         bool generated) :
         base(source, target, value, Kind.Relation, timestamp, blockHeight)
     {
-        TxId = txid;
+        Txid = txid;
         Vout = vout;
         Generated = generated;
     }
