@@ -15,8 +15,8 @@ public class T2SEdgeStrategy(bool serializeCompressed)
         Factory.TargetId<T2SEdge>(ScriptNodeStrategy.IdSpace, e => e.Target.Id),
         Factory.Value<T2SEdge>(e => e.Value),
         new(nameof(T2SEdge.Vout), FieldType.Int, e => e.Vout),
-        new(nameof(T2SEdge.SpentInBlockHeight), FieldType.Long, e => e.SpentInBlockHeight),
-        Factory.Height<T2SEdge>(e => e.BlockHeight),
+        new(nameof(T2SEdge.CreationHeight), FieldType.Long, e => e.CreationHeight),
+        new(nameof(T2SEdge.SpentHeight), FieldType.Long, e => e.SpentHeight),
         Factory.EdgeType<T2SEdge>(e => e.Relation),
     ];
 
@@ -41,10 +41,10 @@ public class T2SEdgeStrategy(bool serializeCompressed)
             source: source,
             target: target,
             timestamp: 0,
-            blockHeight: _mappings.Get(Factory.HeightProperty.Name).Deserialize<long>(relationship.Properties),
+            creationHeight: _mappings.Get(nameof(T2SEdge.CreationHeight)).Deserialize<long>(relationship.Properties),
             value: _mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties),
             outputIndex: _mappings.Get(nameof(T2SEdge.Vout)).Deserialize<int>(relationship.Properties),
-            spentInBlockHeight: _mappings.Get(nameof(T2SEdge.SpentInBlockHeight)).Deserialize<long>(relationship.Properties));
+            spentHeight: _mappings.Get(nameof(T2SEdge.SpentHeight)).Deserialize<long>(relationship.Properties));
     }
 
     public override string GetQuery(string filename)

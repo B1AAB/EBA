@@ -14,11 +14,11 @@ public class S2TEdgeStrategy(bool serializeCompressed)
         Factory.SourceId<S2TEdge>(ScriptNodeStrategy.IdSpace, e => e.Source.Id),
         Factory.TargetId<S2TEdge>(TxNodeStrategy.IdSpace, e => e.Target.Txid),
         Factory.Value<S2TEdge>(e => e.Value),
-        Factory.Height<S2TEdge>(e => e.BlockHeight),
-        Factory.EdgeType<S2TEdge>(e => e.Relation),
+        new(nameof(S2TEdge.SpentHeight), FieldType.Long, e => e.SpentHeight),
         new(nameof(S2TEdge.Txid), FieldType.String, e => e.Txid),
         new(nameof(S2TEdge.Vout), FieldType.Int, e => e.Vout),
         new(nameof(S2TEdge.Generated), FieldType.Boolean, e => e.Generated),
+        Factory.EdgeType<S2TEdge>(e => e.Relation)
     ];
 
     public override string GetCsvHeader()
@@ -42,7 +42,7 @@ public class S2TEdgeStrategy(bool serializeCompressed)
             source: source,
             target: target,
             timestamp: 0,
-            blockHeight: _mappings.Get(Factory.HeightProperty.Name).Deserialize<long>(relationship.Properties),
+            spentHeight: _mappings.Get(nameof(S2TEdge.SpentHeight)).Deserialize<long>(relationship.Properties),
             value: _mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties),
             txid: _mappings.Get(nameof(S2TEdge.Txid)).Deserialize<string>(relationship.Properties),
             vout: _mappings.Get(nameof(S2TEdge.Vout)).Deserialize<int>(relationship.Properties),

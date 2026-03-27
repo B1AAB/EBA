@@ -8,17 +8,19 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
     public int Vout { get; }
     public bool Generated { get; }
 
+    public long SpentHeight { get { return BlockHeight; } }
+
     public S2TEdge(
         ScriptNode source,
         TxNode target,
         uint timestamp,
-        long blockHeight,
+        long spentHeight,
         Input spentUTxO)
         : this(
             source: source,
             target: target,
             timestamp: timestamp,
-            blockHeight: blockHeight,
+            spentHeight: spentHeight,
             value: spentUTxO.PrevOut.Value,
             txid: spentUTxO.Txid,
             vout: spentUTxO.Vout,
@@ -29,12 +31,12 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         ScriptNode source,
         TxNode target,
         uint timestamp,
-        long blockHeight,
+        long spentHeight,
         long value,
         string txid,
         int vout,
         bool generated) :
-        base(source, target, value, Kind.Relation, timestamp, blockHeight)
+        base(source, target, value, Kind.Relation, timestamp, spentHeight)
     {
         Txid = txid;
         Vout = vout;

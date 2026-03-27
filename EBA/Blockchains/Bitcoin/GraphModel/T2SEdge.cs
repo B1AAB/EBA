@@ -6,33 +6,35 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
 
     public int Vout { get; }
 
-    public long SpentInBlockHeight { get; }
+    public long SpentHeight { get; }
+
+    public long CreationHeight => BlockHeight;
 
     public T2SEdge(
         TxNode source,
         ScriptNode target,
         uint timestamp,
-        long blockHeight,
+        long creationHeight,
         Output output,
-        long spentInBlockHeight = long.MaxValue)
-        : base(source, target, output.Value, Kind.Relation, timestamp, blockHeight)
+        long spentHeight = long.MaxValue)
+        : base(source, target, output.Value, Kind.Relation, timestamp, creationHeight)
     {
         Vout = output.N;
-        SpentInBlockHeight = spentInBlockHeight;
+        SpentHeight = spentHeight;
     }
 
     public T2SEdge(
         TxNode source,
         ScriptNode target,
         uint timestamp,
-        long blockHeight,
+        long creationHeight,
         long value,
         int outputIndex,
-        long spentInBlockHeight = long.MaxValue) :
-        base(source, target, value, Kind.Relation, timestamp, blockHeight)
+        long spentHeight = long.MaxValue) :
+        base(source, target, value, Kind.Relation, timestamp, creationHeight)
     {
         Vout = outputIndex;
-        SpentInBlockHeight = spentInBlockHeight;
+        SpentHeight = spentHeight;
     }
 
     public override int GetHashCode()
