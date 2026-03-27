@@ -19,7 +19,7 @@ public class Output : IBase64Serializable
     public long Value { get; private set; }
 
     [JsonPropertyName("n")]
-    public int Index { set; get; }
+    public int N { set; get; }
 
     [JsonPropertyName("scriptPubKey")]
     public ScriptPubKey ScriptPubKey { set; get; }
@@ -61,7 +61,7 @@ public class Output : IBase64Serializable
         using (var writer = new BinaryWriter(stream))
         {
             writer.Write(Value);
-            writer.Write(Index);
+            writer.Write(N);
             if (ScriptPubKey != null)
                 writer.Write(ScriptPubKey.ToBase64String());
         }
