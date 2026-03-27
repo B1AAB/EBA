@@ -95,7 +95,6 @@ public class BitcoinStrategyFactory : IStrategyFactory
         writer.WriteLine("");
         writer.WriteLine(scriptAddressUniqueness);
 
-
         var txidName = PropertyMappingFactory.TxId<TxNode>(n => n.Txid).Property.Name;
         var txidUniqueness =
             $"// Uniqueness constraint for {TxNode.Kind}.{txidName} property." +
@@ -113,6 +112,13 @@ public class BitcoinStrategyFactory : IStrategyFactory
             $"\r\nFOR (v:{BlockNode.Kind}) REQUIRE v.{heightName} IS UNIQUE;";
         writer.WriteLine("");
         writer.WriteLine(blockHeightUniqueness);
+
+        var txidIndex =
+            $"// Create Txid index." +
+            $"\r\nCREATE INDEX tx_txid_index IF NOT EXISTS " +
+            $"\r\nFOR (t:{TxNode.Kind}) ON (t.{nameof(TxNode.Txid)});";
+        writer.WriteLine("");
+        writer.WriteLine(txidIndex);
 
         var followsEdge = 
             $"// Create edge (Block)-[{RelationType.Follows}]->(Block)" +
