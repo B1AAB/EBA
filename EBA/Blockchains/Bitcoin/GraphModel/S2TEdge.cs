@@ -20,7 +20,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
             timestamp: timestamp,
             blockHeight: blockHeight,
             value: spentUTxO.PrevOut.Value,
-            txid: spentUTxO.TxId,
+            txid: spentUTxO.Txid,
             vout: spentUTxO.Vout,
             generated: spentUTxO.PrevOut.Generated)
     { }

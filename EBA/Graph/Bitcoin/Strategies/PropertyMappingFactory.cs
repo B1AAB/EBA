@@ -18,7 +18,7 @@ public static class PropertyMappingFactory
         return new(nameof(ScriptNode.SHA256Hash), FieldType.String, x => getValue(x), headerOverride);
     }
 
-    public static PropertyMapping<T> TxId<T>(Func<T, string> getValue, Func<Property, string>? headerOverride = null)
+    public static PropertyMapping<T> Txid<T>(Func<T, string> getValue, Func<Property, string>? headerOverride = null)
     {
         return new(nameof(TxNode.Txid), FieldType.String, x => getValue(x), headerOverride);
     }

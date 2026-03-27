@@ -6,7 +6,7 @@ public class Input : IEquatable<Input>
     public string Coinbase { set; get; } = string.Empty;
 
     [JsonPropertyName("txid")]
-    public string TxId { set; get; } = string.Empty;
+    public string Txid { set; get; } = string.Empty;
 
     [JsonPropertyName("vout")]
     public int Vout { set; get; }
@@ -39,7 +39,7 @@ public class Input : IEquatable<Input>
     {
         if (other is null) return false;
         return
-            TxId == other.TxId &&
+            Txid == other.Txid &&
             Vout == other.Vout;
     }
 
@@ -50,6 +50,6 @@ public class Input : IEquatable<Input>
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(TxId, Vout);
+        return HashCode.Combine(Txid, Vout);
     }
 }

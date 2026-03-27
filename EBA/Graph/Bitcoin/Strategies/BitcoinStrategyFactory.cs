@@ -95,7 +95,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
         writer.WriteLine("");
         writer.WriteLine(scriptAddressUniqueness);
 
-        var txidName = PropertyMappingFactory.TxId<TxNode>(n => n.Txid).Property.Name;
+        var txidName = PropertyMappingFactory.Txid<TxNode>(n => n.Txid).Property.Name;
         var txidUniqueness =
             $"// Uniqueness constraint for {TxNode.Kind}.{txidName} property." +
             $"\r\nCREATE CONSTRAINT {TxNode.Kind}_{txidName}_Unique " +
