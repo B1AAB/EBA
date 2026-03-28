@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+﻿using EBA.Utilities;
 
 namespace EBA.Blockchains.Bitcoin.Utilities;
 
@@ -7,39 +7,7 @@ public class MarketMapper(BitcoinChainAgent agent, ILogger<BitcoinOrchestrator> 
     private readonly BitcoinChainAgent _agent = agent;
     private readonly ILogger<BitcoinOrchestrator> _logger = logger;
 
-    private record OHLCV(long Timestamp, float Open, float High, float Low, float Close, float Volume)
-    {
-        public static bool TryParse(string csvLine, out OHLCV candle)
-        {
-            candle = null;
-
-            var values = csvLine.Split(',');
-            if (values.Length < 6) return false;
-
-            if (!double.TryParse(values[0], NumberStyles.Any, CultureInfo.InvariantCulture, out var ts) ||
-                !float.TryParse(values[1], NumberStyles.Any, CultureInfo.InvariantCulture, out var open) ||
-                !float.TryParse(values[2], NumberStyles.Any, CultureInfo.InvariantCulture, out var high) ||
-                !float.TryParse(values[3], NumberStyles.Any, CultureInfo.InvariantCulture, out var low) ||
-                !float.TryParse(values[4], NumberStyles.Any, CultureInfo.InvariantCulture, out var close) ||
-                !float.TryParse(values[5], NumberStyles.Any, CultureInfo.InvariantCulture, out var volume))
-            {
-                return false;
-            }
-
-            candle = new OHLCV(
-                Timestamp: (long)ts,
-                Open: open,
-                High: high,
-                Low: low,
-                Close: close,
-                Volume: volume
-            );
-
-            return true;
-        }
-    }
-
-    private record BlockOHLC(BlockMetadata Metadata, OHLCV OHLC);
+    private record BlockOHLC(BlockMetadata Metadata, OHLCV ohlcv);
 
     public async Task MapAsync(Options options, CancellationToken cT)
     {
@@ -49,17 +17,10 @@ public class MarketMapper(BitcoinChainAgent agent, ILogger<BitcoinOrchestrator> 
         var matchedBlockMarket = MatchBlockAndMarketData(blocks, options.Bitcoin.MapMarket.OhlcvSourceFilename);
 
         using var writer = new StreamWriter(options.Bitcoin.MapMarket.BlockOhlcvMappedFilename);
+        writer.WriteLine(string.Join('\t', ["Height", .. OHLCV.GetFeaturesName()]));
+
         foreach (var x in matchedBlockMarket)
-            writer.WriteLine(
-                string.Join(
-                    '\t',
-                    x.Metadata.Height,
-                    x.Metadata.MedianTime,
-                    x.OHLC.Open,
-                    x.OHLC.High,
-                    x.OHLC.Low,
-                    x.OHLC.Close,
-                    x.OHLC.Volume));
+            writer.WriteLine(string.Join('\t', [x.Metadata.Height.ToString(), .. x.ohlcv.GetFeatures()]));
 
         _logger.LogInformation(
             "Finished writing mapped block and market data to {MappedOutputFilename}",
@@ -89,7 +50,7 @@ public class MarketMapper(BitcoinChainAgent agent, ILogger<BitcoinOrchestrator> 
 
             while ((line = reader.ReadLine()) != null)
             {
-                if (!OHLCV.TryParse(line, out var candle))
+                if (!OHLCV.TryParse(line, out var candle) || candle == null)
                     continue;
 
                 if (candle.Timestamp < startTime)
@@ -107,12 +68,13 @@ public class MarketMapper(BitcoinChainAgent agent, ILogger<BitcoinOrchestrator> 
                     new BlockOHLC(
                         sortedBlocks[i],
                         new OHLCV(
-                            sortedBlocks[i].MedianTime,
-                            data.First().Open,
-                            data.Max(x => x.High),
-                            data.Min(x => x.Low),
-                            data.Last().Close,
-                            data.Average(x => x.Volume))));
+                            timestamp: sortedBlocks[i].MedianTime,
+                            open: data.First().Open,
+                            high: data.Max(x => x.High),
+                            low: data.Min(x => x.Low),
+                            close: data.Last().Close,
+                            volume: (long)Math.Round(data.Average(x => x.Volume)),
+                            vwap: OHLCV.GetVWAP(data))));
             }
         }
 
