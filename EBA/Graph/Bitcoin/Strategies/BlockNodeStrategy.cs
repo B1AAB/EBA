@@ -12,7 +12,8 @@ public class BlockNodeStrategy(bool serializeCompressed)
     private const Block v = null!;
     private static readonly PropertyMapping<BlockNode>[] _mappings =
     [
-        PropertyMappingFactory.Height<BlockNode>(n => n.BlockMetadata.Height, p => p.GetIdFieldCsvHeader(IdSpace.ToString())),
+        new("", FieldType.String, x=>x.BlockMetadata.Height, p => p.GetIdFieldCsvHeader(IdSpace.ToString())),
+        PropertyMappingFactory.Height<BlockNode>(n => n.BlockMetadata.Height),
         new(nameof(v.Hash), FieldType.String, n => n.BlockMetadata.Hash),
         new(nameof(v.Confirmations), FieldType.Long, n => n.BlockMetadata.Confirmations),
         new(nameof(v.Version), FieldType.Long, n => n.BlockMetadata.Version),

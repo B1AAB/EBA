@@ -95,8 +95,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
         writer.WriteLine("");
         writer.WriteLine(scriptAddressUniqueness);
 
-
-        var txidName = PropertyMappingFactory.TxId<TxNode>(n => n.Txid).Property.Name;
+        var txidName = PropertyMappingFactory.Txid<TxNode>(n => n.Txid).Property.Name;
         var txidUniqueness =
             $"// Uniqueness constraint for {TxNode.Kind}.{txidName} property." +
             $"\r\nCREATE CONSTRAINT {TxNode.Kind}_{txidName}_Unique " +
@@ -114,10 +113,17 @@ public class BitcoinStrategyFactory : IStrategyFactory
         writer.WriteLine("");
         writer.WriteLine(blockHeightUniqueness);
 
+        var txidIndex =
+            $"// Create Txid index." +
+            $"\r\nCREATE INDEX tx_txid_index IF NOT EXISTS " +
+            $"\r\nFOR (t:{TxNode.Kind}) ON (t.{nameof(TxNode.Txid)});";
+        writer.WriteLine("");
+        writer.WriteLine(txidIndex);
+
         var followsEdge = 
             $"// Create edge (Block)-[{RelationType.Follows}]->(Block)" +
             $"\r\nMATCH (target:Block), (source:Block)" +
-            $"\r\nWHERE toInteger(target.{heightName}) + 1 = toInteger(source.{heightName})" +
+            $"\r\nWHERE target.{heightName} + 1 = source.{heightName}" +
             $"\r\nMERGE (target)-[:{RelationType.Follows}]->(source)";
         writer.WriteLine("");
         writer.WriteLine(followsEdge);

@@ -39,7 +39,7 @@ public class TxGraph(Tx tx) : GraphBase()
     {
         var prevOut = input.PrevOut;
 
-        SourceTxes.AddOrUpdate(input.TxId, prevOut.Value, (_, oldValue) => oldValue + prevOut.Value);
+        SourceTxes.AddOrUpdate(input.Txid, prevOut.Value, (_, oldValue) => oldValue + prevOut.Value);
         Helpers.ThreadsafeAdd(ref _totalInputValue, prevOut.Value);
 
         _inputs.Add(input);

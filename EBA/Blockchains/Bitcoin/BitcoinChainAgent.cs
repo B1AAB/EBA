@@ -355,7 +355,7 @@ public class BitcoinChainAgent : IDisposable
                 output.TryGetAddress(out string? address);
 
                 var utxo = new Utxo(
-                    id: Utxo.GetId(txGraph.TxNode.Txid, output.Index),
+                    id: Utxo.GetId(txGraph.TxNode.Txid, output.N),
                     address: address,
                     value: output.Value,
                     scriptType: output.ScriptPubKey.ScriptType,
