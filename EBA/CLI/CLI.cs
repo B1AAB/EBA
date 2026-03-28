@@ -81,14 +81,6 @@ internal class Cli
             _workingDirOption,
             _statusFilenameOption,
             GetBitcoinCmd(
-                defOps,
-                bitcoinTraverseCmdHandlerAsync,
-                bitcoinDeDupCmdHandlerAsync,
-                bitcoinImportCmdHandlerAsync,
-                bitcoinSampleCmdHandlerAsync,
-                bitcoinAddressStatsHandlerAsync,
-                bitcoinImportCypherQueriesAsync,
-                bitcoinPostProcessGraphHandlerAsync)
                 defaultOptions: defOps,
                 traverseHandlerAsync: bitcoinTraverseCmdHandlerAsync,
                 dedupHandlerAsync: bitcoinDeDupCmdHandlerAsync,
@@ -96,7 +88,8 @@ internal class Cli
                 sampleHandlerAsync: bitcoinSampleCmdHandlerAsync,
                 mapMarketHandlerAsync: bitcoinMapMarketHandlerAsync,
                 addressStatsHandlerAsync: bitcoinAddressStatsHandlerAsync,
-                importCypherQueriesAsync: bitcoinImportCypherQueriesAsync)
+                importCypherQueriesAsync: bitcoinImportCypherQueriesAsync,
+                postProcessGraphHandlerAsync: bitcoinPostProcessGraphHandlerAsync)
         };
 
         for (int i = 0; i < _rootCmd.Options.Count; i++)
