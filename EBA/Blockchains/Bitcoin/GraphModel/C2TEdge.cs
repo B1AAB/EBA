@@ -6,12 +6,12 @@ public class C2TEdge(
     uint timestamp,
     long blockHeight)
     : Edge<CoinbaseNode, TxNode>(
-        new CoinbaseNode(),
-        target,
-        value,
-        RelationType.Mints,
-        timestamp,
-        blockHeight)
+        source: new CoinbaseNode(),
+        target: target,
+        value: value,
+        relation: RelationType.Mints,
+        timestamp: timestamp,
+        blockHeight: blockHeight)
 {
     public new static EdgeKind Kind => new(CoinbaseNode.Kind, TxNode.Kind, RelationType.Mints);
 

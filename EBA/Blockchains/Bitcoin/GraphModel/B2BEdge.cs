@@ -3,7 +3,13 @@
 public class B2BEdge(
     BlockNode source,
     BlockNode target)
-    : Edge<BlockNode, BlockNode>(source, target, 0, Kind.Relation, 0, 0)
+    : Edge<BlockNode, BlockNode>(
+        source: source,
+        target: target,
+        value: 0,
+        relation: Kind.Relation,
+        timestamp: 0,
+        blockHeight: 0)
 {
     public static new EdgeKind Kind => new(BlockNode.Kind, BlockNode.Kind, RelationType.Follows);
 

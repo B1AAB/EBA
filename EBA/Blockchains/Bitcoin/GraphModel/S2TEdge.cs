@@ -36,7 +36,13 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         string txid,
         int vout,
         bool generated) :
-        base(source, target, value, Kind.Relation, timestamp, spentHeight)
+        base(
+            source: source,
+            target: target,
+            value: value,
+            relation: Kind.Relation,
+            timestamp: timestamp,
+            blockHeight: spentHeight)
     {
         Txid = txid;
         Vout = vout;
