@@ -18,6 +18,11 @@ public class OHLCV(long timestamp, decimal open, decimal high, decimal low, deci
 
     public decimal OHLC4 { get { return (Open + High + Low + Close) / 4; } }
 
+    public decimal GetFiatValue(long satoshiAmount)
+    {
+        return satoshiAmount / (decimal)BitcoinChainAgent.Coin * VWAP;
+    }
+
     public static bool TryParse(string csvLine, out OHLCV? candle)
     {
         candle = default;
