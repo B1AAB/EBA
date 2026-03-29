@@ -8,7 +8,13 @@ public class B2TEdge : Edge<BlockNode, TxNode>
         BlockNode source, TxNode target,
         long value, 
         uint timestamp, long blockHeight) :
-        base(source, target, value, Kind.Relation, timestamp, blockHeight)
+        base(
+            source: source,
+            target: target,
+            value: value,
+            relation: Kind.Relation,
+            timestamp: timestamp,
+            blockHeight: blockHeight)
     { }    
 
     public B2TEdge Update(long value)

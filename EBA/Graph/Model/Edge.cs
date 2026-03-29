@@ -37,9 +37,12 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
     private const string _delimiter = "\t";
 
     public Edge(
-        TSource source, TTarget target,
-        long value, RelationType relation,
-        uint timestamp, long blockHeight)
+        TSource source,
+        TTarget target,
+        RelationType relation,
+        long value,
+        uint timestamp,
+        long blockHeight)
     {
         Source = source;
         Target = target;
