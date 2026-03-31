@@ -4,7 +4,7 @@
         <title>EBA Blog</title>
         <link>https://eba.b1aab.ai/releases</link>
         <description>EBA Blog</description>
-        <lastBuildDate>Sat, 14 Mar 2026 22:57:40 GMT</lastBuildDate>
+        <lastBuildDate>Tue, 31 Mar 2026 21:41:18 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
@@ -12,7 +12,7 @@
             <title><![CDATA[Bitcoin Graph v1]]></title>
             <link>https://eba.b1aab.ai/releases/data-release/v1</link>
             <guid>https://eba.b1aab.ai/releases/data-release/v1</guid>
-            <pubDate>Sat, 14 Mar 2026 22:57:40 GMT</pubDate>
+            <pubDate>Tue, 31 Mar 2026 21:41:18 GMT</pubDate>
             <description><![CDATA[Initial data release.]]></description>
             <content:encoded><![CDATA[<p>This data release provides the full output of the ETL pipeline,
 covering the Bitcoin blockchain up to block height <code>863 000</code>.
@@ -20,6 +20,8 @@ The release includes the complete Bitcoin Graph,
 consisting of <code>&gt;2.4B</code> nodes, <code>&gt;39.7B</code> edges,
 provided in both Neo4j-compatible TSV and database dump formats,
 alongside pre-sampled communities and per-block summary statistics.</p>
+<p>To help you get started with this data, we've prepared
+<a href="https://github.com/B1AAB/GraphStudio/blob/main/g101/g101.ipynb" target="_blank" rel="noopener noreferrer" class="">a hands-on Jupyter Notebook tutorial</a>.</p>
 <p>The release contains the following resources:</p>
 <hr>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="bitcoin-graph">Bitcoin Graph<a href="https://eba.b1aab.ai/releases/data-release/v1#bitcoin-graph" class="hash-link" aria-label="Direct link to Bitcoin Graph" title="Direct link to Bitcoin Graph" translate="no">​</a></h3>
