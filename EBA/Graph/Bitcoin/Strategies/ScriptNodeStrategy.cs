@@ -105,7 +105,7 @@ public class ScriptNodeStrategy(bool serializeCompressed)
         throw new NotImplementedException();
     }
 
-    public override string[] GetSchemaConfiguration()
+    public override string[] GetSchemaConfigs()
     {
         return 
         [

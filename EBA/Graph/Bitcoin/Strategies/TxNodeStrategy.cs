@@ -97,7 +97,7 @@ public class TxNodeStrategy(bool serializeCompressed)
         throw new NotImplementedException();
     }
 
-    public override string[] GetSchemaConfiguration()
+    public override string[] GetSchemaConfigs()
     {
         var txidName = PropertyMappingFactory.Txid<TxNode>(n => n.Txid).Property.Name;
         return

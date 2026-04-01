@@ -52,7 +52,7 @@ public class T2SEdgeStrategy(bool serializeCompressed)
         throw new NotImplementedException();
     }
 
-    public override string[] GetSchemaConfiguration()
+    public override string[] GetSchemaConfigs()
     {
         return 
         [

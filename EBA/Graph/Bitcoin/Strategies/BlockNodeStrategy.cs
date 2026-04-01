@@ -189,7 +189,7 @@ public class BlockNodeStrategy(bool serializeCompressed)
         throw new NotImplementedException();
     }
 
-    public override string[] GetSchemaConfiguration()
+    public override string[] GetSchemaConfigs()
     {
         var heightName = PropertyMappingFactory.HeightProperty.Name;
         return
