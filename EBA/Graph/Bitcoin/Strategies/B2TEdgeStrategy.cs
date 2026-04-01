@@ -7,7 +7,7 @@ public class B2TEdgeStrategy(bool serializeCompressed)
         $"edges_{B2TEdge.Kind.Source}_{B2TEdge.Kind.Relation}_{B2TEdge.Kind.Target}",
         serializeCompressed)
 {
-    private static readonly PropertyMapping<B2TEdge>[] _mappings =
+    public static readonly PropertyMapping<B2TEdge>[] Mappings =
     [
         Factory.SourceId<B2TEdge>(BlockNodeStrategy.IdSpace, e => e.Source.BlockMetadata.Height),
         Factory.TargetId<B2TEdge>(TxNodeStrategy.IdSpace, e => e.Target.Txid),
@@ -18,7 +18,7 @@ public class B2TEdgeStrategy(bool serializeCompressed)
 
     public override string GetCsvHeader()
     {
-        return _mappings.GetCsvHeader();
+        return Mappings.GetCsvHeader();
     }
 
     public override string GetCsvRow(IGraphElement edge)
@@ -28,7 +28,7 @@ public class B2TEdgeStrategy(bool serializeCompressed)
 
     public static string GetCsv(B2TEdge edge)
     {
-        return _mappings.GetCsv(edge);
+        return Mappings.GetCsv(edge);
     }
 
     public static B2TEdge Deserialize(BlockNode source, TxNode target, IRelationship relationship)
@@ -37,8 +37,8 @@ public class B2TEdgeStrategy(bool serializeCompressed)
             source: source,
             target: target,
             timestamp: 0,
-            blockHeight: _mappings.Get(Factory.HeightProperty.Name).Deserialize<long>(relationship.Properties),
-            value: _mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties));
+            blockHeight: Mappings.Get(Factory.HeightProperty.Name).Deserialize<long>(relationship.Properties),
+            value: Mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties));
     }
 
     public override string GetQuery(string filename)

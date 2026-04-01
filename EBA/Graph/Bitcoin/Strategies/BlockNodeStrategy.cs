@@ -10,7 +10,7 @@ public class BlockNodeStrategy(bool serializeCompressed)
     public static string IdSpace { get; } = BlockNode.Kind.ToString();
 
     private const Block v = null!;
-    private static readonly PropertyMapping<BlockNode>[] _mappings =
+    public static readonly PropertyMapping<BlockNode>[] Mappings =
     [
         new("", FieldType.String, x=>x.BlockMetadata.Height, p => p.GetIdFieldCsvHeader(IdSpace.ToString())),
         PropertyMappingFactory.Height<BlockNode>(n => n.BlockMetadata.Height),
@@ -68,12 +68,12 @@ public class BlockNodeStrategy(bool serializeCompressed)
     ];
 
     private static readonly Dictionary<string, PropertyMapping<BlockNode>> _mappingsDict =
-        _mappings.ToDictionary(m => m.Property.Name, m => m);
+        Mappings.ToDictionary(m => m.Property.Name, m => m);
 
 
     public override string GetCsvHeader()
     {
-        return _mappings.GetCsvHeader();
+        return Mappings.GetCsvHeader();
     }
 
     public override string GetCsvRow(IGraphElement component)
@@ -83,7 +83,7 @@ public class BlockNodeStrategy(bool serializeCompressed)
 
     public static string GetCsv(BlockNode node)
     {
-        return _mappings.GetCsv(node);
+        return Mappings.GetCsv(node);
     }
 
     public static BlockNode Deserialize(
@@ -187,5 +187,16 @@ public class BlockNodeStrategy(bool serializeCompressed)
         return builder.ToString();
         */
         throw new NotImplementedException();
+    }
+
+    public override string[] GetSchemaConfiguration()
+    {
+        var heightName = PropertyMappingFactory.HeightProperty.Name;
+        return
+        [
+            $"CREATE CONSTRAINT {BlockNode.Kind}_{heightName}_Unique " +
+            $"IF NOT EXISTS " +
+            $"FOR (v:{BlockNode.Kind}) REQUIRE v.{heightName} IS UNIQUE"
+        ];
     }
 }

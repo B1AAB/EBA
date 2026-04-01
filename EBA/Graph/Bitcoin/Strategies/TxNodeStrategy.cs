@@ -14,7 +14,7 @@ public class TxNodeStrategy(bool serializeCompressed)
     public static string IdSpace { get; } = TxNode.Kind.ToString();
 
     private const TxNode v = null!;
-    private static readonly PropertyMapping<TxNode>[] _mappings =
+    public static readonly PropertyMapping<TxNode>[] Mappings =
     [
         PropertyMappingFactory.Txid<TxNode>(n => n.Txid, p => p.GetIdFieldCsvHeader(IdSpace)),
         new(nameof(v.Version), FieldType.Long, n => n.Version),
@@ -27,11 +27,11 @@ public class TxNodeStrategy(bool serializeCompressed)
     ];
 
     private static readonly Dictionary<string, PropertyMapping<TxNode>> _mappingsDict =
-        _mappings.ToDictionary(m => m.Property.Name, m => m);
+        Mappings.ToDictionary(m => m.Property.Name, m => m);
 
     public override string GetCsvHeader()
     {
-        return _mappings.GetCsvHeader();
+        return Mappings.GetCsvHeader();
     }
 
     public override string GetCsvRow(IGraphElement component)
@@ -41,7 +41,7 @@ public class TxNodeStrategy(bool serializeCompressed)
 
     public static string GetCsv(TxNode node)
     {
-        return _mappings.GetCsv(node);
+        return Mappings.GetCsv(node);
     }
 
     public static TxNode Deserialize(
@@ -95,5 +95,19 @@ public class TxNodeStrategy(bool serializeCompressed)
         
         return builder.ToString();*/
         throw new NotImplementedException();
+    }
+
+    public override string[] GetSchemaConfiguration()
+    {
+        var txidName = PropertyMappingFactory.Txid<TxNode>(n => n.Txid).Property.Name;
+        return
+        [
+            $"CREATE CONSTRAINT {TxNode.Kind}_{txidName}_Unique " +
+            $"IF NOT EXISTS " +
+            $"FOR (v:{TxNode.Kind}) REQUIRE v.{txidName} IS UNIQUE",
+
+            $"CREATE INDEX tx_txid_index IF NOT EXISTS " +
+            $"FOR (t:{TxNode.Kind}) ON (t.{nameof(TxNode.Txid)})"
+        ];
     }
 }

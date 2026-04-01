@@ -9,7 +9,7 @@ public class C2TEdgeStrategy(bool serializeCompressed)
 {
     public static string IdSpaceCoinbase { get; } = CoinbaseNode.Kind.ToString();
 
-    public static readonly PropertyMapping<C2TEdge>[] _mappings =
+    public static readonly PropertyMapping<C2TEdge>[] Mappings =
     [
         Factory.SourceId<C2TEdge>(IdSpaceCoinbase, _ => CoinbaseNode.Kind),
         Factory.TargetId<C2TEdge>(TxNodeStrategy.IdSpace, e => e.Target.Txid),
@@ -20,7 +20,7 @@ public class C2TEdgeStrategy(bool serializeCompressed)
 
     public override string GetCsvHeader()
     {
-        return _mappings.GetCsvHeader();
+        return Mappings.GetCsvHeader();
     }
 
     public override string GetCsvRow(IGraphElement edge)
@@ -30,16 +30,16 @@ public class C2TEdgeStrategy(bool serializeCompressed)
 
     public static string GetCsv(C2TEdge edge)
     {
-        return _mappings.GetCsv(edge);
+        return Mappings.GetCsv(edge);
     }
 
     public static C2TEdge Deserialize(TxNode target, IRelationship relationship)
     {
         return new C2TEdge(
             target: target,
-            value: _mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties),
+            value: Mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties),
             timestamp: 0,
-            blockHeight: _mappings.Get(Factory.HeightProperty.Name).Deserialize<long>(relationship.Properties));
+            blockHeight: Mappings.Get(Factory.HeightProperty.Name).Deserialize<long>(relationship.Properties));
     }
 
     public override string GetQuery(string csvFilename)

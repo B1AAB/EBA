@@ -15,7 +15,7 @@ public class ScriptNodeStrategy(bool serializeCompressed)
             n => n.SHA256Hash, 
             p => p.GetIdFieldCsvHeader(IdSpace));
 
-    private readonly static PropertyMapping<ScriptNode>[] _mappings =
+    public readonly static PropertyMapping<ScriptNode>[] Mappings =
     [
         _sha256Hash,
         new(nameof(v.Address), FieldType.String, n => n.Address),
@@ -25,11 +25,11 @@ public class ScriptNodeStrategy(bool serializeCompressed)
     ];
 
     private static readonly Dictionary<string, PropertyMapping<ScriptNode>> _mappingsDict =
-        _mappings.ToDictionary(m => m.Property.Name, m => m);
+        Mappings.ToDictionary(m => m.Property.Name, m => m);
 
     public override string GetCsvHeader()
     {
-        return _mappings.GetCsvHeader();
+        return Mappings.GetCsvHeader();
     }
 
     public override string GetCsvRow(IGraphElement component)
@@ -39,7 +39,7 @@ public class ScriptNodeStrategy(bool serializeCompressed)
 
     public static string GetCsv(ScriptNode node)
     {
-        return _mappings.GetCsv(node);
+        return Mappings.GetCsv(node);
     }
 
     public static ScriptNode Deserialize(
@@ -103,5 +103,15 @@ public class ScriptNodeStrategy(bool serializeCompressed)
         return builder.ToString();
         */
         throw new NotImplementedException();
+    }
+
+    public override string[] GetSchemaConfiguration()
+    {
+        return 
+        [
+            $"CREATE CONSTRAINT {ScriptNode.Kind}_{_sha256Hash.Property.Name}_Unique " +
+            $"IF NOT EXISTS " +
+            $"FOR (v:{ScriptNode.Kind}) REQUIRE v.{_sha256Hash.Property.Name} IS UNIQUE"
+        ];
     }
 }

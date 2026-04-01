@@ -9,7 +9,7 @@ public class S2TEdgeStrategy(bool serializeCompressed)
         $"edges_{S2TEdge.Kind.Source}_{S2TEdge.Kind.Relation}_{S2TEdge.Kind.Target}",
         serializeCompressed)
 {
-    private static readonly PropertyMapping<S2TEdge>[] _mappings =
+    public static readonly PropertyMapping<S2TEdge>[] Mappings =
     [
         Factory.SourceId<S2TEdge>(ScriptNodeStrategy.IdSpace, e => e.Source.Id),
         Factory.TargetId<S2TEdge>(TxNodeStrategy.IdSpace, e => e.Target.Txid),
@@ -23,7 +23,7 @@ public class S2TEdgeStrategy(bool serializeCompressed)
 
     public override string GetCsvHeader()
     {
-        return _mappings.GetCsvHeader();
+        return Mappings.GetCsvHeader();
     }
 
     public override string GetCsvRow(IGraphElement edge)
@@ -33,7 +33,7 @@ public class S2TEdgeStrategy(bool serializeCompressed)
 
     public static string GetCsvRow(S2TEdge edge)
     {
-        return _mappings.GetCsv(edge);
+        return Mappings.GetCsv(edge);
     }
 
     public static S2TEdge Deserialize(ScriptNode source, TxNode target, IRelationship relationship)
@@ -42,11 +42,11 @@ public class S2TEdgeStrategy(bool serializeCompressed)
             source: source,
             target: target,
             timestamp: 0,
-            spentHeight: _mappings.Get(nameof(S2TEdge.SpentHeight)).Deserialize<long>(relationship.Properties),
-            value: _mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties),
-            txid: _mappings.Get(nameof(S2TEdge.Txid)).Deserialize<string>(relationship.Properties),
-            vout: _mappings.Get(nameof(S2TEdge.Vout)).Deserialize<int>(relationship.Properties),
-            generated: _mappings.Get(nameof(S2TEdge.Generated)).Deserialize<bool>(relationship.Properties)
+            spentHeight: Mappings.Get(nameof(S2TEdge.SpentHeight)).Deserialize<long>(relationship.Properties),
+            value: Mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties),
+            txid: Mappings.Get(nameof(S2TEdge.Txid)).Deserialize<string>(relationship.Properties),
+            vout: Mappings.Get(nameof(S2TEdge.Vout)).Deserialize<int>(relationship.Properties),
+            generated: Mappings.Get(nameof(S2TEdge.Generated)).Deserialize<bool>(relationship.Properties)
         );
     }
 

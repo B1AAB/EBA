@@ -9,7 +9,7 @@ public class T2SEdgeStrategy(bool serializeCompressed)
         $"edges_{T2SEdge.Kind.Source}_{T2SEdge.Kind.Relation}_{T2SEdge.Kind.Target}",
         serializeCompressed)
 {
-    public static readonly PropertyMapping<T2SEdge>[] _mappings =
+    public static readonly PropertyMapping<T2SEdge>[] Mappings =
     [
         Factory.SourceId<T2SEdge>(TxNodeStrategy.IdSpace, e => e.Source.Txid),
         Factory.TargetId<T2SEdge>(ScriptNodeStrategy.IdSpace, e => e.Target.Id),
@@ -22,7 +22,7 @@ public class T2SEdgeStrategy(bool serializeCompressed)
 
     public override string GetCsvHeader()
     {
-        return _mappings.GetCsvHeader();
+        return Mappings.GetCsvHeader();
     }
 
     public override string GetCsvRow(IGraphElement edge)
@@ -32,7 +32,7 @@ public class T2SEdgeStrategy(bool serializeCompressed)
 
     public static string GetCsv(T2SEdge edge)
     {
-        return _mappings.GetCsv(edge);
+        return Mappings.GetCsv(edge);
     }
 
     public static T2SEdge Deserialize(TxNode source, ScriptNode target, IRelationship relationship)
@@ -41,14 +41,24 @@ public class T2SEdgeStrategy(bool serializeCompressed)
             source: source,
             target: target,
             timestamp: 0,
-            creationHeight: _mappings.Get(nameof(T2SEdge.CreationHeight)).Deserialize<long>(relationship.Properties),
-            value: _mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties),
-            outputIndex: _mappings.Get(nameof(T2SEdge.Vout)).Deserialize<int>(relationship.Properties),
-            spentHeight: _mappings.Get(nameof(T2SEdge.SpentHeight)).Deserialize<long>(relationship.Properties));
+            creationHeight: Mappings.Get(nameof(T2SEdge.CreationHeight)).Deserialize<long>(relationship.Properties),
+            value: Mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties),
+            outputIndex: Mappings.Get(nameof(T2SEdge.Vout)).Deserialize<int>(relationship.Properties),
+            spentHeight: Mappings.Get(nameof(T2SEdge.SpentHeight)).Deserialize<long>(relationship.Properties));
     }
 
     public override string GetQuery(string filename)
     {
         throw new NotImplementedException();
+    }
+
+    public override string[] GetSchemaConfiguration()
+    {
+        return 
+        [
+            $"CREATE INDEX utxo_spending_idx IF NOT EXISTS " +
+            $"FOR ()-[r:{T2SEdge.Kind.Relation}]-() " +
+            $"ON (r.{nameof(T2SEdge.CreationHeight)}, r.{nameof(T2SEdge.SpentHeight)})"
+        ];
     }
 }

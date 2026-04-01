@@ -28,7 +28,8 @@ public class BitcoinStrategyFactory : IStrategyFactory
             { T2TEdge.KindFee, new T2TEdgeStrategy(T2TEdge.KindFee, compressOutput) },
             { S2TEdge.Kind, new S2TEdgeStrategy(compressOutput) },
             { T2SEdge.Kind, new T2SEdgeStrategy(compressOutput) },
-            { B2TEdge.Kind, new B2TEdgeStrategy(compressOutput) }
+            { B2TEdge.Kind, new B2TEdgeStrategy(compressOutput) },
+            { B2BEdge.Kind, new B2BEdgeStrategy(compressOutput) }
         };
     }
 
