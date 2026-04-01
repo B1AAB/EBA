@@ -61,4 +61,19 @@ public class NodeFactory
                 $"Unexpected node type, labels: {string.Join(',', node.Labels)}");
         }
     }
+
+    public static bool TryCreate<T>(List<IRecord> records, out List<T> nodes, string nodeVar = "n") where T: Model.INode
+    {
+        nodes = [];
+        foreach (var record in records)
+        {
+            TryCreate(record[nodeVar].As<Neo4j.Driver.INode>(), out var createdNode);
+            if (createdNode is not T)
+                return false;
+
+            nodes.Add((T)createdNode);
+        }
+
+        return true;
+    }
 }
