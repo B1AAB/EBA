@@ -1,9 +1,13 @@
-﻿namespace EBA.Graph.Db.Neo4jDb;
+﻿using EBA.Utilities;
+
+namespace EBA.Graph.Db.Neo4jDb;
 
 public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 {
     private readonly Options _options;
     private readonly IDriver _driver;
+
+    public IStrategyFactory StrategyFactory { get { return _strategyFactory; } }
     private readonly IStrategyFactory _strategyFactory;
 
     private List<Batch> _batches = [];
@@ -223,6 +227,156 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             _options.Neo4j.BatchesFilename);
     }
 
+    public async Task ExecuteWriteQueryAsync(List<string> queries, CancellationToken ct)
+    {
+        await VerifyConnectivityAsync(ct);
+
+        await using var session = _driver.AsyncSession(
+            x => x.WithDefaultAccessMode(AccessMode.Write));
+
+        foreach (var query in queries)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            _logger.LogInformation("Executing write query: {schema}", query);
+
+            var summary = await session.ExecuteWriteAsync(async tx =>
+            {
+                var cursor = await tx.RunAsync(query);
+                return await cursor.ConsumeAsync();
+            });
+
+            _logger.LogInformation("Finished executing write query; {counters}", summary.Counters);
+        }
+    }
+
+    public async Task TEST_NUPL(BlockNode blockNode, Dictionary<long, OHLCV> ohlcv)
+    {
+        await VerifyConnectivityAsync(CancellationToken.None);
+        await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+
+        var readTx = await session.BeginTransactionAsync();
+
+        var cursor = await readTx.RunAsync(
+            $"MATCH (tx)-[r:{T2SEdge.Kind.Relation}]->(script) " +
+            $"WHERE r.{nameof(T2SEdge.CreationHeight)} <= {blockNode.BlockMetadata.Height} " +
+            $"AND r.{nameof(T2SEdge.SpentHeight)} > {blockNode.BlockMetadata.Height} " +
+            $"AND script.{nameof(ScriptNode.ScriptType)} <> '{ScriptType.NullData}' " +
+            $"RETURN r");
+
+        decimal realizedCap = 0;
+
+        while (await cursor.FetchAsync())
+        {
+            var record = cursor.Current;
+
+            var r = record["r"].As<IRelationship>();
+            var creationHeight = (long)r.Properties[nameof(T2SEdge.CreationHeight)];
+            var value = (long)r.Properties[nameof(T2SEdge.Value)];
+
+            if (ohlcv.TryGetValue(creationHeight, out var blockOHLCV))
+            {
+                realizedCap += blockOHLCV.GetFiatValue(value);
+            }
+        }
+
+        blockNode.BlockMetadata.RealizedCap = realizedCap;
+    }
+
+    // TODO: this method should not be here;
+    // it is specific to the Bitcoin graph model
+    // and this class should be kept agnostic to the graph model.
+    public async Task SetUTxOSpentHeight(CancellationToken ct)
+    {
+        _logger.LogInformation(
+            "Starting to find UTxO spending, and set their status to spent by setting {prop} on {r} edges.",
+            nameof(S2TEdge.SpentHeight), T2SEdge.Kind.Relation);
+
+        await VerifyConnectivityAsync(ct);
+
+        var batch = new List<Dictionary<string, object>>();
+        var batchIndex = 0;
+        long totalProcessed = 0;
+
+        await using var readSession = _driver.AsyncSession(
+            x => x.WithDefaultAccessMode(AccessMode.Read));
+
+        var readTx = await readSession.BeginTransactionAsync();
+
+        var cursor = await readTx.RunAsync(
+            $"MATCH ()-[r:{S2TEdge.Kind.Relation}]->() " +
+            $"WHERE r.{nameof(S2TEdge.Generated)} = false " +
+            $"RETURN " +
+            $"r.{nameof(S2TEdge.Txid)} AS txid, " +
+            $"r.{nameof(S2TEdge.Vout)} AS vout, " +
+            $"r.{nameof(S2TEdge.SpentHeight)} AS height");
+
+        while (await cursor.FetchAsync())
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var record = cursor.Current;
+            var height = record["height"].As<long>();
+
+            batch.Add(new Dictionary<string, object>
+            {
+                ["txid"] = record["txid"].As<string>(),
+                ["vout"] = record["vout"].As<int>(),
+                ["height"] = height
+            });
+
+            if (batch.Count >= _options.Neo4j.MaxEntitiesPerBatch)
+            {
+                await CommitUTxOSpentHeight(batch, batchIndex++, ct);
+                totalProcessed += batch.Count;
+                batch = [];
+            }
+        }
+
+        if (batch.Count > 0)
+        {
+            await CommitUTxOSpentHeight(batch, batchIndex++, ct);
+            totalProcessed += batch.Count;
+        }
+
+        await readTx.CommitAsync();
+
+        _logger.LogInformation(
+            "Completed setting SpentHeight on Credits for {total:n0} Redeems edges.",
+            totalProcessed);
+    }
+
+    private async Task CommitUTxOSpentHeight(
+        IReadOnlyList<Dictionary<string, object>> batch,
+        int batchIndex,
+        CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        _logger.LogInformation(
+            "Committing batch {batch} with {count:n0} records.",
+            batchIndex, batch.Count);
+
+        await using var writeSession = _driver.AsyncSession(
+            x => x.WithDefaultAccessMode(AccessMode.Write));
+
+        var summary = await writeSession.ExecuteWriteAsync(async x =>
+        {
+            var cursor = await x.RunAsync(
+                $"UNWIND $batch AS row " +
+                $"MATCH (t:{TxNode.Kind} {{{nameof(TxNode.Txid)}: row.txid}})-[c:{T2SEdge.Kind.Relation}]->() " +
+                $"WHERE c.{nameof(S2TEdge.Vout)} = row.vout " +
+                $"SET c.{nameof(S2TEdge.SpentHeight)} = row.height",
+                new Dictionary<string, object> { ["batch"] = batch });
+
+            return await cursor.ConsumeAsync();
+        });
+
+        _logger.LogInformation(
+            "Committing batch {batch} finished; set {props:n0} properties on {relation} edges.",
+            batchIndex, summary.Counters.PropertiesSet, T2SEdge.Kind.Relation);
+    }
+
     public void Dispose()
     {
         Dispose(true);
@@ -252,11 +406,10 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         await VerifyConnectivityAsync(ct);
 
+        var sampleProps = updates[0].Keys.Where(k => k != idProperty);
         var setClause = string.Join(
-            ", ", 
-            updates[0].Keys
-            .Where(k => k != idProperty)
-            .Select(k => $"n.{k} = row.{k}"));
+            ", ",
+            sampleProps.Select(k => $"n.{k} = row.{k}"));
 
         // using toString() on the id property to match the string-typed
         // :ID column created by neo4j-admin import.
@@ -265,8 +418,8 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             $"MATCH (n:{label} {{{idProperty}: toString(row.{idProperty})}}) " +
             $"SET {setClause}";
 
-        var chunkIndex = 0;
-        foreach (var chunk in updates.Chunk(_options.Neo4j.MaxEntitiesPerBatch))
+        var batchIndex = 0;
+        foreach (var batch in updates.Chunk(_options.Neo4j.MaxEntitiesPerBatch))
         {
             ct.ThrowIfCancellationRequested();
 
@@ -275,20 +428,20 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             {
                 var cursor = await tx.RunAsync(
                     query,
-                    new Dictionary<string, object> { ["batch"] = chunk });
+                    new Dictionary<string, object> { ["batch"] = batch });
 
                 return await cursor.ConsumeAsync();
             });
 
             var counters = summary.Counters;
             if (counters.PropertiesSet == 0)
-                _logger.LogWarning("Chunk {chunk}: 0 properties set (MATCH may have found no nodes).",
-                    chunkIndex);
+                _logger.LogWarning("Batch {batch}: 0 properties set (MATCH may have found no nodes).",
+                    batchIndex);
             else
-                _logger.LogInformation("Chunk {chunk}: set {props:n0} properties on nodes.",
-                    chunkIndex, counters.PropertiesSet);
+                _logger.LogInformation("Batch {batch}: set {props:n0} properties on nodes.",
+                    batchIndex, counters.PropertiesSet);
 
-            chunkIndex++;
+            batchIndex++;
         }
 
         _logger.LogInformation(
