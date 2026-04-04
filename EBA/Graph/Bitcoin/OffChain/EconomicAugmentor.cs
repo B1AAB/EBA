@@ -1,4 +1,5 @@
 ﻿using EBA.Graph.Bitcoin.Factories;
+using EBA.Graph.Bitcoin.Strategies;
 using EBA.Utilities;
 
 namespace EBA.Graph.Bitcoin.OffChain;
@@ -11,7 +12,20 @@ public class EconomicAugmentor(Options options, IGraphDb<BitcoinGraph> graphDb, 
 
     public async Task SetBlockMarketIndicators(CancellationToken ct)
     {
-        OHLCV.TryParseFile(_options.Bitcoin.Augmentor.BlockOhlcvMappedFilename, out var blockOHLCVMapping);
+        if (!OHLCV.TryParseFile(_options.Bitcoin.Augmentor.BlockOhlcvMappedFilename, out var blockOHLCVMapping))
+        {
+            _logger.LogError(
+                "Failed to parse OHLCV data from file: {filename}",
+                _options.Bitcoin.Augmentor.BlockOhlcvMappedFilename);
+            return;
+        }
+        else
+        {
+            _logger.LogInformation(
+                "Successfully parsed OHLCV data for {count:n0} blocks from file: {filename}",
+                blockOHLCVMapping.Count,
+                _options.Bitcoin.Augmentor.BlockOhlcvMappedFilename);
+        }
 
         var blockNodes = await GetBlockNodes(ct);
 
@@ -52,14 +66,7 @@ public class EconomicAugmentor(Options options, IGraphDb<BitcoinGraph> graphDb, 
 
         _logger.LogInformation("Saving realized cap for {count:n0} block nodes.", blocks.Count);
         var updates = blocks.Values
-            .Select(b => new Dictionary<string, object?>
-            {
-                [nameof(BlockMetadata.Height)] = b.BlockMetadata.Height,
-                [nameof(BlockMetadata.RealizedCap)] = b.BlockMetadata.RealizedCap,
-                [nameof(BlockMetadata.MarketCap)] = b.BlockMetadata.MarketCap,
-                [nameof(BlockMetadata.NUPL)] = b.BlockMetadata.NUPL
-                // TODO: save ohlcv
-            })
+            .Select(b => BlockNodeStrategy.EconomicMappings.ToDictionary(b))
             .ToList();
 
         await _graphDb.BulkUpdateNodePropertiesAsync(

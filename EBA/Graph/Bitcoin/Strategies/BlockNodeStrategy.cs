@@ -10,6 +10,27 @@ public class BlockNodeStrategy(bool serializeCompressed)
     public static string IdSpace { get; } = BlockNode.Kind.ToString();
 
     private const Block v = null!;
+
+    private static readonly PropertyMapping<BlockNode>[] _economicMappings =
+    [
+        new(nameof(v.RealizedCap), FieldType.Double, n => (double?)n.BlockMetadata.RealizedCap),
+        new(nameof(v.MarketCap), FieldType.Double, n => (double?)n.BlockMetadata.MarketCap),
+        new(nameof(v.NUPL), FieldType.Double, n => (double?)n.BlockMetadata.NUPL),
+
+        .. PropertyMappingFactory.OHLCV<BlockNode>(n => n.BlockMetadata.Ohlcv),
+    ];
+
+    /// <summary>
+    /// The subset of mappings used by <see cref="EconomicAugmentor"/>
+    /// to persist valuation metrics back to the graph.
+    /// Includes <see cref="PropertyMappingFactory.HeightProperty"/> as the match key.
+    /// </summary>
+    public static PropertyMapping<BlockNode>[] EconomicMappings { get; } =
+    [
+        PropertyMappingFactory.Height<BlockNode>(n => n.BlockMetadata.Height),
+        .. _economicMappings,
+    ];
+
     public static readonly PropertyMapping<BlockNode>[] Mappings =
     [
         new("", FieldType.String, x=>x.BlockMetadata.Height, p => p.GetIdFieldCsvHeader(IdSpace.ToString())),
@@ -63,6 +84,8 @@ public class BlockNodeStrategy(bool serializeCompressed)
 
         .. PropertyMappingFactory.DictionaryToColumns<BlockNode>(
             nameof(BlockNode.TripletTypeValueSum), Schema.EdgeKinds, n => n.TripletTypeValueSum),
+
+        .. _economicMappings,
 
         new(":LABEL", FieldType.String, _ => BlockNode.Kind, _ => ":LABEL"),
     ];

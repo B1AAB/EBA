@@ -345,7 +345,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         });
 
         _logger.LogInformation(
-            "Processed {p:n0} edges and skipped {s:n0} edges (due to missing OHLCV data at their creation height.)",
+            "Processed {p:n0} edges and skipped {s:n0} edges due to missing OHLCV data at their creation height.",
             processedEdgeCount, skippedEdgeCounter);
     }
 

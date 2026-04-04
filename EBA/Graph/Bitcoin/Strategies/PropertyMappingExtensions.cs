@@ -27,4 +27,14 @@ public static class PropertyMappingExtensions
 
         throw new KeyNotFoundException($"No mapping found for property '{propertyName}'.");
     }
+
+    public static Dictionary<string, object?> ToDictionary<T>(
+        this PropertyMapping<T>[] mappings,
+        T source)
+    {
+        var dict = new Dictionary<string, object?>(mappings.Length);
+        foreach (var m in mappings)
+            dict[m.Property.Name] = m.SerializeValue(source);
+        return dict;
+    }
 }
