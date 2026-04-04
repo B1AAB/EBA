@@ -115,4 +115,6 @@ public class BlockMetadata
     }
 
     public OHLCV? Ohlcv { set; get; } = null;
+
+    // TODO: add MVRV, NVT, Thermocap
 }

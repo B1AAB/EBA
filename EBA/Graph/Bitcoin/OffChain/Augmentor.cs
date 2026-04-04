@@ -15,7 +15,11 @@ public class Augmentor(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<
 
         var blockNodes = await GetBlockNodes(ct);
 
-        await SetRealizedCap(blockNodes, blockOHLCVMapping, ct);
+        foreach (var block in blockNodes)
+            if (blockOHLCVMapping.TryGetValue(block.Key, out var ohlcv))
+                block.Value.BlockMetadata.Ohlcv = ohlcv;        
+
+        await ComputeBlockValuationMetrics(blockNodes, blockOHLCVMapping, ct);
     }
 
     private async Task<SortedDictionary<long, BlockNode>> GetBlockNodes(CancellationToken ct)
@@ -38,7 +42,7 @@ public class Augmentor(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<
         return blocks;
     }
 
-    private async Task SetRealizedCap(
+    private async Task ComputeBlockValuationMetrics(
         SortedDictionary<long, BlockNode> blocks, 
         Dictionary<long, OHLCV> blockOHLCVMapping, 
         CancellationToken ct)
@@ -51,7 +55,10 @@ public class Augmentor(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<
             .Select(b => new Dictionary<string, object?>
             {
                 [nameof(BlockMetadata.Height)] = b.BlockMetadata.Height,
-                [nameof(BlockMetadata.RealizedCap)] = b.BlockMetadata.RealizedCap
+                [nameof(BlockMetadata.RealizedCap)] = b.BlockMetadata.RealizedCap,
+                [nameof(BlockMetadata.MarketCap)] = b.BlockMetadata.MarketCap,
+                [nameof(BlockMetadata.NUPL)] = b.BlockMetadata.NUPL
+                // TODO: save ohlcv
             })
             .ToList();
 
