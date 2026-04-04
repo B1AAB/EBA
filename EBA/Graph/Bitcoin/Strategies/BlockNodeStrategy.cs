@@ -20,11 +20,6 @@ public class BlockNodeStrategy(bool serializeCompressed)
         .. PropertyMappingFactory.OHLCV<BlockNode>(n => n.BlockMetadata.Ohlcv),
     ];
 
-    /// <summary>
-    /// The subset of mappings used by <see cref="EconomicAugmentor"/>
-    /// to persist valuation metrics back to the graph.
-    /// Includes <see cref="PropertyMappingFactory.HeightProperty"/> as the match key.
-    /// </summary>
     public static PropertyMapping<BlockNode>[] EconomicMappings { get; } =
     [
         PropertyMappingFactory.Height<BlockNode>(n => n.BlockMetadata.Height),
@@ -148,7 +143,10 @@ public class BlockNodeStrategy(bool serializeCompressed)
             InputScriptTypeCount = PropertyMappingFactory.ReadScriptTypeCounts("Inputs", props),
             OutputScriptTypeCount = PropertyMappingFactory.ReadScriptTypeCounts("Outputs", props),
             InputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Inputs", props),
-            OutputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Outputs", props)
+            OutputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Outputs", props),
+
+            RealizedCap = (decimal?)_mappingsDict[nameof(v.RealizedCap)].Deserialize<double?>(props),
+            Ohlcv = PropertyMappingFactory.ReadOHLCV(props),
         };
 
         var blockNode = new BlockNode(

@@ -210,9 +210,9 @@ public static class PropertyMappingFactory
             new($"{prefix}.{nameof(o.High)}", FieldType.Double, s => (double?)(getOhlcv(s)?.High)),
             new($"{prefix}.{nameof(o.Low)}", FieldType.Double, s => (double?)(getOhlcv(s)?.Low)),
             new($"{prefix}.{nameof(o.Close)}", FieldType.Double, s => (double?)(getOhlcv(s)?.Close)),
-            new($"{prefix}.{nameof(o.VWAP)}", FieldType.Double, s => (double?)(getOhlcv(s)?.VWAP)),
-            new($"{prefix}.{nameof(o.OHLC4)}", FieldType.Double, s => (double?)(getOhlcv(s)?.OHLC4)),
             new($"{prefix}.{nameof(o.Volume)}", FieldType.Long, s => getOhlcv(s)?.Volume),
+            new($"{prefix}.{nameof(o.VWAP)}", FieldType.Double, s => (double?)(getOhlcv(s)?.VWAP)),
+            new($"{prefix}.{nameof(o.OHLC4)}", FieldType.Double, s => (double?)(getOhlcv(s)?.OHLC4))
         ];
     }
 
@@ -220,7 +220,7 @@ public static class PropertyMappingFactory
         IReadOnlyDictionary<string, object> properties,
         string prefix = "OHLCV")
     {
-        OHLCV o = null!;
+        OHLCV o;
         if (!properties.TryGetValue($"{prefix}.{nameof(o.Open)}", out _))
             return null;
 
