@@ -281,6 +281,9 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         blockNode.BlockMetadata.RealizedCap = realizedCap;
     }
 
+    // TODO: this method should not be here;
+    // it is specific to the Bitcoin graph model
+    // and this class should be kept agnostic to the graph model.
     public async Task SetRealizedCap(
         SortedDictionary<long, BlockNode> blockNodes,
         Dictionary<long, OHLCV> ohlcv,
@@ -299,48 +302,51 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         await VerifyConnectivityAsync(ct);
         await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
 
-        var readTx = await session.BeginTransactionAsync();
+        var processedEdgeCount = 0;
+        var skippedEdgeCounter = 0;
 
-        var cursor = await readTx.RunAsync(
-            $"MATCH (tx)-[r:{T2SEdge.Kind.Relation}]->(script) " +
-            $"WHERE r.{nameof(T2SEdge.CreationHeight)} <= {maxHeight} " +
-            $"AND r.{nameof(T2SEdge.SpentHeight)} > {minHeight} " +
-            $"AND script.{nameof(ScriptNode.ScriptType)} <> '{ScriptType.NullData}' " +
-            $"RETURN " +
-            $"r.{nameof(T2SEdge.CreationHeight)} AS creationHeight, " +
-            $"r.{nameof(T2SEdge.SpentHeight)} AS spentHeight, " +
-            $"r.{nameof(T2SEdge.Value)} AS value");
-
-        var counter = 0;
-
-        while (await cursor.FetchAsync())
+        await session.ExecuteReadAsync(async tx =>
         {
-            ct.ThrowIfCancellationRequested();
+            var cursor = await tx.RunAsync(
+                $"MATCH (tx)-[r:{T2SEdge.Kind.Relation}]->(script) " +
+                $"WHERE " +
+                $"r.{nameof(T2SEdge.CreationHeight)} <= {maxHeight} " +
+                $"AND " +
+                $"r.{nameof(T2SEdge.SpentHeight)} > {minHeight} " +
+                $"AND " +
+                $"script.{nameof(ScriptNode.ScriptType)} <> '{ScriptType.NullData}' " +
+                $"RETURN " +
+                $"r.{nameof(T2SEdge.CreationHeight)} AS creationHeight, " +
+                $"r.{nameof(T2SEdge.SpentHeight)} AS spentHeight, " +
+                $"r.{nameof(T2SEdge.Value)} AS value");
 
-            var creationHeight = cursor.Current["creationHeight"].As<long>();
-            var spentHeight = cursor.Current["spentHeight"].As<long>();
-            var value = cursor.Current["value"].As<long>();
-
-            if (!ohlcv.TryGetValue(creationHeight, out var blockOHLCV))
-                continue;
-
-            var fiatValue = blockOHLCV.GetFiatValue(value);
-
-            foreach (var x in blockNodes)
+            while (await cursor.FetchAsync())
             {
-                if (x.Key < creationHeight)
+                ct.ThrowIfCancellationRequested();
+
+                var creationHeight = cursor.Current["creationHeight"].As<long>();
+                var spentHeight = cursor.Current["spentHeight"].As<long>();
+                var value = cursor.Current["value"].As<long>();
+
+                if (!ohlcv.TryGetValue(creationHeight, out var blockOHLCV))
+                {
+                    skippedEdgeCounter++;
                     continue;
+                }
 
-                if (x.Key >= spentHeight)
-                    break;
+                var fiatValue = blockOHLCV.GetFiatValue(value);
+                foreach (var h in sortedHeights.GetViewBetween(creationHeight, spentHeight))
+                    blockNodes[h].BlockMetadata.RealizedCap += fiatValue;
 
-                x.Value.BlockMetadata.RealizedCap += fiatValue;
+                processedEdgeCount++;
+                if (processedEdgeCount % 1000 == 0)
+                    _logger.LogInformation("Processed {count:n0} edges for realized cap calculation.", processedEdgeCount);
             }
+        });
 
-            counter++;
-            if (counter % 10000 == 0)
-                _logger.LogInformation("Processed {count:n0} edges for realized cap calculation.", counter);
-        }
+        _logger.LogInformation(
+            "Processed {p:n0} edges and skipped {s:n0} edges (due to missing OHLCV data at their creation height.)",
+            processedEdgeCount, skippedEdgeCounter);
     }
 
     // TODO: this method should not be here;

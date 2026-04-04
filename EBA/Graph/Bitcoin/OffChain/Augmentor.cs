@@ -9,10 +9,17 @@ public class Augmentor(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<
     private readonly IGraphDb<BitcoinGraph> _graphDb = graphDb;
     private readonly ILogger<BitcoinGraphAgent> _logger = logger;
 
-    public async Task SetRealizedCap(CancellationToken ct)
+    public async Task AddMarketData(CancellationToken ct)
     {
-        OHLCV.TryParseFile(_options.Bitcoin.Augmentor.BlockOhlcvMappedFilename, out var mappings);
+        OHLCV.TryParseFile(_options.Bitcoin.Augmentor.BlockOhlcvMappedFilename, out var blockOHLCVMapping);
 
+        var blockNodes = await GetBlockNodes(ct);
+
+        await SetRealizedCap(blockNodes, blockOHLCVMapping, ct);
+    }
+
+    private async Task<SortedDictionary<long, BlockNode>> GetBlockNodes(CancellationToken ct)
+    {
         _logger.LogInformation("Fetching block nodes.");
         var blockRecords = await _graphDb.GetNodesAsync(NodeKind.Block, ct, nodeVariable: "b");
         _logger.LogInformation("Fetched {count:n0} block nodes.", blockRecords.Count);
@@ -28,8 +35,16 @@ public class Augmentor(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<
             throw new Exception("Invalid node types received from database");
         }
 
+        return blocks;
+    }
+
+    private async Task SetRealizedCap(
+        SortedDictionary<long, BlockNode> blocks, 
+        Dictionary<long, OHLCV> blockOHLCVMapping, 
+        CancellationToken ct)
+    {
         _logger.LogInformation("Setting realized cap for {count:n0} block nodes.", blocks.Count);
-        await _graphDb.SetRealizedCap(blocks, mappings, CancellationToken.None);
+        await _graphDb.SetRealizedCap(blocks, blockOHLCVMapping, CancellationToken.None);
 
         _logger.LogInformation("Saving realized cap for {count:n0} block nodes.", blocks.Count);
         var updates = blocks.Values
