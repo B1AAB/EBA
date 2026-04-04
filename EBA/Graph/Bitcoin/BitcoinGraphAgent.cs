@@ -54,8 +54,8 @@ public class BitcoinGraphAgent : IGraphAgent<BitcoinGraph>, IDisposable
 
     public async Task AddMarketData(CancellationToken ct)
     {
-        var augmentor = new OffChain.Augmentor(_options, _db, _logger);
-        await augmentor.AddMarketData(ct);
+        var augmentor = new OffChain.EconomicAugmentor(_options, _db, _logger);
+        await augmentor.SetBlockMarketIndicators(ct);
     }
 
     public void Dispose()

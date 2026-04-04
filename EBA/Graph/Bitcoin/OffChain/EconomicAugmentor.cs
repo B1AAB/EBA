@@ -3,13 +3,13 @@ using EBA.Utilities;
 
 namespace EBA.Graph.Bitcoin.OffChain;
 
-public class Augmentor(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<BitcoinGraphAgent> logger)
+public class EconomicAugmentor(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<BitcoinGraphAgent> logger)
 {
     private readonly Options _options = options;
     private readonly IGraphDb<BitcoinGraph> _graphDb = graphDb;
     private readonly ILogger<BitcoinGraphAgent> _logger = logger;
 
-    public async Task AddMarketData(CancellationToken ct)
+    public async Task SetBlockMarketIndicators(CancellationToken ct)
     {
         OHLCV.TryParseFile(_options.Bitcoin.Augmentor.BlockOhlcvMappedFilename, out var blockOHLCVMapping);
 
