@@ -1,7 +1,12 @@
-﻿namespace EBA.Graph.Db;
+﻿using EBA.Graph.Db.Neo4jDb;
+using EBA.Utilities;
+
+namespace EBA.Graph.Db;
 
 public interface IGraphDb<T> : IDisposable where T : GraphBase
 {
+    public IStrategyFactory StrategyFactory { get; }
+
     public Task VerifyConnectivityAsync(CancellationToken ct);
     public Task SerializeAsync(T graph, CancellationToken ct);
 
@@ -47,4 +52,10 @@ public interface IGraphDb<T> : IDisposable where T : GraphBase
         CancellationToken ct,
         string nodeVariable = "n",
         int? count = null);
+
+    public Task SetUTxOSpentHeight(CancellationToken ct);
+
+    public Task ExecuteWriteQueryAsync(List<string> schemas, CancellationToken ct);
+
+    public Task SetRealizedCap(SortedDictionary<long, BlockNode> blockNodes, Dictionary<long, OHLCV> ohlcv, CancellationToken ct);
 }

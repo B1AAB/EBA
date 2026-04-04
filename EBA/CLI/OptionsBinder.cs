@@ -29,7 +29,9 @@ internal class OptionsBinder
         Option<string>? sortedTxNodeFilenameOption = null,
         Option<string>? sortedScriptNodeFilenameOption = null,
         Option<string>? marketDataFilenameOption = null,
-        Option<string>? outputFilenameOption = null)
+        Option<string>? outputFilenameOption = null,
+        Option<string>? blockMarketMappingOption = null,
+        Option<string>? augmentroOhlcvOption = null)
     {
         if (statusFilenameOption != null && c.GetResult(statusFilenameOption) is not null)
         {
@@ -56,7 +58,8 @@ internal class OptionsBinder
             MaxBlocksInBuffer = GetValue(defs.Bitcoin.Traverse.MaxBlocksInBuffer, maxBlocksInBufferOption, c),
             TxoFilename = GetValue(defs.Bitcoin.Traverse.TxoFilename, txoFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
             TrackTxo = GetValue(defs.Bitcoin.Traverse.TrackTxo, trackTxoOption, c),
-            SkipGraphSerialization = GetValue(defs.Bitcoin.Traverse.SkipGraphSerialization, skipGraphSerializationOption, c)
+            SkipGraphSerialization = GetValue(defs.Bitcoin.Traverse.SkipGraphSerialization, skipGraphSerializationOption, c),
+            BlockMarketMappingFilename = GetValue(defs.Bitcoin.Traverse.BlockMarketMappingFilename, blockMarketMappingOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
         };
 
         var traversalAlgorithm = GetValue(defs.Bitcoin.GraphSample.TraversalAlgorithm, graphSampleMethodOption, c);
@@ -103,12 +106,18 @@ internal class OptionsBinder
             BlockOhlcvMappedFilename = GetValue(defs.Bitcoin.MapMarket.BlockOhlcvMappedFilename, outputFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); })
         };
 
+        var bitcoinAugmentorOps = new BitcoinAugmentorOptions()
+        {
+            BlockOhlcvMappedFilename = GetValue(defs.Bitcoin.Augmentor.BlockOhlcvMappedFilename, augmentroOhlcvOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
+        };
+
         var bitcoinOps = new BitcoinOptions(defs.Timestamp)
         {
             Traverse = bitcoinTraverseOptions,
             Dedup = bitcoinDedupOps,
             GraphSample = gsample,
-            MapMarket = bitcoinMapMarketOps
+            MapMarket = bitcoinMapMarketOps,
+            Augmentor = bitcoinAugmentorOps,
         };
 
         var options = new Options()

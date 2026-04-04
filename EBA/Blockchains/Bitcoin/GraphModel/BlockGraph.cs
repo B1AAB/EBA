@@ -1,4 +1,6 @@
-﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
+﻿using EBA.Utilities;
+
+namespace EBA.Blockchains.Bitcoin.GraphModel;
 
 public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 {
@@ -74,6 +76,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         var v = _coinbaseTxGraph.TxNode;
         var t = Timestamp;
         var h = Block.Height;
+        BitcoinContext.OHLCVCache.TryGetValue(h, out var ohlcv);
 
         Parallel.ForEach(_txGraphsQueue,
             #if (DEBUG)
@@ -84,7 +87,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
             if (ct.IsCancellationRequested)
             { state.Stop(); return; }
 
-            AddTxGraphToBlockGraph(txGraph);
+            AddTxGraphToBlockGraph(txGraph, ohlcv);
 
             if (ct.IsCancellationRequested)
             { state.Stop(); return; }
@@ -95,7 +98,9 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         long miningReward = 0;
         foreach (var u in _coinbaseTxGraph.Outputs)
         {
-            TryGetOrAddEdge(new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, output: u), out var edge);
+            TryGetOrAddEdge(
+                new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, u, ohlcv?.GetFiatValue(u.Value)),
+                out T2SEdge _);
 
             Block.ProfileCreatedOutput(u);
             miningReward += u.Value;
@@ -110,7 +115,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         BlockNode.TripletTypeValueSum = _edgeLabelValueSum.ToDictionary(x => x.Key, x => x.Value);
     }
 
-    private void AddTxGraphToBlockGraph(TxGraph txGraph)
+    private void AddTxGraphToBlockGraph(TxGraph txGraph, OHLCV? ohlcv)
     {
         var v = txGraph.TxNode;
         var h = Block.Height;
@@ -123,14 +128,16 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         {
             TryGetOrAddEdge(
                 new S2TEdge(new ScriptNode(u.PrevOut.ScriptPubKey), v, t, h, u),
-                out var edge);
+                out S2TEdge _);
 
             Block.ProfileSpentOutput(u);
         }
 
         foreach (var u in txGraph.Outputs)
         {
-            TryGetOrAddEdge(new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, output: u), out var edge);
+            TryGetOrAddEdge(
+                new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, u, ohlcv?.GetFiatValue(u.Value)), 
+                out T2SEdge _);
 
             Block.ProfileCreatedOutput(u);
         }

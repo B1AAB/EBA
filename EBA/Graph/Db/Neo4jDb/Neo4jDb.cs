@@ -250,7 +250,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         }
     }
 
-    public async Task TEST_NUPL(BlockNode blockNode, Dictionary<long, OHLCV> ohlcv)
+    public async Task SetRealizedCap(BlockNode blockNode, Dictionary<long, OHLCV> ohlcv, CancellationToken ct)
     {
         await VerifyConnectivityAsync(CancellationToken.None);
         await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
@@ -268,9 +268,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         while (await cursor.FetchAsync())
         {
-            var record = cursor.Current;
-
-            var r = record["r"].As<IRelationship>();
+            var r = cursor.Current["r"].As<IRelationship>();
             var creationHeight = (long)r.Properties[nameof(T2SEdge.CreationHeight)];
             var value = (long)r.Properties[nameof(T2SEdge.Value)];
 
@@ -281,6 +279,68 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         }
 
         blockNode.BlockMetadata.RealizedCap = realizedCap;
+    }
+
+    public async Task SetRealizedCap(
+        SortedDictionary<long, BlockNode> blockNodes,
+        Dictionary<long, OHLCV> ohlcv,
+        CancellationToken ct)
+    {
+        if (blockNodes.Count == 0)
+            return;
+
+        var sortedHeights = blockNodes.Keys.ToArray();
+        var minHeight = sortedHeights[0];
+        var maxHeight = sortedHeights[^1];
+
+        foreach (var block in blockNodes.Values)
+            block.BlockMetadata.RealizedCap = 0;
+
+        await VerifyConnectivityAsync(ct);
+        await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+
+        var readTx = await session.BeginTransactionAsync();
+
+        var cursor = await readTx.RunAsync(
+            $"MATCH (tx)-[r:{T2SEdge.Kind.Relation}]->(script) " +
+            $"WHERE r.{nameof(T2SEdge.CreationHeight)} <= {maxHeight} " +
+            $"AND r.{nameof(T2SEdge.SpentHeight)} > {minHeight} " +
+            $"AND script.{nameof(ScriptNode.ScriptType)} <> '{ScriptType.NullData}' " +
+            $"RETURN " +
+            $"r.{nameof(T2SEdge.CreationHeight)} AS creationHeight, " +
+            $"r.{nameof(T2SEdge.SpentHeight)} AS spentHeight, " +
+            $"r.{nameof(T2SEdge.Value)} AS value");
+
+        var counter = 0;
+
+        while (await cursor.FetchAsync())
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var creationHeight = cursor.Current["creationHeight"].As<long>();
+            var spentHeight = cursor.Current["spentHeight"].As<long>();
+            var value = cursor.Current["value"].As<long>();
+
+            if (!ohlcv.TryGetValue(creationHeight, out var blockOHLCV))
+                continue;
+
+            var fiatValue = blockOHLCV.GetFiatValue(value);
+
+            foreach (var x in blockNodes)
+            {
+                if (x.Key < creationHeight)
+                    continue;
+
+                if (x.Key >= spentHeight)
+                    break;
+
+                x.Value.BlockMetadata.RealizedCap += fiatValue;
+            }
+
+            counter++;
+            if (counter % 10000 == 0)
+                _logger.LogInformation("Processed {count:n0} edges for realized cap calculation.", counter);
+        }
     }
 
     // TODO: this method should not be here;

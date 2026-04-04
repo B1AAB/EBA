@@ -21,7 +21,8 @@ internal class Cli
         Func<Options, Task> bitcoinMapMarketHandlerAsync,
         Func<Options, Task> bitcoinAddressStatsHandlerAsync,
         Func<Options, Task> bitcoinImportCypherQueriesAsync,
-        Func<Options, Task> bitcoinPostProcessGraphHandlerAsync,
+        Func<Options, Task> bitcoinFinalizeImportHandlerAsync,
+        Func<Options, Task> bitcoinAugmentHandlerAsync,
         Action<Exception, ParseResult> exceptionHandler)
     {
         _exceptionHandler = exceptionHandler;
@@ -89,7 +90,8 @@ internal class Cli
                 mapMarketHandlerAsync: bitcoinMapMarketHandlerAsync,
                 addressStatsHandlerAsync: bitcoinAddressStatsHandlerAsync,
                 importCypherQueriesAsync: bitcoinImportCypherQueriesAsync,
-                postProcessGraphHandlerAsync: bitcoinPostProcessGraphHandlerAsync)
+                finalizeImportHandlerAsync: bitcoinFinalizeImportHandlerAsync,
+                bitcoinAugmentHandlerAsync: bitcoinAugmentHandlerAsync)
         };
 
         for (int i = 0; i < _rootCmd.Options.Count; i++)
@@ -125,7 +127,8 @@ internal class Cli
         Func<Options, Task> mapMarketHandlerAsync,
         Func<Options, Task> addressStatsHandlerAsync,
         Func<Options, Task> importCypherQueriesAsync,
-        Func<Options, Task> postProcessGraphHandlerAsync)
+        Func<Options, Task> finalizeImportHandlerAsync,
+        Func<Options, Task> bitcoinAugmentHandlerAsync)
     {
         var cmd = new Command(
             name: "bitcoin",
@@ -138,7 +141,8 @@ internal class Cli
             GetBitcoinMapMarketCmd(defaultOptions, mapMarketHandlerAsync),
             GetBitcoinSampleCmd(defaultOptions, sampleHandlerAsync),
             GetBitcoinAddressStatsCmd(defaultOptions, addressStatsHandlerAsync),
-            GetPostProcessGraphCmd(defaultOptions, postProcessGraphHandlerAsync)
+            GetFinalizeImportCmd(defaultOptions, finalizeImportHandlerAsync),
+            GetBitcoinAugmentCmd(defaultOptions, bitcoinAugmentHandlerAsync)
         };
         return cmd;
     }
@@ -234,6 +238,11 @@ internal class Cli
                 "(reference: https://neo4j.com/blog/bulk-data-import-neo4j-3-0/)"
         };
 
+        var blockMarketMappingOption = new Option<string>("--map-block-market")
+        {
+            Required = false
+        };
+
         var cmd = new Command(
             name: "traverse",
             description: "Traverses the blockchain in the defined range collecting the set metrics.")
@@ -247,7 +256,8 @@ internal class Cli
             txoFilenameOption,
             skipGraphSerialization,
             trackTxoOption,
-            maxEntriesPerBatch
+            maxEntriesPerBatch,
+            blockMarketMappingOption
         };
 
 
@@ -297,7 +307,8 @@ internal class Cli
                 trackTxoOption: trackTxoOption,
                 txoFilenameOption: txoFilenameOption,
                 skipGraphSerializationOption: skipGraphSerialization,
-                maxEntriesPerBatch: maxEntriesPerBatch);
+                maxEntriesPerBatch: maxEntriesPerBatch,
+                blockMarketMappingOption: blockMarketMappingOption);
 
             try
             {
@@ -441,9 +452,9 @@ internal class Cli
         return cmd;
     }
 
-    private Command GetPostProcessGraphCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    private Command GetFinalizeImportCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
-        var cmd = new Command(name: "post-process-graph");
+        var cmd = new Command(name: "finalize-import");
         cmd.SetAction(async (parseResult, cancellationToken) =>
         {
             var options = OptionsBinder.Build(
@@ -679,6 +690,37 @@ internal class Cli
             }
         });
 
+        return cmd;
+    }
+
+    private Command GetBitcoinAugmentCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    {
+        var ohlcvFilenameOption = new Option<string>("--ohlcv-filename")
+        {
+            Description = "A TSV file containing block metadata (height, median time) mapped to aggregated OHLCV market data."
+        };
+        var cmd = new Command(
+            name: "augment",
+            description: "Augments the graph with additional features, such as NUPL, using the output of the map-market command and other similar files.")
+        {
+            ohlcvFilenameOption
+        };
+        cmd.SetAction(async (parseResult, cancellationToken) =>
+        {
+            var options = OptionsBinder.Build(
+                parseResult,
+                workingDirOption: _workingDirOption,
+                statusFilenameOption: _statusFilenameOption,
+                augmentroOhlcvOption: ohlcvFilenameOption);
+            try
+            {
+                await handlerAsync(options);
+            }
+            catch (Exception e)
+            {
+                _exceptionHandler(e, parseResult);
+            }
+        });
         return cmd;
     }
 }

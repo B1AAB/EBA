@@ -8,6 +8,8 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
 
     public long SpentHeight { get; }
 
+    public decimal? FiatValue { get; } = null;
+
     public long CreationHeight => BlockHeight;
 
     public T2SEdge(
@@ -16,6 +18,7 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
         uint timestamp,
         long creationHeight,
         Output output,
+        decimal? fiatValue = null,
         long spentHeight = long.MaxValue)
         : base(
             source: source,
@@ -27,6 +30,7 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
     {
         Vout = output.N;
         SpentHeight = spentHeight;
+        FiatValue = fiatValue;
     }
 
     public T2SEdge(
