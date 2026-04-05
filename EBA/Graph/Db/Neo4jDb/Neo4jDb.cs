@@ -281,6 +281,20 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         blockNode.BlockMetadata.RealizedCap = realizedCap;
     }
 
+    private async Task<long> GetEdgeTypeCount(RelationType relationType, CancellationToken ct)
+    {
+        await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+
+        long edgeCount = await session.ExecuteReadAsync(async tx =>
+        {
+            var cursor = await tx.RunAsync($"MATCH ()-[r:{relationType}]->() RETURN count(r)");
+            var record = await cursor.SingleAsync();
+            return record[0].As<long>();
+        });
+
+        return edgeCount;
+    }
+
     // TODO: this method should not be here;
     // it is specific to the Bitcoin graph model
     // and this class should be kept agnostic to the graph model.
@@ -289,8 +303,6 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         Dictionary<long, OHLCV> ohlcv,
         CancellationToken ct)
     {
-        // TODO: add more logging info here
-
         if (blockNodes.Count == 0)
             return;
 
@@ -304,8 +316,12 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         await VerifyConnectivityAsync(ct);
         await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
 
+        var edgeCounter = 0;
+        var totalEdgeCount = await GetEdgeTypeCount(T2SEdge.Kind.Relation, ct);
         var processedEdgeCount = 0;
         var skippedEdgeCounter = 0;
+
+        _logger.LogInformation("Starting iteration through {b} edges.", T2SEdge.Kind.Relation);
 
         await session.ExecuteReadAsync(async tx =>
         {
@@ -325,6 +341,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             while (await cursor.FetchAsync())
             {
                 ct.ThrowIfCancellationRequested();
+                edgeCounter++;
 
                 var creationHeight = cursor.Current["creationHeight"].As<long>();
                 var spentHeight = cursor.Current["spentHeight"].As<long>();
@@ -333,24 +350,28 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 if (!ohlcv.TryGetValue(creationHeight, out var blockOHLCV))
                 {
                     skippedEdgeCounter++;
-                    continue;
+                }
+                else
+                {
+                    var fiatValue = blockOHLCV.GetFiatValue(value);
+                    foreach (var h in sortedHeights.GetViewBetween(creationHeight, spentHeight))
+                        blockNodes[h].BlockMetadata.RealizedCap += fiatValue;
+
+                    processedEdgeCount++;
                 }
 
-                var fiatValue = blockOHLCV.GetFiatValue(value);
-                foreach (var h in sortedHeights.GetViewBetween(creationHeight, spentHeight))
-                    blockNodes[h].BlockMetadata.RealizedCap += fiatValue;
-
-                // TODO: also log the number of skipped edges
-
-                processedEdgeCount++;
-                if (processedEdgeCount % 10000 == 0)
-                    _logger.LogInformation("Processed {count:n0} edges for realized cap calculation.", processedEdgeCount);
+                if (edgeCounter % 100000 == 0)
+                {
+                    _logger.LogInformation(
+                        "Traversed {e:n0} / {t:n0} edges. Processed {p:n0} edges and skipped {s:n0} edges due to missing related OHLCV data.",
+                        edgeCounter, totalEdgeCount, processedEdgeCount, skippedEdgeCounter);
+                }
             }
         });
 
         _logger.LogInformation(
-            "Processed {p:n0} edges and skipped {s:n0} edges due to missing OHLCV data at their creation height.",
-            processedEdgeCount, skippedEdgeCounter);
+            "Traversed {e:n0} / {t:n0} edges. Processed {p:n0} edges and skipped {s:n0} edges due to missing related OHLCV data.",
+            edgeCounter, totalEdgeCount, processedEdgeCount, skippedEdgeCounter);
     }
 
     // TODO: this method should not be here;
