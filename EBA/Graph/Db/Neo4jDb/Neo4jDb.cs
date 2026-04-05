@@ -71,10 +71,10 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     }
 
     public async Task<List<IRecord>> GetNodesAsync(
-        NodeKind label, 
-        CancellationToken ct, 
+        NodeKind label,
+        CancellationToken ct,
         string nodeVariable = "n",
-        int? count=null)
+        int? count = null)
     {
         await VerifyConnectivityAsync(ct);
 
@@ -94,11 +94,11 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     }
 
     public async Task<List<IRecord>> GetNeighborsAsync(
-        NodeKind rootNodeLabel, 
+        NodeKind rootNodeLabel,
         string rootNodeIdProperty,
         string rootNodeId,
-        int queryLimit, 
-        int maxLevel, 
+        int queryLimit,
+        int maxLevel,
         bool useBFS,
         CancellationToken ct,
         string relationshipFilter = "")
@@ -114,7 +114,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         if (useBFS)
             qBuilder.Append($"bfs: true ");
-        else 
+        else
             qBuilder.Append($"bfs: false ");
 
         //qBuilder.Append($", labelFilter: '{labelFilters}'");
@@ -176,7 +176,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         await _strategyFactory.SerializeSchemasAsync(_options.WorkingDir, ct);
     }
 
-    public async Task SerializeAsync(T g,CancellationToken ct)
+    public async Task SerializeAsync(T g, CancellationToken ct)
     {
         var nodes = g.GetNodes();
         var edges = g.GetEdges();
@@ -188,7 +188,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         {
             batchInfo.Update(nodeGroup.Key, nodeGroup.Value.Count);
             var _strategy = _strategyFactory.GetStrategy(nodeGroup.Key);
-            if (_strategy == null) 
+            if (_strategy == null)
                 continue;
 
             tasks.Add(_strategy.ToCsvAsync(nodeGroup.Value, batchInfo.GetFilename(nodeGroup.Key)));
@@ -456,9 +456,9 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         _logger.LogInformation(
             "Committing batch update of {p} property of {e} edges: " +
             "Batch {i} containing {c:n0} edges.",
-            nameof(T2SEdge.SpentHeight), 
-            T2SEdge.Kind.Relation, 
-            batchIndex, 
+            nameof(T2SEdge.SpentHeight),
+            T2SEdge.Kind.Relation,
+            batchIndex,
             batch.Count);
 
         await using var writeSession = _driver.AsyncSession(
@@ -479,12 +479,12 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         _logger.LogInformation(
             "Committing batch update of {p} property of {e} edges: " +
             "Batch {i} containing {c:n0} edges succeeded. Processed {processed:n0}/{total:n0} edges, set {props:n0} properties.",
-            nameof(T2SEdge.SpentHeight), 
-            T2SEdge.Kind.Relation, 
-            batchIndex, 
-            batch.Count, 
-            processedEdgeCount, 
-            totalEdgesToProcess, 
+            nameof(T2SEdge.SpentHeight),
+            T2SEdge.Kind.Relation,
+            batchIndex,
+            batch.Count,
+            processedEdgeCount,
+            totalEdgesToProcess,
             summary.Counters.PropertiesSet);
     }
 
@@ -520,13 +520,11 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         var sampleProps = updates[0].Keys.Where(k => k != idProperty);
         var setClause = string.Join(
             ", ",
-            sampleProps.Select(k => $"n.`{k}` = row.`{k}`"));
+            sampleProps.Select(k => $"n.{k} = row.{k}"));
 
-        // using toString() on the id property to match the string-typed
-        // :ID column created by neo4j-admin import.
         var query =
             "UNWIND $batch AS row " +
-            $"MATCH (n:{label} {{`{idProperty}`: toString(row.`{idProperty}`)}}) " +
+            $"MATCH (n:{label} {{{idProperty}: row.{idProperty}}}) " +
             $"SET {setClause}";
 
         var batchIndex = 0;
@@ -544,14 +542,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 return await cursor.ConsumeAsync();
             });
 
-            var counters = summary.Counters;
-            if (counters.PropertiesSet == 0)
-                _logger.LogWarning("Batch {batch}: 0 properties set (MATCH may have found no nodes).",
-                    batchIndex);
-            else
-                _logger.LogInformation("Batch {batch}: set {props:n0} properties on nodes.",
-                    batchIndex, counters.PropertiesSet);
-
+            _logger.LogInformation("Finished batch {batch}; summary: {s}", batchIndex, summary.Counters);
             batchIndex++;
         }
 
