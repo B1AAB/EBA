@@ -21,7 +21,7 @@ internal class Cli
         Func<Options, Task> bitcoinMapMarketHandlerAsync,
         Func<Options, Task> bitcoinAddressStatsHandlerAsync,
         Func<Options, Task> bitcoinImportCypherQueriesAsync,
-        Func<Options, Task> bitcoinFinalizeImportHandlerAsync,
+        Func<Options, Task> bitcoinPostProcessHandlerAsync,
         Func<Options, Task> bitcoinAugmentHandlerAsync,
         Action<Exception, ParseResult> exceptionHandler)
     {
@@ -90,7 +90,7 @@ internal class Cli
                 mapMarketHandlerAsync: bitcoinMapMarketHandlerAsync,
                 addressStatsHandlerAsync: bitcoinAddressStatsHandlerAsync,
                 importCypherQueriesAsync: bitcoinImportCypherQueriesAsync,
-                finalizeImportHandlerAsync: bitcoinFinalizeImportHandlerAsync,
+                postProcessHandlerAsync: bitcoinPostProcessHandlerAsync,
                 bitcoinAugmentHandlerAsync: bitcoinAugmentHandlerAsync)
         };
 
@@ -127,7 +127,7 @@ internal class Cli
         Func<Options, Task> mapMarketHandlerAsync,
         Func<Options, Task> addressStatsHandlerAsync,
         Func<Options, Task> importCypherQueriesAsync,
-        Func<Options, Task> finalizeImportHandlerAsync,
+        Func<Options, Task> postProcessHandlerAsync,
         Func<Options, Task> bitcoinAugmentHandlerAsync)
     {
         var cmd = new Command(
@@ -141,7 +141,7 @@ internal class Cli
             GetBitcoinMapMarketCmd(defaultOptions, mapMarketHandlerAsync),
             GetBitcoinSampleCmd(defaultOptions, sampleHandlerAsync),
             GetBitcoinAddressStatsCmd(defaultOptions, addressStatsHandlerAsync),
-            GetFinalizeImportCmd(defaultOptions, finalizeImportHandlerAsync),
+            GetPostProcessCmd(defaultOptions, postProcessHandlerAsync),
             GetBitcoinAugmentCmd(defaultOptions, bitcoinAugmentHandlerAsync)
         };
         return cmd;
@@ -452,9 +452,9 @@ internal class Cli
         return cmd;
     }
 
-    private Command GetFinalizeImportCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    private Command GetPostProcessCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
-        var cmd = new Command(name: "finalize-import");
+        var cmd = new Command(name: "post-process");
         cmd.SetAction(async (parseResult, cancellationToken) =>
         {
             var options = OptionsBinder.Build(

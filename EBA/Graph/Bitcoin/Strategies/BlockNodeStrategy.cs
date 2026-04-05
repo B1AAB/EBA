@@ -80,6 +80,9 @@ public class BlockNodeStrategy(bool serializeCompressed)
         .. PropertyMappingFactory.DictionaryToColumns<BlockNode>(
             nameof(BlockNode.TripletTypeValueSum), Schema.EdgeKinds, n => n.TripletTypeValueSum),
 
+        new(nameof(v.TotalSupply), FieldType.Long, n => n.BlockMetadata.TotalSupply),
+        new(nameof(v.TotalSupplyNominal), FieldType.Long, n => n.BlockMetadata.TotalSupplyNominal),
+
         .. _economicMappings,
 
         new(":LABEL", FieldType.String, _ => BlockNode.Kind, _ => ":LABEL"),
@@ -145,8 +148,11 @@ public class BlockNodeStrategy(bool serializeCompressed)
             InputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Inputs", props),
             OutputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Outputs", props),
 
+            TotalSupply = _mappingsDict[nameof(v.TotalSupply)].Deserialize<long>(props),
+            TotalSupplyNominal = _mappingsDict[nameof(v.TotalSupplyNominal)].Deserialize<long>(props),
+
             RealizedCap = (decimal?)_mappingsDict[nameof(v.RealizedCap)].Deserialize<double?>(props),
-            Ohlcv = PropertyMappingFactory.ReadOHLCV(props),
+            Ohlcv = PropertyMappingFactory.ReadOHLCV(props)
         };
 
         var blockNode = new BlockNode(

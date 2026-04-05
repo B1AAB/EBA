@@ -2,6 +2,9 @@
 
 namespace EBA.Graph.Db.Neo4jDb;
 
+// TODO: all the property name setting here should not nameof(), 
+// instead they should use the property mapping in the strategies.
+
 public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 {
     private readonly Options _options;
@@ -317,7 +320,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
 
         var edgeCounter = 0;
-        var totalEdgeCount = await GetEdgeTypeCount(T2SEdge.Kind.Relation, ct);
+        double totalEdgeCount = await GetEdgeTypeCount(T2SEdge.Kind.Relation, ct);
         var processedEdgeCount = 0;
         var skippedEdgeCounter = 0;
 
@@ -388,13 +391,13 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         var batch = new List<Dictionary<string, object>>();
         var batchIndex = 0;
         long totalProcessed = 0;
+        var totalEdgesToProcess = await GetEdgeTypeCount(S2TEdge.Kind.Relation, ct);
+        long processedEdgeCount = 0;
 
         await using var readSession = _driver.AsyncSession(
             x => x.WithDefaultAccessMode(AccessMode.Read));
 
         var readTx = await readSession.BeginTransactionAsync();
-
-        // TODO: this should also report the total number of edges reported. 
 
         var cursor = await readTx.RunAsync(
             $"MATCH ()-[r:{S2TEdge.Kind.Relation}]->() " +
@@ -418,9 +421,11 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 ["height"] = height
             });
 
+            processedEdgeCount++;
+
             if (batch.Count >= _options.Neo4j.MaxEntitiesPerBatch)
             {
-                await CommitUTxOSpentHeight(batch, batchIndex++, ct);
+                await CommitUTxOSpentHeight(batch, totalEdgesToProcess, processedEdgeCount, batchIndex++, ct);
                 totalProcessed += batch.Count;
                 batch = [];
             }
@@ -428,27 +433,33 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         if (batch.Count > 0)
         {
-            await CommitUTxOSpentHeight(batch, batchIndex++, ct);
+            await CommitUTxOSpentHeight(batch, totalEdgesToProcess, processedEdgeCount, batchIndex++, ct);
             totalProcessed += batch.Count;
         }
 
         await readTx.CommitAsync();
 
         _logger.LogInformation(
-            "Completed setting SpentHeight on Credits for {total:n0} Redeems edges.",
-            totalProcessed);
+            "Completed setting {p} on {e} for {total:n0} edges.",
+            nameof(T2SEdge.SpentHeight), T2SEdge.Kind.Relation, totalProcessed);
     }
 
     private async Task CommitUTxOSpentHeight(
         IReadOnlyList<Dictionary<string, object>> batch,
+        long totalEdgesToProcess,
+        long processedEdgeCount,
         int batchIndex,
         CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
         _logger.LogInformation(
-            "Committing batch {batch} with {count:n0} records.",
-            batchIndex, batch.Count);
+            "Committing batch update of {p} property of {e} edges: " +
+            "Batch {i} containing {c:n0} edges.",
+            nameof(T2SEdge.SpentHeight), 
+            T2SEdge.Kind.Relation, 
+            batchIndex, 
+            batch.Count);
 
         await using var writeSession = _driver.AsyncSession(
             x => x.WithDefaultAccessMode(AccessMode.Write));
@@ -458,16 +469,23 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             var cursor = await x.RunAsync(
                 $"UNWIND $batch AS row " +
                 $"MATCH (t:{TxNode.Kind} {{{nameof(TxNode.Txid)}: row.txid}})-[c:{T2SEdge.Kind.Relation}]->() " +
-                $"WHERE c.{nameof(S2TEdge.Vout)} = row.vout " +
-                $"SET c.{nameof(S2TEdge.SpentHeight)} = row.height",
+                $"WHERE c.{nameof(T2SEdge.Vout)} = row.vout " +
+                $"SET c.{nameof(T2SEdge.SpentHeight)} = row.height",
                 new Dictionary<string, object> { ["batch"] = batch });
 
             return await cursor.ConsumeAsync();
         });
 
         _logger.LogInformation(
-            "Committing batch {batch} finished; set {props:n0} properties on {relation} edges.",
-            batchIndex, summary.Counters.PropertiesSet, T2SEdge.Kind.Relation);
+            "Committing batch update of {p} property of {e} edges: " +
+            "Batch {i} containing {c:n0} edges succeeded. Processed {processed:n0}/{total:n0} edges, set {props:n0} properties.",
+            nameof(T2SEdge.SpentHeight), 
+            T2SEdge.Kind.Relation, 
+            batchIndex, 
+            batch.Count, 
+            processedEdgeCount, 
+            totalEdgesToProcess, 
+            summary.Counters.PropertiesSet);
     }
 
     public void Dispose()
