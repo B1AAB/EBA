@@ -520,11 +520,11 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         var sampleProps = updates[0].Keys.Where(k => k != idProperty);
         var setClause = string.Join(
             ", ",
-            sampleProps.Select(k => $"n.{k} = row.{k}"));
+            sampleProps.Select(k => $"n.`{k}` = row.`{k}`"));
 
         var query =
             "UNWIND $batch AS row " +
-            $"MATCH (n:{label} {{{idProperty}: row.{idProperty}}}) " +
+            $"MATCH (n:{label} {{`{idProperty}`: row.`{idProperty}`}}) " +
             $"SET {setClause}";
 
         var batchIndex = 0;
