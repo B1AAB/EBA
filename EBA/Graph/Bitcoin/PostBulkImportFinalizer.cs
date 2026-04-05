@@ -48,12 +48,12 @@ public class PostBulkImportFinalizer(
 
     private async Task SetSupplyAmount(CancellationToken ct)
     {
-        _logger.LogInformation("Setting total supply feature.");
+        _logger.LogInformation("Setting {f} property.", nameof(BlockMetadata.TotalSupply));
 
-        _logger.LogInformation("Fetching blocks from graph database.");
+        _logger.LogInformation("Fetching {n} nodes from graph database.", BlockNode.Kind);
         var nodeVar = "n";
         var records = await _graphDb.GetNodesAsync(NodeKind.Block, CancellationToken.None, nodeVariable: nodeVar);
-        _logger.LogInformation("Retrieved {count:n0} records from graph database. Creating block nodes.", records.Count);
+        _logger.LogInformation("Fetching {n} nodes from graph database succeeded, retrieved {count:n0} nodes.", BlockNode.Kind, records.Count);
 
         NodeFactory.TryCreate<BlockNode>(records, out var blockNodes, nodeVar);
 
@@ -95,14 +95,15 @@ public class PostBulkImportFinalizer(
             [nameof(BlockMetadata.TotalSupplyNominal)] = b.BlockMetadata.TotalSupplyNominal,
         }).ToList();
 
-        _logger.LogInformation("Pushing {count:n0} block updates to graph database.", updates.Count);
+        _logger.LogInformation("Pushing {count:n0} {n} node updates to graph database.", updates.Count, BlockNode.Kind);
         await _graphDb.BulkUpdateNodePropertiesAsync(
             NodeKind.Block,
             nameof(BlockMetadata.Height),
             updates,
             ct);
-        _logger.LogInformation("Completed pushing block updates.");
 
-        _logger.LogInformation("Completed setting total supply feature.");
+        _logger.LogInformation(
+            "Successfully updated {f} property of {n} nodes.", 
+            nameof(BlockMetadata.TotalSupply), BlockNode.Kind);
     }
 }
