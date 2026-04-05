@@ -44,44 +44,13 @@ To improve query performance
 we define database constraints, such as uniqueness constraints, 
 which index commonly used properties.
 
-
-EBA generates a `schema.cypher` file containing the queries required 
-to create these constraints and indexes. 
-EBA creates this file in the same directory where the Bitcoin graph was serialized. 
-
-
-The Cypher queries in the `schema.cypher` file are as follows:
-
-```javascript
-// EBA Bitcoin Graph Schema
-
-// Uniqueness constraint for Script.Address property.
-CREATE CONSTRAINT Script_Address_Unique 
-IF NOT EXISTS 
-FOR (v:Script) REQUIRE v.Address IS UNIQUE;
-
-// Uniqueness constraint for Tx.Txid property.
-CREATE CONSTRAINT Tx_Txid_Unique 
-IF NOT EXISTS 
-FOR (v:Tx) REQUIRE v.Txid IS UNIQUE;
-
-// Uniqueness constraint for Block.Height property.
-CREATE CONSTRAINT Block_Height_Unique 
-IF NOT EXISTS 
-FOR (v:Block) REQUIRE v.Height IS UNIQUE;
-```
-
-
 Take the following steps to apply these constraints to your database:
+
 
 1.  Start the Neo4j database service.
 
-2.  Execute the schema.cypher file using cypher-shell:
+2.  Run the `post-process` subcommand.
 
     ```Shell
-    cypher-shell -u neo4j -p password -f schema.cypher
+    .\eba.exe bitcoin post-process
     ```
-
-    Please refer to 
-    [this documentation](https://neo4j.com/docs/operations-manual/current/cypher-shell/) 
-    for details on locating and running `cypher-shell` depending on your Neo4j deployment.
