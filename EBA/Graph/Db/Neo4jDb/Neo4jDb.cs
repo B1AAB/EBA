@@ -289,6 +289,8 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         Dictionary<long, OHLCV> ohlcv,
         CancellationToken ct)
     {
+        // TODO: add more logging info here
+
         if (blockNodes.Count == 0)
             return;
 
@@ -339,7 +341,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                     blockNodes[h].BlockMetadata.RealizedCap += fiatValue;
 
                 processedEdgeCount++;
-                if (processedEdgeCount % 1000 == 0)
+                if (processedEdgeCount % 10000 == 0)
                     _logger.LogInformation("Processed {count:n0} edges for realized cap calculation.", processedEdgeCount);
             }
         });
@@ -368,6 +370,8 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             x => x.WithDefaultAccessMode(AccessMode.Read));
 
         var readTx = await readSession.BeginTransactionAsync();
+
+        // TODO: this should also report the total number of edges reported. 
 
         var cursor = await readTx.RunAsync(
             $"MATCH ()-[r:{S2TEdge.Kind.Relation}]->() " +
@@ -475,13 +479,13 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         var sampleProps = updates[0].Keys.Where(k => k != idProperty);
         var setClause = string.Join(
             ", ",
-            sampleProps.Select(k => $"n.{k} = row.{k}"));
+            sampleProps.Select(k => $"n.`{k}` = row.`{k}`"));
 
         // using toString() on the id property to match the string-typed
         // :ID column created by neo4j-admin import.
         var query =
             "UNWIND $batch AS row " +
-            $"MATCH (n:{label} {{{idProperty}: toString(row.{idProperty})}}) " +
+            $"MATCH (n:{label} {{`{idProperty}`: toString(row.`{idProperty}`)}}) " +
             $"SET {setClause}";
 
         var batchIndex = 0;

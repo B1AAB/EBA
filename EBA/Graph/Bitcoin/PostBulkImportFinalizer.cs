@@ -12,7 +12,7 @@ public class PostBulkImportFinalizer(
     private readonly ILogger<BitcoinGraphAgent> _logger = logger;
 
     public async Task Finalize(CancellationToken ct)
-    {
+    {        
         await AddSchemaAndSeeding(ct);
 
         await SetSupplyAmount(ct);
@@ -22,6 +22,8 @@ public class PostBulkImportFinalizer(
 
     private async Task AddSchemaAndSeeding(CancellationToken ct)
     {
+        _logger.LogInformation("Setting schema and seeding data.");
+
         var schemas = new List<string>();
         var seedingCommands = new List<string>();
         foreach (var nodeStrategy in _graphDb.StrategyFactory.NodeStrategies)
@@ -40,10 +42,14 @@ public class PostBulkImportFinalizer(
 
         _logger.LogInformation("Executing {count:n0} seeding commands.", seedingCommands.Count);
         await _graphDb.ExecuteWriteQueryAsync(seedingCommands, ct);
+
+        _logger.LogInformation("Completed setting schema and seeding data.");
     }
 
     private async Task SetSupplyAmount(CancellationToken ct)
     {
+        _logger.LogInformation("Setting total supply feature.");
+
         _logger.LogInformation("Fetching blocks from graph database.");
         var nodeVar = "n";
         var records = await _graphDb.GetNodesAsync(NodeKind.Block, CancellationToken.None, nodeVariable: nodeVar);
@@ -96,5 +102,7 @@ public class PostBulkImportFinalizer(
             updates,
             ct);
         _logger.LogInformation("Completed pushing block updates.");
+
+        _logger.LogInformation("Completed setting total supply feature.");
     }
 }
