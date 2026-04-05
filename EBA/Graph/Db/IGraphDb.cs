@@ -53,9 +53,15 @@ public interface IGraphDb<T> : IDisposable where T : GraphBase
         string nodeVariable = "n",
         int? count = null);
 
-    public Task SetUTxOSpentHeight(CancellationToken ct);
+    public Task SetUTxOSpentHeight(
+        CancellationToken ct);
 
-    public Task ExecuteWriteQueryAsync(List<string> schemas, CancellationToken ct);
+    public Task ExecuteWriteQueryAsync(
+        List<string> schemas, 
+        CancellationToken ct);
 
-    public Task SetRealizedCap(SortedDictionary<long, BlockNode> blockNodes, Dictionary<long, OHLCV> ohlcv, CancellationToken ct);
+    public Task SetRealizedCap(
+        SortedDictionary<long, BlockNode> blockNodes, 
+        Dictionary<long, OHLCV> ohlcv, 
+        CancellationToken ct);
 }

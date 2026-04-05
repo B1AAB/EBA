@@ -107,7 +107,7 @@ public class BlockMetadata
     {
         get
         {
-            if (RealizedCap == null || MarketCap == null)
+            if (RealizedCap == null || MarketCap == null || MarketCap == 0)
                 return null;
 
             return (MarketCap - RealizedCap) / MarketCap;
