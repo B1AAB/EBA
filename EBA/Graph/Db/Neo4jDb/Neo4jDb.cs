@@ -340,6 +340,8 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 foreach (var h in sortedHeights.GetViewBetween(creationHeight, spentHeight))
                     blockNodes[h].BlockMetadata.RealizedCap += fiatValue;
 
+                // TODO: also log the number of skipped edges
+
                 processedEdgeCount++;
                 if (processedEdgeCount % 10000 == 0)
                     _logger.LogInformation("Processed {count:n0} edges for realized cap calculation.", processedEdgeCount);

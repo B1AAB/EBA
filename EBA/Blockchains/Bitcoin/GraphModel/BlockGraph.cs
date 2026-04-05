@@ -76,7 +76,6 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         var v = _coinbaseTxGraph.TxNode;
         var t = Timestamp;
         var h = Block.Height;
-        BitcoinContext.OHLCVCache.TryGetValue(h, out var ohlcv);
 
         Parallel.ForEach(_txGraphsQueue,
             #if (DEBUG)
@@ -87,7 +86,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
             if (ct.IsCancellationRequested)
             { state.Stop(); return; }
 
-            AddTxGraphToBlockGraph(txGraph, ohlcv);
+            AddTxGraphToBlockGraph(txGraph);
 
             if (ct.IsCancellationRequested)
             { state.Stop(); return; }
@@ -99,7 +98,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         foreach (var u in _coinbaseTxGraph.Outputs)
         {
             TryGetOrAddEdge(
-                new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, u, ohlcv?.GetFiatValue(u.Value)),
+                new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, u),
                 out T2SEdge _);
 
             Block.ProfileCreatedOutput(u);
@@ -115,7 +114,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         BlockNode.TripletTypeValueSum = _edgeLabelValueSum.ToDictionary(x => x.Key, x => x.Value);
     }
 
-    private void AddTxGraphToBlockGraph(TxGraph txGraph, OHLCV? ohlcv)
+    private void AddTxGraphToBlockGraph(TxGraph txGraph)
     {
         var v = txGraph.TxNode;
         var h = Block.Height;
@@ -136,7 +135,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         foreach (var u in txGraph.Outputs)
         {
             TryGetOrAddEdge(
-                new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, u, ohlcv?.GetFiatValue(u.Value)), 
+                new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, u), 
                 out T2SEdge _);
 
             Block.ProfileCreatedOutput(u);
