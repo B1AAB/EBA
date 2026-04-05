@@ -1,5 +1,4 @@
 ﻿using EBA.Blockchains.Bitcoin.Utilities;
-using EBA.Utilities;
 
 namespace EBA.Blockchains.Bitcoin;
 
@@ -37,30 +36,6 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         {
             _logger.LogInformation("No blocks to process.");
             return;
-        }
-
-        if (options.Bitcoin.Traverse.BlockMarketMappingFilename != null)
-        {
-            _logger.LogInformation(
-                "Parsing market mapping from file {f}.",
-                options.Bitcoin.Traverse.BlockMarketMappingFilename);
-
-            if (OHLCV.TryParseFile(options.Bitcoin.Traverse.BlockMarketMappingFilename, out var mappings))
-            {
-                BitcoinContext.OHLCVCache = new ConcurrentDictionary<long, OHLCV>(mappings);
-
-                _logger.LogInformation(
-                    "Read market mapping for {n:n0} blocks from file {f}.",
-                    new Dictionary<long, OHLCV>().Count,
-                    options.Bitcoin.Traverse.BlockMarketMappingFilename);
-            }
-            else
-            {
-                _logger.LogWarning(
-                    "Failed to read market mapping from file {f}. " +
-                    "Proceeding without market mapping.",
-                    options.Bitcoin.Traverse.BlockMarketMappingFilename);
-            }
         }
 
         cT.ThrowIfCancellationRequested();

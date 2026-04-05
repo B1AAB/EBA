@@ -58,8 +58,7 @@ internal class OptionsBinder
             MaxBlocksInBuffer = GetValue(defs.Bitcoin.Traverse.MaxBlocksInBuffer, maxBlocksInBufferOption, c),
             TxoFilename = GetValue(defs.Bitcoin.Traverse.TxoFilename, txoFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
             TrackTxo = GetValue(defs.Bitcoin.Traverse.TrackTxo, trackTxoOption, c),
-            SkipGraphSerialization = GetValue(defs.Bitcoin.Traverse.SkipGraphSerialization, skipGraphSerializationOption, c),
-            BlockMarketMappingFilename = GetValue(defs.Bitcoin.Traverse.BlockMarketMappingFilename, blockMarketMappingOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
+            SkipGraphSerialization = GetValue(defs.Bitcoin.Traverse.SkipGraphSerialization, skipGraphSerializationOption, c)
         };
 
         var traversalAlgorithm = GetValue(defs.Bitcoin.GraphSample.TraversalAlgorithm, graphSampleMethodOption, c);

@@ -85,8 +85,6 @@ public class BitcoinTraverseOptions(long timestamp)
 
     public bool SkipGraphSerialization { init; get; } = false;
 
-    public string? BlockMarketMappingFilename { init; get; } = null;
-
     public ResilienceStrategyOptions HttpClientResilienceStrategy { init; get; } = new();
 
     public ResilienceStrategyOptions BitcoinAgentResilienceStrategy { init; get; } = new()
