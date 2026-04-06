@@ -34,7 +34,7 @@ public static class PropertyMappingExtensions
     {
         var dict = new Dictionary<string, object?>(mappings.Length);
         foreach (var m in mappings)
-            dict[m.Property.Name] = m.SerializeValue(source);
+            dict[m.Property.Name] = m.GetValue(source);
         return dict;
     }
 }
