@@ -139,22 +139,19 @@ meaning it does not support incremental updates to an existing graph.
     ```shell
     sudo -u neo4j HEAP_SIZE=4G neo4j-admin database import full \
         --overwrite-destination neo4j \
-        --nodes="$GDIR/BitcoinCoinbase.tsv.gz" \
-        --nodes="$GDIR/BitcoinGraph_header.tsv.gz,$GDIR/0_BitcoinGraph.tsv.gz" \
-        --nodes="$GDIR/BitcoinScriptNode_header.tsv.gz,$GDIR/unique_BitcoinScriptNode.tsv.gz" \
-        --nodes="$GDIR/BitcoinTxNode_header.tsv.gz,$GDIR/unique_BitcoinTxNode.tsv.gz" \
-        --relationships="$GDIR/BitcoinS2S_header.tsv.gz,$GDIR/.*BitcoinS2S.tsv.gz" \
-        --relationships="$GDIR/BitcoinT2T_header.tsv.gz,$GDIR/.*BitcoinT2T.tsv.gz" \
-        --relationships="$GDIR/BitcoinC2T_header.tsv.gz,$GDIR/.*BitcoinC2T.tsv.gz" \
-        --relationships="$GDIR/BitcoinC2S_header.tsv.gz,$GDIR/.*BitcoinC2S.tsv.gz" \
-        --relationships="$GDIR/BitcoinB2T_header.tsv.gz,$GDIR/.*BitcoinB2T.tsv.gz" \
-        --relationships="$GDIR/BitcoinB2S_header.tsv.gz,$GDIR/.*BitcoinB2S.tsv.gz" \
-        --relationships="$GDIR/BitcoinS2B_header.tsv.gz,$GDIR/.*BitcoinS2B.tsv.gz" \
-        --relationships="$GDIR/BitcoinT2B_header.tsv.gz,$GDIR/.*BitcoinT2B.tsv.gz" \
+        --nodes="$GDIR/Coinbase.csv.gz" \
+        --nodes="$GDIR/header_nodes_Block.csv.gz.gz,$GDIR/[0-9].*_nodes_Block.csv.gz" \
+        --nodes="$GDIR/header_nodes_Script.csv.gz,$GDIR/unique_nodes_Script.csv.gz" \
+        --nodes="$GDIR/header_nodes_Tx.csv.gz,$GDIR/unique_nodes_Tx.tsv.gz" \
+        --relationships="$GDIR/header_edges_Block_Confirms_Tx.csv.gz,$GDIR/[0-9].*_edges_Block_Confirms_Tx.csv.gz" \
+        --relationships="$GDIR/header_edges_Coinbase_Mints_Tx.csv.gz,$GDIR/[0-9].*_edges_Coinbase_Mints_Tx.csv.gz" \
+        --relationships="$GDIR/header_edges_Tx_Credits_Script.csv.gz,$GDIR/[0-9].*_edges_Tx_Credits_Script.csv.gz" \
+        --relationships="$GDIR/header_edges_Script_Redeems_Tx.csv.gz,$GDIR/[0-9].*_edges_Script_Redeems_Tx.csv.gz" \
+        --relationships="$GDIR/header_edges_Tx_Fee_Tx.csv.gz,$GDIR/[0-9].*_edges_Tx_Fee_Tx.csv.gz" \
+        --relationships="$GDIR/header_edges_Tx_Transfers_Tx.csv.gz,$GDIR/[0-9].*_edges_Tx_Transfers_Tx.csv.gz" \
         --delimiter="\t" \
         --array-delimiter=";" \
-        --verbose \
-        --skip-duplicate-nodes
+        --verbose
     ```
 
 
