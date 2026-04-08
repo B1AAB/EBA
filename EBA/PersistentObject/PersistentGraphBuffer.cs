@@ -2,7 +2,7 @@
 
 namespace EBA.PersistentObject;
 
-public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposable
+public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposable, IAsyncDisposable
 {
     private readonly Graph.Bitcoin.BitcoinGraphAgent? _graphAgent;
     private readonly ILogger<PersistentGraphBuffer> _logger;
@@ -112,5 +112,20 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 
             _disposed = true;
         }
+    }
+
+    public new async ValueTask DisposeAsync()
+    {
+        if (!_disposed)
+        {
+            base.Dispose(true);
+
+            if (_graphAgent is IAsyncDisposable asyncDisposable)
+                await asyncDisposable.DisposeAsync();
+
+            _disposed = true;
+        }
+
+        GC.SuppressFinalize(this);
     }
 }

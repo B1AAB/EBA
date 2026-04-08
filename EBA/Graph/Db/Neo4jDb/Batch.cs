@@ -8,6 +8,7 @@ public class Batch
     public string DefaultDirectory { get; }
     private readonly bool _compressOutput;
 
+    public ReadOnlyDictionary<string, TypeInfo> TypesInfo => new(_typesInfo);
     private readonly Dictionary<string, TypeInfo> _typesInfo;
 
     [JsonConstructor]

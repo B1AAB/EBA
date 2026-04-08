@@ -206,7 +206,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         // TODO: pass the bitcoin option to the following method instead of passing null values depending on the set options.
         // TODO: refactor the following so that only options is passed to the buffer
 
-        using var gBuffer = new PersistentGraphBuffer(
+        await using var gBuffer = new PersistentGraphBuffer(
             graphAgent: _host.Services.GetRequiredService<Graph.Bitcoin.BitcoinGraphAgent>(),
             logger: _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),
             pTxoLifeCyccleLogger: options.Bitcoin.Traverse.TrackTxo ?_host.Services.GetRequiredService<ILogger<PersistentTxoLifeCycleBuffer>>() : null,
