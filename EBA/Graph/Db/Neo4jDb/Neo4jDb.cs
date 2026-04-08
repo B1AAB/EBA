@@ -235,6 +235,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         Dispose(true);
         GC.SuppressFinalize(this);
     }
+
     protected virtual void Dispose(bool disposing)
     {
         if (!_disposed)
@@ -242,9 +243,25 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             if (disposing)
             {
                 _strategyFactory.Dispose();
-                SerializeBatchesAsync().Wait(); // TODO: this need to change, use AsyncDisposable 
             }
 
+            _disposed = true;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore().ConfigureAwait(false);
+        Dispose(false);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual async ValueTask DisposeAsyncCore()
+    {
+        if (!_disposed)
+        {
+            _strategyFactory.Dispose();
+            await SerializeBatchesAsync().ConfigureAwait(false);
             _disposed = true;
         }
     }
