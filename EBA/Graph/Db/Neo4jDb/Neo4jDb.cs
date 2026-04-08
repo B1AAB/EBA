@@ -220,7 +220,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
     private async Task SerializeBatchesAsync()
     {
-        var json = JsonSerializer.Serialize(_batches, _options.JsonSerializationOptions);
+        var json = JsonSerializer.Serialize(_batches, Options.JsonSerializationOptions);
         await File.WriteAllTextAsync(_options.Neo4j.BatchesFilename, json);
     }
 

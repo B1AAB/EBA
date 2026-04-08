@@ -19,7 +19,7 @@ public class Batch
     {
         Name = name;
         DefaultDirectory = defaultDirectory;
-        _typesInfo = new Dictionary<string, TypeInfo>(typesInfo);
+        _typesInfo = [];
     }
 
     public Batch(

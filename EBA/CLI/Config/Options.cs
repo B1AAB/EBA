@@ -35,7 +35,7 @@ public class Options
     private static readonly long _timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
     private static readonly string _wd = Path.Join(Environment.CurrentDirectory, $"session_{_timestamp}");
 
-    public JsonSerializerOptions JsonSerializationOptions
+    public static JsonSerializerOptions JsonSerializationOptions
     {
         get
         {
