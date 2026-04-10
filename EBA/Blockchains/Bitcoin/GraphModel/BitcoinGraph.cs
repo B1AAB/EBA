@@ -1,6 +1,6 @@
 ﻿namespace EBA.Blockchains.Bitcoin.GraphModel;
 
-public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
+public class BitcoinGraph(string? id = null) : GraphBase(id), IEquatable<BitcoinGraph>
 {
     public bool Equals(BitcoinGraph? other)
     {

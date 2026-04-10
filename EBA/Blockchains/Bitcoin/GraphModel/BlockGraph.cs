@@ -36,7 +36,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 
     private readonly ILogger<BitcoinChainAgent> _logger;
 
-    public BlockGraph(Block block, ILogger<BitcoinChainAgent> logger) : base()
+    public BlockGraph(string id, Block block, ILogger<BitcoinChainAgent> logger) : base(id)
     {
         Block = block;
 

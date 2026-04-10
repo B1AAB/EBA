@@ -6,7 +6,7 @@ public class Batch
 {
     public string Name { get; }
     public string DefaultDirectory { get; }
-    private readonly bool _compressOutput;
+    public List<string> GraphIds { get; }
 
     public ReadOnlyDictionary<string, TypeInfo> TypesInfo => new(_typesInfo);
     private readonly Dictionary<string, TypeInfo> _typesInfo;
@@ -26,12 +26,11 @@ public class Batch
         string name,
         string defaultDirectory,
         IReadOnlyDictionary<NodeKind, StrategyBase> nodeStrategies,
-        IReadOnlyDictionary<EdgeKind, StrategyBase> edgeStrategies,
-        bool compresseOutput)
+        IReadOnlyDictionary<EdgeKind, StrategyBase> edgeStrategies)
     {
         Name = name;
         DefaultDirectory = defaultDirectory;
-        _compressOutput = compresseOutput;
+        GraphIds = [];
         var timestamp = Helpers.GetUnixTimeSeconds();
 
         _typesInfo = [];
@@ -52,6 +51,11 @@ public class Batch
                     Path.Join(DefaultDirectory, $"{timestamp}_{strategy.Value.DefaultFilename}"),
                     0));
         }
+    }
+
+    public void AddGraphId(string graphId)
+    {
+        GraphIds.Add(graphId);
     }
 
     public void Update(NodeKind kind, int count)

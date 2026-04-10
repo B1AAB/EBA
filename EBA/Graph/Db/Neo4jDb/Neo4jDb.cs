@@ -174,6 +174,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         var nodes = g.GetNodes();
         var edges = g.GetEdges();
         var batchInfo = await GetBatchAsync();
+        batchInfo.AddGraphId(g.Id);
 
         var tasks = new List<Task>();
 
@@ -210,8 +211,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 _batches.Count.ToString(),
                 _options.WorkingDir,
                 _strategyFactory.NodeStrategies,
-                _strategyFactory.EdgeStrategies,
-                _options.Neo4j.CompressOutput));
+                _strategyFactory.EdgeStrategies));
 
         await SerializeBatchesAsync();
 
