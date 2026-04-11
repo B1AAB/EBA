@@ -18,6 +18,7 @@ public class S2TEdgeStrategy(bool serializeCompressed)
         new(nameof(S2TEdge.Txid), FieldType.String, e => e.Txid),
         new(nameof(S2TEdge.Vout), FieldType.Int, e => e.Vout),
         new(nameof(S2TEdge.Generated), FieldType.Boolean, e => e.Generated),
+        new(nameof(S2TEdge.CreationHeight), FieldType.Long, e => e.CreationHeight),
         Factory.EdgeType<S2TEdge>(e => e.Relation)
     ];
 
@@ -46,7 +47,8 @@ public class S2TEdgeStrategy(bool serializeCompressed)
             value: _mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties),
             txid: _mappings.Get(nameof(S2TEdge.Txid)).Deserialize<string>(relationship.Properties),
             vout: _mappings.Get(nameof(S2TEdge.Vout)).Deserialize<int>(relationship.Properties),
-            generated: _mappings.Get(nameof(S2TEdge.Generated)).Deserialize<bool>(relationship.Properties)
+            generated: _mappings.Get(nameof(S2TEdge.Generated)).Deserialize<bool>(relationship.Properties),
+            creationHeight: _mappings.Get(nameof(S2TEdge.CreationHeight)).Deserialize<long>(relationship.Properties)
         );
     }
 

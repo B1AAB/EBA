@@ -86,13 +86,41 @@ public class BlockNodeStrategy(bool serializeCompressed)
         return _mappings.GetCsv(node);
     }
 
+    public static BlockNode Deserialize(string[] values)
+    {
+        var properties = new Dictionary<string, object>();
+
+        for (var i = 0; i < _mappings.Length; i++)
+            properties[_mappings[i].Property.Name] = values[i];
+
+        return Deserialize(props: properties);
+    }
+
+    // TODO: need a deserializer from string that returns only a given property,
+    // so avoids building the whole object when only a few properties are needed
+    // (e.g., for filtering in queries).
+
     public static BlockNode Deserialize(
         Neo4j.Driver.INode node,
         double? originalIndegree,
         double? originalOutdegree,
         double? hopsFromRoot)
     {
-        var props = node.Properties;
+        return Deserialize(
+            node.Properties, 
+            originalIndegree, 
+            originalOutdegree, 
+            hopsFromRoot, 
+            node.ElementId);
+    }
+
+    public static BlockNode Deserialize(
+        IReadOnlyDictionary<string, object> props, 
+        double? originalIndegree = null,
+        double? originalOutdegree = null,
+        double? hopsFromRoot= null, 
+        string? idInGraphDb = null)
+    {
         var blockMetadata = new BlockMetadata
         {
             Height = _mappingsDict[nameof(v.Height)].Deserialize<long>(props),
@@ -133,8 +161,8 @@ public class BlockNodeStrategy(bool serializeCompressed)
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
             outHopsFromRoot: hopsFromRoot,
-            idInGraphDb: node.ElementId);
-        
+            idInGraphDb: idInGraphDb);
+
         blockNode.TripletTypeCount = PropertyMappingFactory.ReadDictionary<uint>(
             nameof(blockNode.TripletTypeCount), Schema.EdgeKinds, props);
 
