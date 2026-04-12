@@ -7,7 +7,7 @@ public class B2BEdgeStrategy(bool serializeCompressed)
          $"edges_{B2BEdge.Kind.Source}_{B2BEdge.Kind.Relation}_{B2BEdge.Kind.Target}",
          serializeCompressed)
 {
-    private static readonly PropertyMapping<B2BEdge>[] _mappings =
+    public static readonly PropertyMapping<B2BEdge>[] Mappings =
     [
         Factory.SourceId<B2BEdge>(BlockNodeStrategy.IdSpace, e => e.BlockHeight),
         Factory.TargetId<B2BEdge>(BlockNodeStrategy.IdSpace, e => e.BlockHeight),
@@ -16,7 +16,7 @@ public class B2BEdgeStrategy(bool serializeCompressed)
 
     public override string GetCsvHeader()
     {
-        return _mappings.GetCsvHeader();
+        return Mappings.GetCsvHeader();
     }
 
     public override string GetCsvRow(IGraphElement edge)
@@ -26,7 +26,7 @@ public class B2BEdgeStrategy(bool serializeCompressed)
 
     public static string GetCsvRow(B2BEdge edge)
     {
-        return _mappings.GetCsv(edge);
+        return Mappings.GetCsv(edge);
     }
 
     public static B2BEdge Deserialize(BlockNode source, BlockNode target, IRelationship relationship)
@@ -37,5 +37,15 @@ public class B2BEdgeStrategy(bool serializeCompressed)
     public override string GetQuery(string filename)
     {
         throw new NotImplementedException();
+    }
+
+    public override string[] GetSeedingCommands()
+    {
+        return
+        [
+            $"MATCH (target:Block), (source:Block) " +
+            $"WHERE target.{nameof(B2BEdge.BlockHeight)} + 1 = source.{nameof(B2BEdge.BlockHeight)} " +
+            $"MERGE (target)-[:{RelationType.Follows}]->(source)"
+        ];
     }
 }

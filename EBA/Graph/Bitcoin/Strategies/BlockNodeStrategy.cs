@@ -10,7 +10,23 @@ public class BlockNodeStrategy(bool serializeCompressed)
     public static string IdSpace { get; } = BlockNode.Kind.ToString();
 
     private const Block v = null!;
-    private static readonly PropertyMapping<BlockNode>[] _mappings =
+
+    private static readonly PropertyMapping<BlockNode>[] _economicMappings =
+    [
+        new(nameof(v.RealizedCap), FieldType.Double, n => (double?)n.BlockMetadata.RealizedCap),
+        new(nameof(v.MarketCap), FieldType.Double, n => (double?)n.BlockMetadata.MarketCap),
+        new(nameof(v.NUPL), FieldType.Double, n => (double?)n.BlockMetadata.NUPL),
+
+        .. PropertyMappingFactory.OHLCV<BlockNode>(n => n.BlockMetadata.Ohlcv),
+    ];
+
+    public static PropertyMapping<BlockNode>[] EconomicMappings { get; } =
+    [
+        PropertyMappingFactory.Height<BlockNode>(n => n.BlockMetadata.Height),
+        .. _economicMappings,
+    ];
+
+    public static readonly PropertyMapping<BlockNode>[] Mappings =
     [
         new("", FieldType.String, x=>x.BlockMetadata.Height, p => p.GetIdFieldCsvHeader(IdSpace.ToString())),
         PropertyMappingFactory.Height<BlockNode>(n => n.BlockMetadata.Height),
@@ -64,16 +80,21 @@ public class BlockNodeStrategy(bool serializeCompressed)
         .. PropertyMappingFactory.DictionaryToColumns<BlockNode>(
             nameof(BlockNode.TripletTypeValueSum), Schema.EdgeKinds, n => n.TripletTypeValueSum),
 
+        new(nameof(v.TotalSupply), FieldType.Long, n => n.BlockMetadata.TotalSupply),
+        new(nameof(v.TotalSupplyNominal), FieldType.Long, n => n.BlockMetadata.TotalSupplyNominal),
+
+        .. _economicMappings,
+
         new(":LABEL", FieldType.String, _ => BlockNode.Kind, _ => ":LABEL"),
     ];
 
     private static readonly Dictionary<string, PropertyMapping<BlockNode>> _mappingsDict =
-        _mappings.ToDictionary(m => m.Property.Name, m => m);
+        Mappings.ToDictionary(m => m.Property.Name, m => m);
 
 
     public override string GetCsvHeader()
     {
-        return _mappings.GetCsvHeader();
+        return Mappings.GetCsvHeader();
     }
 
     public override string GetCsvRow(IGraphElement component)
@@ -83,7 +104,7 @@ public class BlockNodeStrategy(bool serializeCompressed)
 
     public static string GetCsv(BlockNode node)
     {
-        return _mappings.GetCsv(node);
+        return Mappings.GetCsv(node);
     }
 
     // TODO: need a deserializer from string that returns only a given property,
@@ -143,7 +164,13 @@ public class BlockNodeStrategy(bool serializeCompressed)
             InputScriptTypeCount = PropertyMappingFactory.ReadScriptTypeCounts("Inputs", props),
             OutputScriptTypeCount = PropertyMappingFactory.ReadScriptTypeCounts("Outputs", props),
             InputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Inputs", props),
-            OutputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Outputs", props)
+            OutputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Outputs", props),
+
+            TotalSupply = _mappingsDict[nameof(v.TotalSupply)].Deserialize<long>(props),
+            TotalSupplyNominal = _mappingsDict[nameof(v.TotalSupplyNominal)].Deserialize<long>(props),
+
+            RealizedCap = (decimal?)_mappingsDict[nameof(v.RealizedCap)].Deserialize<double?>(props),
+            Ohlcv = PropertyMappingFactory.ReadOHLCV(props)
         };
 
         var blockNode = new BlockNode(
@@ -205,5 +232,16 @@ public class BlockNodeStrategy(bool serializeCompressed)
         return builder.ToString();
         */
         throw new NotImplementedException();
+    }
+
+    public override string[] GetSchemaConfigs()
+    {
+        var heightName = PropertyMappingFactory.HeightProperty.Name;
+        return
+        [
+            $"CREATE CONSTRAINT {BlockNode.Kind}_{heightName}_Unique " +
+            $"IF NOT EXISTS " +
+            $"FOR (v:{BlockNode.Kind}) REQUIRE v.{heightName} IS UNIQUE"
+        ];
     }
 }

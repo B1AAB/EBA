@@ -197,4 +197,40 @@ public static class PropertyMappingFactory
         // Make sure to keep EdgeKind string representation compatible with neo4j header requirements. 
         return $"{edgeKind.Source}_{edgeKind.Relation}_{edgeKind.Target}";
     }
+
+
+    public static PropertyMapping<T>[] OHLCV<T>(
+        Func<T, OHLCV?> getOhlcv,
+        string prefix = "OHLCV")
+    {
+        OHLCV o = null!;
+        return
+        [
+            new($"{prefix}.{nameof(o.Open)}", FieldType.Double, s => (double?)(getOhlcv(s)?.Open)),
+            new($"{prefix}.{nameof(o.High)}", FieldType.Double, s => (double?)(getOhlcv(s)?.High)),
+            new($"{prefix}.{nameof(o.Low)}", FieldType.Double, s => (double?)(getOhlcv(s)?.Low)),
+            new($"{prefix}.{nameof(o.Close)}", FieldType.Double, s => (double?)(getOhlcv(s)?.Close)),
+            new($"{prefix}.{nameof(o.Volume)}", FieldType.Long, s => getOhlcv(s)?.Volume),
+            new($"{prefix}.{nameof(o.VWAP)}", FieldType.Double, s => (double?)(getOhlcv(s)?.VWAP)),
+            new($"{prefix}.{nameof(o.OHLC4)}", FieldType.Double, s => (double?)(getOhlcv(s)?.OHLC4))
+        ];
+    }
+
+    public static OHLCV? ReadOHLCV(
+        IReadOnlyDictionary<string, object> properties,
+        string prefix = "OHLCV")
+    {
+        OHLCV o;
+        if (!properties.TryGetValue($"{prefix}.{nameof(o.Open)}", out _))
+            return null;
+
+        return new OHLCV(
+            timestamp: 0,
+            open: (decimal)(double)properties[$"{prefix}.{nameof(o.Open)}"],
+            high: (decimal)(double)properties[$"{prefix}.{nameof(o.High)}"],
+            low: (decimal)(double)properties[$"{prefix}.{nameof(o.Low)}"],
+            close: (decimal)(double)properties[$"{prefix}.{nameof(o.Close)}"],
+            volume: (long)properties[$"{prefix}.{nameof(o.Volume)}"],
+            vwap: (decimal)(double)properties[$"{prefix}.{nameof(o.VWAP)}"]);
+    }
 }

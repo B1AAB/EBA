@@ -95,7 +95,9 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         long miningReward = 0;
         foreach (var u in _coinbaseTxGraph.Outputs)
         {
-            TryGetOrAddEdge(new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, output: u), out var edge);
+            TryGetOrAddEdge(
+                new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, u),
+                out T2SEdge _);
 
             Block.ProfileCreatedOutput(u);
             miningReward += u.Value;
@@ -123,14 +125,16 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         {
             TryGetOrAddEdge(
                 new S2TEdge(new ScriptNode(u.PrevOut.ScriptPubKey), v, t, h, u),
-                out var edge);
+                out S2TEdge _);
 
             Block.ProfileSpentOutput(u);
         }
 
         foreach (var u in txGraph.Outputs)
         {
-            TryGetOrAddEdge(new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, output: u), out var edge);
+            TryGetOrAddEdge(
+                new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, u), 
+                out T2SEdge _);
 
             Block.ProfileCreatedOutput(u);
         }

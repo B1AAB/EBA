@@ -61,6 +61,16 @@ public abstract class StrategyBase : IDisposable
 
     public abstract string GetQuery(string filename);
 
+    public virtual string[] GetSchemaConfigs()
+    {
+        return [];
+    }
+
+    public virtual string[] GetSeedingCommands()
+    {
+        return [];
+    }
+
     public void Dispose()
     {
         Dispose(true);

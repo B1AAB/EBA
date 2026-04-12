@@ -21,7 +21,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
     }
 
     public async Task TraverseAsync(
-        Options options, 
+        Options options,
         CancellationToken cT)
     {
         var chainInfo = await _agent.AssertChainAsync(cT);
@@ -59,7 +59,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
             throw;
         }
-    }
+    }    
 
     public async Task DeDupAsync(
         Options options,

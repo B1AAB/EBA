@@ -36,6 +36,8 @@ public class PropertyMapping<T>
             deserializer)
     { }
 
+    public object? GetValue(T source) => _propertySelector(source);
+
     public string SerializeHeader()
     {
         return _headerOverride?.Invoke(Property) ?? Property.TypeAnnotatedCsvHeader;

@@ -90,4 +90,31 @@ public class BlockMetadata
 
     public long? TotalSupply { set; get; } = null;
     public long? TotalSupplyNominal { set; get; } = null;
+
+    public decimal? RealizedCap { set; get; } = null;
+    public decimal? MarketCap
+    {
+        get
+        {
+            if (TotalSupply == null || Ohlcv == null)
+                return null;
+
+            return Ohlcv.GetFiatValue((long)TotalSupply);
+        }
+    }
+
+    public decimal? NUPL
+    {
+        get
+        {
+            if (RealizedCap == null || MarketCap == null || MarketCap == 0)
+                return null;
+
+            return (MarketCap - RealizedCap) / MarketCap;
+        }
+    }
+
+    public OHLCV? Ohlcv { set; get; } = null;
+
+    // TODO: add MVRV, NVT, Thermocap
 }

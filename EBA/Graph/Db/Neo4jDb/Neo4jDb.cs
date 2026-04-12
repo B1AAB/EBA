@@ -1,9 +1,16 @@
-﻿namespace EBA.Graph.Db.Neo4jDb;
+﻿using EBA.Utilities;
+
+namespace EBA.Graph.Db.Neo4jDb;
+
+// TODO: all the property name setting here should not nameof(), 
+// instead they should use the property mapping in the strategies.
 
 public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 {
     private readonly Options _options;
     private readonly IDriver _driver;
+
+    public IStrategyFactory StrategyFactory { get { return _strategyFactory; } }
     private readonly IStrategyFactory _strategyFactory;
 
     private List<Batch> _batches = [];
@@ -64,10 +71,10 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     }
 
     public async Task<List<IRecord>> GetNodesAsync(
-        NodeKind label, 
-        CancellationToken ct, 
+        NodeKind label,
+        CancellationToken ct,
         string nodeVariable = "n",
-        int? count=null)
+        int? count = null)
     {
         await VerifyConnectivityAsync(ct);
 
@@ -87,11 +94,11 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     }
 
     public async Task<List<IRecord>> GetNeighborsAsync(
-        NodeKind rootNodeLabel, 
+        NodeKind rootNodeLabel,
         string rootNodeIdProperty,
         string rootNodeId,
-        int queryLimit, 
-        int maxLevel, 
+        int queryLimit,
+        int maxLevel,
         bool useBFS,
         CancellationToken ct,
         string relationshipFilter = "")
@@ -107,7 +114,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         if (useBFS)
             qBuilder.Append($"bfs: true ");
-        else 
+        else
             qBuilder.Append($"bfs: false ");
 
         //qBuilder.Append($", labelFilter: '{labelFilters}'");
@@ -169,7 +176,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         await _strategyFactory.SerializeSchemasAsync(_options.WorkingDir, ct);
     }
 
-    public async Task SerializeAsync(T g,CancellationToken ct)
+    public async Task SerializeAsync(T g, CancellationToken ct)
     {
         var nodes = g.GetNodes();
         var edges = g.GetEdges();
@@ -181,7 +188,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         {
             batchInfo.Update(nodeGroup.Key, nodeGroup.Value.Count);
             var _strategy = _strategyFactory.GetStrategy(nodeGroup.Key);
-            if (_strategy == null) 
+            if (_strategy == null)
                 continue;
 
             tasks.Add(_strategy.ToCsvAsync(nodeGroup.Value, batchInfo.GetFilename(nodeGroup.Key)));
@@ -215,6 +222,159 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         await Batch.SerializeBatchesAsync(_options.Neo4j.BatchesFilename, _batches);
 
         return _batches[^1];
+    }
+
+    private async Task<List<Batch>> DeserializeBatchesAsync()
+    {
+        return await JsonSerializer<List<Batch>>.DeserializeAsync(
+            _options.Neo4j.BatchesFilename);
+    }
+
+    public async Task ExecuteWriteQueryAsync(List<string> queries, CancellationToken ct)
+    {
+        await VerifyConnectivityAsync(ct);
+
+        await using var session = _driver.AsyncSession(
+            x => x.WithDefaultAccessMode(AccessMode.Write));
+
+        foreach (var query in queries)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            _logger.LogInformation("Executing write query: {schema}", query);
+
+            var summary = await session.ExecuteWriteAsync(async tx =>
+            {
+                var cursor = await tx.RunAsync(query);
+                return await cursor.ConsumeAsync();
+            });
+
+            _logger.LogInformation("Finished executing write query; {counters}", summary.Counters);
+        }
+    }
+
+    public async Task SetRealizedCap(BlockNode blockNode, Dictionary<long, OHLCV> ohlcv, CancellationToken ct)
+    {
+        await VerifyConnectivityAsync(CancellationToken.None);
+        await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+
+        var readTx = await session.BeginTransactionAsync();
+
+        var cursor = await readTx.RunAsync(
+            $"MATCH (tx)-[r:{T2SEdge.Kind.Relation}]->(script) " +
+            $"WHERE r.{nameof(T2SEdge.CreationHeight)} <= {blockNode.BlockMetadata.Height} " +
+            $"AND r.{nameof(T2SEdge.SpentHeight)} > {blockNode.BlockMetadata.Height} " +
+            $"AND script.{nameof(ScriptNode.ScriptType)} <> '{ScriptType.NullData}' " +
+            $"RETURN r");
+
+        decimal realizedCap = 0;
+
+        while (await cursor.FetchAsync())
+        {
+            var r = cursor.Current["r"].As<IRelationship>();
+            var creationHeight = (long)r.Properties[nameof(T2SEdge.CreationHeight)];
+            var value = (long)r.Properties[nameof(T2SEdge.Value)];
+
+            if (ohlcv.TryGetValue(creationHeight, out var blockOHLCV))
+            {
+                realizedCap += blockOHLCV.GetFiatValue(value);
+            }
+        }
+
+        blockNode.BlockMetadata.RealizedCap = realizedCap;
+    }
+
+    private async Task<long> GetEdgeTypeCount(RelationType relationType, CancellationToken ct)
+    {
+        await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+
+        long edgeCount = await session.ExecuteReadAsync(async tx =>
+        {
+            var cursor = await tx.RunAsync($"MATCH ()-[r:{relationType}]->() RETURN count(r)");
+            var record = await cursor.SingleAsync();
+            return record[0].As<long>();
+        });
+
+        return edgeCount;
+    }
+
+    // TODO: this method should not be here;
+    // it is specific to the Bitcoin graph model
+    // and this class should be kept agnostic to the graph model.
+    public async Task SetRealizedCap(
+        SortedDictionary<long, BlockNode> blockNodes,
+        Dictionary<long, OHLCV> ohlcv,
+        CancellationToken ct)
+    {
+        if (blockNodes.Count == 0)
+            return;
+
+        var sortedHeights = blockNodes.Keys.ToArray();
+        var minHeight = sortedHeights[0];
+        var maxHeight = sortedHeights[^1];
+
+        foreach (var block in blockNodes.Values)
+            block.BlockMetadata.RealizedCap = 0;
+
+        await VerifyConnectivityAsync(ct);
+        await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+
+        var edgeCounter = 0;
+        double totalEdgeCount = await GetEdgeTypeCount(T2SEdge.Kind.Relation, ct);
+        var processedEdgeCount = 0;
+        var skippedEdgeCounter = 0;
+
+        _logger.LogInformation("Starting iteration through {b} edges.", T2SEdge.Kind.Relation);
+
+        await session.ExecuteReadAsync(async tx =>
+        {
+            var cursor = await tx.RunAsync(
+                $"MATCH (tx)-[r:{T2SEdge.Kind.Relation}]->(script) " +
+                $"WHERE " +
+                $"r.{nameof(T2SEdge.CreationHeight)} <= {maxHeight} " +
+                $"AND " +
+                $"r.{nameof(T2SEdge.SpentHeight)} > {minHeight} " +
+                $"AND " +
+                $"script.{nameof(ScriptNode.ScriptType)} <> '{ScriptType.NullData}' " +
+                $"RETURN " +
+                $"r.{nameof(T2SEdge.CreationHeight)} AS creationHeight, " +
+                $"r.{nameof(T2SEdge.SpentHeight)} AS spentHeight, " +
+                $"r.{nameof(T2SEdge.Value)} AS value");
+
+            while (await cursor.FetchAsync())
+            {
+                ct.ThrowIfCancellationRequested();
+                edgeCounter++;
+
+                var creationHeight = cursor.Current["creationHeight"].As<long>();
+                var spentHeight = cursor.Current["spentHeight"].As<long>();
+                var value = cursor.Current["value"].As<long>();
+
+                if (!ohlcv.TryGetValue(creationHeight, out var blockOHLCV))
+                {
+                    skippedEdgeCounter++;
+                }
+                else
+                {
+                    var fiatValue = blockOHLCV.GetFiatValue(value);
+                    foreach (var h in sortedHeights.GetViewBetween(creationHeight, spentHeight))
+                        blockNodes[h].BlockMetadata.RealizedCap += fiatValue;
+
+                    processedEdgeCount++;
+                }
+
+                if (edgeCounter % 100000 == 0)
+                {
+                    _logger.LogInformation(
+                        "Traversed {e:n0} / {t:n0} edges. Processed {p:n0} edges and skipped {s:n0} edges due to missing related OHLCV data.",
+                        edgeCounter, totalEdgeCount, processedEdgeCount, skippedEdgeCounter);
+                }
+            }
+        });
+
+        _logger.LogInformation(
+            "Traversed {e:n0} / {t:n0} edges. Processed {p:n0} edges and skipped {s:n0} edges due to missing related OHLCV data.",
+            edgeCounter, totalEdgeCount, processedEdgeCount, skippedEdgeCounter);
     }
 
     public void Dispose()
@@ -264,21 +424,18 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
         await VerifyConnectivityAsync(ct);
 
+        var sampleProps = updates[0].Keys.Where(k => k != idProperty);
         var setClause = string.Join(
-            ", ", 
-            updates[0].Keys
-            .Where(k => k != idProperty)
-            .Select(k => $"n.{k} = row.{k}"));
+            ", ",
+            sampleProps.Select(k => $"n.`{k}` = row.`{k}`"));
 
-        // using toString() on the id property to match the string-typed
-        // :ID column created by neo4j-admin import.
         var query =
             "UNWIND $batch AS row " +
-            $"MATCH (n:{label} {{{idProperty}: toString(row.{idProperty})}}) " +
+            $"MATCH (n:{label} {{`{idProperty}`: row.`{idProperty}`}}) " +
             $"SET {setClause}";
 
-        var chunkIndex = 0;
-        foreach (var chunk in updates.Chunk(_options.Neo4j.MaxEntitiesPerBatch))
+        var batchIndex = 0;
+        foreach (var batch in updates.Chunk(_options.Neo4j.MaxEntitiesPerBatch))
         {
             ct.ThrowIfCancellationRequested();
 
@@ -287,20 +444,13 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             {
                 var cursor = await tx.RunAsync(
                     query,
-                    new Dictionary<string, object> { ["batch"] = chunk });
+                    new Dictionary<string, object> { ["batch"] = batch });
 
                 return await cursor.ConsumeAsync();
             });
 
-            var counters = summary.Counters;
-            if (counters.PropertiesSet == 0)
-                _logger.LogWarning("Chunk {chunk}: 0 properties set (MATCH may have found no nodes).",
-                    chunkIndex);
-            else
-                _logger.LogInformation("Chunk {chunk}: set {props:n0} properties on nodes.",
-                    chunkIndex, counters.PropertiesSet);
-
-            chunkIndex++;
+            _logger.LogInformation("Finished batch {batch}; summary: {s}", batchIndex, summary.Counters);
+            batchIndex++;
         }
 
         _logger.LogInformation(

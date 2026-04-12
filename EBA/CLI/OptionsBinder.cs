@@ -30,6 +30,8 @@ internal class OptionsBinder
         Option<string>? sortedScriptNodeFilenameOption = null,
         Option<string>? marketDataFilenameOption = null,
         Option<string>? outputFilenameOption = null,
+        Option<string>? blockMarketMappingOption = null,
+        Option<string>? augmentroOhlcvOption = null,
         Option<string>? batchesFilenameOption = null)
     {
         if (statusFilenameOption != null && c.GetResult(statusFilenameOption) is not null)
@@ -104,6 +106,11 @@ internal class OptionsBinder
             BlockOhlcvMappedFilename = GetValue(defs.Bitcoin.MapMarket.BlockOhlcvMappedFilename, outputFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); })
         };
 
+        var bitcoinAugmentorOps = new BitcoinAugmentorOptions()
+        {
+            BlockOhlcvMappedFilename = GetValue(defs.Bitcoin.Augmentor.BlockOhlcvMappedFilename, augmentroOhlcvOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
+        };
+
         var bitcoinMapSpendsOps = new BitcoinMapSpendsOptions()
         {
             BatchesFilename = GetValue(defs.Bitcoin.MapSpends.BatchesFilename, batchesFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); })
@@ -115,6 +122,7 @@ internal class OptionsBinder
             Dedup = bitcoinDedupOps,
             GraphSample = gsample,
             MapMarket = bitcoinMapMarketOps,
+            Augmentor = bitcoinAugmentorOps,
             MapSpends = bitcoinMapSpendsOps
         };
 
