@@ -14,10 +14,6 @@ public class Neo4jOptions
         Environment.GetEnvironmentVariable("NEO4J_PASSWORD") ??
         "password";
 
-    public string ImportDirectory { init; get; } =
-        Environment.GetEnvironmentVariable("NEO4J_IMPORTDIRECTORY") ??
-        @"E:\neo4j\relate-data\dbmss\dbms-dfca261d-2476-4d4e-ac5e-ead99120ab3e\import";
-
     public string BatchesFilename { init; get; } = "batches.json";
 
     public bool CompressOutput { init; get; } = true;
@@ -29,8 +25,4 @@ public class Neo4jOptions
     /// Ref: https://neo4j.com/blog/bulk-data-import-neo4j-3-0/
     /// </summary>
     public int MaxEntitiesPerBatch { init; get; } = 80000;
-
-    public string CypherImportPrefix { init; get; } =
-        Environment.GetEnvironmentVariable("NEO4J_CYPHERIMPORTPREFIX") ??
-        "file:///";
 }

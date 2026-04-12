@@ -203,31 +203,18 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     private async Task<Batch> GetBatchAsync()
     {
         if (_batches.Count == 0)
-            _batches = await DeserializeBatchesAsync();
+            _batches = await Batch.DeserializeBatchesAsync(_options.Neo4j.BatchesFilename);
 
         if (_batches.Count == 0 || _batches[^1].GetMaxCount() >= _options.Neo4j.MaxEntitiesPerBatch)
             _batches.Add(new Batch(
                 _batches.Count.ToString(),
                 _options.WorkingDir,
                 _strategyFactory.NodeStrategies,
-                _strategyFactory.EdgeStrategies,
-                _options.Neo4j.CompressOutput));
+                _strategyFactory.EdgeStrategies));
 
-        await SerializeBatchesAsync();
+        await Batch.SerializeBatchesAsync(_options.Neo4j.BatchesFilename, _batches);
 
         return _batches[^1];
-    }
-
-    private async Task SerializeBatchesAsync()
-    {
-        var json = JsonSerializer.Serialize(_batches, Options.JsonSerializationOptions);
-        await File.WriteAllTextAsync(_options.Neo4j.BatchesFilename, json);
-    }
-
-    private async Task<List<Batch>> DeserializeBatchesAsync()
-    {
-        return await JsonSerializer<List<Batch>>.DeserializeAsync(
-            _options.Neo4j.BatchesFilename);
     }
 
     public void Dispose()
@@ -261,7 +248,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         if (!_disposed)
         {
             _strategyFactory.Dispose();
-            await SerializeBatchesAsync().ConfigureAwait(false);
+            await Batch.SerializeBatchesAsync(_options.Neo4j.BatchesFilename, _batches).ConfigureAwait(false);
             _disposed = true;
         }
     }

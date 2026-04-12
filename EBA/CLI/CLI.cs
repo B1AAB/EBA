@@ -22,6 +22,7 @@ internal class Cli
         Func<Options, Task> bitcoinAddressStatsHandlerAsync,
         Func<Options, Task> bitcoinImportCypherQueriesAsync,
         Func<Options, Task> bitcoinPostProcessGraphHandlerAsync,
+        Func<Options, Task> bitcoinMapSpendsHandlerAsync,
         Action<Exception, ParseResult> exceptionHandler)
     {
         _exceptionHandler = exceptionHandler;
@@ -89,7 +90,8 @@ internal class Cli
                 mapMarketHandlerAsync: bitcoinMapMarketHandlerAsync,
                 addressStatsHandlerAsync: bitcoinAddressStatsHandlerAsync,
                 importCypherQueriesAsync: bitcoinImportCypherQueriesAsync,
-                postProcessGraphHandlerAsync: bitcoinPostProcessGraphHandlerAsync)
+                postProcessGraphHandlerAsync: bitcoinPostProcessGraphHandlerAsync,
+                mapSpendsHandlerAsync: bitcoinMapSpendsHandlerAsync)
         };
 
         for (int i = 0; i < _rootCmd.Options.Count; i++)
@@ -125,7 +127,8 @@ internal class Cli
         Func<Options, Task> mapMarketHandlerAsync,
         Func<Options, Task> addressStatsHandlerAsync,
         Func<Options, Task> importCypherQueriesAsync,
-        Func<Options, Task> postProcessGraphHandlerAsync)
+        Func<Options, Task> postProcessGraphHandlerAsync,
+        Func<Options, Task> mapSpendsHandlerAsync)
     {
         var cmd = new Command(
             name: "bitcoin",
@@ -138,7 +141,8 @@ internal class Cli
             GetBitcoinMapMarketCmd(defaultOptions, mapMarketHandlerAsync),
             GetBitcoinSampleCmd(defaultOptions, sampleHandlerAsync),
             GetBitcoinAddressStatsCmd(defaultOptions, addressStatsHandlerAsync),
-            GetPostProcessGraphCmd(defaultOptions, postProcessGraphHandlerAsync)
+            GetPostProcessGraphCmd(defaultOptions, postProcessGraphHandlerAsync),
+            GetBitcoinMapSpendsCmd(defaultOptions, mapSpendsHandlerAsync)
         };
         return cmd;
     }
@@ -668,6 +672,37 @@ internal class Cli
             var options = OptionsBinder.Build(
                 parseResult,
                 txoFilenameOption: addressesFilenameOption);
+
+            try
+            {
+                await handlerAsync(options);
+            }
+            catch (Exception e)
+            {
+                _exceptionHandler(e, parseResult);
+            }
+        });
+
+        return cmd;
+    }
+
+    private Command GetBitcoinMapSpendsCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    {
+        var batchesFilenameOption = new Option<string>("--batches-filename")
+        {
+            Required = true
+        };
+
+        var cmd = new Command(name: "map-spends")
+        {
+            batchesFilenameOption
+        };
+
+        cmd.SetAction(async (parseResult, cancellationToken) =>
+        {
+            var options = OptionsBinder.Build(
+                parseResult,
+                batchesFilenameOption: batchesFilenameOption);
 
             try
             {
