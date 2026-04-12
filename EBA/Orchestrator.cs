@@ -27,7 +27,6 @@ public class Orchestrator : IDisposable
             bitcoinMapMarketHandlerAsync: BitcoinMarketMapAsync,
             bitcoinPostProcessHandlerAsync: BitcoinPostProcess,
             bitcoinAugmentHandlerAsync: BitcoinAugmentGraphAsync,
-            bitcoinPostProcessGraphHandlerAsync: BitcoinPostProcessGraph,
             bitcoinMapSpendsHandlerAsync: BitcoinMapSpends,
             exceptionHandler: (e, _) =>
             {

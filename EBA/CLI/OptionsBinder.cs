@@ -31,8 +31,7 @@ internal class OptionsBinder
         Option<string>? marketDataFilenameOption = null,
         Option<string>? outputFilenameOption = null,
         Option<string>? blockMarketMappingOption = null,
-        Option<string>? augmentroOhlcvOption = null)
-        Option<string>? outputFilenameOption = null,
+        Option<string>? augmentroOhlcvOption = null,
         Option<string>? batchesFilenameOption = null)
     {
         if (statusFilenameOption != null && c.GetResult(statusFilenameOption) is not null)
@@ -124,7 +123,6 @@ internal class OptionsBinder
             GraphSample = gsample,
             MapMarket = bitcoinMapMarketOps,
             Augmentor = bitcoinAugmentorOps,
-            MapMarket = bitcoinMapMarketOps,
             MapSpends = bitcoinMapSpendsOps
         };
 

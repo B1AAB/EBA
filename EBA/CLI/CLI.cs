@@ -23,7 +23,6 @@ internal class Cli
         Func<Options, Task> bitcoinImportCypherQueriesAsync,
         Func<Options, Task> bitcoinPostProcessHandlerAsync,
         Func<Options, Task> bitcoinAugmentHandlerAsync,
-        Func<Options, Task> bitcoinPostProcessGraphHandlerAsync,
         Func<Options, Task> bitcoinMapSpendsHandlerAsync,
         Action<Exception, ParseResult> exceptionHandler)
     {
@@ -93,8 +92,7 @@ internal class Cli
                 addressStatsHandlerAsync: bitcoinAddressStatsHandlerAsync,
                 importCypherQueriesAsync: bitcoinImportCypherQueriesAsync,
                 postProcessHandlerAsync: bitcoinPostProcessHandlerAsync,
-                bitcoinAugmentHandlerAsync: bitcoinAugmentHandlerAsync)
-                postProcessGraphHandlerAsync: bitcoinPostProcessGraphHandlerAsync,
+                bitcoinAugmentHandlerAsync: bitcoinAugmentHandlerAsync,
                 mapSpendsHandlerAsync: bitcoinMapSpendsHandlerAsync)
         };
 
@@ -132,8 +130,7 @@ internal class Cli
         Func<Options, Task> addressStatsHandlerAsync,
         Func<Options, Task> importCypherQueriesAsync,
         Func<Options, Task> postProcessHandlerAsync,
-        Func<Options, Task> bitcoinAugmentHandlerAsync)
-        Func<Options, Task> postProcessGraphHandlerAsync,
+        Func<Options, Task> bitcoinAugmentHandlerAsync,
         Func<Options, Task> mapSpendsHandlerAsync)
     {
         var cmd = new Command(
@@ -148,8 +145,7 @@ internal class Cli
             GetBitcoinSampleCmd(defaultOptions, sampleHandlerAsync),
             GetBitcoinAddressStatsCmd(defaultOptions, addressStatsHandlerAsync),
             GetPostProcessCmd(defaultOptions, postProcessHandlerAsync),
-            GetBitcoinAugmentCmd(defaultOptions, bitcoinAugmentHandlerAsync)
-            GetPostProcessGraphCmd(defaultOptions, postProcessGraphHandlerAsync),
+            GetBitcoinAugmentCmd(defaultOptions, bitcoinAugmentHandlerAsync),
             GetBitcoinMapSpendsCmd(defaultOptions, mapSpendsHandlerAsync)
         };
         return cmd;
