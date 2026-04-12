@@ -16,8 +16,6 @@ public class PostBulkImportFinalizer(
         await AddSchemaAndSeeding(ct);
 
         await SetSupplyAmount(ct);
-
-        await _graphDb.SetUTxOSpentHeight(ct);
     }
 
     private async Task AddSchemaAndSeeding(CancellationToken ct)

@@ -56,6 +56,9 @@ public class EconomicAugmentor(Options options, IGraphDb<BitcoinGraph> graphDb, 
         return blocks;
     }
 
+    // TODO: this can be set as part of the pre-bulk import finalization step,
+    // instead of being computed and updated after the fact.
+    // This would require reordering the import steps to ensure that the OHLCV data is available before the block nodes are created.
     private async Task ComputeBlockValuationMetrics(
         SortedDictionary<long, BlockNode> blocks, 
         Dictionary<long, OHLCV> blockOHLCVMapping, 

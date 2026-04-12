@@ -53,9 +53,6 @@ public interface IGraphDb<T> : IDisposable, IAsyncDisposable where T : GraphBase
         string nodeVariable = "n",
         int? count = null);
 
-    public Task SetUTxOSpentHeight(
-        CancellationToken ct);
-
     public Task ExecuteWriteQueryAsync(
         List<string> schemas, 
         CancellationToken ct);
