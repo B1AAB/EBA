@@ -130,7 +130,7 @@ public class TxoSpendingTracker
 
                         if (spentTxo.TryGetValue($"{txid}-{vout}", out var spentHeightBB))
                         {
-                            writer.WriteLine($"{txid}\t{vout}\t{value}\t{creationHeight}\t{spentHeightBB}\t{typeLabel}");
+                            writer.WriteLine($"{txid}\t{target}\t{value}\t{vout}\t{creationHeight}\t{spentHeightBB}\t{typeLabel}");
                         }
                         else
                         {
