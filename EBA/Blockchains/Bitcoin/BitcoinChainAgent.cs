@@ -256,7 +256,7 @@ public class BitcoinChainAgent : IDisposable
         BitcoinOptions options,
         CancellationToken cT)
     {
-        var g = new BlockGraph(block.Height.ToString(), block, _logger);
+        var g = new BlockGraph(block, _logger);
 
         // By definition, each block has a generative block that is the
         // reward of the miner. Hence, this should never raise an 
