@@ -7,6 +7,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
     public string Txid { get; }
     public int Vout { get; }
     public bool Generated { get; }
+    public long CreationHeight { get; }
 
     public long SpentHeight { get { return BlockHeight; } }
 
@@ -24,7 +25,8 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
             value: spentUTxO.PrevOut.Value,
             txid: spentUTxO.Txid,
             vout: spentUTxO.Vout,
-            generated: spentUTxO.PrevOut.Generated)
+            generated: spentUTxO.PrevOut.Generated,
+            creationHeight: spentUTxO.PrevOut.Height)
     { }
 
     public S2TEdge(
@@ -35,7 +37,8 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         long value,
         string txid,
         int vout,
-        bool generated) :
+        bool generated,
+        long creationHeight) :
         base(
             source: source,
             target: target,
@@ -47,5 +50,6 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         Txid = txid;
         Vout = vout;
         Generated = generated;
+        CreationHeight = creationHeight;
     }
 }

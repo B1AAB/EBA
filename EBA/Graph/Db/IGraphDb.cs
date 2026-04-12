@@ -3,7 +3,7 @@ using EBA.Utilities;
 
 namespace EBA.Graph.Db;
 
-public interface IGraphDb<T> : IDisposable where T : GraphBase
+public interface IGraphDb<T> : IDisposable, IAsyncDisposable where T : GraphBase
 {
     public IStrategyFactory StrategyFactory { get; }
 
