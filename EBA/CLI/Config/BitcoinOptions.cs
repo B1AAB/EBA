@@ -9,4 +9,5 @@ public class BitcoinOptions(long timestamp)
     public BitcoinDedupOptions Dedup { init; get; } = new();
     public BitcoinGraphSampleOptions GraphSample { init; get; } = new();
     public BitcoinMapMarketOptions MapMarket { init; get; } = new();
+    public BitcoinMapSpendsOptions MapSpends { init; get; } = new();
 }

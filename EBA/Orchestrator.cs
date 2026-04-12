@@ -1,3 +1,4 @@
+using EBA.Blockchains.Bitcoin.Utilities;
 using EBA.CLI;
 using EBA.Graph.Bitcoin;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -25,6 +26,7 @@ public class Orchestrator : IDisposable
             bitcoinImportCypherQueriesAsync: BitcoinImportCypherQueriesAsync,
             bitcoinMapMarketHandlerAsync: BitcoinMarketMapAsync,
             bitcoinPostProcessGraphHandlerAsync: BitcoinPostProcessGraph,
+            bitcoinMapSpendsHandlerAsync: BitcoinMapSpends,
             exceptionHandler: (e, _) =>
             {
                 if (_logger != null)
@@ -61,6 +63,12 @@ public class Orchestrator : IDisposable
         var host = await SetupAndGetHostAsync(options);
         var bitcoinOrchestrator = host.Services.GetRequiredService<BitcoinOrchestrator>();
         await bitcoinOrchestrator.DeDupAsync(options, _cT);
+    }
+
+    private async Task BitcoinMapSpends(Options options)
+    {
+        var txoSpendingTracker = new TxoSpendingTracker();
+        await txoSpendingTracker.UpdatePostTraverse(options);
     }
 
     private async Task BitcoinMarketMapAsync(Options options)
