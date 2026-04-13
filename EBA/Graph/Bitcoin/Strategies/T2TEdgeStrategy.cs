@@ -10,14 +10,13 @@ public class T2TEdgeStrategy(EdgeKind kind, bool serializeCompressed)
         $"{kind.Target}",
         serializeCompressed)
 {
-    public static readonly PropertyMapping<T2TEdge>[] Mappings =
-    [
-        Factory.SourceId<T2TEdge>(TxNodeStrategy.IdSpace, e => e.Source.Txid),
-        Factory.TargetId<T2TEdge>(TxNodeStrategy.IdSpace, e => e.Target.Txid),
-        Factory.Value<T2TEdge>(e => e.Value),
-        Factory.Height<T2TEdge>(e => e.BlockHeight),
-        Factory.EdgeType<T2TEdge>(e => e.Relation)
-    ];
+    public static readonly PropertyMapping<T2TEdge>[] Mappings = new MappingBuilder<T2TEdge>()
+        .MapSourceId(TxNodeStrategy.IdSpace, e => e.Source.Txid)
+        .MapTargetId(TxNodeStrategy.IdSpace, e => e.Target.Txid)
+        .MapValue(e => e.Value)
+        .MapBlockHeight(e => e.BlockHeight)
+        .MapEdgeType(e => e.Relation)
+        .ToArray();
 
     public override string GetCsvHeader()
     {

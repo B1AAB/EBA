@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Db.Neo4jDb;
-
-namespace EBA.Graph.Bitcoin.Strategies;
+﻿namespace EBA.Graph.Bitcoin.Strategies;
 
 public class BlockNodeStrategy(bool serializeCompressed) 
     : BitcoinStrategyBase(
@@ -11,82 +9,79 @@ public class BlockNodeStrategy(bool serializeCompressed)
 
     private const Block v = null!;
 
-    private static readonly PropertyMapping<BlockNode>[] _economicMappings =
-    [
-        new(nameof(v.RealizedCap), FieldType.Double, n => (double?)n.BlockMetadata.RealizedCap),
-        new(nameof(v.MarketCap), FieldType.Double, n => (double?)n.BlockMetadata.MarketCap),
-        new(nameof(v.NUPL), FieldType.Double, n => (double?)n.BlockMetadata.NUPL),
+    private static readonly PropertyMapping<BlockNode>[] _economicMappings = new MappingBuilder<BlockNode>()
+        .Map(n => (double?)n.BlockMetadata.RealizedCap)
+        .Map(n => (double?)n.BlockMetadata.MarketCap)
+        .Map(n => (double?)n.BlockMetadata.NUPL)
+        .MapRange(PropertyMappingFactory.OHLCV<BlockNode>(n => n.BlockMetadata.Ohlcv))
+        .ToArray();
 
-        .. PropertyMappingFactory.OHLCV<BlockNode>(n => n.BlockMetadata.Ohlcv),
-    ];
+    public static PropertyMapping<BlockNode>[] EconomicMappings { get; } = new MappingBuilder<BlockNode>()
+        .MapBlockHeight(n => n.BlockMetadata.Height)
+        .MapRange(_economicMappings)
+        .ToArray();
 
-    public static PropertyMapping<BlockNode>[] EconomicMappings { get; } =
-    [
-        PropertyMappingFactory.Height<BlockNode>(n => n.BlockMetadata.Height),
-        .. _economicMappings,
-    ];
+    public static readonly PropertyMapping<BlockNode>[] Mappings = new MappingBuilder<BlockNode>()
+        .MapSourceId(IdSpace, n => n.BlockMetadata.Height)
+        .MapBlockHeight(n => n.BlockMetadata.Height)
+        .Map(n => n.BlockMetadata.Hash)
+        .Map(n => n.BlockMetadata.Confirmations)
+        .Map(n => n.BlockMetadata.Version)
+        .Map(n => n.BlockMetadata.VersionHex)
+        .Map(n => n.BlockMetadata.Merkleroot)
+        .Map(n => n.BlockMetadata.Time)
+        .Map(n => n.BlockMetadata.MedianTime)
+        .Map(n => n.BlockMetadata.Nonce)
+        .Map(n => n.BlockMetadata.Bits)
+        .Map(n => n.BlockMetadata.Difficulty)
+        .Map(n => n.BlockMetadata.Chainwork)
+        .Map(n => n.BlockMetadata.TransactionsCount)
+        .Map(n => n.BlockMetadata.PreviousBlockHash)
+        .Map(n => n.BlockMetadata.NextBlockHash)
+        .Map(n => n.BlockMetadata.StrippedSize)
+        .Map(n => n.BlockMetadata.Size)
+        .Map(n => n.BlockMetadata.Weight)
+        .Map(n => n.BlockMetadata.CoinbaseOutputsCount)
+        .Map(n => n.BlockMetadata.MintedBitcoins)
+        
+        .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
+            nameof(v.InputCountsStats), n => n.BlockMetadata.InputCountsStats))
 
-    public static readonly PropertyMapping<BlockNode>[] Mappings =
-    [
-        new("", FieldType.String, x=>x.BlockMetadata.Height, p => p.GetIdFieldCsvHeader(IdSpace.ToString())),
-        PropertyMappingFactory.Height<BlockNode>(n => n.BlockMetadata.Height),
-        new(nameof(v.Hash), FieldType.String, n => n.BlockMetadata.Hash),
-        new(nameof(v.Confirmations), FieldType.Long, n => n.BlockMetadata.Confirmations),
-        new(nameof(v.Version), FieldType.Long, n => n.BlockMetadata.Version),
-        new(nameof(v.VersionHex), FieldType.String, n => n.BlockMetadata.VersionHex),
-        new(nameof(v.Merkleroot), FieldType.String, n => n.BlockMetadata.Merkleroot),
-        new(nameof(v.Time), FieldType.Long, n => n.BlockMetadata.Time),
-        new(nameof(v.MedianTime), FieldType.Long, n => n.BlockMetadata.MedianTime),
-        new(nameof(v.Nonce), FieldType.Long, n => n.BlockMetadata.Nonce),
-        new(nameof(v.Bits), FieldType.String, n => n.BlockMetadata.Bits),
-        new(nameof(v.Difficulty), FieldType.Double, n => n.BlockMetadata.Difficulty),
-        new(nameof(v.Chainwork), FieldType.String, n => n.BlockMetadata.Chainwork),
-        new(nameof(v.TransactionsCount), FieldType.Long, n => n.BlockMetadata.TransactionsCount),
-        new(nameof(v.PreviousBlockHash), FieldType.String, n => n.BlockMetadata.PreviousBlockHash),
-        new(nameof(v.NextBlockHash), FieldType.String, n => n.BlockMetadata.NextBlockHash),
-        new(nameof(v.StrippedSize), FieldType.Long, n => n.BlockMetadata.StrippedSize),
-        new(nameof(v.Size), FieldType.Long, n => n.BlockMetadata.Size),
-        new(nameof(v.Weight), FieldType.Long, n => n.BlockMetadata.Weight),
-        new(nameof(v.CoinbaseOutputsCount), FieldType.Long, n => n.BlockMetadata.CoinbaseOutputsCount),
-        new(nameof(v.MintedBitcoins), FieldType.Long, n => n.BlockMetadata.MintedBitcoins),
+        .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
+            nameof(v.OutputCountsStats), n => n.BlockMetadata.OutputCountsStats))
 
-        .. PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.InputCountsStats), n => n.BlockMetadata.InputCountsStats),
+        .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
+            nameof(v.InputValuesStats), n => n.BlockMetadata.InputValuesStats))
 
-        .. PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.OutputCountsStats), n => n.BlockMetadata.OutputCountsStats),
+        .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
+            nameof(v.OutputValuesStats), n => n.BlockMetadata.OutputValuesStats))
 
-        .. PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.InputValuesStats), n => n.BlockMetadata.InputValuesStats),
+        .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
+            nameof(v.SpentOutputAgeStats), n => n.BlockMetadata.SpentOutputAgeStats))
 
-        .. PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.OutputValuesStats), n => n.BlockMetadata.OutputValuesStats),
+        .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
+            nameof(v.FeesStats), n => n.BlockMetadata.FeesStats))
 
-        .. PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.SpentOutputAgeStats), n => n.BlockMetadata.SpentOutputAgeStats),
+        .MapRange(PropertyMappingFactory.ScriptTypeCounts<BlockNode>(
+            "Inputs", n => n.BlockMetadata.InputScriptTypeCount))
 
-        .. PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.FeesStats), n => n.BlockMetadata.FeesStats),
+        .MapRange(PropertyMappingFactory.ScriptTypeCounts<BlockNode>(
+            "Outputs", n => n.BlockMetadata.OutputScriptTypeCount))
 
-        .. PropertyMappingFactory.ScriptTypeCounts<BlockNode>(
-            "Inputs", n => n.BlockMetadata.InputScriptTypeCount),
+        .MapRange(PropertyMappingFactory.DictionaryToColumns<BlockNode>(
+            nameof(BlockNode.TripletTypeCount), Schema.EdgeKinds, n => n.TripletTypeCount))
 
-        .. PropertyMappingFactory.ScriptTypeCounts<BlockNode>(
-            "Outputs", n => n.BlockMetadata.OutputScriptTypeCount),
+        .MapRange(PropertyMappingFactory.DictionaryToColumns<BlockNode>(
+            nameof(BlockNode.TripletTypeValueSum), Schema.EdgeKinds, n => n.TripletTypeValueSum))
 
-        .. PropertyMappingFactory.DictionaryToColumns<BlockNode>(
-            nameof(BlockNode.TripletTypeCount), Schema.EdgeKinds, n => n.TripletTypeCount),
+        .Map(n=>n.BlockMetadata.TotalSupply)
+        .Map(n=>n.BlockMetadata.TotalSupplyNominal)
 
-        .. PropertyMappingFactory.DictionaryToColumns<BlockNode>(
-            nameof(BlockNode.TripletTypeValueSum), Schema.EdgeKinds, n => n.TripletTypeValueSum),
+        .MapRange(_economicMappings)
 
-        new(nameof(v.TotalSupply), FieldType.Long, n => n.BlockMetadata.TotalSupply),
-        new(nameof(v.TotalSupplyNominal), FieldType.Long, n => n.BlockMetadata.TotalSupplyNominal),
+        .MapLabel(_ => BlockNode.Kind)
 
-        .. _economicMappings,
-
-        new(":LABEL", FieldType.String, _ => BlockNode.Kind, _ => ":LABEL"),
-    ];
+        .ToArray();
 
     private static readonly Dictionary<string, PropertyMapping<BlockNode>> _mappingsDict =
         Mappings.ToDictionary(m => m.Property.Name, m => m);

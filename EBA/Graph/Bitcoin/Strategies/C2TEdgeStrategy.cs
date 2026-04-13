@@ -9,14 +9,13 @@ public class C2TEdgeStrategy(bool serializeCompressed)
 {
     public static string IdSpaceCoinbase { get; } = CoinbaseNode.Kind.ToString();
 
-    public static readonly PropertyMapping<C2TEdge>[] Mappings =
-    [
-        Factory.SourceId<C2TEdge>(IdSpaceCoinbase, _ => CoinbaseNode.Kind),
-        Factory.TargetId<C2TEdge>(TxNodeStrategy.IdSpace, e => e.Target.Txid),
-        Factory.Value<C2TEdge>(e => e.Value),
-        Factory.Height<C2TEdge>(e => e.BlockHeight),
-        Factory.EdgeType<C2TEdge>(e => e.Relation)
-    ];
+    public static readonly PropertyMapping<C2TEdge>[] Mappings = new MappingBuilder<C2TEdge>()
+        .MapSourceId(IdSpaceCoinbase, _ => CoinbaseNode.Kind)
+        .MapTargetId(TxNodeStrategy.IdSpace, e => e.Target.Txid)
+        .MapValue(e => e.Value)
+        .MapBlockHeight(e => e.BlockHeight)
+        .MapEdgeType(e => e.Relation)
+        .ToArray();
 
     public override string GetCsvHeader()
     {

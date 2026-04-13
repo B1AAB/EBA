@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Db.Neo4jDb;
-
-namespace EBA.Graph.Bitcoin.Strategies;
+﻿namespace EBA.Graph.Bitcoin.Strategies;
 
 public class TxNodeStrategy(bool serializeCompressed) 
     : BitcoinStrategyBase(
@@ -14,17 +12,15 @@ public class TxNodeStrategy(bool serializeCompressed)
     public static string IdSpace { get; } = TxNode.Kind.ToString();
 
     private const TxNode v = null!;
-    public static readonly PropertyMapping<TxNode>[] Mappings =
-    [
-        PropertyMappingFactory.Txid<TxNode>(n => n.Txid, p => p.GetIdFieldCsvHeader(IdSpace)),
-        new(nameof(v.Version), FieldType.Long, n => n.Version),
-        new(nameof(v.Size), FieldType.Long, n => n.Size),
-        new(nameof(v.VSize), FieldType.Long, n => n.VSize),
-        new(nameof(v.Weight), FieldType.Long, n => n.Weight),
-        new(nameof(v.LockTime), FieldType.Long, n => n.LockTime),
-
-        new(":LABEL", FieldType.String, _ => TxNode.Kind, _ => ":LABEL"),
-    ];
+    public static readonly PropertyMapping<TxNode>[] Mappings = new MappingBuilder<TxNode>()
+        .Map(n => n.Txid).WithCsvHeader(p => p.GetIdFieldCsvHeader(IdSpace))
+        .Map(n => n.Version)
+        .Map(n => n.Size)
+        .Map(n => n.VSize)
+        .Map(n => n.Weight)
+        .Map(n => n.LockTime)
+        .MapLabel(_ => TxNode.Kind)
+        .ToArray();
 
     private static readonly Dictionary<string, PropertyMapping<TxNode>> _mappingsDict =
         Mappings.ToDictionary(m => m.Property.Name, m => m);

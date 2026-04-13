@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Db.Neo4jDb;
-
-using Factory = EBA.Graph.Bitcoin.Strategies.PropertyMappingFactory;
+﻿using Factory = EBA.Graph.Bitcoin.Strategies.PropertyMappingFactory;
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
@@ -9,16 +7,15 @@ public class T2SEdgeStrategy(bool serializeCompressed)
         $"edges_{T2SEdge.Kind.Source}_{T2SEdge.Kind.Relation}_{T2SEdge.Kind.Target}",
         serializeCompressed)
 {
-    public static readonly PropertyMapping<T2SEdge>[] Mappings =
-    [
-        Factory.SourceId<T2SEdge>(TxNodeStrategy.IdSpace, e => e.Source.Txid),
-        Factory.TargetId<T2SEdge>(ScriptNodeStrategy.IdSpace, e => e.Target.Id),
-        Factory.Value<T2SEdge>(e => e.Value),
-        new(nameof(T2SEdge.Vout), FieldType.Int, e => e.Vout),
-        new(nameof(T2SEdge.CreationHeight), FieldType.Long, e => e.CreationHeight),
-        new(nameof(T2SEdge.SpentHeight), FieldType.Long, e => e.SpentHeight),
-        Factory.EdgeType<T2SEdge>(e => e.Relation),
-    ];
+    public static readonly PropertyMapping<T2SEdge>[] Mappings = new MappingBuilder<T2SEdge>()
+        .MapSourceId(TxNodeStrategy.IdSpace, e => e.Source.Txid)
+        .MapTargetId(ScriptNodeStrategy.IdSpace, e => e.Target.Id)
+        .MapValue(e => e.Value)
+        .Map(e => e.Vout)
+        .Map(e => e.CreationHeight)
+        .Map(e => e.SpentHeight)
+        .MapEdgeType(e => e.Relation)
+        .ToArray();
 
     public override string GetCsvHeader()
     {

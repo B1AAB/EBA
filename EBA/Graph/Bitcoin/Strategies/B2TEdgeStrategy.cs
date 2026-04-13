@@ -7,14 +7,13 @@ public class B2TEdgeStrategy(bool serializeCompressed)
         $"edges_{B2TEdge.Kind.Source}_{B2TEdge.Kind.Relation}_{B2TEdge.Kind.Target}",
         serializeCompressed)
 {
-    public static readonly PropertyMapping<B2TEdge>[] Mappings =
-    [
-        Factory.SourceId<B2TEdge>(BlockNodeStrategy.IdSpace, e => e.Source.BlockMetadata.Height),
-        Factory.TargetId<B2TEdge>(TxNodeStrategy.IdSpace, e => e.Target.Txid),
-        Factory.Value<B2TEdge>(e => e.Value),
-        Factory.Height<B2TEdge>(e => e.BlockHeight),
-        Factory.EdgeType<B2TEdge>(e => e.Relation)
-    ];
+    public static readonly PropertyMapping<B2TEdge>[] Mappings = new MappingBuilder<B2TEdge>()
+        .MapSourceId(BlockNodeStrategy.IdSpace, e => e.Source.BlockMetadata.Height)
+        .MapTargetId(TxNodeStrategy.IdSpace, e => e.Target.Txid)
+        .MapValue(e => e.Value)
+        .MapBlockHeight(e => e.BlockHeight)
+        .MapEdgeType(e => e.Relation)
+        .ToArray();
 
     public override string GetCsvHeader()
     {

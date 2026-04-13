@@ -73,6 +73,16 @@ public class MappingBuilder<T>
         return this;
     }
 
+    public MappingBuilder<T> MapBlockHeight(Func<T, long> selector)
+    {
+        _mappings.Add(
+            new PropertyMapping<T>(
+                PropertyMappingFactory.HeightProperty, 
+                x => selector(x), 
+                deserializer: v => (long)v!));
+        return this;
+    }
+
     public MappingBuilder<T> MapValue(Func<T, long> selector)
     {
         _mappings.Add(
@@ -80,6 +90,51 @@ public class MappingBuilder<T>
                 PropertyMappingFactory.ValueProperty, 
                 x => selector(x), 
                 deserializer: v => (long)v!));
+
+        return this;
+    }
+
+    public MappingBuilder<T> MapRange(IEnumerable<PropertyMapping<T>> mappings)
+    {
+        _mappings.AddRange(mappings);
+        return this;
+    }
+
+    public MappingBuilder<T> MapCustom<TProperty>(string customColumnName, Func<T, TProperty> selector)
+    {
+        _mappings.Add(new PropertyMapping<T>(
+            new Property(customColumnName, GetNeo4jType(typeof(TProperty))),
+            x => selector(x)
+        ));
+
+        return this;
+    }
+
+    public MappingBuilder<T> MapLabel<TProperty>(Func<T, TProperty> selector)
+    {
+        _mappings.Add(
+            new PropertyMapping<T>(
+                ":LABEL", 
+                FieldType.String,
+                x => selector(x),
+                _ => ":LABEL"));
+
+        return this;
+    }
+
+    public MappingBuilder<T> WithCsvHeader(Func<Property, string> headerOverride)
+    {
+        if (_mappings.Count == 0)
+            throw new InvalidOperationException("Cannot call WithCsvHeader before adding a map.");
+
+        var lastMapping = _mappings[^1];
+        
+        _mappings[^1] = new PropertyMapping<T>(
+            lastMapping.Property,
+            x => lastMapping.GetValue(x),
+            headerOverride,
+            null
+        );
 
         return this;
     }

@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Db.Neo4jDb;
-
-namespace EBA.Graph.Bitcoin.Strategies;
+﻿namespace EBA.Graph.Bitcoin.Strategies;
 
 public class ScriptNodeStrategy(bool serializeCompressed) 
     : BitcoinStrategyBase(
@@ -9,20 +7,15 @@ public class ScriptNodeStrategy(bool serializeCompressed)
 {
     public static string IdSpace { get; } = ScriptNode.Kind.ToString();
 
-    private const ScriptNode v = null!;
-    private static readonly PropertyMapping<ScriptNode> _sha256Hash = 
-        PropertyMappingFactory.ScriptSHA256HashString<ScriptNode>(
-            n => n.SHA256Hash, 
-            p => p.GetIdFieldCsvHeader(IdSpace));
+    public readonly static PropertyMapping<ScriptNode>[] Mappings = new MappingBuilder<ScriptNode>()
+        .Map(n => n.SHA256Hash).WithCsvHeader(p => p.GetIdFieldCsvHeader(IdSpace))
 
-    public readonly static PropertyMapping<ScriptNode>[] Mappings =
-    [
-        _sha256Hash,
-        new(nameof(v.Address), FieldType.String, n => n.Address),
-        new(nameof(v.ScriptType), FieldType.String, n => n.ScriptType),
-        new(nameof(v.HexBase64), FieldType.String, n => n.HexBase64),
-        new(":LABEL", FieldType.String, _ => ScriptNode.Kind, _ => ":LABEL"),
-    ];
+        .Map(n => n.Address)
+        .Map(n => n.ScriptType)
+        .Map(n => n.HexBase64)
+        .MapLabel(_ => ScriptNode.Kind)
+
+        .ToArray();
 
     private static readonly Dictionary<string, PropertyMapping<ScriptNode>> _mappingsDict =
         Mappings.ToDictionary(m => m.Property.Name, m => m);
@@ -49,10 +42,10 @@ public class ScriptNodeStrategy(bool serializeCompressed)
         double? hopsFromRoot)
     {
         return new ScriptNode(
-            address: _mappingsDict[nameof(v.Address)].Deserialize<string>(node.Properties),
-            scriptType: _mappingsDict[nameof(v.ScriptType)].Deserialize<ScriptType>(node.Properties),
-            sha256Hash: _sha256Hash.Deserialize<string>(node.Properties),
-            hexBase64: _mappingsDict[nameof(v.HexBase64)].Deserialize<string>(node.Properties),
+            address: _mappingsDict[nameof(ScriptNode.Address)].Deserialize<string>(node.Properties),
+            scriptType: _mappingsDict[nameof(ScriptNode.ScriptType)].Deserialize<ScriptType>(node.Properties),
+            sha256Hash: _mappingsDict[nameof(ScriptNode.SHA256Hash)].Deserialize<string>(node.Properties)!,
+            hexBase64: _mappingsDict[nameof(ScriptNode.HexBase64)].Deserialize<string>(node.Properties),
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
             hopsFromRoot: hopsFromRoot,
@@ -109,9 +102,9 @@ public class ScriptNodeStrategy(bool serializeCompressed)
     {
         return 
         [
-            $"CREATE CONSTRAINT {ScriptNode.Kind}_{_sha256Hash.Property.Name}_Unique " +
+            $"CREATE CONSTRAINT {ScriptNode.Kind}_{nameof(ScriptNode.SHA256Hash)}_Unique " +
             $"IF NOT EXISTS " +
-            $"FOR (v:{ScriptNode.Kind}) REQUIRE v.{_sha256Hash.Property.Name} IS UNIQUE"
+            $"FOR (v:{ScriptNode.Kind}) REQUIRE v.{nameof(ScriptNode.SHA256Hash)} IS UNIQUE"
         ];
     }
 }

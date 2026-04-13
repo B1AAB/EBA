@@ -72,24 +72,23 @@ public static class PropertyMappingFactory
 
         var C = converter ?? (x => x ?? double.NaN);
 
-        return
-        [
-            new($"{prefix}.{nameof(d.Sum)}", FieldType.Double, s => C(getStats(s)?.Sum)),
-            new($"{prefix}.{nameof(d.Count)}", FieldType.Double, s => C(getStats(s)?.Count)),
-            new($"{prefix}.{nameof(d.Min)}", FieldType.Double, s => C(getStats(s)?.Min)),
-            new($"{prefix}.{nameof(d.Max)}", FieldType.Double, s => C(getStats(s)?.Max)),
-            new($"{prefix}.{nameof(d.Mean)}", FieldType.Double, s => C(getStats(s)?.Mean)),
-            new($"{prefix}.{nameof(d.Variance)}", FieldType.Double, s => C(getStats(s)?.Variance)),
-            new($"{prefix}.{nameof(d.Skewness)}", FieldType.Double, s => C(getStats(s)?.Skewness)),
-            new($"{prefix}.{nameof(d.Kurtosis)}", FieldType.Double, s => C(getStats(s)?.Kurtosis)),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P01)}", FieldType.Double, s => C(getStats(s)?.Percentiles.P01)),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P05)}", FieldType.Double, s => C(getStats(s)?.Percentiles.P05)),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P25)}", FieldType.Double, s => C(getStats(s)?.Percentiles.P25)),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P50)}", FieldType.Double, s => C(getStats(s)?.Percentiles.P50)),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P75)}", FieldType.Double, s => C(getStats(s)?.Percentiles.P75)),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P95)}", FieldType.Double, s => C(getStats(s)?.Percentiles.P95)),
-            new($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P99)}", FieldType.Double, s => C(getStats(s)?.Percentiles.P99)),
-        ];
+        return new MappingBuilder<T>()
+            .MapCustom($"{prefix}.{nameof(d.Sum)}", s => C(getStats(s)?.Sum))
+            .MapCustom($"{prefix}.{nameof(d.Count)}", s => C(getStats(s)?.Count))
+            .MapCustom($"{prefix}.{nameof(d.Min)}", s => C(getStats(s)?.Min))
+            .MapCustom($"{prefix}.{nameof(d.Max)}", s => C(getStats(s)?.Max))
+            .MapCustom($"{prefix}.{nameof(d.Mean)}", s => C(getStats(s)?.Mean))
+            .MapCustom($"{prefix}.{nameof(d.Variance)}", s => C(getStats(s)?.Variance))
+            .MapCustom($"{prefix}.{nameof(d.Skewness)}", s => C(getStats(s)?.Skewness))
+            .MapCustom($"{prefix}.{nameof(d.Kurtosis)}", s => C(getStats(s)?.Kurtosis))
+            .MapCustom($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P01)}", s => C(getStats(s)?.Percentiles.P01))
+            .MapCustom($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P05)}", s => C(getStats(s)?.Percentiles.P05))
+            .MapCustom($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P25)}", s => C(getStats(s)?.Percentiles.P25))
+            .MapCustom($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P50)}", s => C(getStats(s)?.Percentiles.P50))
+            .MapCustom($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P75)}", s => C(getStats(s)?.Percentiles.P75))
+            .MapCustom($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P95)}", s => C(getStats(s)?.Percentiles.P95))
+            .MapCustom($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P99)}", s => C(getStats(s)?.Percentiles.P99))
+            .ToArray();
     }
 
     public static DescriptiveStatistics ReadDescriptiveStats(
@@ -129,12 +128,16 @@ public static class PropertyMappingFactory
         string prefix,
         Func<T, Dictionary<ScriptType, long>> getScriptTypeCounts)
     {
-        return [..
-            Enum.GetValues<ScriptType>()
-                .Select(scriptType => new PropertyMapping<T>(
-                    $"{prefix}.ScriptType.{scriptType}",
-                    FieldType.Long,
-                    x => getScriptTypeCounts(x).GetValueOrDefault(scriptType)))];
+        var builder = new MappingBuilder<T>();
+        
+        foreach (var scriptType in Enum.GetValues<ScriptType>())
+        {
+            builder.MapCustom(
+                $"{prefix}.ScriptType.{scriptType}", 
+                x => getScriptTypeCounts(x).GetValueOrDefault(scriptType));
+        }
+
+        return builder.ToArray();
     }
 
     public static Dictionary<ScriptType, long> ReadScriptTypeCounts(
@@ -154,15 +157,17 @@ public static class PropertyMappingFactory
         Func<double?, double>? converter = null)
     {
         var C = converter ?? (x => x ?? double.NaN);
+        var builder = new MappingBuilder<T>();
 
         // Make sure to keep EdgeKind string representation compatible with neo4j header requirements. 
-        return
-        [
-            ..  keys.Select(k => new PropertyMapping<T>(
-                $"{prefix}.{k.Source}_{k.Relation}_{k.Target}",
-                FieldType.Double,
-                n => C(getDict(n).TryGetValue(k, out var v) ? v : 0)))
-        ];
+        foreach (var k in keys)
+        {
+            builder.MapCustom(
+                $"{prefix}.{k.Source}_{k.Relation}_{k.Target}", 
+                n => C(getDict(n).TryGetValue(k, out var v) ? v : 0));
+        }
+
+        return builder.ToArray();
     }
 
     public static PropertyMapping<T>[] DictionaryToColumns<T>(
@@ -170,13 +175,16 @@ public static class PropertyMappingFactory
         IEnumerable<EdgeKind> keys,
         Func<T, Dictionary<EdgeKind, uint>> getDict)
     {
-        return
-        [
-            ..  keys.Select(k => new PropertyMapping<T>(
-                $"{prefix}.{EdgeKindToPropertyName(k)}",
-                FieldType.Long,
-                n => getDict(n).TryGetValue(k, out var v) ? v : 0))
-        ];
+        var builder = new MappingBuilder<T>();
+        
+        foreach (var k in keys)
+        {
+            builder.MapCustom(
+                $"{prefix}.{EdgeKindToPropertyName(k)}", 
+                n => getDict(n).TryGetValue(k, out var v) ? v : 0U);
+        }
+        
+        return builder.ToArray();
     }
 
     public static Dictionary<EdgeKind, TValue> ReadDictionary<TValue>(
@@ -204,16 +212,15 @@ public static class PropertyMappingFactory
         string prefix = "OHLCV")
     {
         OHLCV o = null!;
-        return
-        [
-            new($"{prefix}.{nameof(o.Open)}", FieldType.Double, s => (double?)(getOhlcv(s)?.Open)),
-            new($"{prefix}.{nameof(o.High)}", FieldType.Double, s => (double?)(getOhlcv(s)?.High)),
-            new($"{prefix}.{nameof(o.Low)}", FieldType.Double, s => (double?)(getOhlcv(s)?.Low)),
-            new($"{prefix}.{nameof(o.Close)}", FieldType.Double, s => (double?)(getOhlcv(s)?.Close)),
-            new($"{prefix}.{nameof(o.Volume)}", FieldType.Long, s => getOhlcv(s)?.Volume),
-            new($"{prefix}.{nameof(o.VWAP)}", FieldType.Double, s => (double?)(getOhlcv(s)?.VWAP)),
-            new($"{prefix}.{nameof(o.OHLC4)}", FieldType.Double, s => (double?)(getOhlcv(s)?.OHLC4))
-        ];
+        return new MappingBuilder<T>()
+            .MapCustom($"{prefix}.{nameof(o.Open)}", s => (double?)(getOhlcv(s)?.Open))
+            .MapCustom($"{prefix}.{nameof(o.High)}", s => (double?)(getOhlcv(s)?.High))
+            .MapCustom($"{prefix}.{nameof(o.Low)}", s => (double?)(getOhlcv(s)?.Low))
+            .MapCustom($"{prefix}.{nameof(o.Close)}", s => (double?)(getOhlcv(s)?.Close))
+            .MapCustom($"{prefix}.{nameof(o.Volume)}", s => getOhlcv(s)?.Volume)
+            .MapCustom($"{prefix}.{nameof(o.VWAP)}", s => (double?)(getOhlcv(s)?.VWAP))
+            .MapCustom($"{prefix}.{nameof(o.OHLC4)}", s => (double?)(getOhlcv(s)?.OHLC4))
+            .ToArray();
     }
 
     public static OHLCV? ReadOHLCV(
