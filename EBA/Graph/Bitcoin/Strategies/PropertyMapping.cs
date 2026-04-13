@@ -40,7 +40,7 @@ public class PropertyMapping<T>
 
     public string SerializeHeader()
     {
-        return _headerOverride?.Invoke(Property) ?? Property.TypeAnnotatedCsvHeader;
+        return _headerOverride?.Invoke(Property) ?? Property.CsvHeaderTypeAnnotated;
     }
 
     public string SerializeValue(T source)
@@ -61,38 +61,66 @@ public class PropertyMapping<T>
         return value.ToString() ?? string.Empty;
     }
 
-    public V? Deserialize<V>(IReadOnlyDictionary<string, object> properties)
+    private V? ConvertValue<V>(object? rawValue)
     {
-        if (!properties.TryGetValue(Property.Name, out var value))
+        if (rawValue == null || (rawValue is string str && string.IsNullOrEmpty(str)))
             return default;
 
         if (_deserializer != null)
-            return (V?)_deserializer(value);
+            return (V?)_deserializer(rawValue);
 
         if (typeof(V).IsEnum)
-            return (V)Enum.Parse(typeof(V), (string)value);
-
-        if (value is V typed)
-            return typed;
-
-        if (value is IList list && typeof(V).IsArray)
         {
-            var elementType = typeof(V).GetElementType()!;
-
-            int count = 0;
-            for (int i = 0; i < list.Count; i++)
-                if (list[i] is not null) 
-                    count++;
-
-            var array = Array.CreateInstance(elementType, count);
-            int idx = 0;
-            for (int i = 0; i < list.Count; i++)
-                if (list[i] is not null)
-                    array.SetValue(Convert.ChangeType(list[i], elementType), idx++);
-
-            return (V)(object)array;
+            return (V)Enum.Parse(typeof(V), rawValue.ToString()!);
         }
 
-        return (V)Convert.ChangeType(value, typeof(V));
+        if (rawValue is V typedValue)
+            return typedValue;
+
+        if (typeof(V).IsArray)
+        {
+            var elementType = typeof(V).GetElementType()!;
+            
+            if (rawValue is string csvString)
+            {
+                var parts = csvString.Split(';');
+                var array = Array.CreateInstance(elementType, parts.Length);
+                for (int i = 0; i < parts.Length; i++)
+                    if (!string.IsNullOrEmpty(parts[i]))
+                        array.SetValue(Convert.ChangeType(parts[i], elementType), i);
+                        
+                return (V)(object)array;
+            }
+            else if (rawValue is IList list)
+            {
+                int count = 0;
+                for (int i = 0; i < list.Count; i++)
+                    if (list[i] is not null) 
+                        count++;
+
+                var array = Array.CreateInstance(elementType, count);
+                int idx = 0;
+                for (int i = 0; i < list.Count; i++)
+                    if (list[i] is not null)
+                        array.SetValue(Convert.ChangeType(list[i], elementType), idx++);
+
+                return (V)(object)array;
+            }
+        }
+
+        Type underlyingType = Nullable.GetUnderlyingType(typeof(V)) ?? typeof(V);
+        return (V)Convert.ChangeType(rawValue, underlyingType);
+    }
+
+    public V? Deserialize<V>(IReadOnlyDictionary<string, object> properties)
+    {
+        return properties.TryGetValue(Property.Name, out var value) 
+            ? ConvertValue<V>(value) 
+            : default;
+    }
+
+    public V? DeserializeCsv<V>(string stringValue)
+    {
+        return ConvertValue<V>(stringValue);
     }
 }

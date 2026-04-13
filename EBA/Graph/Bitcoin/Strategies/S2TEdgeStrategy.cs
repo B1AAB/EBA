@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Db.Neo4jDb;
-
-using Factory = EBA.Graph.Bitcoin.Strategies.PropertyMappingFactory;
+﻿using Factory = EBA.Graph.Bitcoin.Strategies.PropertyMappingFactory;
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
@@ -9,18 +7,17 @@ public class S2TEdgeStrategy(bool serializeCompressed)
         $"edges_{S2TEdge.Kind.Source}_{S2TEdge.Kind.Relation}_{S2TEdge.Kind.Target}",
         serializeCompressed)
 {
-    public static readonly PropertyMapping<S2TEdge>[] Mappings =
-    [
-        Factory.SourceId<S2TEdge>(ScriptNodeStrategy.IdSpace, e => e.Source.Id),
-        Factory.TargetId<S2TEdge>(TxNodeStrategy.IdSpace, e => e.Target.Txid),
-        Factory.Value<S2TEdge>(e => e.Value),
-        new(nameof(S2TEdge.SpentHeight), FieldType.Long, e => e.SpentHeight),
-        new(nameof(S2TEdge.Txid), FieldType.String, e => e.Txid),
-        new(nameof(S2TEdge.Vout), FieldType.Int, e => e.Vout),
-        new(nameof(S2TEdge.Generated), FieldType.Boolean, e => e.Generated),
-        new(nameof(S2TEdge.CreationHeight), FieldType.Long, e => e.CreationHeight),
-        Factory.EdgeType<S2TEdge>(e => e.Relation)
-    ];
+    public static readonly PropertyMapping<S2TEdge>[] Mappings = new MappingBuilder<S2TEdge>()
+        .MapSourceId(ScriptNodeStrategy.IdSpace, e => e.Source.Id)
+        .MapTargetId(TxNodeStrategy.IdSpace, e => e.Target.Txid)
+        .MapValue(e => e.Value)
+        .Map(e => e.SpentHeight)
+        .Map(e => e.Txid)
+        .Map(e => e.Vout)
+        .Map(e => e.Generated)
+        .Map(e => e.CreationHeight)
+        .MapEdgeType(e => e.Relation)
+        .ToArray();
 
     public override string GetCsvHeader()
     {
