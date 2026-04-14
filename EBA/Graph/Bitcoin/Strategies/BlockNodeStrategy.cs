@@ -1,4 +1,6 @@
-﻿namespace EBA.Graph.Bitcoin.Strategies;
+﻿using System.Linq.Expressions;
+
+namespace EBA.Graph.Bitcoin.Strategies;
 
 public class BlockNodeStrategy(bool serializeCompressed) 
     : BitcoinStrategyBase(
@@ -43,7 +45,7 @@ public class BlockNodeStrategy(bool serializeCompressed)
         .Map(n => n.BlockMetadata.Weight)
         .Map(n => n.BlockMetadata.CoinbaseOutputsCount)
         .Map(n => n.BlockMetadata.MintedBitcoins)
-        
+
         .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
             nameof(v.InputCountsStats), n => n.BlockMetadata.InputCountsStats))
 
@@ -90,6 +92,29 @@ public class BlockNodeStrategy(bool serializeCompressed)
     public override string GetCsvHeader()
     {
         return Mappings.GetCsvHeader();
+    }
+
+    public static Func<string[], TProperty> GetFieldParser<TProperty>(Expression<Func<BlockNode, TProperty>> e)
+    {
+        var eMember = e.Body switch
+        {
+            MemberExpression m => m,
+            UnaryExpression { Operand: MemberExpression m } => m,
+            _ => throw new ArgumentException("Expression must be a member access.")
+        };
+
+        var propertyName = eMember.Member.Name;
+
+        int columnIndex = Array.FindIndex(Mappings, m => m.Property.Name == propertyName);
+        if (columnIndex == -1)
+            throw new ArgumentException($"Property '{propertyName}' is not mapped.");
+
+        return (string[] columns) =>
+        {
+            return (TProperty)Convert.ChangeType(
+                columns[columnIndex], 
+                typeof(TProperty));
+        };
     }
 
     public override string GetCsvRow(IGraphElement component)
