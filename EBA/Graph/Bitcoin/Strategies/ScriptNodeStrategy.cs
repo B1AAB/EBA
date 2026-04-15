@@ -1,39 +1,21 @@
 ﻿namespace EBA.Graph.Bitcoin.Strategies;
 
 public class ScriptNodeStrategy(bool serializeCompressed) 
-    : BitcoinStrategyBase(
+    : StrategyBase<ScriptNode, ScriptNodeStrategy>(
         $"nodes_{ScriptNode.Kind}",
-        serializeCompressed)
+        serializeCompressed),
+    IElementSchema<ScriptNode>
 {
     public static string IdSpace { get; } = ScriptNode.Kind.ToString();
 
-    public readonly static PropertyMapping<ScriptNode>[] Mappings = new MappingBuilder<ScriptNode>()
-        .Map(n => n.SHA256Hash).WithCsvHeader(p => p.GetIdFieldCsvHeader(IdSpace))
-
-        .Map(n => n.Address)
-        .Map(n => n.ScriptType)
-        .Map(n => n.HexBase64)
-        .MapLabel(_ => ScriptNode.Kind)
-
-        .ToArray();
-
-    private static readonly Dictionary<string, PropertyMapping<ScriptNode>> _mappingsDict =
-        Mappings.ToDictionary(m => m.Property.Name, m => m);
-
-    public override string GetCsvHeader()
-    {
-        return Mappings.GetCsvHeader();
-    }
-
-    public override string GetCsvRow(IGraphElement component)
-    {
-        return GetCsv((ScriptNode)component);
-    }
-
-    public static string GetCsv(ScriptNode node)
-    {
-        return Mappings.GetCsv(node);
-    }
+    public static EntityTypeMapper<ScriptNode> Mapper { get; } = new EntityTypeMapper<ScriptNode>(
+        new MappingBuilder<ScriptNode>()
+            .Map(n => n.SHA256Hash).WithCsvHeader(p => p.GetIdFieldCsvHeader(IdSpace))
+            .Map(n => n.Address)
+            .Map(n => n.ScriptType)
+            .Map(n => n.HexBase64)
+            .MapLabel(_ => ScriptNode.Kind)
+            .ToArray());
 
     public static ScriptNode Deserialize(
         Neo4j.Driver.INode node,
@@ -42,10 +24,10 @@ public class ScriptNodeStrategy(bool serializeCompressed)
         double? hopsFromRoot)
     {
         return new ScriptNode(
-            address: _mappingsDict[nameof(ScriptNode.Address)].Deserialize<string>(node.Properties),
-            scriptType: _mappingsDict[nameof(ScriptNode.ScriptType)].Deserialize<ScriptType>(node.Properties),
-            sha256Hash: _mappingsDict[nameof(ScriptNode.SHA256Hash)].Deserialize<string>(node.Properties)!,
-            hexBase64: _mappingsDict[nameof(ScriptNode.HexBase64)].Deserialize<string>(node.Properties),
+            address: Mapper.GetValue(x => x.Address, node.Properties),
+            scriptType: Mapper.GetValue(x => x.ScriptType, node.Properties),
+            sha256Hash: Mapper.GetValue(x => x.SHA256Hash, node.Properties)!,
+            hexBase64: Mapper.GetValue(x => x.HexBase64, node.Properties),
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
             hopsFromRoot: hopsFromRoot,

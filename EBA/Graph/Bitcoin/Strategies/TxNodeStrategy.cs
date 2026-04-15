@@ -1,9 +1,10 @@
 ﻿namespace EBA.Graph.Bitcoin.Strategies;
 
 public class TxNodeStrategy(bool serializeCompressed) 
-    : BitcoinStrategyBase(
+    : StrategyBase<TxNode, TxNodeStrategy>(
         $"nodes_{TxNode.Kind}",
-        serializeCompressed)
+        serializeCompressed),
+    IElementSchema<TxNode>
 {
     /// <summary>
     /// The namespace used to resolve IDs during import by Neo4j. 
@@ -11,34 +12,16 @@ public class TxNodeStrategy(bool serializeCompressed)
     /// </summary>
     public static string IdSpace { get; } = TxNode.Kind.ToString();
 
-    private const TxNode v = null!;
-    public static readonly PropertyMapping<TxNode>[] Mappings = new MappingBuilder<TxNode>()
-        .Map(n => n.Txid).WithCsvHeader(p => p.GetIdFieldCsvHeader(IdSpace))
-        .Map(n => n.Version)
-        .Map(n => n.Size)
-        .Map(n => n.VSize)
-        .Map(n => n.Weight)
-        .Map(n => n.LockTime)
-        .MapLabel(_ => TxNode.Kind)
-        .ToArray();
-
-    private static readonly Dictionary<string, PropertyMapping<TxNode>> _mappingsDict =
-        Mappings.ToDictionary(m => m.Property.Name, m => m);
-
-    public override string GetCsvHeader()
-    {
-        return Mappings.GetCsvHeader();
-    }
-
-    public override string GetCsvRow(IGraphElement component)
-    {
-        return GetCsv((TxNode)component);
-    }
-
-    public static string GetCsv(TxNode node)
-    {
-        return Mappings.GetCsv(node);
-    }
+    public static EntityTypeMapper<TxNode> Mapper { get; } = new EntityTypeMapper<TxNode>(
+        new MappingBuilder<TxNode>()
+            .Map(n => n.Txid).WithCsvHeader(p => p.GetIdFieldCsvHeader(IdSpace))
+            .Map(n => n.Version)
+            .Map(n => n.Size)
+            .Map(n => n.VSize)
+            .Map(n => n.Weight)
+            .Map(n => n.LockTime)
+            .MapLabel(_ => TxNode.Kind)
+            .ToArray());
 
     public static TxNode Deserialize(
         Neo4j.Driver.INode node,
@@ -47,13 +30,12 @@ public class TxNodeStrategy(bool serializeCompressed)
         double? hopsFromRoot)
     {
         return new TxNode(
-            txid: _mappingsDict[nameof(v.Txid)].Deserialize<string>(node.Properties) ?? 
-                throw new ArgumentNullException(nameof(v.Txid)),
-            version: _mappingsDict[nameof(v.Version)].Deserialize<ulong>(node.Properties),
-            size: _mappingsDict[nameof(v.Size)].Deserialize<int>(node.Properties),
-            vSize: _mappingsDict[nameof(v.VSize)].Deserialize<int>(node.Properties),
-            weight: _mappingsDict[nameof(v.Weight)].Deserialize<int>(node.Properties),
-            lockTime: _mappingsDict[nameof(v.LockTime)].Deserialize<long>(node.Properties),
+            txid: Mapper.GetValue(x=>x.Txid, node.Properties) ?? throw new InvalidDataException("Txid cannot be null"),
+            version: Mapper.GetValue(x=>x.Version, node.Properties),
+            size: Mapper.GetValue(x=>x.Size, node.Properties),
+            vSize: Mapper.GetValue(x=>x.VSize, node.Properties),
+            weight: Mapper.GetValue(x=>x.Weight, node.Properties),
+            lockTime: Mapper.GetValue(x=>x.LockTime, node.Properties),
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
             hopsFromRoot: hopsFromRoot,

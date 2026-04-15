@@ -14,13 +14,12 @@ public class MappingBuilder<T>
 
     public MappingBuilder<T> Map<TProperty>(Expression<Func<T, TProperty>> e)
     {
-        var eMember = e.Body as MemberExpression;
-        if (eMember == null && e.Body is UnaryExpression unaryExpression)
-            eMember = unaryExpression.Operand as MemberExpression;
-
-        if (eMember == null)
-            throw new ArgumentException("Expression must be a member access.");
-
+        var eMember = e.Body switch
+        {
+            MemberExpression m => m,
+            UnaryExpression { Operand: MemberExpression m } => m,
+            _ => throw new ArgumentException("Expression must be a member access.")
+        };
         var compiledFunc = e.Compile();
 
         _mappings.Add(new PropertyMapping<T>(
@@ -141,25 +140,44 @@ public class MappingBuilder<T>
 
     private static FieldType GetNeo4jType(Type type)
     {
-        if (type == typeof(int) || type == typeof(int?)) 
-            return FieldType.Int;
-        if (type == typeof(long) || type == typeof(long?)) 
-            return FieldType.Long;
-        if (type == typeof(float) || type == typeof(float?)) 
-            return FieldType.Float;
-        if (type == typeof(double) || type == typeof(double?)) 
-            return FieldType.Double;
-        if (type == typeof(bool) || type == typeof(bool?)) 
-            return FieldType.Boolean;
-        if (type == typeof(string)) 
-            return FieldType.String;
-        if (type == typeof(string[])) 
-            return FieldType.StringArray;
-        if (type == typeof(long[])) 
-            return FieldType.LongArray;
-        if (type == typeof(double[])) 
-            return FieldType.DoubleArray;
+        // extracts underlying type if nullable
+        var actualType = Nullable.GetUnderlyingType(type) ?? type;
 
-        throw new ArgumentException($"Unsupported type for Neo4j FieldType: {type.Name}");
+        return actualType switch
+        {
+            { IsEnum: true } 
+            => FieldType.String,
+
+            _ when actualType == typeof(int) 
+                || actualType == typeof(uint) 
+            => FieldType.Int,
+
+            _ when actualType == typeof(long) 
+                || actualType == typeof(ulong) 
+            => FieldType.Long,
+
+            _ when actualType == typeof(float) 
+            => FieldType.Float,
+
+            _ when actualType == typeof(double) 
+            => FieldType.Double,
+
+            _ when actualType == typeof(bool) 
+            => FieldType.Boolean,
+
+            _ when actualType == typeof(string) 
+            => FieldType.String,
+
+            _ when actualType == typeof(string[]) 
+            => FieldType.StringArray,
+
+            _ when actualType == typeof(long[]) 
+            => FieldType.LongArray,
+
+            _ when actualType == typeof(double[]) 
+            => FieldType.DoubleArray,
+
+            _ => throw new ArgumentException($"Unsupported type for Neo4j FieldType: {type.Name}")
+        };
     }
 }

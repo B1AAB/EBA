@@ -7,21 +7,21 @@ public class BitcoinStrategyFactory : IStrategyFactory
 {
     private bool _disposed = false;
 
-    public IReadOnlyDictionary<NodeKind, StrategyBase> NodeStrategies { get; }
-    public IReadOnlyDictionary<EdgeKind, StrategyBase> EdgeStrategies { get; }
+    public IReadOnlyDictionary<NodeKind, IElementStrategy> NodeStrategies { get; }
+    public IReadOnlyDictionary<EdgeKind, IElementStrategy> EdgeStrategies { get; }
 
     public BitcoinStrategyFactory(Options options)
     {
         var compressOutput = options.Neo4j.CompressOutput;
 
-        NodeStrategies = new Dictionary<NodeKind, StrategyBase>
+        NodeStrategies = new Dictionary<NodeKind, IElementStrategy>
         {
             { BlockNode.Kind, new BlockNodeStrategy(compressOutput) },
             { ScriptNode.Kind, new ScriptNodeStrategy(compressOutput) },
             { TxNode.Kind, new TxNodeStrategy(compressOutput) }
         };
 
-        EdgeStrategies = new Dictionary<EdgeKind, StrategyBase>
+        EdgeStrategies = new Dictionary<EdgeKind, IElementStrategy>
         {
             { C2TEdge.Kind, new C2TEdgeStrategy(compressOutput) },
             { T2TEdge.KindTransfers, new T2TEdgeStrategy(T2TEdge.KindTransfers, compressOutput) },
@@ -33,7 +33,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
         };
     }
 
-    public StrategyBase? GetStrategy(NodeKind kind)
+    public IElementStrategy? GetStrategy(NodeKind kind)
     {
         if (NodeStrategies.TryGetValue(kind, out var strategy))
             return strategy;
@@ -41,7 +41,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
             return null;
     }
 
-    public StrategyBase? GetStrategy(EdgeKind kind)
+    public IElementStrategy? GetStrategy(EdgeKind kind)
     {
         if (EdgeStrategies.TryGetValue(kind, out var strategy))
             return strategy;

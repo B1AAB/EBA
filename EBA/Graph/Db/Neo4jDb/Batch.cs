@@ -26,8 +26,8 @@ public class Batch
     public Batch(
         string name,
         string defaultDirectory,
-        IReadOnlyDictionary<NodeKind, StrategyBase> nodeStrategies,
-        IReadOnlyDictionary<EdgeKind, StrategyBase> edgeStrategies)
+        IReadOnlyDictionary<NodeKind, IElementStrategy> nodeStrategies,
+        IReadOnlyDictionary<EdgeKind, IElementStrategy> edgeStrategies)
     {
         Name = name;
         DefaultDirectory = defaultDirectory;

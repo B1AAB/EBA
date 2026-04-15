@@ -1,37 +1,22 @@
 ﻿namespace EBA.Graph.Bitcoin.Strategies;
 
-using Factory = PropertyMappingFactory;
-
 public class T2TEdgeStrategy(EdgeKind kind, bool serializeCompressed) 
-    : BitcoinStrategyBase(
+    : StrategyBase<T2TEdge, T2TEdgeStrategy>(
         $"edges_" +
         $"{kind.Source}_" +
         $"{kind.Relation}_" +
         $"{kind.Target}",
-        serializeCompressed)
+        serializeCompressed),
+    IElementSchema<T2TEdge>
 {
-    public static readonly PropertyMapping<T2TEdge>[] Mappings = new MappingBuilder<T2TEdge>()
-        .MapSourceId(TxNodeStrategy.IdSpace, e => e.Source.Txid)
-        .MapTargetId(TxNodeStrategy.IdSpace, e => e.Target.Txid)
-        .MapValue(e => e.Value)
-        .MapBlockHeight(e => e.BlockHeight)
-        .MapEdgeType(e => e.Relation)
-        .ToArray();
-
-    public override string GetCsvHeader()
-    {
-        return Mappings.GetCsvHeader();
-    }
-
-    public override string GetCsvRow(IGraphElement edge)
-    {
-        return GetCsv((T2TEdge)edge);
-    }
-
-    public static string GetCsv(T2TEdge edge)
-    {
-        return Mappings.GetCsv(edge);
-    }
+    public static EntityTypeMapper<T2TEdge> Mapper { get; } = new EntityTypeMapper<T2TEdge>(
+        new MappingBuilder<T2TEdge>()
+            .MapSourceId(TxNodeStrategy.IdSpace, e => e.Source.Txid)
+            .MapTargetId(TxNodeStrategy.IdSpace, e => e.Target.Txid)
+            .MapValue(e => e.Value)
+            .MapBlockHeight(e => e.BlockHeight)
+            .MapEdgeType(e => e.Relation)
+            .ToArray());
 
     public static T2TEdge Deserialize(TxNode source, TxNode target, IRelationship relationship)
     {
@@ -39,8 +24,8 @@ public class T2TEdgeStrategy(EdgeKind kind, bool serializeCompressed)
             source: source,
             target: target,
             timestamp: 0,
-            blockHeight: Mappings.Get(Factory.HeightProperty.Name).Deserialize<long>(relationship.Properties),
-            value: Mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties),
+            blockHeight: Mapper.GetValue(x => x.BlockHeight, relationship.Properties),
+            value: Mapper.GetValue(x => x.Value, relationship.Properties),
             type: Enum.Parse<RelationType>(relationship.Type));
     }
 

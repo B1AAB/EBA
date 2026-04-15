@@ -2,11 +2,11 @@
 
 public interface IStrategyFactory : IDisposable
 {
-    public IReadOnlyDictionary<NodeKind, StrategyBase> NodeStrategies { get; }
-    public IReadOnlyDictionary<EdgeKind, StrategyBase> EdgeStrategies { get; }
+    public IReadOnlyDictionary<NodeKind, IElementStrategy> NodeStrategies { get; }
+    public IReadOnlyDictionary<EdgeKind, IElementStrategy> EdgeStrategies { get; }
 
-    public StrategyBase? GetStrategy(NodeKind kind);
-    public StrategyBase? GetStrategy(EdgeKind kind);
+    public IElementStrategy? GetStrategy(NodeKind kind);
+    public IElementStrategy? GetStrategy(EdgeKind kind);
 
     public bool IsSerializable(NodeKind kind);
     public bool IsSerializable(EdgeKind kind);

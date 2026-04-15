@@ -1,11 +1,8 @@
-﻿using System.Linq.Expressions;
+﻿namespace EBA.Graph.Bitcoin.Strategies;
 
-namespace EBA.Graph.Bitcoin.Strategies;
-
-public class BlockNodeStrategy(bool serializeCompressed) 
-    : BitcoinStrategyBase(
-        $"nodes_{BlockNode.Kind}",
-        serializeCompressed)
+public class BlockNodeStrategy(bool serializeCompressed) :
+    StrategyBase<BlockNode, BlockNodeStrategy>($"nodes_{BlockNode.Kind}", serializeCompressed),
+    IElementSchema<BlockNode>
 {
     public static string IdSpace { get; } = BlockNode.Kind.ToString();
 
@@ -23,109 +20,69 @@ public class BlockNodeStrategy(bool serializeCompressed)
         .MapRange(_economicMappings)
         .ToArray();
 
-    public static readonly PropertyMapping<BlockNode>[] Mappings = new MappingBuilder<BlockNode>()
-        .MapSourceId(IdSpace, n => n.BlockMetadata.Height)
-        .MapBlockHeight(n => n.BlockMetadata.Height)
-        .Map(n => n.BlockMetadata.Hash)
-        .Map(n => n.BlockMetadata.Confirmations)
-        .Map(n => n.BlockMetadata.Version)
-        .Map(n => n.BlockMetadata.VersionHex)
-        .Map(n => n.BlockMetadata.Merkleroot)
-        .Map(n => n.BlockMetadata.Time)
-        .Map(n => n.BlockMetadata.MedianTime)
-        .Map(n => n.BlockMetadata.Nonce)
-        .Map(n => n.BlockMetadata.Bits)
-        .Map(n => n.BlockMetadata.Difficulty)
-        .Map(n => n.BlockMetadata.Chainwork)
-        .Map(n => n.BlockMetadata.TransactionsCount)
-        .Map(n => n.BlockMetadata.PreviousBlockHash)
-        .Map(n => n.BlockMetadata.NextBlockHash)
-        .Map(n => n.BlockMetadata.StrippedSize)
-        .Map(n => n.BlockMetadata.Size)
-        .Map(n => n.BlockMetadata.Weight)
-        .Map(n => n.BlockMetadata.CoinbaseOutputsCount)
-        .Map(n => n.BlockMetadata.MintedBitcoins)
+    public static EntityTypeMapper<BlockNode> Mapper { get; } = new EntityTypeMapper<BlockNode>(
+        new MappingBuilder<BlockNode>()
+            .MapSourceId(IdSpace, n => n.BlockMetadata.Height)
+            .MapBlockHeight(n => n.BlockMetadata.Height)
+            .Map(n => n.BlockMetadata.Hash)
+            .Map(n => n.BlockMetadata.Confirmations)
+            .Map(n => n.BlockMetadata.Version)
+            .Map(n => n.BlockMetadata.VersionHex)
+            .Map(n => n.BlockMetadata.Merkleroot)
+            .Map(n => n.BlockMetadata.Time)
+            .Map(n => n.BlockMetadata.MedianTime)
+            .Map(n => n.BlockMetadata.Nonce)
+            .Map(n => n.BlockMetadata.Bits)
+            .Map(n => n.BlockMetadata.Difficulty)
+            .Map(n => n.BlockMetadata.Chainwork)
+            .Map(n => n.BlockMetadata.TransactionsCount)
+            .Map(n => n.BlockMetadata.PreviousBlockHash)
+            .Map(n => n.BlockMetadata.NextBlockHash)
+            .Map(n => n.BlockMetadata.StrippedSize)
+            .Map(n => n.BlockMetadata.Size)
+            .Map(n => n.BlockMetadata.Weight)
+            .Map(n => n.BlockMetadata.CoinbaseOutputsCount)
+            .Map(n => n.BlockMetadata.MintedBitcoins)
 
-        .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.InputCountsStats), n => n.BlockMetadata.InputCountsStats))
+            .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
+                nameof(v.InputCountsStats), n => n.BlockMetadata.InputCountsStats))
 
-        .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.OutputCountsStats), n => n.BlockMetadata.OutputCountsStats))
+            .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
+                nameof(v.OutputCountsStats), n => n.BlockMetadata.OutputCountsStats))
 
-        .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.InputValuesStats), n => n.BlockMetadata.InputValuesStats))
+            .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
+                nameof(v.InputValuesStats), n => n.BlockMetadata.InputValuesStats))
 
-        .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.OutputValuesStats), n => n.BlockMetadata.OutputValuesStats))
+            .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
+                nameof(v.OutputValuesStats), n => n.BlockMetadata.OutputValuesStats))
 
-        .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.SpentOutputAgeStats), n => n.BlockMetadata.SpentOutputAgeStats))
+            .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
+                nameof(v.SpentOutputAgeStats), n => n.BlockMetadata.SpentOutputAgeStats))
 
-        .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
-            nameof(v.FeesStats), n => n.BlockMetadata.FeesStats))
+            .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
+                nameof(v.FeesStats), n => n.BlockMetadata.FeesStats))
 
-        .MapRange(PropertyMappingFactory.ScriptTypeCounts<BlockNode>(
-            "Inputs", n => n.BlockMetadata.InputScriptTypeCount))
+            .MapRange(PropertyMappingFactory.ScriptTypeCounts<BlockNode>(
+                "Inputs", n => n.BlockMetadata.InputScriptTypeCount))
 
-        .MapRange(PropertyMappingFactory.ScriptTypeCounts<BlockNode>(
-            "Outputs", n => n.BlockMetadata.OutputScriptTypeCount))
+            .MapRange(PropertyMappingFactory.ScriptTypeCounts<BlockNode>(
+                "Outputs", n => n.BlockMetadata.OutputScriptTypeCount))
 
-        .MapRange(PropertyMappingFactory.DictionaryToColumns<BlockNode>(
-            nameof(BlockNode.TripletTypeCount), Schema.EdgeKinds, n => n.TripletTypeCount))
+            .MapRange(PropertyMappingFactory.DictionaryToColumns<BlockNode>(
+                nameof(BlockNode.TripletTypeCount), Schema.EdgeKinds, n => n.TripletTypeCount))
 
-        .MapRange(PropertyMappingFactory.DictionaryToColumns<BlockNode>(
-            nameof(BlockNode.TripletTypeValueSum), Schema.EdgeKinds, n => n.TripletTypeValueSum))
+            .MapRange(PropertyMappingFactory.DictionaryToColumns<BlockNode>(
+                nameof(BlockNode.TripletTypeValueSum), Schema.EdgeKinds, n => n.TripletTypeValueSum))
 
-        .Map(n=>n.BlockMetadata.TotalSupply)
-        .Map(n=>n.BlockMetadata.TotalSupplyNominal)
+            .Map(n => n.BlockMetadata.TotalSupply)
+            .Map(n => n.BlockMetadata.TotalSupplyNominal)
 
-        .MapRange(_economicMappings)
+            .MapRange(_economicMappings)
 
-        .MapLabel(_ => BlockNode.Kind)
+            .MapLabel(_ => BlockNode.Kind)
 
-        .ToArray();
+            .ToArray());
 
-    private static readonly Dictionary<string, PropertyMapping<BlockNode>> _mappingsDict =
-        Mappings.ToDictionary(m => m.Property.Name, m => m);
-
-
-    public override string GetCsvHeader()
-    {
-        return Mappings.GetCsvHeader();
-    }
-
-    public static Func<string[], TProperty> GetFieldParser<TProperty>(Expression<Func<BlockNode, TProperty>> e)
-    {
-        var eMember = e.Body switch
-        {
-            MemberExpression m => m,
-            UnaryExpression { Operand: MemberExpression m } => m,
-            _ => throw new ArgumentException("Expression must be a member access.")
-        };
-
-        var propertyName = eMember.Member.Name;
-
-        int columnIndex = Array.FindIndex(Mappings, m => m.Property.Name == propertyName);
-        if (columnIndex == -1)
-            throw new ArgumentException($"Property '{propertyName}' is not mapped.");
-
-        return (string[] columns) =>
-        {
-            return (TProperty)Convert.ChangeType(
-                columns[columnIndex], 
-                typeof(TProperty));
-        };
-    }
-
-    public override string GetCsvRow(IGraphElement component)
-    {
-        return GetCsv((BlockNode)component);
-    }
-
-    public static string GetCsv(BlockNode node)
-    {
-        return Mappings.GetCsv(node);
-    }
 
     // TODO: need a deserializer from string that returns only a given property,
     // so avoids building the whole object when only a few properties are needed
@@ -138,43 +95,42 @@ public class BlockNodeStrategy(bool serializeCompressed)
         double? hopsFromRoot)
     {
         return Deserialize(
-            node.Properties, 
-            originalIndegree, 
-            originalOutdegree, 
-            hopsFromRoot, 
+            node.Properties,
+            originalIndegree,
+            originalOutdegree,
+            hopsFromRoot,
             node.ElementId);
     }
 
     public static BlockNode Deserialize(
-        IReadOnlyDictionary<string, object> props, 
+        IReadOnlyDictionary<string, object> props,
         double? originalIndegree = null,
         double? originalOutdegree = null,
-        double? hopsFromRoot= null, 
+        double? hopsFromRoot = null,
         string? idInGraphDb = null)
     {
         var blockMetadata = new BlockMetadata
         {
-            Height = _mappingsDict[nameof(v.Height)].Deserialize<long>(props),
-            Hash = _mappingsDict[nameof(v.Hash)].Deserialize<string>(props),
-            Confirmations = _mappingsDict[nameof(v.Confirmations)].Deserialize<int>(props),
-            Version = _mappingsDict[nameof(v.Version)].Deserialize<ulong>(props),
-            VersionHex = _mappingsDict[nameof(v.VersionHex)].Deserialize<string>(props),
-            Merkleroot = _mappingsDict[nameof(v.Merkleroot)].Deserialize<string>(props),
-            Time = _mappingsDict[nameof(v.Time)].Deserialize<uint>(props),
-            MedianTime = _mappingsDict[nameof(v.MedianTime)].Deserialize<uint>(props),
-            Nonce = _mappingsDict[nameof(v.Nonce)].Deserialize<ulong>(props),
-            Bits = _mappingsDict[nameof(v.Bits)].Deserialize<string>(props),
-            Difficulty = _mappingsDict[nameof(v.Difficulty)].Deserialize<double>(props),
-            Chainwork = _mappingsDict[nameof(v.Chainwork)].Deserialize<string>(props),
-            TransactionsCount = _mappingsDict[nameof(v.TransactionsCount)].Deserialize<int>(props),
-            PreviousBlockHash = _mappingsDict[nameof(v.PreviousBlockHash)].Deserialize<string>(props),
-            NextBlockHash = _mappingsDict[nameof(v.NextBlockHash)].Deserialize<string>(props),
-            StrippedSize = _mappingsDict[nameof(v.StrippedSize)].Deserialize<int>(props),
-            Size = _mappingsDict[nameof(v.Size)].Deserialize<int>(props),
-            Weight = _mappingsDict[nameof(v.Weight)].Deserialize<int>(props),
-            CoinbaseOutputsCount = _mappingsDict[nameof(v.CoinbaseOutputsCount)].Deserialize<int>(props),
-            MintedBitcoins = _mappingsDict[nameof(v.MintedBitcoins)].Deserialize<long>(props),
-
+            Height = Mapper.GetValue(x=>x.BlockMetadata.Height, props),
+            Hash = Mapper.GetValue(x=>x.BlockMetadata.Hash, props) ?? throw new InvalidDataException("Hash cannot be null"),
+            Confirmations = Mapper.GetValue(x=>x.BlockMetadata.Confirmations, props),
+            Version = Mapper.GetValue(x=>x.BlockMetadata.Version, props),
+            VersionHex = Mapper.GetValue(x=>x.BlockMetadata.VersionHex, props),
+            Merkleroot = Mapper.GetValue(x=>x.BlockMetadata.Merkleroot, props),
+            Time = Mapper.GetValue(x=>x.BlockMetadata.Time, props),
+            MedianTime = Mapper.GetValue(x=>x.BlockMetadata.MedianTime, props),
+            Nonce = Mapper.GetValue(x=>x.BlockMetadata.Nonce, props),
+            Bits = Mapper.GetValue(x=>x.BlockMetadata.Bits, props),
+            Difficulty = Mapper.GetValue(x=>x.BlockMetadata.Difficulty, props),
+            Chainwork = Mapper.GetValue(x=>x.BlockMetadata.Chainwork, props),
+            TransactionsCount = Mapper.GetValue(x=>x.BlockMetadata.TransactionsCount, props),
+            PreviousBlockHash = Mapper.GetValue(x=>x.BlockMetadata.PreviousBlockHash, props),
+            NextBlockHash = Mapper.GetValue(x=>x.BlockMetadata.NextBlockHash, props),
+            StrippedSize = Mapper.GetValue(x=>x.BlockMetadata.StrippedSize, props),
+            Size = Mapper.GetValue(x=>x.BlockMetadata.Size, props),
+            Weight = Mapper.GetValue(x=>x.BlockMetadata.Weight, props),
+            CoinbaseOutputsCount = Mapper.GetValue(x=>x.BlockMetadata.CoinbaseOutputsCount, props),
+            MintedBitcoins = Mapper.GetValue(x=>x.BlockMetadata.MintedBitcoins, props),
             InputCountsStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.InputCountsStats)),
             OutputCountsStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.OutputCountsStats)),
             InputValuesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.InputValuesStats)),
@@ -186,10 +142,10 @@ public class BlockNodeStrategy(bool serializeCompressed)
             InputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Inputs", props),
             OutputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Outputs", props),
 
-            TotalSupply = _mappingsDict[nameof(v.TotalSupply)].Deserialize<long>(props),
-            TotalSupplyNominal = _mappingsDict[nameof(v.TotalSupplyNominal)].Deserialize<long>(props),
+            TotalSupply = Mapper.GetValue(x => x.BlockMetadata.TotalSupply, props),
+            TotalSupplyNominal = Mapper.GetValue(x => x.BlockMetadata.TotalSupplyNominal, props),
 
-            RealizedCap = (decimal?)_mappingsDict[nameof(v.RealizedCap)].Deserialize<double?>(props),
+            RealizedCap = Mapper.GetValue(x => x.BlockMetadata.RealizedCap, props),
             Ohlcv = PropertyMappingFactory.ReadOHLCV(props)
         };
 

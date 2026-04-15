@@ -69,7 +69,7 @@ public class EconomicAugmentor(Options options, IGraphDb<BitcoinGraph> graphDb, 
 
         _logger.LogInformation("Saving realized cap for {count:n0} block nodes.", blocks.Count);
         var updates = blocks.Values
-            .Select(b => BlockNodeStrategy.EconomicMappings.ToDictionary(b))
+            .Select(b => BlockNodeStrategy.EconomicMappings.ToDictionary(b)) // TODO: update this
             .ToList();
 
         await _graphDb.BulkUpdateNodePropertiesAsync(

@@ -1,8 +1,10 @@
 ﻿using System.IO.Compression;
+using System.Linq.Expressions;
 
-namespace EBA.Graph.Db.Neo4jDb;
+namespace EBA.Graph.Model;
 
-public abstract class StrategyBase : IDisposable
+public abstract class StrategyBase<TElement, TSchema> : IElementStrategy
+    where TSchema : IElementSchema<TElement>
 {
     public string DefaultFilename { get; }
 
@@ -55,11 +57,25 @@ public abstract class StrategyBase : IDisposable
                 from x in elements select GetCsvRow(x)));
     }
 
-    public abstract string GetCsvHeader();
+    public virtual string GetCsvHeader()
+    {
+        return TSchema.Mapper.GetCsvHeader();
+    }
 
-    public abstract string GetCsvRow(IGraphElement element);
+    public virtual string GetCsvRow(IGraphElement element)
+    {
+        return GetCsv((TElement)element);
+    }
 
-    public abstract string GetQuery(string filename);
+    public static string GetCsv(TElement element)
+    {
+        return TSchema.Mapper.GetCsv(element);
+    }
+
+    public virtual string GetQuery(string filename)
+    {
+        throw new NotImplementedException("GetQuery is not implemented.");
+    }
 
     public virtual string[] GetSchemaConfigs()
     {
@@ -69,6 +85,23 @@ public abstract class StrategyBase : IDisposable
     public virtual string[] GetSeedingCommands()
     {
         return [];
+    }
+
+    public static Func<string[], T> GetFieldParser<T>(Expression<Func<TElement, T>> e)
+    {
+        var memberExpression = e.Body switch
+        {
+            MemberExpression m => m,
+            UnaryExpression { Operand: MemberExpression m } => m,
+            _ => throw new ArgumentException("Expression must be a member access.")
+        };
+
+        var i = TSchema.Mapper.GetPropertyCsvIndex(memberExpression.Member.Name);
+
+        return columns =>
+        {
+            return (T)Convert.ChangeType(columns[i], typeof(T));
+        };
     }
 
     public void Dispose()

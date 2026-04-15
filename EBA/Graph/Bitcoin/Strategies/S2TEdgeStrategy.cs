@@ -1,51 +1,37 @@
-﻿using Factory = EBA.Graph.Bitcoin.Strategies.PropertyMappingFactory;
-
-namespace EBA.Graph.Bitcoin.Strategies;
+﻿namespace EBA.Graph.Bitcoin.Strategies;
 
 public class S2TEdgeStrategy(bool serializeCompressed)
-    : BitcoinStrategyBase(
+    : StrategyBase<S2TEdge, S2TEdgeStrategy>(
         $"edges_{S2TEdge.Kind.Source}_{S2TEdge.Kind.Relation}_{S2TEdge.Kind.Target}",
-        serializeCompressed)
+        serializeCompressed),
+    IElementSchema<S2TEdge>
 {
-    public static readonly PropertyMapping<S2TEdge>[] Mappings = new MappingBuilder<S2TEdge>()
-        .MapSourceId(ScriptNodeStrategy.IdSpace, e => e.Source.Id)
-        .MapTargetId(TxNodeStrategy.IdSpace, e => e.Target.Txid)
-        .MapValue(e => e.Value)
-        .Map(e => e.SpentHeight)
-        .Map(e => e.Txid)
-        .Map(e => e.Vout)
-        .Map(e => e.Generated)
-        .Map(e => e.CreationHeight)
-        .MapEdgeType(e => e.Relation)
-        .ToArray();
-
-    public override string GetCsvHeader()
-    {
-        return Mappings.GetCsvHeader();
-    }
-
-    public override string GetCsvRow(IGraphElement edge)
-    {
-        return GetCsvRow((S2TEdge)edge);
-    }
-
-    public static string GetCsvRow(S2TEdge edge)
-    {
-        return Mappings.GetCsv(edge);
-    }
+    public static EntityTypeMapper<S2TEdge> Mapper { get; } = new EntityTypeMapper<S2TEdge>(
+        new MappingBuilder<S2TEdge>()
+            .MapSourceId(ScriptNodeStrategy.IdSpace, e => e.Source.Id)
+            .MapTargetId(TxNodeStrategy.IdSpace, e => e.Target.Txid)
+            .MapValue(e => e.Value)
+            .Map(e => e.SpentHeight)
+            .Map(e => e.Txid)
+            .Map(e => e.Vout)
+            .Map(e => e.Generated)
+            .Map(e => e.CreationHeight)
+            .MapEdgeType(e => e.Relation)
+            .ToArray());
 
     public static S2TEdge Deserialize(ScriptNode source, TxNode target, IRelationship relationship)
     {
+        // TODO: this should be updated
         return new S2TEdge(
             source: source,
             target: target,
             timestamp: 0,
-            creationHeight: Mappings.Get(nameof(S2TEdge.CreationHeight)).Deserialize<long>(relationship.Properties),
-            spentHeight: Mappings.Get(nameof(S2TEdge.SpentHeight)).Deserialize<long>(relationship.Properties),
-            value: Mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties),
-            txid: Mappings.Get(nameof(S2TEdge.Txid)).Deserialize<string>(relationship.Properties),
-            vout: Mappings.Get(nameof(S2TEdge.Vout)).Deserialize<int>(relationship.Properties),
-            generated: Mappings.Get(nameof(S2TEdge.Generated)).Deserialize<bool>(relationship.Properties)
+            creationHeight: Mapper.GetValue(x => x.CreationHeight, relationship.Properties),
+            spentHeight: Mapper.GetValue(x => x.SpentHeight, relationship.Properties),
+            value: Mapper.GetValue(x => x.Value, relationship.Properties),
+            txid: Mapper.GetValue(x => x.Txid, relationship.Properties),
+            vout: Mapper.GetValue(x => x.Vout, relationship.Properties),
+            generated: Mapper.GetValue(x => x.Generated, relationship.Properties)
         );
     }
 

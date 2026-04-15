@@ -68,8 +68,8 @@ public abstract class PersistentObjectBase<T> : IDisposable
             catch (Exception e)
             {
                 _logger.LogError(
-                    "Exception occurred persisting an instance of type `{o}`. {e}",
-                    obj, e.Message);
+                    "Exception occurred persisting an instance of type {o}. Error message: {e} Inner exception message: {i}",
+                    typeof(T), e.Message, e.InnerException?.Message);
 
                 // TODO: re-throwing exception here has no impact.
                 // fixing it requires a bit of reengineering how this method is used.

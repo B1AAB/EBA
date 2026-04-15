@@ -1,34 +1,19 @@
-﻿using Factory = EBA.Graph.Bitcoin.Strategies.PropertyMappingFactory;
+﻿namespace EBA.Graph.Bitcoin.Strategies;
 
-namespace EBA.Graph.Bitcoin.Strategies;
-
-public class B2TEdgeStrategy(bool serializeCompressed) 
-    : BitcoinStrategyBase(
+public class B2TEdgeStrategy(bool serializeCompressed)
+    : StrategyBase<B2TEdge, B2TEdgeStrategy>(
         $"edges_{B2TEdge.Kind.Source}_{B2TEdge.Kind.Relation}_{B2TEdge.Kind.Target}",
-        serializeCompressed)
+        serializeCompressed),
+    IElementSchema<B2TEdge>
 {
-    public static readonly PropertyMapping<B2TEdge>[] Mappings = new MappingBuilder<B2TEdge>()
-        .MapSourceId(BlockNodeStrategy.IdSpace, e => e.Source.BlockMetadata.Height)
-        .MapTargetId(TxNodeStrategy.IdSpace, e => e.Target.Txid)
-        .MapValue(e => e.Value)
-        .MapBlockHeight(e => e.BlockHeight)
-        .MapEdgeType(e => e.Relation)
-        .ToArray();
-
-    public override string GetCsvHeader()
-    {
-        return Mappings.GetCsvHeader();
-    }
-
-    public override string GetCsvRow(IGraphElement edge)
-    {
-        return GetCsv((B2TEdge)edge);
-    }
-
-    public static string GetCsv(B2TEdge edge)
-    {
-        return Mappings.GetCsv(edge);
-    }
+    public static EntityTypeMapper<B2TEdge> Mapper { get; } = new EntityTypeMapper<B2TEdge>(
+        new MappingBuilder<B2TEdge>()
+            .MapSourceId(BlockNodeStrategy.IdSpace, e => e.Source.BlockMetadata.Height)
+            .MapTargetId(TxNodeStrategy.IdSpace, e => e.Target.Txid)
+            .MapValue(e => e.Value)
+            .MapBlockHeight(e => e.BlockHeight)
+            .MapEdgeType(e => e.Relation)
+            .ToArray());
 
     public static B2TEdge Deserialize(BlockNode source, TxNode target, IRelationship relationship)
     {
@@ -36,12 +21,7 @@ public class B2TEdgeStrategy(bool serializeCompressed)
             source: source,
             target: target,
             timestamp: 0,
-            blockHeight: Mappings.Get(Factory.HeightProperty.Name).Deserialize<long>(relationship.Properties),
-            value: Mappings.Get(Factory.ValueProperty.Name).Deserialize<long>(relationship.Properties));
-    }
-
-    public override string GetQuery(string filename)
-    {
-        throw new NotImplementedException();
+            blockHeight: Mapper.GetValue(x => x.BlockHeight, relationship.Properties),
+            value: Mapper.GetValue(x => x.Value, relationship.Properties));
     }
 }

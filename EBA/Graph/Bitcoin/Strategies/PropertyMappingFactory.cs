@@ -5,8 +5,6 @@ namespace EBA.Graph.Bitcoin.Strategies;
 
 public static class PropertyMappingFactory
 {
-    public static char PropertyDelimiter { get; } = '-';
-
     public static Property HeightProperty { get; } = new(nameof(Block.Height), FieldType.Long);
     public static PropertyMapping<T> Height<T>(Func<T, long> getValue, Func<Property, string>? headerOverride = null)
     {
@@ -41,25 +39,7 @@ public static class PropertyMappingFactory
             deserializer: v => Helpers.BTC2Satoshi((double)v!));*/
     }
 
-    public static PropertyMapping<T> SourceId<T>(string idSpace, Func<T, object?> getValue)
-    {
-        return new(":START_ID", FieldType.String, getValue, _ => $":START_ID({idSpace})");
-    }
-    public static PropertyMapping<T> TargetId<T>(string idSpace, Func<T, object?> getValue)
-    {
-        return new(":END_ID", FieldType.String, getValue, _ => $":END_ID({idSpace})");
-    }
-
     public static string TypePropertyName { get; } = ":TYPE";
-    public static PropertyMapping<T> EdgeType<T>(Func<T, object?> getType)
-    {
-        return new(TypePropertyName, FieldType.String, getType, _ => TypePropertyName);
-    }
-
-    public static PropertyMapping<T> Label<T>(object label)
-    {
-        return new(":LABEL", FieldType.String, _ => label, _ => ":LABEL");
-    }
 
     public static PropertyMapping<T>[] DescriptiveStats<T>(
         string prefix,

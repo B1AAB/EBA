@@ -19,6 +19,11 @@ public class TxoSpendingTracker
     {
         var blockStrategy = new BlockNodeStrategy(true);
 
+        var test = new BlockNode(new Block());
+        var testx = BlockNodeStrategy.GetCsv(test);
+
+        var heightParser = BlockNodeStrategy.GetFieldParser(x => x.BlockMetadata.Height);
+
         var mapping = new Dictionary<long, Batch>();
 
         foreach (var batch in batches)
@@ -30,8 +35,7 @@ public class TxoSpendingTracker
             var line = "";
             while ((line = reader.ReadLine()) != null)
             {
-                var parts = line.Split('\t');
-                mapping.Add(long.Parse(parts[1]), batch);
+                mapping.Add(heightParser(line.Split('\t')), batch);
             }
         }
 
