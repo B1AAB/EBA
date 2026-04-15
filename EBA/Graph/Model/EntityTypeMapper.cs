@@ -25,7 +25,7 @@ public class EntityTypeMapper<T>
 
     public string GetCsvHeader() => _cachedCsvHeader;
 
-    public string GetCsv(T source)
+    public string ToCsvRow(T source)
     {
         return string.Join(Options.CsvDelimiter, _mappings.Select(m => m.SerializeValue(source)));
     }
@@ -38,7 +38,7 @@ public class EntityTypeMapper<T>
         throw new KeyNotFoundException($"No mapping found for property '{propertyName}'.");
     }
 
-    public Dictionary<string, object?> ToDictionary(T source)
+    public Dictionary<string, object?> ToProperties(T source)
     {
         var dict = new Dictionary<string, object?>(_mappings.Length);
         foreach (var m in _mappings)

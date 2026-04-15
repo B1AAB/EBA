@@ -8,18 +8,6 @@ public class BlockNodeStrategy(bool serializeCompressed) :
 
     private const Block v = null!;
 
-    private static readonly PropertyMapping<BlockNode>[] _economicMappings = new MappingBuilder<BlockNode>()
-        .Map(n => (double?)n.BlockMetadata.RealizedCap)
-        .Map(n => (double?)n.BlockMetadata.MarketCap)
-        .Map(n => (double?)n.BlockMetadata.NUPL)
-        .MapRange(PropertyMappingFactory.OHLCV<BlockNode>(n => n.BlockMetadata.Ohlcv))
-        .ToArray();
-
-    public static PropertyMapping<BlockNode>[] EconomicMappings { get; } = new MappingBuilder<BlockNode>()
-        .MapBlockHeight(n => n.BlockMetadata.Height)
-        .MapRange(_economicMappings)
-        .ToArray();
-
     public static EntityTypeMapper<BlockNode> Mapper { get; } = new EntityTypeMapper<BlockNode>(
         new MappingBuilder<BlockNode>()
             .MapSourceId(IdSpace, n => n.BlockMetadata.Height)
@@ -77,7 +65,10 @@ public class BlockNodeStrategy(bool serializeCompressed) :
             .Map(n => n.BlockMetadata.TotalSupply)
             .Map(n => n.BlockMetadata.TotalSupplyNominal)
 
-            .MapRange(_economicMappings)
+            .Map(n => (double?)n.BlockMetadata.RealizedCap)
+            .Map(n => (double?)n.BlockMetadata.MarketCap)
+            .Map(n => (double?)n.BlockMetadata.NUPL)
+            .MapRange(PropertyMappingFactory.OHLCV<BlockNode>(n => n.BlockMetadata.Ohlcv))
 
             .MapLabel(_ => BlockNode.Kind)
 

@@ -67,9 +67,18 @@ public class EconomicAugmentor(Options options, IGraphDb<BitcoinGraph> graphDb, 
         _logger.LogInformation("Setting realized cap for {count:n0} block nodes.", blocks.Count);
         await _graphDb.SetRealizedCap(blocks, blockOHLCVMapping, CancellationToken.None);
 
+        var economicMappings = new EntityTypeMapper<BlockNode>(
+            new MappingBuilder<BlockNode>()
+                .MapBlockHeight(n => n.BlockMetadata.Height)
+                .Map(n => (double?)n.BlockMetadata.RealizedCap)
+                .Map(n => (double?)n.BlockMetadata.MarketCap)
+                .Map(n => (double?)n.BlockMetadata.NUPL)
+                .MapRange(PropertyMappingFactory.OHLCV<BlockNode>(n => n.BlockMetadata.Ohlcv))
+                .ToArray());
+
         _logger.LogInformation("Saving realized cap for {count:n0} block nodes.", blocks.Count);
         var updates = blocks.Values
-            .Select(b => BlockNodeStrategy.EconomicMappings.ToDictionary(b)) // TODO: update this
+            .Select(b => economicMappings.ToProperties(b))
             .ToList();
 
         await _graphDb.BulkUpdateNodePropertiesAsync(

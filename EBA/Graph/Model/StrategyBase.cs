@@ -13,12 +13,25 @@ public abstract class StrategyBase<TElement, TSchema> : IElementStrategy
     private bool _disposed = false;
     private readonly bool _serializeCompressed;
 
-    public const string csvDelimiter = "\t";
-
     public StrategyBase(string defaultFilename, bool serializeCompressed)
     {
         _serializeCompressed = serializeCompressed;
         DefaultFilename = defaultFilename + (_serializeCompressed ? ".csv.gz" : ".csv");
+    }
+
+    public virtual string GetCsvHeader()
+    {
+        return TSchema.Mapper.GetCsvHeader();
+    }
+
+    public virtual string ToCsvRow(IGraphElement element)
+    {
+        return ToCsvRow((TElement)element);
+    }
+
+    public static string ToCsvRow(TElement element)
+    {
+        return TSchema.Mapper.ToCsvRow(element);
     }
 
     private StreamWriter GetStreamWriter(string filename)
@@ -55,21 +68,6 @@ public abstract class StrategyBase<TElement, TSchema> : IElementStrategy
             string.Join(
                 Environment.NewLine,
                 from x in elements select ToCsvRow(x)));
-    }
-
-    public virtual string GetCsvHeader()
-    {
-        return TSchema.Mapper.GetCsvHeader();
-    }
-
-    public virtual string ToCsvRow(IGraphElement element)
-    {
-        return ToCsvRow((TElement)element);
-    }
-
-    public static string ToCsvRow(TElement element)
-    {
-        return TSchema.Mapper.GetCsv(element);
     }
 
     public virtual string GetQuery(string filename)
