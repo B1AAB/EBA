@@ -69,7 +69,7 @@ public class EconomicAugmentor(Options options, IGraphDb<BitcoinGraph> graphDb, 
 
         var economicMappings = new EntityTypeMapper<BlockNode>(
             new MappingBuilder<BlockNode>()
-                .MapBlockHeight(n => n.BlockMetadata.Height)
+                .Map(n => n.BlockMetadata.Height)
                 .Map(n => (double?)n.BlockMetadata.RealizedCap)
                 .Map(n => (double?)n.BlockMetadata.MarketCap)
                 .Map(n => (double?)n.BlockMetadata.NUPL)

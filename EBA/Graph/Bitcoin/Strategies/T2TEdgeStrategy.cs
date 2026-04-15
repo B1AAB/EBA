@@ -13,8 +13,8 @@ public class T2TEdgeStrategy(EdgeKind kind, bool serializeCompressed)
         new MappingBuilder<T2TEdge>()
             .MapSourceId(TxNodeStrategy.IdSpace, e => e.Source.Txid)
             .MapTargetId(TxNodeStrategy.IdSpace, e => e.Target.Txid)
-            .MapValue(e => e.Value)
-            .MapBlockHeight(e => e.BlockHeight)
+            .Map(n => n.Value)
+            .Map(n => n.BlockHeight)
             .MapEdgeType(e => e.Relation)
             .ToArray());
 

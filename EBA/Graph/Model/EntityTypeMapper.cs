@@ -29,14 +29,6 @@ public class EntityTypeMapper<T>
         return string.Join(Options.CsvDelimiter, _mappings.Select(m => m.SerializeValue(source)));
     }
 
-    public PropertyMapping<T> Get(string propertyName)
-    {
-        if (_propertyIndices.TryGetValue(propertyName, out int index))
-            return _mappings[index];
-
-        throw new KeyNotFoundException($"No mapping found for property '{propertyName}'.");
-    }
-
     public Dictionary<string, object?> ToProperties(T source)
     {
         var dict = new Dictionary<string, object?>(_mappings.Length);
@@ -80,17 +72,23 @@ public class EntityTypeMapper<T>
                 $"but the requested type '{typeof(V).Name}' does not accept nulls.");
     }
 
+    public PropertyMapping<T> GetMapping(string propertyName)
+    {
+        if (_propertyIndices.TryGetValue(propertyName, out int index))
+            return _mappings[index];
+
+        throw new KeyNotFoundException($"No mapping found for property '{propertyName}'.");
+    }
+
+    public PropertyMapping<T> GetMapping<V>(Expression<Func<T, V>> propertyExpression)
+    {
+        return GetMapping(MappingBuilder.GetPropertyName(propertyExpression));
+    }
+
     public V GetValue<V>(
         Expression<Func<T, V>> propertyExpression,
         IReadOnlyDictionary<string, object> properties)
     {
-        var memberExpression = propertyExpression.Body switch
-        {
-            MemberExpression m => m,
-            UnaryExpression { Operand: MemberExpression m } => m,
-            _ => throw new ArgumentException("Expression must be a member access.")
-        };
-
-        return GetValue<V>(memberExpression.Member.Name, properties);
+        return GetValue<V>(MappingBuilder.GetPropertyName(propertyExpression), properties);
     }
 }

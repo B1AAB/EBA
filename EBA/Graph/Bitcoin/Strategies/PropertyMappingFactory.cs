@@ -1,46 +1,9 @@
-﻿using EBA.Graph.Db.Neo4jDb;
-using EBA.Utilities;
+﻿using EBA.Utilities;
 
 namespace EBA.Graph.Bitcoin.Strategies;
 
 public static class PropertyMappingFactory
 {
-    public static Property HeightProperty { get; } = new(nameof(Block.Height), FieldType.Long);
-    public static PropertyMapping<T> Height<T>(Func<T, long> getValue, Func<Property, string>? headerOverride = null)
-    {
-        return new(HeightProperty, x => getValue(x), headerOverride);
-    }
-
-    public static PropertyMapping<T> ScriptSHA256HashString<T>(Func<T, string?> getValue, Func<Property, string>? headerOverride = null)
-    {
-        return new(nameof(ScriptNode.SHA256Hash), FieldType.String, x => getValue(x), headerOverride);
-    }
-
-    public static PropertyMapping<T> Txid<T>(Func<T, string> getValue, Func<Property, string>? headerOverride = null)
-    {
-        return new(nameof(TxNode.Txid), FieldType.String, x => getValue(x), headerOverride);
-    }
-
-    public static Property ValueProperty { get; } = new("Value", FieldType.Long);
-    public static PropertyMapping<T> Value<T>(Func<T, long> getValue)
-    {
-        return new(
-            ValueProperty,
-            x => getValue(x),
-            deserializer: v => (long)v!);
-
-        /* you may use the following if you need to convert between Satoshi and BTC, 
-         * but be aware that this will make the deserialization more complex 
-         * and may lead to precision issues if not handled carefully.
-         * 
-        return new(
-            ValueProperty, 
-            x => Helpers.Satoshi2BTC(getValue(x)),
-            deserializer: v => Helpers.BTC2Satoshi((double)v!));*/
-    }
-
-    public static string TypePropertyName { get; } = ":TYPE";
-
     public static PropertyMapping<T>[] DescriptiveStats<T>(
         string prefix,
         Func<T, DescriptiveStatistics?> getStats,
@@ -53,21 +16,21 @@ public static class PropertyMappingFactory
         var C = converter ?? (x => x ?? double.NaN);
 
         return new MappingBuilder<T>()
-            .MapCustom($"{prefix}.{nameof(d.Sum)}", s => C(getStats(s)?.Sum))
-            .MapCustom($"{prefix}.{nameof(d.Count)}", s => C(getStats(s)?.Count))
-            .MapCustom($"{prefix}.{nameof(d.Min)}", s => C(getStats(s)?.Min))
-            .MapCustom($"{prefix}.{nameof(d.Max)}", s => C(getStats(s)?.Max))
-            .MapCustom($"{prefix}.{nameof(d.Mean)}", s => C(getStats(s)?.Mean))
-            .MapCustom($"{prefix}.{nameof(d.Variance)}", s => C(getStats(s)?.Variance))
-            .MapCustom($"{prefix}.{nameof(d.Skewness)}", s => C(getStats(s)?.Skewness))
-            .MapCustom($"{prefix}.{nameof(d.Kurtosis)}", s => C(getStats(s)?.Kurtosis))
-            .MapCustom($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P01)}", s => C(getStats(s)?.Percentiles.P01))
-            .MapCustom($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P05)}", s => C(getStats(s)?.Percentiles.P05))
-            .MapCustom($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P25)}", s => C(getStats(s)?.Percentiles.P25))
-            .MapCustom($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P50)}", s => C(getStats(s)?.Percentiles.P50))
-            .MapCustom($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P75)}", s => C(getStats(s)?.Percentiles.P75))
-            .MapCustom($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P95)}", s => C(getStats(s)?.Percentiles.P95))
-            .MapCustom($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P99)}", s => C(getStats(s)?.Percentiles.P99))
+            .Map($"{prefix}.{nameof(d.Sum)}", s => C(getStats(s)?.Sum))
+            .Map($"{prefix}.{nameof(d.Count)}", s => C(getStats(s)?.Count))
+            .Map($"{prefix}.{nameof(d.Min)}", s => C(getStats(s)?.Min))
+            .Map($"{prefix}.{nameof(d.Max)}", s => C(getStats(s)?.Max))
+            .Map($"{prefix}.{nameof(d.Mean)}", s => C(getStats(s)?.Mean))
+            .Map($"{prefix}.{nameof(d.Variance)}", s => C(getStats(s)?.Variance))
+            .Map($"{prefix}.{nameof(d.Skewness)}", s => C(getStats(s)?.Skewness))
+            .Map($"{prefix}.{nameof(d.Kurtosis)}", s => C(getStats(s)?.Kurtosis))
+            .Map($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P01)}", s => C(getStats(s)?.Percentiles.P01))
+            .Map($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P05)}", s => C(getStats(s)?.Percentiles.P05))
+            .Map($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P25)}", s => C(getStats(s)?.Percentiles.P25))
+            .Map($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P50)}", s => C(getStats(s)?.Percentiles.P50))
+            .Map($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P75)}", s => C(getStats(s)?.Percentiles.P75))
+            .Map($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P95)}", s => C(getStats(s)?.Percentiles.P95))
+            .Map($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P99)}", s => C(getStats(s)?.Percentiles.P99))
             .ToArray();
     }
 
@@ -112,7 +75,7 @@ public static class PropertyMappingFactory
         
         foreach (var scriptType in Enum.GetValues<ScriptType>())
         {
-            builder.MapCustom(
+            builder.Map(
                 $"{prefix}.ScriptType.{scriptType}", 
                 x => getScriptTypeCounts(x).GetValueOrDefault(scriptType));
         }
@@ -142,7 +105,7 @@ public static class PropertyMappingFactory
         // Make sure to keep EdgeKind string representation compatible with neo4j header requirements. 
         foreach (var k in keys)
         {
-            builder.MapCustom(
+            builder.Map(
                 $"{prefix}.{k.Source}_{k.Relation}_{k.Target}", 
                 n => C(getDict(n).TryGetValue(k, out var v) ? v : 0));
         }
@@ -159,7 +122,7 @@ public static class PropertyMappingFactory
         
         foreach (var k in keys)
         {
-            builder.MapCustom(
+            builder.Map(
                 $"{prefix}.{EdgeKindToPropertyName(k)}", 
                 n => getDict(n).TryGetValue(k, out var v) ? v : 0U);
         }
@@ -193,13 +156,13 @@ public static class PropertyMappingFactory
     {
         OHLCV o = null!;
         return new MappingBuilder<T>()
-            .MapCustom($"{prefix}.{nameof(o.Open)}", s => (double?)(getOhlcv(s)?.Open))
-            .MapCustom($"{prefix}.{nameof(o.High)}", s => (double?)(getOhlcv(s)?.High))
-            .MapCustom($"{prefix}.{nameof(o.Low)}", s => (double?)(getOhlcv(s)?.Low))
-            .MapCustom($"{prefix}.{nameof(o.Close)}", s => (double?)(getOhlcv(s)?.Close))
-            .MapCustom($"{prefix}.{nameof(o.Volume)}", s => getOhlcv(s)?.Volume)
-            .MapCustom($"{prefix}.{nameof(o.VWAP)}", s => (double?)(getOhlcv(s)?.VWAP))
-            .MapCustom($"{prefix}.{nameof(o.OHLC4)}", s => (double?)(getOhlcv(s)?.OHLC4))
+            .Map($"{prefix}.{nameof(o.Open)}", s => (double?)(getOhlcv(s)?.Open))
+            .Map($"{prefix}.{nameof(o.High)}", s => (double?)(getOhlcv(s)?.High))
+            .Map($"{prefix}.{nameof(o.Low)}", s => (double?)(getOhlcv(s)?.Low))
+            .Map($"{prefix}.{nameof(o.Close)}", s => (double?)(getOhlcv(s)?.Close))
+            .Map($"{prefix}.{nameof(o.Volume)}", s => getOhlcv(s)?.Volume)
+            .Map($"{prefix}.{nameof(o.VWAP)}", s => (double?)(getOhlcv(s)?.VWAP))
+            .Map($"{prefix}.{nameof(o.OHLC4)}", s => (double?)(getOhlcv(s)?.OHLC4))
             .ToArray();
     }
 

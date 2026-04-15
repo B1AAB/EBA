@@ -1,4 +1,6 @@
-﻿namespace EBA.Graph.Bitcoin.Strategies;
+﻿using EBA.Graph.Db.Neo4jDb;
+
+namespace EBA.Graph.Bitcoin.Strategies;
 
 public class B2BEdgeStrategy(bool serializeCompressed) 
     : StrategyBase<B2BEdge, B2BEdgeStrategy>(
@@ -9,7 +11,7 @@ public class B2BEdgeStrategy(bool serializeCompressed)
     public static EntityTypeMapper<B2BEdge> Mapper { get; } = new EntityTypeMapper<B2BEdge>(
         new MappingBuilder<B2BEdge>()
             .MapSourceId(BlockNodeStrategy.IdSpace, e => e.BlockHeight)
-            .MapTargetId(BlockNodeStrategy.IdSpace, e => e.BlockHeight)
+            .MapNeo4jTargetId(BlockNodeStrategy.IdSpace, e => e.BlockHeight)
             .MapEdgeType(e => e.Relation)
             .ToArray());
 

@@ -10,8 +10,8 @@ public class B2TEdgeStrategy(bool serializeCompressed)
         new MappingBuilder<B2TEdge>()
             .MapSourceId(BlockNodeStrategy.IdSpace, e => e.Source.BlockMetadata.Height)
             .MapTargetId(TxNodeStrategy.IdSpace, e => e.Target.Txid)
-            .MapValue(e => e.Value)
-            .MapBlockHeight(e => e.BlockHeight)
+            .Map(e => e.Value)
+            .Map(e => e.BlockHeight)
             .MapEdgeType(e => e.Relation)
             .ToArray());
 

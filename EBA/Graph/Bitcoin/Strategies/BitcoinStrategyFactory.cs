@@ -87,7 +87,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
         using var writer = new StreamWriter(File.Create(Path.Join(outputDirectory, "schema.cypher")));
         writer.WriteLine("// EBA Bitcoin Graph Schema");
 
-        var x = PropertyMappingFactory.ScriptSHA256HashString<ScriptNode>(n => n.SHA256Hash).Property.Name;
+        var x = ScriptNodeStrategy.Mapper.GetMapping(x => x.SHA256Hash).Property.Name;
         var scriptAddressUniqueness =
             $"// Uniqueness constraint for {ScriptNode.Kind}.{x} property." +
             $"\r\nCREATE CONSTRAINT {ScriptNode.Kind}_{x}_Unique " +
@@ -96,7 +96,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
         writer.WriteLine("");
         writer.WriteLine(scriptAddressUniqueness);
 
-        var txidName = PropertyMappingFactory.Txid<TxNode>(n => n.Txid).Property.Name;
+        var txidName = TxNodeStrategy.Mapper.GetMapping(x => x.Txid).Property.Name;
         var txidUniqueness =
             $"// Uniqueness constraint for {TxNode.Kind}.{txidName} property." +
             $"\r\nCREATE CONSTRAINT {TxNode.Kind}_{txidName}_Unique " +
@@ -104,8 +104,8 @@ public class BitcoinStrategyFactory : IStrategyFactory
             $"\r\nFOR (v:{TxNode.Kind}) REQUIRE v.{txidName} IS UNIQUE;";
         writer.WriteLine("");
         writer.WriteLine(txidUniqueness);
-        
-        var heightName = PropertyMappingFactory.HeightProperty.Name;
+
+        var heightName = BlockNodeStrategy.Mapper.GetMapping(x => x.BlockMetadata.Height).Property.Name;
         var blockHeightUniqueness =
             $"// Uniqueness constraint for {BlockNode.Kind}.{heightName} property." +
             $"\r\nCREATE CONSTRAINT {BlockNode.Kind}_{heightName}_Unique " +

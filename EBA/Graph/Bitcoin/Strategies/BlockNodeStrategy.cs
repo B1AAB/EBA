@@ -9,7 +9,7 @@ public class BlockNodeStrategy(bool serializeCompressed) :
     public static EntityTypeMapper<BlockNode> Mapper { get; } = new EntityTypeMapper<BlockNode>(
         new MappingBuilder<BlockNode>()
             .MapSourceId(IdSpace, n => n.BlockMetadata.Height)
-            .MapBlockHeight(n => n.BlockMetadata.Height)
+            .Map(n => n.BlockMetadata.Height)
             .Map(n => n.BlockMetadata.Hash)
             .Map(n => n.BlockMetadata.Confirmations)
             .Map(n => n.BlockMetadata.Version)
@@ -201,7 +201,7 @@ public class BlockNodeStrategy(bool serializeCompressed) :
 
     public override string[] GetSchemaConfigs()
     {
-        var heightName = PropertyMappingFactory.HeightProperty.Name;
+        var heightName = Mapper.GetMapping(x => x.BlockMetadata.Height).Property.Name;
         return
         [
             $"CREATE CONSTRAINT {BlockNode.Kind}_{heightName}_Unique " +

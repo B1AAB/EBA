@@ -77,15 +77,15 @@ public class TxNodeStrategy(bool serializeCompressed)
 
     public override string[] GetSchemaConfigs()
     {
-        var txidName = PropertyMappingFactory.Txid<TxNode>(n => n.Txid).Property.Name;
+        var txidPropName = Mapper.GetMapping(x => x.Txid).Property.Name;
         return
         [
-            $"CREATE CONSTRAINT {TxNode.Kind}_{txidName}_Unique " +
+            $"CREATE CONSTRAINT {TxNode.Kind}_{txidPropName}_Unique " +
             $"IF NOT EXISTS " +
-            $"FOR (v:{TxNode.Kind}) REQUIRE v.{txidName} IS UNIQUE",
+            $"FOR (v:{TxNode.Kind}) REQUIRE v.{txidPropName} IS UNIQUE",
 
             $"CREATE INDEX tx_txid_index IF NOT EXISTS " +
-            $"FOR (t:{TxNode.Kind}) ON (t.{nameof(TxNode.Txid)})"
+            $"FOR (t:{TxNode.Kind}) ON (t.{txidPropName})"
         ];
     }
 }

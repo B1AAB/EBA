@@ -12,8 +12,8 @@ public class C2TEdgeStrategy(bool serializeCompressed)
         new MappingBuilder<C2TEdge>()
             .MapSourceId(IdSpace, _ => CoinbaseNode.Kind)
             .MapTargetId(TxNodeStrategy.IdSpace, e => e.Target.Txid)
-            .MapValue(e => e.Value)
-            .MapBlockHeight(e => e.BlockHeight)
+            .Map(e => e.Value)
+            .Map(e => e.BlockHeight)
             .MapEdgeType(e => e.Relation)
             .ToArray());
 

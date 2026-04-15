@@ -1,8 +1,65 @@
-﻿using EBA.Graph.Bitcoin.Strategies;
-using EBA.Graph.Db.Neo4jDb;
+﻿using EBA.Graph.Db.Neo4jDb;
 using System.Linq.Expressions;
 
 namespace EBA.Graph.Model;
+
+public class MappingBuilder
+{
+    public static string GetPropertyName(LambdaExpression expression)
+    {
+        var memberExpression = expression.Body switch
+        {
+            MemberExpression m => m,
+            UnaryExpression { Operand: MemberExpression m } => m,
+            _ => throw new ArgumentException("Expression must be a member access.")
+        };
+
+        return memberExpression.Member.Name;
+    }
+
+    public static FieldType ToFieldType(Type type)
+    {
+        // extracts underlying type if nullable
+        var actualType = Nullable.GetUnderlyingType(type) ?? type;
+
+        return actualType switch
+        {
+            { IsEnum: true }
+            => FieldType.String,
+
+            _ when actualType == typeof(int)
+                || actualType == typeof(uint)
+            => FieldType.Int,
+
+            _ when actualType == typeof(long)
+                || actualType == typeof(ulong)
+            => FieldType.Long,
+
+            _ when actualType == typeof(float)
+            => FieldType.Float,
+
+            _ when actualType == typeof(double)
+            => FieldType.Double,
+
+            _ when actualType == typeof(bool)
+            => FieldType.Boolean,
+
+            _ when actualType == typeof(string)
+            => FieldType.String,
+
+            _ when actualType == typeof(string[])
+            => FieldType.StringArray,
+
+            _ when actualType == typeof(long[])
+            => FieldType.LongArray,
+
+            _ when actualType == typeof(double[])
+            => FieldType.DoubleArray,
+
+            _ => throw new ArgumentException($"Unsupported type for: {type.Name}")
+        };
+    }
+}
 
 public class MappingBuilder<T>
 {
@@ -15,19 +72,11 @@ public class MappingBuilder<T>
 
     public MappingBuilder<T> Map<TProperty>(Expression<Func<T, TProperty>> e)
     {
-        var eMember = e.Body switch
-        {
-            MemberExpression m => m,
-            UnaryExpression { Operand: MemberExpression m } => m,
-            _ => throw new ArgumentException("Expression must be a member access.")
-        };
-        var compiledFunc = e.Compile();
-
         _mappings.Add(new PropertyMapping<T>(
             new Property(
-                eMember.Member.Name, 
-                GetNeo4jType(typeof(TProperty))),
-            x => compiledFunc(x)
+                MappingBuilder.GetPropertyName(e),
+                MappingBuilder.ToFieldType(typeof(TProperty))),
+            x => e.Compile()(x)
         ));
 
         return this;
@@ -39,8 +88,8 @@ public class MappingBuilder<T>
     {
         _mappings.Add(
             new PropertyMapping<T>(
-                ":START_ID", 
-                GetNeo4jType(typeof(TProperty)), 
+                ":START_ID",
+                MappingBuilder.ToFieldType(typeof(TProperty)), 
                 x => selector(x),
                 _ => $":START_ID({idSpace})"));
 
@@ -53,27 +102,30 @@ public class MappingBuilder<T>
     {
         _mappings.Add(
             new PropertyMapping<T>(
-                ":END_ID", 
-                GetNeo4jType(typeof(TProperty)), 
+                ":END_ID",
+                MappingBuilder.ToFieldType(typeof(TProperty)), 
                 x => selector(x), 
                 _ => $":END_ID({idSpace})"));
 
         return this;
     }
 
-    public MappingBuilder<T> MapEdgeType<TProperty>(Func<T, TProperty> selector)
+    public MappingBuilder<T> MapEdgeType<TProperty>(
+        Func<T, TProperty> selector, 
+        string propName = ":TYPE")
     {
         _mappings.Add(
             new PropertyMapping<T>(
-                PropertyMappingFactory.TypePropertyName, 
+                propName,
                 FieldType.String,
                 x => selector(x),
-                _ => PropertyMappingFactory.TypePropertyName));
+                _ => propName));
 
         return this;
     }
 
-    public MappingBuilder<T> MapBlockHeight(Func<T, long> selector)
+    // TODO: should not need this
+    /*public MappingBuilder<T> MapBlockHeight(Func<T, long> selector) 
     {
         _mappings.Add(
             new PropertyMapping<T>(
@@ -81,9 +133,22 @@ public class MappingBuilder<T>
                 x => selector(x), 
                 deserializer: v => (long)v!));
         return this;
+    }*/
+
+    public MappingBuilder<T> Map<TProperty>(Property property, Func<T, TProperty> selector)
+    {
+        _mappings.Add(
+            new PropertyMapping<T>(
+                property,
+                x => selector(x),
+                deserializer: v => (TProperty)v!
+            ));
+
+        return this;
     }
 
-    public MappingBuilder<T> MapValue(Func<T, long> selector)
+    // TODO: also shoud not need this
+    /*public MappingBuilder<T> MapValue(Func<T, long> selector) 
     {
         _mappings.Add(
             new PropertyMapping<T>(
@@ -91,6 +156,12 @@ public class MappingBuilder<T>
                 x => selector(x), 
                 deserializer: v => (long)v!));
 
+        return this;
+    }*/
+
+    public MappingBuilder<T> Map(PropertyMapping<T> mapping)
+    {
+        _mappings.Add(mapping);
         return this;
     }
 
@@ -100,10 +171,10 @@ public class MappingBuilder<T>
         return this;
     }
 
-    public MappingBuilder<T> MapCustom<TProperty>(string customColumnName, Func<T, TProperty> selector)
+    public MappingBuilder<T> Map<TProperty>(string name, Func<T, TProperty> selector)
     {
         _mappings.Add(new PropertyMapping<T>(
-            new Property(customColumnName, GetNeo4jType(typeof(TProperty))),
+            new Property(name, MappingBuilder.ToFieldType(typeof(TProperty))),
             x => selector(x)
         ));
 
@@ -139,46 +210,11 @@ public class MappingBuilder<T>
         return this;
     }
 
-    private static FieldType GetNeo4jType(Type type)
+    internal PropertyMapping<T> GetLastMapping()
     {
-        // extracts underlying type if nullable
-        var actualType = Nullable.GetUnderlyingType(type) ?? type;
+        if (_mappings.Count == 0) 
+            throw new InvalidOperationException("No mappings defined.");
 
-        return actualType switch
-        {
-            { IsEnum: true } 
-            => FieldType.String,
-
-            _ when actualType == typeof(int) 
-                || actualType == typeof(uint) 
-            => FieldType.Int,
-
-            _ when actualType == typeof(long) 
-                || actualType == typeof(ulong) 
-            => FieldType.Long,
-
-            _ when actualType == typeof(float) 
-            => FieldType.Float,
-
-            _ when actualType == typeof(double) 
-            => FieldType.Double,
-
-            _ when actualType == typeof(bool) 
-            => FieldType.Boolean,
-
-            _ when actualType == typeof(string) 
-            => FieldType.String,
-
-            _ when actualType == typeof(string[]) 
-            => FieldType.StringArray,
-
-            _ when actualType == typeof(long[]) 
-            => FieldType.LongArray,
-
-            _ when actualType == typeof(double[]) 
-            => FieldType.DoubleArray,
-
-            _ => throw new ArgumentException($"Unsupported type for Neo4j FieldType: {type.Name}")
-        };
+        return _mappings[^1];
     }
 }
