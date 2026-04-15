@@ -44,17 +44,17 @@ public abstract class StrategyBase<TElement, TSchema> : IElementStrategy
         }
     }
 
-    public async Task ToCsvAsync(IGraphElement element, string filename)
+    public async Task WriteCsvAsync(IGraphElement element, string filename)
     {
-        await GetStreamWriter(filename).WriteLineAsync(GetCsvRow(element));
+        await GetStreamWriter(filename).WriteLineAsync(ToCsvRow(element));
     }
 
-    public async Task ToCsvAsync<T>(IEnumerable<T> elements, string filename) where T : IGraphElement
+    public async Task WriteCsvAsync<T>(IEnumerable<T> elements, string filename) where T : IGraphElement
     {
         await GetStreamWriter(filename).WriteLineAsync(
             string.Join(
                 Environment.NewLine,
-                from x in elements select GetCsvRow(x)));
+                from x in elements select ToCsvRow(x)));
     }
 
     public virtual string GetCsvHeader()
@@ -62,12 +62,12 @@ public abstract class StrategyBase<TElement, TSchema> : IElementStrategy
         return TSchema.Mapper.GetCsvHeader();
     }
 
-    public virtual string GetCsvRow(IGraphElement element)
+    public virtual string ToCsvRow(IGraphElement element)
     {
-        return GetCsv((TElement)element);
+        return ToCsvRow((TElement)element);
     }
 
-    public static string GetCsv(TElement element)
+    public static string ToCsvRow(TElement element)
     {
         return TSchema.Mapper.GetCsv(element);
     }

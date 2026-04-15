@@ -20,7 +20,7 @@ public class TxoSpendingTracker
         var blockStrategy = new BlockNodeStrategy(true);
 
         var test = new BlockNode(new Block());
-        var testx = BlockNodeStrategy.GetCsv(test);
+        var testx = BlockNodeStrategy.ToCsvRow(test);
 
         var heightParser = BlockNodeStrategy.GetFieldParser(x => x.BlockMetadata.Height);
 
