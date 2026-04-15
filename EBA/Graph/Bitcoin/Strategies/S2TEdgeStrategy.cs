@@ -21,7 +21,6 @@ public class S2TEdgeStrategy(bool serializeCompressed)
 
     public static S2TEdge Deserialize(ScriptNode source, TxNode target, IRelationship relationship)
     {
-        // TODO: this should be updated
         return new S2TEdge(
             source: source,
             target: target,
@@ -33,10 +32,5 @@ public class S2TEdgeStrategy(bool serializeCompressed)
             vout: Mapper.GetValue(x => x.Vout, relationship.Properties),
             generated: Mapper.GetValue(x => x.Generated, relationship.Properties)
         );
-    }
-
-    public override string GetQuery(string filename)
-    {
-        throw new NotImplementedException();
     }
 }

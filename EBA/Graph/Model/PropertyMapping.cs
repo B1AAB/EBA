@@ -1,7 +1,7 @@
 ﻿using EBA.Graph.Db.Neo4jDb;
 using System.Collections;
 
-namespace EBA.Graph.Bitcoin.Strategies;
+namespace EBA.Graph.Model;
 
 public class PropertyMapping<T>
 {

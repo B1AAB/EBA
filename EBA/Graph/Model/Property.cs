@@ -1,6 +1,6 @@
 ﻿using EBA.Graph.Db.Neo4jDb;
 
-namespace EBA.Graph.Bitcoin.Strategies;
+namespace EBA.Graph.Model;
 
 public class Property
 {

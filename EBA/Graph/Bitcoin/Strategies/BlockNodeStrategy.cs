@@ -6,8 +6,6 @@ public class BlockNodeStrategy(bool serializeCompressed) :
 {
     public static string IdSpace { get; } = BlockNode.Kind.ToString();
 
-    private const Block v = null!;
-
     public static EntityTypeMapper<BlockNode> Mapper { get; } = new EntityTypeMapper<BlockNode>(
         new MappingBuilder<BlockNode>()
             .MapSourceId(IdSpace, n => n.BlockMetadata.Height)
@@ -33,22 +31,22 @@ public class BlockNodeStrategy(bool serializeCompressed) :
             .Map(n => n.BlockMetadata.MintedBitcoins)
 
             .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
-                nameof(v.InputCountsStats), n => n.BlockMetadata.InputCountsStats))
+                nameof(Block.InputCountsStats), n => n.BlockMetadata.InputCountsStats))
 
             .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
-                nameof(v.OutputCountsStats), n => n.BlockMetadata.OutputCountsStats))
+                nameof(Block.OutputCountsStats), n => n.BlockMetadata.OutputCountsStats))
 
             .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
-                nameof(v.InputValuesStats), n => n.BlockMetadata.InputValuesStats))
+                nameof(Block.InputValuesStats), n => n.BlockMetadata.InputValuesStats))
 
             .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
-                nameof(v.OutputValuesStats), n => n.BlockMetadata.OutputValuesStats))
+                nameof(Block.OutputValuesStats), n => n.BlockMetadata.OutputValuesStats))
 
             .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
-                nameof(v.SpentOutputAgeStats), n => n.BlockMetadata.SpentOutputAgeStats))
+                nameof(Block.SpentOutputAgeStats), n => n.BlockMetadata.SpentOutputAgeStats))
 
             .MapRange(PropertyMappingFactory.DescriptiveStats<BlockNode>(
-                nameof(v.FeesStats), n => n.BlockMetadata.FeesStats))
+                nameof(Block.FeesStats), n => n.BlockMetadata.FeesStats))
 
             .MapRange(PropertyMappingFactory.ScriptTypeCounts<BlockNode>(
                 "Inputs", n => n.BlockMetadata.InputScriptTypeCount))
@@ -102,32 +100,32 @@ public class BlockNodeStrategy(bool serializeCompressed) :
     {
         var blockMetadata = new BlockMetadata
         {
-            Height = Mapper.GetValue(x=>x.BlockMetadata.Height, props),
-            Hash = Mapper.GetValue(x=>x.BlockMetadata.Hash, props) ?? throw new InvalidDataException("Hash cannot be null"),
-            Confirmations = Mapper.GetValue(x=>x.BlockMetadata.Confirmations, props),
-            Version = Mapper.GetValue(x=>x.BlockMetadata.Version, props),
-            VersionHex = Mapper.GetValue(x=>x.BlockMetadata.VersionHex, props),
-            Merkleroot = Mapper.GetValue(x=>x.BlockMetadata.Merkleroot, props),
-            Time = Mapper.GetValue(x=>x.BlockMetadata.Time, props),
-            MedianTime = Mapper.GetValue(x=>x.BlockMetadata.MedianTime, props),
-            Nonce = Mapper.GetValue(x=>x.BlockMetadata.Nonce, props),
-            Bits = Mapper.GetValue(x=>x.BlockMetadata.Bits, props),
-            Difficulty = Mapper.GetValue(x=>x.BlockMetadata.Difficulty, props),
-            Chainwork = Mapper.GetValue(x=>x.BlockMetadata.Chainwork, props),
-            TransactionsCount = Mapper.GetValue(x=>x.BlockMetadata.TransactionsCount, props),
-            PreviousBlockHash = Mapper.GetValue(x=>x.BlockMetadata.PreviousBlockHash, props),
-            NextBlockHash = Mapper.GetValue(x=>x.BlockMetadata.NextBlockHash, props),
-            StrippedSize = Mapper.GetValue(x=>x.BlockMetadata.StrippedSize, props),
-            Size = Mapper.GetValue(x=>x.BlockMetadata.Size, props),
-            Weight = Mapper.GetValue(x=>x.BlockMetadata.Weight, props),
-            CoinbaseOutputsCount = Mapper.GetValue(x=>x.BlockMetadata.CoinbaseOutputsCount, props),
-            MintedBitcoins = Mapper.GetValue(x=>x.BlockMetadata.MintedBitcoins, props),
-            InputCountsStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.InputCountsStats)),
-            OutputCountsStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.OutputCountsStats)),
-            InputValuesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.InputValuesStats)),
-            OutputValuesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.OutputValuesStats)),
-            SpentOutputAgeStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.SpentOutputAgeStats)),
-            FeesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(v.FeesStats)),
+            Height = Mapper.GetValue(x => x.BlockMetadata.Height, props),
+            Hash = Mapper.GetValue(x => x.BlockMetadata.Hash, props) ?? throw new InvalidDataException("Hash cannot be null"),
+            Confirmations = Mapper.GetValue(x => x.BlockMetadata.Confirmations, props),
+            Version = Mapper.GetValue(x => x.BlockMetadata.Version, props),
+            VersionHex = Mapper.GetValue(x => x.BlockMetadata.VersionHex, props),
+            Merkleroot = Mapper.GetValue(x => x.BlockMetadata.Merkleroot, props),
+            Time = Mapper.GetValue(x => x.BlockMetadata.Time, props),
+            MedianTime = Mapper.GetValue(x => x.BlockMetadata.MedianTime, props),
+            Nonce = Mapper.GetValue(x => x.BlockMetadata.Nonce, props),
+            Bits = Mapper.GetValue(x => x.BlockMetadata.Bits, props),
+            Difficulty = Mapper.GetValue(x => x.BlockMetadata.Difficulty, props),
+            Chainwork = Mapper.GetValue(x => x.BlockMetadata.Chainwork, props),
+            TransactionsCount = Mapper.GetValue(x => x.BlockMetadata.TransactionsCount, props),
+            PreviousBlockHash = Mapper.GetValue(x => x.BlockMetadata.PreviousBlockHash, props),
+            NextBlockHash = Mapper.GetValue(x => x.BlockMetadata.NextBlockHash, props),
+            StrippedSize = Mapper.GetValue(x => x.BlockMetadata.StrippedSize, props),
+            Size = Mapper.GetValue(x => x.BlockMetadata.Size, props),
+            Weight = Mapper.GetValue(x => x.BlockMetadata.Weight, props),
+            CoinbaseOutputsCount = Mapper.GetValue(x => x.BlockMetadata.CoinbaseOutputsCount, props),
+            MintedBitcoins = Mapper.GetValue(x => x.BlockMetadata.MintedBitcoins, props),
+            InputCountsStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(Block.InputCountsStats)),
+            OutputCountsStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(Block.OutputCountsStats)),
+            InputValuesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(Block.InputValuesStats)),
+            OutputValuesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(Block.OutputValuesStats)),
+            SpentOutputAgeStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(Block.SpentOutputAgeStats)),
+            FeesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(Block.FeesStats)),
             InputScriptTypeCount = PropertyMappingFactory.ReadScriptTypeCounts("Inputs", props),
             OutputScriptTypeCount = PropertyMappingFactory.ReadScriptTypeCounts("Outputs", props),
             InputScriptTypeValue = PropertyMappingFactory.ReadScriptTypeCounts("Inputs", props),

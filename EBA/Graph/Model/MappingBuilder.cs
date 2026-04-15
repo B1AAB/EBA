@@ -1,7 +1,8 @@
-﻿using EBA.Graph.Db.Neo4jDb;
+﻿using EBA.Graph.Bitcoin.Strategies;
+using EBA.Graph.Db.Neo4jDb;
 using System.Linq.Expressions;
 
-namespace EBA.Graph.Bitcoin.Strategies;
+namespace EBA.Graph.Model;
 
 public class MappingBuilder<T>
 {
