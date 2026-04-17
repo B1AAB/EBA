@@ -51,11 +51,9 @@ public class PropertyMapping<T>
 
         if (value is not string && value is IEnumerable enumerable)
         {
-            var items = new List<string>();
-            foreach (var item in enumerable)
-                items.Add(item?.ToString() ?? string.Empty);
-
-            return string.Join(';', items);
+            return string.Join(
+                ";", 
+                enumerable.Cast<object>().Select(x => x?.ToString() ?? string.Empty));
         }
 
         return value.ToString() ?? string.Empty;
@@ -69,13 +67,11 @@ public class PropertyMapping<T>
         if (_deserializer != null)
             return (V?)_deserializer(rawValue);
 
-        if (typeof(V).IsEnum)
-        {
-            return (V)Enum.Parse(typeof(V), rawValue.ToString()!);
-        }
-
         if (rawValue is V typedValue)
             return typedValue;
+
+        if (typeof(V).IsEnum)
+            return (V)Enum.Parse(typeof(V), rawValue.ToString()!);
 
         if (typeof(V).IsArray)
         {
@@ -108,8 +104,13 @@ public class PropertyMapping<T>
             }
         }
 
-        Type underlyingType = Nullable.GetUnderlyingType(typeof(V)) ?? typeof(V);
-        return (V)Convert.ChangeType(rawValue, underlyingType);
+        //Type underlyingType = Nullable.GetUnderlyingType(typeof(V)) ?? typeof(V);
+        //return (V)Convert.ChangeType(rawValue, underlyingType);
+
+        var targetType = typeof(V);
+        if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Nullable<>))
+            targetType = targetType.GetGenericArguments()[0];
+        return (V)Convert.ChangeType(rawValue, targetType);
     }
 
     public V? Deserialize<V>(IReadOnlyDictionary<string, object> properties)

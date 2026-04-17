@@ -2,14 +2,13 @@
 
 namespace EBA.Graph.Model;
 
-public class EntityTypeMapper<T>
+public class ElementMapper<T>
 {
     private readonly PropertyMapping<T>[] _mappings;
     private readonly Dictionary<string, int> _propertyIndices;
     private readonly string _cachedCsvHeader;
 
-    // The constructor computes expensive strings and lookups once!
-    public EntityTypeMapper(PropertyMapping<T>[] mappings)
+    public ElementMapper(PropertyMapping<T>[] mappings)
     {
         _mappings = mappings;
 
@@ -50,26 +49,10 @@ public class EntityTypeMapper<T>
         if (!_propertyIndices.TryGetValue(propertyName, out int columnIndex))
             return default;
 
-        // Safely return default if the CSV row is malformed or too short
         if (columnIndex >= csvRow.Length)
             return default;
 
         return _mappings[columnIndex].DeserializeCsv<V>(csvRow[columnIndex]);
-    }
-
-    public V GetValue<V>(
-        string propertyName,
-        IReadOnlyDictionary<string, object> properties)
-    {
-        if (!_propertyIndices.TryGetValue(propertyName, out int index))
-            throw new KeyNotFoundException(
-                $"No mapping found for property '{propertyName}'.");
-
-        return 
-            _mappings[index].Deserialize<V>(properties) 
-            ?? throw new InvalidOperationException(
-                $"The property '{propertyName}' returned null, " +
-                $"but the requested type '{typeof(V).Name}' does not accept nulls.");
     }
 
     public PropertyMapping<T> GetMapping(string propertyName)
@@ -90,5 +73,51 @@ public class EntityTypeMapper<T>
         IReadOnlyDictionary<string, object> properties)
     {
         return GetValue<V>(MappingBuilder.GetPropertyName(propertyExpression), properties);
+    }
+
+    public V GetValue<V>(
+        string propertyName,
+        IReadOnlyDictionary<string, object> properties)
+    {
+        if (!_propertyIndices.TryGetValue(propertyName, out int index))
+            throw new KeyNotFoundException(
+                $"No mapping found for property '{propertyName}'.");
+
+        return
+            _mappings[index].Deserialize<V>(properties)
+            ?? throw new InvalidOperationException(
+                $"The property '{propertyName}' returned null, " +
+                $"but the requested type '{typeof(V).Name}' does not accept nulls.");
+    }
+
+    public Dictionary<TEnum, TValue> GetDictionary<TEnum, TValue>(
+        string prefix,
+        IReadOnlyDictionary<string, object> properties)
+        where TEnum : struct, Enum
+    {
+        var enumName = typeof(TEnum).Name;
+        var dict = new Dictionary<TEnum, TValue>();
+
+        foreach (var enumValue in Enum.GetValues<TEnum>())
+        {
+            var propName = $"{prefix}.{enumName}.{enumValue}";
+
+            if (properties.TryGetValue(propName, out var rawValue) && rawValue != null)
+            {
+                dict[enumValue] = (TValue)Convert.ChangeType(rawValue, typeof(TValue));
+            }
+        }
+
+        return dict;
+    }
+
+    public Func<string[], TProperty> GetFieldParser<TProperty>(Expression<Func<T, TProperty>> e)
+    {
+        var i = GetPropertyCsvIndex(MappingBuilder.GetPropertyName(e));
+
+        return columns =>
+        {
+            return (TProperty)Convert.ChangeType(columns[i], typeof(TProperty));
+        };
     }
 }

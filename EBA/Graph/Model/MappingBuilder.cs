@@ -124,41 +124,6 @@ public class MappingBuilder<T>
         return this;
     }
 
-    // TODO: should not need this
-    /*public MappingBuilder<T> MapBlockHeight(Func<T, long> selector) 
-    {
-        _mappings.Add(
-            new PropertyMapping<T>(
-                PropertyMappingFactory.HeightProperty, 
-                x => selector(x), 
-                deserializer: v => (long)v!));
-        return this;
-    }*/
-
-    public MappingBuilder<T> Map<TProperty>(Property property, Func<T, TProperty> selector)
-    {
-        _mappings.Add(
-            new PropertyMapping<T>(
-                property,
-                x => selector(x),
-                deserializer: v => (TProperty)v!
-            ));
-
-        return this;
-    }
-
-    // TODO: also shoud not need this
-    /*public MappingBuilder<T> MapValue(Func<T, long> selector) 
-    {
-        _mappings.Add(
-            new PropertyMapping<T>(
-                PropertyMappingFactory.ValueProperty, 
-                x => selector(x), 
-                deserializer: v => (long)v!));
-
-        return this;
-    }*/
-
     public MappingBuilder<T> Map(PropertyMapping<T> mapping)
     {
         _mappings.Add(mapping);

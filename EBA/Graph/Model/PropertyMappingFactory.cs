@@ -1,10 +1,66 @@
 ﻿using EBA.Utilities;
 
-namespace EBA.Graph.Bitcoin.Strategies;
+namespace EBA.Graph.Model;
 
 public static class PropertyMappingFactory
 {
-    public static PropertyMapping<T>[] DescriptiveStats<T>(
+    public static string GetLabel(string prefix, EdgeKind edgeKind)
+    {
+        // Make sure to keep EdgeKind string representation compatible with neo4j header requirements. 
+        return $"{prefix}.{edgeKind.Source}_{edgeKind.Relation}_{edgeKind.Target}";
+    }
+
+    public static string GetLabel<T>() where T : struct, Enum
+    {
+        return typeof(T).Name;
+    }
+
+    public static string GetLabel(string prefix, string enumTypeName, string enumValueName)
+    {
+        return $"{prefix}.{enumTypeName}.{enumValueName}";
+    }
+
+    public static PropertyMapping<T>[] ToMappings<T, TEnum, TValue>(
+        string prefix,
+        Func<T, Dictionary<TEnum, TValue>?> getDict)
+        where TEnum : struct, Enum
+    {
+        var builder = new MappingBuilder<T>();
+        var enumTypeName = GetLabel<TEnum>();
+
+        foreach (var v in Enum.GetValues<TEnum>())
+        {
+            builder.Map(
+                $"{GetLabel(prefix, enumTypeName, v.ToString())}",
+                x =>
+                {
+                    var dict = getDict(x);
+                    return dict != null && dict.TryGetValue(v, out var val) ? val : default;
+                });
+        }
+
+        return builder.ToArray();
+    }
+
+    public static Dictionary<TEnum, TValue> GetDictionary<TEnum, TValue>(
+        string prefix,
+        IReadOnlyDictionary<string, object> properties)
+        where TEnum : struct, Enum
+    {
+        var enumTypeName = GetLabel<TEnum>();
+        var dict = new Dictionary<TEnum, TValue>();
+
+        foreach (var enumValue in Enum.GetValues<TEnum>())
+        {
+            var key = $"{GetLabel(prefix, enumTypeName, enumValue.ToString())}";
+            if (properties.TryGetValue(key, out var rawValue) && rawValue != null)
+                dict[enumValue] = (TValue)Convert.ChangeType(rawValue, typeof(TValue));
+        }
+
+        return dict;
+    }
+
+    public static PropertyMapping<T>[] ToMappings<T>(
         string prefix,
         Func<T, DescriptiveStatistics?> getStats,
         Func<double?, double>? converter = null)
@@ -67,90 +123,7 @@ public static class PropertyMappingFactory
         };
     }
 
-    public static PropertyMapping<T>[] ScriptTypeCounts<T>(
-        string prefix,
-        Func<T, Dictionary<ScriptType, long>> getScriptTypeCounts)
-    {
-        var builder = new MappingBuilder<T>();
-        
-        foreach (var scriptType in Enum.GetValues<ScriptType>())
-        {
-            builder.Map(
-                $"{prefix}.ScriptType.{scriptType}", 
-                x => getScriptTypeCounts(x).GetValueOrDefault(scriptType));
-        }
-
-        return builder.ToArray();
-    }
-
-    public static Dictionary<ScriptType, long> ReadScriptTypeCounts(
-        string prefix,
-        IReadOnlyDictionary<string, object> properties)
-    {
-        return Enum.GetValues<ScriptType>()
-            .ToDictionary(
-                scriptType => scriptType,
-                scriptType => (long)properties[$"{prefix}.ScriptType.{scriptType}"]);
-    }
-
-    public static PropertyMapping<T>[] DictionaryToColumns<T>(
-        string prefix,
-        IEnumerable<EdgeKind> keys,
-        Func<T, Dictionary<EdgeKind, long>> getDict,
-        Func<double?, double>? converter = null)
-    {
-        var C = converter ?? (x => x ?? double.NaN);
-        var builder = new MappingBuilder<T>();
-
-        // Make sure to keep EdgeKind string representation compatible with neo4j header requirements. 
-        foreach (var k in keys)
-        {
-            builder.Map(
-                $"{prefix}.{k.Source}_{k.Relation}_{k.Target}", 
-                n => C(getDict(n).TryGetValue(k, out var v) ? v : 0));
-        }
-
-        return builder.ToArray();
-    }
-
-    public static PropertyMapping<T>[] DictionaryToColumns<T>(
-        string prefix,
-        IEnumerable<EdgeKind> keys,
-        Func<T, Dictionary<EdgeKind, uint>> getDict)
-    {
-        var builder = new MappingBuilder<T>();
-        
-        foreach (var k in keys)
-        {
-            builder.Map(
-                $"{prefix}.{EdgeKindToPropertyName(k)}", 
-                n => getDict(n).TryGetValue(k, out var v) ? v : 0U);
-        }
-        
-        return builder.ToArray();
-    }
-
-    public static Dictionary<EdgeKind, TValue> ReadDictionary<TValue>(
-        string prefix,
-        IEnumerable<EdgeKind> keys,
-        IReadOnlyDictionary<string, object> properties)
-    {
-        var result = new Dictionary<EdgeKind, TValue>();
-        foreach (var key in keys)
-            if (properties.TryGetValue($"{prefix}.{EdgeKindToPropertyName(key)}", out var val) && val is IConvertible convertible)
-                result[key] = (TValue)convertible.ToType(typeof(TValue), null);
-
-        return result;
-    }
-
-    private static string EdgeKindToPropertyName(EdgeKind edgeKind)
-    {
-        // Make sure to keep EdgeKind string representation compatible with neo4j header requirements. 
-        return $"{edgeKind.Source}_{edgeKind.Relation}_{edgeKind.Target}";
-    }
-
-
-    public static PropertyMapping<T>[] OHLCV<T>(
+    public static PropertyMapping<T>[] ToMappings<T>(
         Func<T, OHLCV?> getOhlcv,
         string prefix = "OHLCV")
     {
@@ -182,5 +155,41 @@ public static class PropertyMappingFactory
             close: (decimal)(double)properties[$"{prefix}.{nameof(o.Close)}"],
             volume: (long)properties[$"{prefix}.{nameof(o.Volume)}"],
             vwap: (decimal)(double)properties[$"{prefix}.{nameof(o.VWAP)}"]);
+    }
+
+
+    public static PropertyMapping<T>[] ToMappings<T, TValue>(
+        string prefix,
+        Func<T, Dictionary<EdgeKind, TValue>?> getDict)
+    {
+        var builder = new MappingBuilder<T>();
+
+        foreach (var kind in Schema.EdgeKinds)
+        {
+            builder.Map(GetLabel(prefix, kind), x =>
+            {
+                var dict = getDict(x);
+                return dict != null && dict.TryGetValue(kind, out var v) ? v : default;
+            });
+        }
+
+        return builder.ToArray();
+    }
+
+    public static Dictionary<EdgeKind, TValue> GetDictionary<TValue>(
+        string prefix,
+        IReadOnlyDictionary<string, object> properties)
+    {
+        var dict = new Dictionary<EdgeKind, TValue>();
+
+        foreach (var kind in Schema.EdgeKinds)
+        {
+            if (properties.TryGetValue(GetLabel(prefix, kind), out var rawValue) && rawValue != null)
+            {
+                dict[kind] = (TValue)Convert.ChangeType(rawValue, typeof(TValue));
+            }
+        }
+
+        return dict;
     }
 }

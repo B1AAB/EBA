@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Bitcoin.Factories;
-
-namespace EBA.Graph.Bitcoin;
+﻿namespace EBA.Graph.Bitcoin;
 
 public class PostBulkImportFinalizer(
     Options options, 
@@ -53,7 +51,7 @@ public class PostBulkImportFinalizer(
         var records = await _graphDb.GetNodesAsync(NodeKind.Block, CancellationToken.None, nodeVariable: nodeVar);
         _logger.LogInformation("Fetching {n} nodes from graph database succeeded, retrieved {count:n0} nodes.", BlockNode.Kind, records.Count);
 
-        NodeFactory.TryCreate<BlockNode>(records, out var blockNodes, nodeVar);
+        _graphDb.StrategyFactory.TryCreateNodes<BlockNode>(records, out var blockNodes, nodeVar);
 
         var blocks = new SortedList<long, BlockNode>();
         foreach (var block in blockNodes)

@@ -1,4 +1,4 @@
-﻿using EBA.Graph.Bitcoin.Strategies;
+﻿using EBA.Graph.Bitcoin.Descriptors;
 using EBA.Utilities;
 
 namespace EBA.Graph.Model;
