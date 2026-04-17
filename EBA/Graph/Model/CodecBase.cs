@@ -2,12 +2,12 @@
 
 namespace EBA.Graph.Model;
 
-public abstract class CodecBase<T> : IElementCodec
-    where T : class, IGraphElement
+public abstract class CodecBase<TElement> : IElementCodec
+    where TElement : class, IGraphElement
 {
     public string DefaultFilename { get; }
 
-    public IElementDescriptor<T> Descriptor { get; }
+    public IElementDescriptor<TElement> Descriptor { get; }
 
     private readonly bool _serializeCompressed;
     private string? _filename;
@@ -15,7 +15,7 @@ public abstract class CodecBase<T> : IElementCodec
     private bool _disposed = false;
 
     protected CodecBase(
-        IElementDescriptor<T> descriptor,
+        IElementDescriptor<TElement> descriptor,
         string defaultFilename,
         bool serializeCompressed)
     {
@@ -43,12 +43,12 @@ public abstract class CodecBase<T> : IElementCodec
         return _writer;
     }
 
-    public async Task WriteCsvAsync(T element, string filename)
+    public async Task WriteCsvAsync(TElement element, string filename)
     {
         await GetStreamWriter(filename).WriteLineAsync(Descriptor.Mapper.ToCsvRow(element));
     }
 
-    public async Task WriteCsvAsync(IEnumerable<T> elements, string filename)
+    public async Task WriteCsvAsync(IEnumerable<TElement> elements, string filename)
     {
         var writer = GetStreamWriter(filename);
         foreach (var x in elements)
@@ -62,12 +62,12 @@ public abstract class CodecBase<T> : IElementCodec
 
     public Task WriteCsvAsync(IGraphElement element, string filename)
     {
-        return WriteCsvAsync((T)element, filename);
+        return WriteCsvAsync((TElement)element, filename);
     }
 
-    public Task WriteCsvAsync<E>(IEnumerable<E> elements, string filename) where E : IGraphElement
+    public Task WriteCsvAsync<T>(IEnumerable<T> elements, string filename) where T : IGraphElement
     {
-        return WriteCsvAsync(elements.Cast<E>(), filename);
+        return WriteCsvAsync(elements.Cast<TElement>(), filename);
     }
 
     public void Dispose()

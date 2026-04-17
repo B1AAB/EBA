@@ -4,18 +4,18 @@ namespace EBA.Graph.Model;
 
 public static class PropertyMappingFactory
 {
-    public static string GetLabel(string prefix, EdgeKind edgeKind)
+    private static string GetLabel(string prefix, EdgeKind edgeKind)
     {
         // Make sure to keep EdgeKind string representation compatible with neo4j header requirements. 
         return $"{prefix}.{edgeKind.Source}_{edgeKind.Relation}_{edgeKind.Target}";
     }
 
-    public static string GetLabel<T>() where T : struct, Enum
+    private static string GetLabel<T>() where T : struct, Enum
     {
         return typeof(T).Name;
     }
 
-    public static string GetLabel(string prefix, string enumTypeName, string enumValueName)
+    private static string GetLabel(string prefix, string enumTypeName, string enumValueName)
     {
         return $"{prefix}.{enumTypeName}.{enumValueName}";
     }
