@@ -51,10 +51,16 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
                 nameof(Block.FeesStats), n => n.BlockMetadata.FeesStats))
 
             .MapRange(PropertyMappingFactory.ToMappings(
-                "Inputs", (BlockNode n) => n.BlockMetadata.InputScriptTypeCount))
+                "InputsCount", (BlockNode n) => n.BlockMetadata.InputScriptTypeCount))
 
             .MapRange(PropertyMappingFactory.ToMappings(
-                "Outputs", (BlockNode n) => n.BlockMetadata.OutputScriptTypeCount))
+                "OutputsCount", (BlockNode n) => n.BlockMetadata.OutputScriptTypeCount))
+
+            .MapRange(PropertyMappingFactory.ToMappings(
+                "InputsValue", (BlockNode n) => n.BlockMetadata.InputScriptTypeValue))
+
+            .MapRange(PropertyMappingFactory.ToMappings(
+                "OutputsValue", (BlockNode n) => n.BlockMetadata.OutputScriptTypeValue))
 
             .MapRange(PropertyMappingFactory.ToMappings<BlockNode, uint>(
                     nameof(BlockNode.TripletTypeCount), n => n.TripletTypeCount))
@@ -114,10 +120,10 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
             OutputValuesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(Block.OutputValuesStats)),
             SpentOutputAgeStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(Block.SpentOutputAgeStats)),
             FeesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(Block.FeesStats)),
-            InputScriptTypeCount = PropertyMappingFactory.GetDictionary<ScriptType, long>("Inputs", props), // TODO: I'm not sure if these four are correct
-            OutputScriptTypeCount = PropertyMappingFactory.GetDictionary<ScriptType, long>("Outputs", props),
-            InputScriptTypeValue = PropertyMappingFactory.GetDictionary<ScriptType, long>("Inputs", props),
-            OutputScriptTypeValue = PropertyMappingFactory.GetDictionary<ScriptType, long>("Outputs", props),
+            InputScriptTypeCount = PropertyMappingFactory.GetDictionary<ScriptType, long>("InputsCount", props),
+            OutputScriptTypeCount = PropertyMappingFactory.GetDictionary<ScriptType, long>("OutputsCount", props),
+            InputScriptTypeValue = PropertyMappingFactory.GetDictionary<ScriptType, long>("InputsValue", props),
+            OutputScriptTypeValue = PropertyMappingFactory.GetDictionary<ScriptType, long>("OutputsValue", props),
 
             TotalSupply = _mapper.GetValue(n => n.BlockMetadata.TotalSupply, props),
             TotalSupplyNominal = _mapper.GetValue(n => n.BlockMetadata.TotalSupplyNominal, props),
