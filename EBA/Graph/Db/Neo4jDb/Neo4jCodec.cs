@@ -4,7 +4,7 @@ public class Neo4jCodec<T>(
     IElementDescriptor<T> descriptor,
     string defaultFilename,
     bool serializeCompressed) 
-    : CodeBase<T>(
+    : CodecBase<T>(
         descriptor, 
         defaultFilename, 
         serializeCompressed)

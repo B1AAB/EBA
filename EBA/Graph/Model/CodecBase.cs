@@ -2,7 +2,7 @@
 
 namespace EBA.Graph.Model;
 
-public abstract class CodeBase<T> : IElementCodec
+public abstract class CodecBase<T> : IElementCodec
     where T : class, IGraphElement
 {
     public string DefaultFilename { get; }
@@ -14,7 +14,7 @@ public abstract class CodeBase<T> : IElementCodec
     private StreamWriter? _writer;
     private bool _disposed = false;
 
-    protected CodeBase(
+    protected CodecBase(
         IElementDescriptor<T> descriptor,
         string defaultFilename,
         bool serializeCompressed)
