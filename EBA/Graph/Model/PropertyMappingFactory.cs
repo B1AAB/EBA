@@ -52,7 +52,7 @@ public static class PropertyMappingFactory
 
         foreach (var enumValue in Enum.GetValues<TEnum>())
         {
-            var key = $"{GetLabel(prefix, enumTypeName, enumValue.ToString())}";
+            var key = GetLabel(prefix, enumTypeName, enumValue.ToString());
             if (properties.TryGetValue(key, out var rawValue) && rawValue != null)
                 dict[enumValue] = (TValue)Convert.ChangeType(rawValue, typeof(TValue));
         }

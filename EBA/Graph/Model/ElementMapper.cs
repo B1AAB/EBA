@@ -44,17 +44,6 @@ public class ElementMapper<T>
         throw new KeyNotFoundException($"No mapping found for property '{propertyName}'.");
     }
 
-    public V? GetValue<V>(string propertyName, string[] csvRow)
-    {
-        if (!_propertyIndices.TryGetValue(propertyName, out int columnIndex))
-            return default;
-
-        if (columnIndex >= csvRow.Length)
-            return default;
-
-        return _mappings[columnIndex].DeserializeCsv<V>(csvRow[columnIndex]);
-    }
-
     public PropertyMapping<T> GetMapping(string propertyName)
     {
         if (_propertyIndices.TryGetValue(propertyName, out int index))
@@ -66,6 +55,17 @@ public class ElementMapper<T>
     public PropertyMapping<T> GetMapping<V>(Expression<Func<T, V>> propertyExpression)
     {
         return GetMapping(MappingBuilder.GetPropertyName(propertyExpression));
+    }
+
+    public V? GetValue<V>(string propertyName, string[] csvRow)
+    {
+        if (!_propertyIndices.TryGetValue(propertyName, out int columnIndex))
+            return default;
+
+        if (columnIndex >= csvRow.Length)
+            return default;
+
+        return _mappings[columnIndex].DeserializeCsv<V>(csvRow[columnIndex]);
     }
 
     public V GetValue<V>(
@@ -88,27 +88,6 @@ public class ElementMapper<T>
             ?? throw new InvalidOperationException(
                 $"The property '{propertyName}' returned null, " +
                 $"but the requested type '{typeof(V).Name}' does not accept nulls.");
-    }
-
-    public Dictionary<TEnum, TValue> GetDictionary<TEnum, TValue>(
-        string prefix,
-        IReadOnlyDictionary<string, object> properties)
-        where TEnum : struct, Enum
-    {
-        var enumName = typeof(TEnum).Name;
-        var dict = new Dictionary<TEnum, TValue>();
-
-        foreach (var enumValue in Enum.GetValues<TEnum>())
-        {
-            var propName = $"{prefix}.{enumName}.{enumValue}";
-
-            if (properties.TryGetValue(propName, out var rawValue) && rawValue != null)
-            {
-                dict[enumValue] = (TValue)Convert.ChangeType(rawValue, typeof(TValue));
-            }
-        }
-
-        return dict;
     }
 
     public Func<string[], TProperty> GetFieldParser<TProperty>(Expression<Func<T, TProperty>> e)
