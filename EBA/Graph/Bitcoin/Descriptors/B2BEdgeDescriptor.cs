@@ -11,7 +11,7 @@ public class B2BEdgeDescriptor : IElementDescriptor<B2BEdge>
     private static readonly ElementMapper<B2BEdge> _mapper = new(
         new MappingBuilder<B2BEdge>()
             .MapSourceId(BlockNodeDescriptor.IdSpace, e => e.BlockHeight)
-            .MapNeo4jTargetId(BlockNodeDescriptor.IdSpace, e => e.BlockHeight)
+            .MapTargetId(BlockNodeDescriptor.IdSpace, e => e.BlockHeight)
             .MapEdgeType(e => e.Relation)
             .ToArray());
 
