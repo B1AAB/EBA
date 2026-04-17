@@ -1,4 +1,4 @@
-﻿using EBA.Graph.Bitcoin.Strategies;
+﻿using EBA.Graph.Bitcoin.Descriptors;
 using EBA.Utilities;
 
 namespace EBA.Graph.Model;
@@ -54,18 +54,6 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
         Id = GetHashCode().ToString();
 
         EdgeKind = new EdgeKind(source.NodeKind, target.NodeKind, relation);
-    }
-
-    public Edge(
-        TSource source, TTarget target,
-        IRelationship relationship)
-    {
-        Source = source;
-        Target = target;
-        Id = relationship.ElementId;
-        Value = PropertyMappingFactory.Value<IRelationship>(null!).Deserialize<long>(relationship.Properties);
-        Relation = Enum.Parse<RelationType>(relationship.Type);
-        BlockHeight = PropertyMappingFactory.Height<IRelationship>(null!).Deserialize<long>(relationship.Properties);
     }
 
     public static string[] GetFeaturesName()

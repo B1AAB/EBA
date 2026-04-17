@@ -1,16 +1,14 @@
 ﻿using EBA.Graph.Db.Neo4jDb;
 
-namespace EBA.Graph.Bitcoin.Strategies;
+namespace EBA.Graph.Model;
 
 public class Property
 {
     public const string lineVarName = "line";
-    public const string createsEdgeLabel = "Creates";
-    public const string redeemsEdgeLabel = "Redeems";
 
     public string Name { get; }
     public string CsvHeader { get; }
-    public string TypeAnnotatedCsvHeader { get; }
+    public string CsvHeaderTypeAnnotated { get; }
     public FieldType Type { get; }
 
     public Property(string name, FieldType type = FieldType.String, string? csvHeader = null)
@@ -27,19 +25,19 @@ public class Property
             case FieldType.Float:
             case FieldType.Double:
             case FieldType.Boolean:
-                TypeAnnotatedCsvHeader = $"{Name}:{type.ToString().ToLower()}";
+                CsvHeaderTypeAnnotated = $"{Name}:{type.ToString().ToLower()}";
                 break;
 
             case FieldType.StringArray:
-                TypeAnnotatedCsvHeader = $"{Name}:{FieldType.String.ToString().ToLower()}[]";
+                CsvHeaderTypeAnnotated = $"{Name}:{FieldType.String.ToString().ToLower()}[]";
                 break;
 
             case FieldType.DoubleArray:
-                TypeAnnotatedCsvHeader = $"{Name}:{FieldType.Double.ToString().ToLower()}[]";
+                CsvHeaderTypeAnnotated = $"{Name}:{FieldType.Double.ToString().ToLower()}[]";
                 break;
 
             case FieldType.LongArray:
-                TypeAnnotatedCsvHeader = $"{Name}:{FieldType.Long.ToString().ToLower()}[]";
+                CsvHeaderTypeAnnotated = $"{Name}:{FieldType.Long.ToString().ToLower()}[]";
                 break;
 
             default:

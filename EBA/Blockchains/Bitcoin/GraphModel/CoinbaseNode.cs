@@ -6,15 +6,15 @@ public class CoinbaseNode : Node
     { }
 
     public CoinbaseNode(
-        Neo4j.Driver.INode node,
         double? originalOutdegree = null,
-        double? hopsFromRoot = null)
+        double? hopsFromRoot = null,
+        string? idInGraphDb = null)
         : base(
             id: Kind.ToString(),
             originalInDegree: 0,
             originalOutDegree: originalOutdegree,
             outHopsFromRoot: hopsFromRoot,
-            idInGraphDb: node.ElementId)
+            idInGraphDb: idInGraphDb)
     { }
 
     public new static NodeKind Kind => NodeKind.Coinbase;

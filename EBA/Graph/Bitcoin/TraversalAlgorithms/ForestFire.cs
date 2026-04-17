@@ -1,7 +1,4 @@
-﻿using EBA.Graph.Bitcoin.Factories;
-using EBA.Graph.Bitcoin.Strategies;
-
-namespace EBA.Graph.Bitcoin.TraversalAlgorithms;
+﻿namespace EBA.Graph.Bitcoin.TraversalAlgorithms;
 
 public class ForestFire : ITraversalAlgorithm
 {
@@ -196,8 +193,8 @@ public class ForestFire : ITraversalAlgorithm
 
             IEdge<Model.INode, Model.INode> candidateEdge =
                 edge.StartNodeElementId == rootNode.IdInGraphDb ?
-                EdgeFactory.Create(rootNode, subjectNode, edge) :
-                EdgeFactory.Create(subjectNode, rootNode, edge);
+                _graphDb.StrategyFactory.CreateEdge(rootNode, subjectNode, edge) :
+                _graphDb.StrategyFactory.CreateEdge(subjectNode, rootNode, edge);
             g.TryGetOrAddEdge(candidateEdge, out candidateEdge);
         }
 
@@ -331,12 +328,19 @@ public class ForestFire : ITraversalAlgorithm
 
         var rndNodes = new List<ScriptNode>();
         foreach (var n in rndRecords)
-            rndNodes.Add(ScriptNodeStrategy.Deserialize(n.Values[nodeVar].As<Neo4j.Driver.INode>(), 0, 0, 0));
+        {
+            if (_graphDb.StrategyFactory.TryCreateNode<ScriptNode>(
+                n.Values[nodeVar].As<Neo4j.Driver.INode>(),
+                out var node, 0, 0, 0))
+            {
+                rndNodes.Add(node);
+            }
+        }
 
         return rndNodes;
     }
 
-    private static bool TryUnpackNodeDict(IDictionary<string, object> dict, double hop, out Model.INode? v)
+    private bool TryUnpackNodeDict(IDictionary<string, object> dict, double hop, out Model.INode? v)
     {
         v = null;
         var node = dict["node"].As<Neo4j.Driver.INode>();
@@ -344,11 +348,12 @@ public class ForestFire : ITraversalAlgorithm
         var outDegree = Convert.ToDouble(dict["outDegree"]);
         if (node is null)
             return false;
-        return NodeFactory.TryCreate(
-            node,
-            out v,
-            originalIndegree: inDegree,
-            originalOutdegree: outDegree,
-            outHopsFromRoot: hop);
+        return
+            _graphDb.StrategyFactory.TryCreateNode(
+                node: node,
+                out v,
+                originalIndegree: inDegree,
+                originalOutdegree: outDegree,
+                outHopsFromRoot: hop);
     }
 }

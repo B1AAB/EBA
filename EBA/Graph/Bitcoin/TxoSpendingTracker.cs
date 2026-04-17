@@ -1,4 +1,4 @@
-﻿using EBA.Graph.Bitcoin.Strategies;
+﻿using EBA.Graph.Bitcoin.Descriptors;
 using EBA.Graph.Db.Neo4jDb;
 using System.IO.Compression;
 
@@ -17,21 +17,22 @@ public class TxoSpendingTracker
 
     private async Task<Dictionary<long, Batch>> GetBlockHeightToBatchMapping(List<Batch> batches)
     {
-        var blockStrategy = new BlockNodeStrategy(true);
+        var heightParser = new BlockNodeDescriptor().Mapper.GetFieldParser(x => x.BlockMetadata.Height);
 
         var mapping = new Dictionary<long, Batch>();
 
         foreach (var batch in batches)
         {
-            var blockNodesFilename = batch.GetFilename(NodeKind.Block);
+            var blockNodesFilename = batch.GetFilename(BlockNode.Kind);
 
-            using Stream stream = File.OpenRead(blockNodesFilename), zippedStream = new GZipStream(stream, CompressionMode.Decompress);
+            using Stream stream = File.OpenRead(blockNodesFilename);
+            using Stream zippedStream = new GZipStream(stream, CompressionMode.Decompress);
             using StreamReader reader = new(zippedStream);
-            var line = "";
-            while ((line = reader.ReadLine()) != null)
+
+            string? line;
+            while ((line = await reader.ReadLineAsync()) != null)
             {
-                var parts = line.Split('\t');
-                mapping.Add(long.Parse(parts[1]), batch);
+                mapping.Add(heightParser(line.Split('\t')), batch);
             }
         }
 

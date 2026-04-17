@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Bitcoin.Factories;
-using EBA.Graph.Bitcoin.Strategies;
-using EBA.Utilities;
+﻿using EBA.Utilities;
 
 namespace EBA.Graph.Bitcoin.OffChain;
 
@@ -43,7 +41,7 @@ public class EconomicAugmentor(Options options, IGraphDb<BitcoinGraph> graphDb, 
         _logger.LogInformation("Fetched {count:n0} block nodes.", blockRecords.Count);
 
         var blocks = new SortedDictionary<long, BlockNode>();
-        if (NodeFactory.TryCreate<BlockNode>(blockRecords, out var blockNodes, nodeVar: "b"))
+        if (_graphDb.StrategyFactory.TryCreateNodes<BlockNode>(blockRecords, out var blockNodes, nodeVar: "b"))
         {
             foreach (var blockNode in blockNodes)
                 blocks.Add(blockNode.BlockMetadata.Height, blockNode);
@@ -67,9 +65,18 @@ public class EconomicAugmentor(Options options, IGraphDb<BitcoinGraph> graphDb, 
         _logger.LogInformation("Setting realized cap for {count:n0} block nodes.", blocks.Count);
         await _graphDb.SetRealizedCap(blocks, blockOHLCVMapping, CancellationToken.None);
 
+        var economicMappings = new ElementMapper<BlockNode>(
+            new MappingBuilder<BlockNode>()
+                .Map(n => n.BlockMetadata.Height)
+                .Map(n => (double?)n.BlockMetadata.RealizedCap)
+                .Map(n => (double?)n.BlockMetadata.MarketCap)
+                .Map(n => (double?)n.BlockMetadata.NUPL)
+                .MapRange(PropertyMappingFactory.ToMappings<BlockNode>(n => n.BlockMetadata.Ohlcv))
+                .ToArray());
+
         _logger.LogInformation("Saving realized cap for {count:n0} block nodes.", blocks.Count);
         var updates = blocks.Values
-            .Select(b => BlockNodeStrategy.EconomicMappings.ToDictionary(b))
+            .Select(b => economicMappings.ToProperties(b))
             .ToList();
 
         await _graphDb.BulkUpdateNodePropertiesAsync(

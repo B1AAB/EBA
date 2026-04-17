@@ -191,7 +191,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             if (_strategy == null)
                 continue;
 
-            tasks.Add(_strategy.ToCsvAsync(nodeGroup.Value, batchInfo.GetFilename(nodeGroup.Key)));
+            tasks.Add(_strategy.WriteCsvAsync(nodeGroup.Value, batchInfo.GetFilename(nodeGroup.Key)));
         }
 
         foreach (var edgeGroup in edges.Where(x => _strategyFactory.IsSerializable(x.Key)))
@@ -201,7 +201,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             if (_strategy == null)
                 continue;
 
-            tasks.Add(_strategy.ToCsvAsync(edgeGroup.Value, batchInfo.GetFilename(edgeGroup.Key)));
+            tasks.Add(_strategy.WriteCsvAsync(edgeGroup.Value, batchInfo.GetFilename(edgeGroup.Key)));
         }
 
         await Task.WhenAll(tasks);
