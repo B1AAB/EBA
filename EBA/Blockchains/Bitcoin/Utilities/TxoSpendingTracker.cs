@@ -56,7 +56,7 @@ public class TxoSpendingTracker
             await foreach (var cols in IElementCodec.ReadCsvAsync(batch.GetFilename(S2TEdge.Kind)))
             {
                 var writer = blockToWriterMapping[blockHeightToBatchMapping[creationHeightParser(cols)].Name];
-                writer.WriteLine(string.Join('\t',
+                writer.WriteLine(string.Join(Options.CsvDelimiter,
                     txidParser(cols), // preout txid
                     voutParser(cols),  // preout vout
                     spentHeightParser(cols)));
@@ -69,22 +69,18 @@ public class TxoSpendingTracker
 
     private static async Task SetTxoSpentHeight(List<Batch> batches)
     {
-        // TODO:
-        // This is not an ideal implementation as it hardcodes the csv columns, 
-        // which will break if the type descriptor changes property serialization order.
-        // However, this is faster as it does not require deserializing the csv lines into
-        // an edge instance with both high memory overhead and not easily possible because
-        // a csv line does not have node details. 
+        var voutIdx = T2SEdgeDescriptor.StaticMapper.GetPropertyCsvIndex(x => x.Vout);
+        var spentHeightIdx = T2SEdgeDescriptor.StaticMapper.GetPropertyCsvIndex(x => x.SpentHeight);
 
         foreach (var batch in batches)
         {
             var spentTxo = new Dictionary<string, long>();
             using (var reader = new StreamReader(GetSpentTxoFilename(batch)))
             {
-                var line = "";
+                string? line;
                 while ((line = reader.ReadLine()) != null)
                 {
-                    var parts = line.Split('\t');
+                    var parts = line.Split(Options.CsvDelimiter);
                     var preoutTxid = parts[0];
                     var preoutVout = parts[1];
                     var spentHeight = long.Parse(parts[2]);
@@ -100,29 +96,15 @@ public class TxoSpendingTracker
                 zippedStream = new GZipStream(stream, CompressionMode.Decompress))
             {
                 using StreamReader reader = new(zippedStream);
-                var line = "";
+                string? line;
 
                 while ((line = reader.ReadLine()) != null)
                 {
-                    var parts = line.Split('\t');
-                    var txid = parts[0];
-                    var vout = int.Parse(parts[3]);
-
-                    if (spentTxo.TryGetValue($"{txid}-{vout}", out var spentHeight))
-                    {
-                        writer.WriteLine(string.Join('\t',
-                            txid, // source
-                            parts[1], // target
-                            parts[2], // value
-                            vout,
-                            parts[4], // creation height
-                            spentHeight,
-                            parts[6])); // type label
-                    }
-                    else
-                    {
-                        writer.WriteLine(line);
-                    }
+                    var cols = line.Split(Options.CsvDelimiter);
+                    if (spentTxo.TryGetValue($"{cols[0]}-{cols[voutIdx]}", out var spentHeight))
+                        cols[spentHeightIdx] = spentHeight.ToString();
+                    
+                    writer.WriteLine(string.Join(Options.CsvDelimiter, cols));
                 }
             }
 
