@@ -23,7 +23,7 @@ internal class Cli
         Func<Options, Task> bitcoinImportCypherQueriesAsync,
         Func<Options, Task> bitcoinPostProcessHandlerAsync,
         Func<Options, Task> bitcoinAugmentHandlerAsync,
-        Func<Options, Task> bitcoinMapSpendsHandlerAsync,
+        Func<Options, Task> bitcoinPostTraverseHandlerAsync,
         Action<Exception, ParseResult> exceptionHandler)
     {
         _exceptionHandler = exceptionHandler;
@@ -93,7 +93,7 @@ internal class Cli
                 importCypherQueriesAsync: bitcoinImportCypherQueriesAsync,
                 postProcessHandlerAsync: bitcoinPostProcessHandlerAsync,
                 bitcoinAugmentHandlerAsync: bitcoinAugmentHandlerAsync,
-                mapSpendsHandlerAsync: bitcoinMapSpendsHandlerAsync)
+                postTraverseHandlerAsync: bitcoinPostTraverseHandlerAsync)
         };
 
         for (int i = 0; i < _rootCmd.Options.Count; i++)
@@ -131,7 +131,7 @@ internal class Cli
         Func<Options, Task> importCypherQueriesAsync,
         Func<Options, Task> postProcessHandlerAsync,
         Func<Options, Task> bitcoinAugmentHandlerAsync,
-        Func<Options, Task> mapSpendsHandlerAsync)
+        Func<Options, Task> postTraverseHandlerAsync)
     {
         var cmd = new Command(
             name: "bitcoin",
@@ -146,7 +146,7 @@ internal class Cli
             GetBitcoinAddressStatsCmd(defaultOptions, addressStatsHandlerAsync),
             GetPostProcessCmd(defaultOptions, postProcessHandlerAsync),
             GetBitcoinAugmentCmd(defaultOptions, bitcoinAugmentHandlerAsync),
-            GetBitcoinMapSpendsCmd(defaultOptions, mapSpendsHandlerAsync)
+            GetBitcoinPostTraverseCmd(defaultOptions, postTraverseHandlerAsync)
         };
         return cmd;
     }
@@ -728,14 +728,14 @@ internal class Cli
         return cmd;
     }
 
-    private Command GetBitcoinMapSpendsCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    private Command GetBitcoinPostTraverseCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
         var batchesFilenameOption = new Option<string>("--batches-filename")
         {
             Required = true
         };
 
-        var cmd = new Command(name: "map-spends")
+        var cmd = new Command(name: "post-traverse")
         {
             batchesFilenameOption
         };

@@ -2,7 +2,7 @@
 using EBA.Graph.Db.Neo4jDb;
 using System.IO.Compression;
 
-namespace EBA.Graph.Bitcoin;
+namespace EBA.Blockchains.Bitcoin.Utilities;
 
 public class TxoSpendingTracker
 {
