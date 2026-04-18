@@ -6,7 +6,7 @@ namespace EBA.Blockchains.Bitcoin.Utilities;
 
 public class TxoSpendingTracker
 {
-    public async Task UpdatePostTraverse(Options options)
+    public static async Task UpdatePostTraverse(Options options)
     {
         var batches = await Batch.DeserializeBatchesAsync(options.Bitcoin.MapSpends.BatchesFilename);
 
@@ -69,6 +69,13 @@ public class TxoSpendingTracker
 
     private static async Task SetTxoSpentHeight(List<Batch> batches)
     {
+        // TODO:
+        // This is not an ideal implementation as it hardcodes the csv columns, 
+        // which will break if the type descriptor changes property serialization order.
+        // However, this is faster as it does not require deserializing the csv lines into
+        // an edge instance with both high memory overhead and not easily possible because
+        // a csv line does not have node details. 
+
         foreach (var batch in batches)
         {
             var spentTxo = new Dictionary<string, long>();

@@ -44,6 +44,11 @@ public class ElementMapper<T>
         throw new KeyNotFoundException($"No mapping found for property '{propertyName}'.");
     }
 
+    public int GetPropertyCsvIndex<V>(Expression<Func<T, V>> propertyExpression)
+    {
+        return GetPropertyCsvIndex(MappingBuilder.GetPropertyName(propertyExpression));
+    }
+
     public PropertyMapping<T> GetMapping(string propertyName)
     {
         if (_propertyIndices.TryGetValue(propertyName, out int index))

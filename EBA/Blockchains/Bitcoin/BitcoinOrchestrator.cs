@@ -66,7 +66,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         CancellationToken cT)
     {
         var finalizer = new TxoSpendingTracker();
-        await finalizer.UpdatePostTraverse(options);
+        await TxoSpendingTracker.UpdatePostTraverse(options);
     }
 
     public async Task DeDupAsync(
