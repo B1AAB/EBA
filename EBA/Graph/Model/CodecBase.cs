@@ -2,7 +2,7 @@
 
 namespace EBA.Graph.Model;
 
-public abstract class CodecBase<TElement> : IElementCodec
+public class CodecBase<TElement> : IElementCodec
     where TElement : class, IGraphElement
 {
     public string DefaultFilename { get; }
@@ -14,7 +14,7 @@ public abstract class CodecBase<TElement> : IElementCodec
     private StreamWriter? _writer;
     private bool _disposed = false;
 
-    protected CodecBase(
+    public CodecBase(
         IElementDescriptor<TElement> descriptor,
         string defaultFilename,
         bool serializeCompressed)
@@ -57,8 +57,15 @@ public abstract class CodecBase<TElement> : IElementCodec
         }
     }
 
-    public abstract string[] GetSchemaConfigs();
-    public abstract string[] GetSeedingCommands();
+    public virtual string[] GetSchemaConfigs()
+    {
+        return [];
+    }
+
+    public virtual string[] GetSeedingCommands()
+    {
+        return [];
+    }
 
     public Task WriteCsvAsync(IGraphElement element, string filename)
     {
