@@ -5,6 +5,11 @@ namespace EBA.Graph.Model;
 
 public class MappingBuilder
 {
+    public const string StartIdPropertyName = ":START_ID";
+    public const string EndIdPropertyName = ":END_ID";
+    public const string EdgeTypePropertyName = ":TYPE";
+    public const string NodeLabelPropertyName = ":LABEL";
+
     public static string GetPropertyName(LambdaExpression expression)
     {
         var memberExpression = expression.Body switch
@@ -84,11 +89,12 @@ public class MappingBuilder<T>
 
     public MappingBuilder<T> MapSourceId<TProperty>(
         string idSpace, 
-        Func<T, TProperty> selector)
+        Func<T, TProperty> selector, 
+        string propName = MappingBuilder.StartIdPropertyName)
     {
         _mappings.Add(
             new PropertyMapping<T>(
-                ":START_ID",
+                propName,
                 MappingBuilder.ToFieldType(typeof(TProperty)), 
                 x => selector(x),
                 _ => $":START_ID({idSpace})"));
@@ -98,11 +104,12 @@ public class MappingBuilder<T>
 
     public MappingBuilder<T> MapTargetId<TProperty>(
         string idSpace, 
-        Func<T, TProperty> selector)
+        Func<T, TProperty> selector,
+        string propName = MappingBuilder.EndIdPropertyName)
     {
         _mappings.Add(
             new PropertyMapping<T>(
-                ":END_ID",
+                propName,
                 MappingBuilder.ToFieldType(typeof(TProperty)), 
                 x => selector(x), 
                 _ => $":END_ID({idSpace})"));
@@ -112,7 +119,7 @@ public class MappingBuilder<T>
 
     public MappingBuilder<T> MapEdgeType<TProperty>(
         Func<T, TProperty> selector, 
-        string propName = ":TYPE")
+        string propName = MappingBuilder.EdgeTypePropertyName)
     {
         _mappings.Add(
             new PropertyMapping<T>(
@@ -146,11 +153,13 @@ public class MappingBuilder<T>
         return this;
     }
 
-    public MappingBuilder<T> MapLabel<TProperty>(Func<T, TProperty> selector)
+    public MappingBuilder<T> MapLabel<TProperty>(
+        Func<T, TProperty> selector, 
+        string propName = MappingBuilder.NodeLabelPropertyName)
     {
         _mappings.Add(
             new PropertyMapping<T>(
-                ":LABEL", 
+                propName, 
                 FieldType.String,
                 x => selector(x),
                 _ => ":LABEL"));

@@ -69,6 +69,7 @@ public class TxoSpendingTracker
 
     private static async Task SetTxoSpentHeight(List<Batch> batches)
     {
+        var sourceIdx = T2SEdgeDescriptor.StaticMapper.GetPropertyCsvIndex(MappingBuilder.StartIdPropertyName);
         var voutIdx = T2SEdgeDescriptor.StaticMapper.GetPropertyCsvIndex(x => x.Vout);
         var spentHeightIdx = T2SEdgeDescriptor.StaticMapper.GetPropertyCsvIndex(x => x.SpentHeight);
 
@@ -101,7 +102,7 @@ public class TxoSpendingTracker
                 while ((line = reader.ReadLine()) != null)
                 {
                     var cols = line.Split(Options.CsvDelimiter);
-                    if (spentTxo.TryGetValue($"{cols[0]}-{cols[voutIdx]}", out var spentHeight))
+                    if (spentTxo.TryGetValue($"{cols[sourceIdx]}-{cols[voutIdx]}", out var spentHeight))
                         cols[spentHeightIdx] = spentHeight.ToString();
                     
                     writer.WriteLine(string.Join(Options.CsvDelimiter, cols));
