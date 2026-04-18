@@ -10,91 +10,69 @@ public class TxoSpendingTracker
     {
         var batches = await Batch.DeserializeBatchesAsync(options.Bitcoin.MapSpends.BatchesFilename);
 
-        var blockHeightToBatchMapping = await GetBlockHeightToBatchMapping(batches);
+        var blockHeightToBatchMapping = await GetBlockHeightToBatchMapping(options, batches);
         await CreatePerBatchSpentTxo(batches, blockHeightToBatchMapping);
         await SetTxoSpentHeight(batches);
     }
 
-    private async Task<Dictionary<long, Batch>> GetBlockHeightToBatchMapping(List<Batch> batches)
+    private static async Task<Dictionary<long, Batch>> GetBlockHeightToBatchMapping(Options options, List<Batch> batches)
     {
-        var heightParser = new BlockNodeDescriptor().Mapper.GetFieldParser(x => x.BlockMetadata.Height);
-
+        var heightParser = BlockNodeDescriptor.StaticMapper.GetFieldParser(x => x.BlockMetadata.Height);
         var mapping = new Dictionary<long, Batch>();
+
+        //var codec = new CodecBase<BlockNode>(null, null, null);
 
         foreach (var batch in batches)
         {
             var blockNodesFilename = batch.GetFilename(BlockNode.Kind);
 
-            using Stream stream = File.OpenRead(blockNodesFilename);
-            using Stream zippedStream = new GZipStream(stream, CompressionMode.Decompress);
-            using StreamReader reader = new(zippedStream);
-
-            string? line;
-            while ((line = await reader.ReadLineAsync()) != null)
-            {
-                mapping.Add(heightParser(line.Split('\t')), batch);
-            }
+            await foreach (var cols in IElementCodec.ReadCsvAsync(blockNodesFilename))
+                mapping.Add(heightParser(cols), batch);
         }
 
         return mapping;
     }
 
-    private async Task CreatePerBatchSpentTxo(List<Batch> batches, Dictionary<long, Batch> blockHeightToBatchMapping)
+    private static string GetSpentTxoFilename(Batch batch)
+    {
+        return Path.Join(
+            Path.GetDirectoryName(batch.GetFilename(T2SEdge.Kind)),
+            batch.FilenamePrefix + "_spent_utxo.tsv");
+    }
+
+    private static async Task CreatePerBatchSpentTxo(List<Batch> batches, Dictionary<long, Batch> blockHeightToBatchMapping)
     {
         var blockToWriterMapping = new Dictionary<string, StreamWriter>();
         foreach (var batch in batches)
-        {
-            blockToWriterMapping.Add(batch.Name, new StreamWriter(
-                Path.Join(
-                    Path.GetDirectoryName(batch.GetFilename(T2SEdge.Kind)),
-                    batch.FilenamePrefix + "_spent_utxo.tsv")));
-        }
+            blockToWriterMapping.Add(batch.Name, new StreamWriter(GetSpentTxoFilename(batch)));
 
+        var creationHeightParser = S2TEdgeDescriptor.StaticMapper.GetFieldParser(x => x.CreationHeight);
+        var spentHeightParser = S2TEdgeDescriptor.StaticMapper.GetFieldParser(x => x.SpentHeight);
+        var txidParser = S2TEdgeDescriptor.StaticMapper.GetFieldParser(x => x.Txid);
+        var voutParser = S2TEdgeDescriptor.StaticMapper.GetFieldParser(x => x.Vout);
 
         foreach (var batch in batches)
         {
-            var filename = batch.GetFilename(S2TEdge.Kind);
-
-            using (
-                Stream fileStream = File.OpenRead(filename),
-                zippedStream = new GZipStream(fileStream, CompressionMode.Decompress))
+            await foreach (var cols in IElementCodec.ReadCsvAsync(batch.GetFilename(S2TEdge.Kind)))
             {
-                using (StreamReader reader = new(zippedStream))
-                {
-                    var line = "";
-
-                    while ((line = reader.ReadLine()) != null)
-                    {
-                        var parts = line.Split('\t');
-                        var height = long.Parse(parts[3]);
-                        var preoutHeight = long.Parse(parts[7]);
-                        var preoutTxid = parts[4];
-                        var preoutVout = int.Parse(parts[5]);
-
-                        var prevoutBatch = blockHeightToBatchMapping[preoutHeight];
-                        var writer = blockToWriterMapping[prevoutBatch.Name];
-
-                        writer.WriteLine($"{preoutTxid}\t{preoutVout}\t{height}");
-                    }
-                }
+                var writer = blockToWriterMapping[blockHeightToBatchMapping[creationHeightParser(cols)].Name];
+                writer.WriteLine(string.Join('\t',
+                    txidParser(cols), // preout txid
+                    voutParser(cols),  // preout vout
+                    spentHeightParser(cols)));
             }
         }
 
         foreach (var writer in blockToWriterMapping.Values)
-        {
             writer.Dispose();
-        }
     }
 
-    private async Task SetTxoSpentHeight(List<Batch> batches)
+    private static async Task SetTxoSpentHeight(List<Batch> batches)
     {
         foreach (var batch in batches)
         {
             var spentTxo = new Dictionary<string, long>();
-            using (var reader = new StreamReader(
-                Path.Join(
-                    Path.GetDirectoryName(batch.GetFilename(T2SEdge.Kind)),
-                    batch.FilenamePrefix + "_spent_utxo.tsv")))
+            using (var reader = new StreamReader(GetSpentTxoFilename(batch)))
             {
                 var line = "";
                 while ((line = reader.ReadLine()) != null)
@@ -109,34 +87,34 @@ public class TxoSpendingTracker
 
             var createdTxes = batch.GetFilename(T2SEdge.Kind);
 
-            var writer = new StreamWriter(Path.Join(Path.GetDirectoryName(batch.GetFilename(T2SEdge.Kind)), batch.FilenamePrefix + "_created_txo.tsv"));
+            var writer = new StreamWriter(Path.Join(Path.GetDirectoryName(batch.GetFilename(T2SEdge.Kind)), batch.FilenamePrefix + "_Tx_Credits_Script.csv"));
             using (
                 Stream stream = File.OpenRead(createdTxes),
                 zippedStream = new GZipStream(stream, CompressionMode.Decompress))
             {
-                using (StreamReader reader = new(zippedStream))
+                using StreamReader reader = new(zippedStream);
+                var line = "";
+
+                while ((line = reader.ReadLine()) != null)
                 {
-                    var line = "";
+                    var parts = line.Split('\t');
+                    var txid = parts[0];
+                    var vout = int.Parse(parts[3]);
 
-                    while ((line = reader.ReadLine()) != null)
+                    if (spentTxo.TryGetValue($"{txid}-{vout}", out var spentHeight))
                     {
-                        var parts = line.Split('\t');
-                        var txid = parts[0];
-                        var target = parts[1];
-                        var value = parts[2];
-                        var vout = int.Parse(parts[3]);
-                        var creationHeight = parts[4];
-                        var spentHeight = parts[5];
-                        var typeLabel = parts[6];
-
-                        if (spentTxo.TryGetValue($"{txid}-{vout}", out var spentHeightBB))
-                        {
-                            writer.WriteLine($"{txid}\t{target}\t{value}\t{vout}\t{creationHeight}\t{spentHeightBB}\t{typeLabel}");
-                        }
-                        else
-                        {
-                            writer.WriteLine(line);
-                        }
+                        writer.WriteLine(string.Join('\t',
+                            txid, // source
+                            parts[1], // target
+                            parts[2], // value
+                            vout,
+                            parts[4], // creation height
+                            spentHeight,
+                            parts[6])); // type label
+                    }
+                    else
+                    {
+                        writer.WriteLine(line);
                     }
                 }
             }
