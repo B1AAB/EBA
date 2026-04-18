@@ -224,12 +224,6 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         return _batches[^1];
     }
 
-    private async Task<List<Batch>> DeserializeBatchesAsync()
-    {
-        return await JsonSerializer<List<Batch>>.DeserializeAsync(
-            _options.Neo4j.BatchesFilename);
-    }
-
     public async Task ExecuteWriteQueryAsync(List<string> queries, CancellationToken ct)
     {
         await VerifyConnectivityAsync(ct);
