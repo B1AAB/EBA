@@ -371,47 +371,11 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             edgeCounter, totalEdgeCount, processedEdgeCount, skippedEdgeCounter);
     }
 
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposed)
-        {
-            if (disposing)
-            {
-                _strategyFactory.Dispose();
-            }
-
-            _disposed = true;
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await DisposeAsyncCore().ConfigureAwait(false);
-        Dispose(false);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual async ValueTask DisposeAsyncCore()
-    {
-        if (!_disposed)
-        {
-            _strategyFactory.Dispose();
-            await Batch.SerializeBatchesAsync(_options.Neo4j.BatchesFilename, _batches).ConfigureAwait(false);
-            _disposed = true;
-        }
-    }
-
     public async Task BulkUpdateNodePropertiesAsync(
-        NodeKind label,
-        string idProperty,
-        IReadOnlyList<Dictionary<string, object?>> updates,
-        CancellationToken ct)
+    NodeKind label,
+    string idProperty,
+    IReadOnlyList<Dictionary<string, object?>> updates,
+    CancellationToken ct)
     {
         if (updates.Count == 0)
             return;
@@ -450,5 +414,41 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         _logger.LogInformation(
             "Completed bulk update of {total:n0} nodes with label {label}.",
             updates.Count, label);
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _strategyFactory.Dispose();
+            }
+
+            _disposed = true;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore().ConfigureAwait(false);
+        Dispose(false);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual async ValueTask DisposeAsyncCore()
+    {
+        if (!_disposed)
+        {
+            _strategyFactory.Dispose();
+            await Batch.SerializeBatchesAsync(_options.Neo4j.BatchesFilename, _batches).ConfigureAwait(false);
+            _disposed = true;
+        }
     }
 }
