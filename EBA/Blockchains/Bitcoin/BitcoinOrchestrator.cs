@@ -61,6 +61,14 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         }
     }    
 
+    public async Task PostTraverseAsync(
+        Options options,
+        CancellationToken cT)
+    {
+        var finalizer = new TraverseFinalizer(_logger, options);
+        await finalizer.UpdatePostTraverse(cT);
+    }
+
     public async Task DeDupAsync(
         Options options,
         CancellationToken cT)

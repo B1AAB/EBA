@@ -11,7 +11,7 @@ public interface IElementDescriptor<T>
     ElementMapper<T> Mapper { get; }
     static abstract ElementMapper<T> StaticMapper { get; }
 
-    virtual string[] UniqueKeys => [];
+    virtual string[] UniqueProps => [];
     virtual string[]? Neo4jSchemaOverride => null;
     virtual string[]? Neo4jSeedingOverride => null;
 }

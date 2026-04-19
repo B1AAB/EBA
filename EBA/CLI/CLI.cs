@@ -15,15 +15,14 @@ internal class Cli
 
     public Cli(
         Func<Options, Task> bitcoinTraverseCmdHandlerAsync,
+        Func<Options, Task> bitcoinPostTraverseHandlerAsync,
         Func<Options, Task> bitcoinDeDupCmdHandlerAsync,
         Func<Options, Task> bitcoinSampleCmdHandlerAsync,
         Func<Options, Task> bitcoinImportCmdHandlerAsync,
         Func<Options, Task> bitcoinMapMarketHandlerAsync,
         Func<Options, Task> bitcoinAddressStatsHandlerAsync,
         Func<Options, Task> bitcoinImportCypherQueriesAsync,
-        Func<Options, Task> bitcoinPostProcessHandlerAsync,
         Func<Options, Task> bitcoinAugmentHandlerAsync,
-        Func<Options, Task> bitcoinMapSpendsHandlerAsync,
         Action<Exception, ParseResult> exceptionHandler)
     {
         _exceptionHandler = exceptionHandler;
@@ -91,9 +90,8 @@ internal class Cli
                 mapMarketHandlerAsync: bitcoinMapMarketHandlerAsync,
                 addressStatsHandlerAsync: bitcoinAddressStatsHandlerAsync,
                 importCypherQueriesAsync: bitcoinImportCypherQueriesAsync,
-                postProcessHandlerAsync: bitcoinPostProcessHandlerAsync,
                 bitcoinAugmentHandlerAsync: bitcoinAugmentHandlerAsync,
-                mapSpendsHandlerAsync: bitcoinMapSpendsHandlerAsync)
+                postTraverseHandlerAsync: bitcoinPostTraverseHandlerAsync)
         };
 
         for (int i = 0; i < _rootCmd.Options.Count; i++)
@@ -123,30 +121,28 @@ internal class Cli
     private Command GetBitcoinCmd(
         Options defaultOptions,
         Func<Options, Task> traverseHandlerAsync,
+        Func<Options, Task> postTraverseHandlerAsync,
         Func<Options, Task> dedupHandlerAsync,
         Func<Options, Task> importHandlerAsync,
         Func<Options, Task> sampleHandlerAsync,
         Func<Options, Task> mapMarketHandlerAsync,
         Func<Options, Task> addressStatsHandlerAsync,
         Func<Options, Task> importCypherQueriesAsync,
-        Func<Options, Task> postProcessHandlerAsync,
-        Func<Options, Task> bitcoinAugmentHandlerAsync,
-        Func<Options, Task> mapSpendsHandlerAsync)
+        Func<Options, Task> bitcoinAugmentHandlerAsync)
     {
         var cmd = new Command(
             name: "bitcoin",
             description: "Implements methods for working with the Bitcoin blockchain.")
         {
             GetBitcoinTraverseCmd(defaultOptions, traverseHandlerAsync),
+            GetBitcoinPostTraverseCmd(defaultOptions, postTraverseHandlerAsync),
             GetBitcoinDedupCmd(defaultOptions, dedupHandlerAsync),
             GetBitcoinImportCmd(defaultOptions, importHandlerAsync),
             GetBitcoinImportCypherQueriesCmd(defaultOptions, importCypherQueriesAsync),
             GetBitcoinMapMarketCmd(defaultOptions, mapMarketHandlerAsync),
             GetBitcoinSampleCmd(defaultOptions, sampleHandlerAsync),
             GetBitcoinAddressStatsCmd(defaultOptions, addressStatsHandlerAsync),
-            GetPostProcessCmd(defaultOptions, postProcessHandlerAsync),
-            GetBitcoinAugmentCmd(defaultOptions, bitcoinAugmentHandlerAsync),
-            GetBitcoinMapSpendsCmd(defaultOptions, mapSpendsHandlerAsync)
+            GetBitcoinAugmentCmd(defaultOptions, bitcoinAugmentHandlerAsync)
         };
         return cmd;
     }
@@ -456,27 +452,6 @@ internal class Cli
         return cmd;
     }
 
-    private Command GetPostProcessCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
-    {
-        var cmd = new Command(name: "post-process");
-        cmd.SetAction(async (parseResult, cancellationToken) =>
-        {
-            var options = OptionsBinder.Build(
-                parseResult,
-                workingDirOption: _workingDirOption,
-                statusFilenameOption: _statusFilenameOption);
-            try
-            {
-                await handlerAsync(options);
-            }
-            catch (Exception e)
-            {
-                _exceptionHandler(e, parseResult);
-            }
-        });
-        return cmd;
-    }
-
     private Command GetBitcoinImportCypherQueriesCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
         var cmd = new Command(
@@ -728,14 +703,19 @@ internal class Cli
         return cmd;
     }
 
-    private Command GetBitcoinMapSpendsCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
+    private Command GetBitcoinPostTraverseCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
         var batchesFilenameOption = new Option<string>("--batches-filename")
         {
             Required = true
         };
 
-        var cmd = new Command(name: "map-spends")
+        var cmd = new Command(
+            name: "post-traverse",
+            description:
+                "Updates the serialized graph prior to database import. " +
+                "Computes node and edge properties that depend on cross-block information, " +
+                "such as UTxO spending and total Bitcoin supply per block.")
         {
             batchesFilenameOption
         };

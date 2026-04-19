@@ -306,4 +306,18 @@ internal class Helpers
             return sortedSequence[k - 1] + d * (sortedSequence[k] - sortedSequence[k - 1]);
         }
     }
+
+    public static string AddPostfixToFilename(string filename, string postfix)
+    {
+        var originalFileName = Path.GetFileName(filename);
+        var basename = originalFileName;
+
+        while (Path.GetExtension(basename).Length > 0)
+            basename = Path.GetFileNameWithoutExtension(basename);
+        var extension = originalFileName[basename.Length..];
+
+        return Path.Combine(
+            Path.GetDirectoryName(filename) ?? "", 
+            $"{basename}{postfix}{extension}");
+    }
 }

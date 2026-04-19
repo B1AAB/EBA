@@ -38,21 +38,8 @@ public class TxNodeDescriptor : IElementDescriptor<TxNode>
             idInGraphDb: idInGraphDb);
     }
 
-    public string[] Neo4jSchemaOverride
-    {
-        get
-        {
-            // TODO: maybe this can be done using `UniqueKeys`
-            var txidPropName = _mapper.GetMapping(x => x.Txid).Property.Name;
-            return
-            [
-                $"CREATE CONSTRAINT {TxNode.Kind}_{txidPropName}_Unique " +
-                $"IF NOT EXISTS " +
-                $"FOR (v:{TxNode.Kind}) REQUIRE v.{txidPropName} IS UNIQUE",
-
-                $"CREATE INDEX tx_txid_index IF NOT EXISTS " +
-                $"FOR (t:{TxNode.Kind}) ON (t.{txidPropName})"
-            ];
-        }
-    }
+    public string[] UniqueProps =>
+    [
+        _mapper.GetMapping(x => x.Txid).Property.Name,
+    ];
 }

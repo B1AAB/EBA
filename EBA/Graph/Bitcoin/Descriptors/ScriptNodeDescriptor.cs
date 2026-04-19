@@ -34,16 +34,8 @@ public class ScriptNodeDescriptor : IElementDescriptor<ScriptNode>
             idInGraphDb: idInGraphDb);
     }
 
-    public string[] Neo4jSchemaOverride
-    {
-        get
-        {
-            return
-            [
-                $"CREATE CONSTRAINT {ScriptNode.Kind}_{nameof(ScriptNode.SHA256Hash)}_Unique " +
-                $"IF NOT EXISTS " +
-                $"FOR (v:{ScriptNode.Kind}) REQUIRE v.{nameof(ScriptNode.SHA256Hash)} IS UNIQUE"
-            ];
-        }
-    }
+    public string[] UniqueProps =>
+    [
+        _mapper.GetMapping(x => x.SHA256Hash).Property.Name,
+    ];
 }

@@ -85,6 +85,11 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
             .MapLabel(_ => BlockNode.Kind)
             .ToArray());
 
+    public string[] UniqueProps =>
+    [
+        _mapper.GetMapping(x => x.BlockMetadata.Height).Property.Name,
+    ];
+
     public static BlockNode Deserialize(
         IReadOnlyDictionary<string, object> props,
         double? originalIndegree = null,
@@ -92,44 +97,65 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
         double? hopsFromRoot = null,
         string? idInGraphDb = null)
     {
+        return Deserialize(
+            new ValueReader(props),
+            originalIndegree, originalOutdegree, hopsFromRoot, idInGraphDb);
+    }
+
+
+    public static BlockNode Deserialize(string[] csvRow)
+    {
+        return Deserialize(
+            new ValueReader<BlockNode>(csvRow, _mapper));
+    }
+
+    public static BlockNode Deserialize<TReader>(
+        TReader reader,
+        double? originalIndegree = null,
+        double? originalOutdegree = null,
+        double? hopsFromRoot = null,
+        string? idInGraphDb = null)
+        where TReader : IValueReader
+    {
         var blockMetadata = new BlockMetadata
         {
-            Height = _mapper.GetValue(n => n.BlockMetadata.Height, props),
-            Hash = _mapper.GetValue(n => n.BlockMetadata.Hash, props),
-            Confirmations = _mapper.GetValue(n => n.BlockMetadata.Confirmations, props),
-            Version = _mapper.GetValue(n => n.BlockMetadata.Version, props),
-            VersionHex = _mapper.GetValue(n => n.BlockMetadata.VersionHex, props),
-            Merkleroot = _mapper.GetValue(n => n.BlockMetadata.Merkleroot, props),
-            Time = _mapper.GetValue(n => n.BlockMetadata.Time, props),
-            MedianTime = _mapper.GetValue(n => n.BlockMetadata.MedianTime, props),
-            Nonce = _mapper.GetValue(n => n.BlockMetadata.Nonce, props),
-            Bits = _mapper.GetValue(n => n.BlockMetadata.Bits, props),
-            Difficulty = _mapper.GetValue(n => n.BlockMetadata.Difficulty, props),
-            Chainwork = _mapper.GetValue(n => n.BlockMetadata.Chainwork, props),
-            TransactionsCount = _mapper.GetValue(n => n.BlockMetadata.TransactionsCount, props),
-            PreviousBlockHash = _mapper.GetValue(n => n.BlockMetadata.PreviousBlockHash, props),
-            NextBlockHash = _mapper.GetValue(n => n.BlockMetadata.NextBlockHash, props),
-            StrippedSize = _mapper.GetValue(n => n.BlockMetadata.StrippedSize, props),
-            Size = _mapper.GetValue(n => n.BlockMetadata.Size, props),
-            Weight = _mapper.GetValue(n => n.BlockMetadata.Weight, props),
-            CoinbaseOutputsCount = _mapper.GetValue(n => n.BlockMetadata.CoinbaseOutputsCount, props),
-            MintedBitcoins = _mapper.GetValue(n => n.BlockMetadata.MintedBitcoins, props),
-            InputCountsStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(Block.InputCountsStats)),
-            OutputCountsStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(Block.OutputCountsStats)),
-            InputValuesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(Block.InputValuesStats)),
-            OutputValuesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(Block.OutputValuesStats)),
-            SpentOutputAgeStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(Block.SpentOutputAgeStats)),
-            FeesStats = PropertyMappingFactory.ReadDescriptiveStats(props, nameof(Block.FeesStats)),
-            InputScriptTypeCount = PropertyMappingFactory.GetDictionary<ScriptType, long>("InputsCount", props),
-            OutputScriptTypeCount = PropertyMappingFactory.GetDictionary<ScriptType, long>("OutputsCount", props),
-            InputScriptTypeValue = PropertyMappingFactory.GetDictionary<ScriptType, long>("InputsValue", props),
-            OutputScriptTypeValue = PropertyMappingFactory.GetDictionary<ScriptType, long>("OutputsValue", props),
+            Height = _mapper.GetValue(n => n.BlockMetadata.Height, reader),
+            Hash = _mapper.GetValue(n => n.BlockMetadata.Hash, reader),
+            Confirmations = _mapper.GetValue(n => n.BlockMetadata.Confirmations, reader),
+            Version = _mapper.GetValue(n => n.BlockMetadata.Version, reader),
+            VersionHex = _mapper.GetValue(n => n.BlockMetadata.VersionHex, reader),
+            Merkleroot = _mapper.GetValue(n => n.BlockMetadata.Merkleroot, reader),
+            Time = _mapper.GetValue(n => n.BlockMetadata.Time, reader),
+            MedianTime = _mapper.GetValue(n => n.BlockMetadata.MedianTime, reader),
+            Nonce = _mapper.GetValue(n => n.BlockMetadata.Nonce, reader),
+            Bits = _mapper.GetValue(n => n.BlockMetadata.Bits, reader),
+            Difficulty = _mapper.GetValue(n => n.BlockMetadata.Difficulty, reader),
+            Chainwork = _mapper.GetValue(n => n.BlockMetadata.Chainwork, reader),
+            TransactionsCount = _mapper.GetValue(n => n.BlockMetadata.TransactionsCount, reader),
+            PreviousBlockHash = _mapper.GetValue(n => n.BlockMetadata.PreviousBlockHash, reader),
+            NextBlockHash = _mapper.GetValue(n => n.BlockMetadata.NextBlockHash, reader),
+            StrippedSize = _mapper.GetValue(n => n.BlockMetadata.StrippedSize, reader),
+            Size = _mapper.GetValue(n => n.BlockMetadata.Size, reader),
+            Weight = _mapper.GetValue(n => n.BlockMetadata.Weight, reader),
+            CoinbaseOutputsCount = _mapper.GetValue(n => n.BlockMetadata.CoinbaseOutputsCount, reader),
+            MintedBitcoins = _mapper.GetValue(n => n.BlockMetadata.MintedBitcoins, reader),
+            TotalSupply = _mapper.GetValue(n => n.BlockMetadata.TotalSupply, reader),
+            TotalSupplyNominal = _mapper.GetValue(n => n.BlockMetadata.TotalSupplyNominal, reader),
+            RealizedCap = _mapper.GetValue(n => n.BlockMetadata.RealizedCap, reader),
 
-            TotalSupply = _mapper.GetValue(n => n.BlockMetadata.TotalSupply, props),
-            TotalSupplyNominal = _mapper.GetValue(n => n.BlockMetadata.TotalSupplyNominal, props),
+            InputCountsStats = PropertyMappingFactory.ReadDescriptiveStats(reader, nameof(Block.InputCountsStats)),
+            OutputCountsStats = PropertyMappingFactory.ReadDescriptiveStats(reader, nameof(Block.OutputCountsStats)),
+            InputValuesStats = PropertyMappingFactory.ReadDescriptiveStats(reader, nameof(Block.InputValuesStats)),
+            OutputValuesStats = PropertyMappingFactory.ReadDescriptiveStats(reader, nameof(Block.OutputValuesStats)),
+            SpentOutputAgeStats = PropertyMappingFactory.ReadDescriptiveStats(reader, nameof(Block.SpentOutputAgeStats)),
+            FeesStats = PropertyMappingFactory.ReadDescriptiveStats(reader, nameof(Block.FeesStats)),
 
-            RealizedCap = _mapper.GetValue(n => n.BlockMetadata.RealizedCap, props),
-            Ohlcv = PropertyMappingFactory.ReadOHLCV(props)
+            InputScriptTypeCount = PropertyMappingFactory.GetDictionary<ScriptType, long>(reader, "InputsCount"),
+            OutputScriptTypeCount = PropertyMappingFactory.GetDictionary<ScriptType, long>(reader, "OutputsCount"),
+            InputScriptTypeValue = PropertyMappingFactory.GetDictionary<ScriptType, long>(reader, "InputsValue"),
+            OutputScriptTypeValue = PropertyMappingFactory.GetDictionary<ScriptType, long>(reader, "OutputsValue"),
+
+            Ohlcv = PropertyMappingFactory.ReadOHLCV(reader)
         };
 
         var blockNode = new BlockNode(
@@ -139,11 +165,8 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
             outHopsFromRoot: hopsFromRoot,
             idInGraphDb: idInGraphDb);
 
-        blockNode.TripletTypeCount = PropertyMappingFactory.GetDictionary<uint>(
-                nameof(blockNode.TripletTypeCount), props);
-
-        blockNode.TripletTypeValueSum = PropertyMappingFactory.GetDictionary<long>(
-            nameof(blockNode.TripletTypeValueSum), props);
+        blockNode.TripletTypeCount = PropertyMappingFactory.GetDictionary<uint>(reader, nameof(blockNode.TripletTypeCount));
+        blockNode.TripletTypeValueSum = PropertyMappingFactory.GetDictionary<long>(reader, nameof(blockNode.TripletTypeValueSum));
 
         return blockNode;
     }

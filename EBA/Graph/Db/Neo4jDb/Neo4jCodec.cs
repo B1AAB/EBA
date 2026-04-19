@@ -11,22 +11,35 @@ public class Neo4jCodec<T>(
     where T : class, IGraphElement
 {
     private const string _uniqueConstraintTemplate =
-        "CREATE CONSTRAINT FOR (n:{0}) REQUIRE n.{1} IS UNIQUE";
+        "CREATE CONSTRAINT {0}_{1}_Unique IF NOT EXISTS FOR (n:{0}) REQUIRE n.{1} IS UNIQUE";
 
     public override string[] GetSchemaConfigs()
     {
         if (Descriptor.Neo4jSchemaOverride != null)
             return Descriptor.Neo4jSchemaOverride;
+        
+        if (Descriptor.UniqueProps.Length == 0)
+            return [];
 
-        return
-        [
-            .. Descriptor
-                .UniqueKeys
-                .Select(key => string.Format(
-                    _uniqueConstraintTemplate, 
-                    Descriptor.Mapper.GetMapping(":LABEL").GetValue(null!)?.ToString(), 
-                    key))
-        ];
+        var configs = new List<string>();
+        if (!Descriptor.Mapper.TryGetMapping(":LABEL", out var mapping))
+        {
+            // Not currently supported for edge types,
+            // because we're currently defining triplet type as instance property
+            // (e.g., Transfer vs. Fee).
+            // For all such constraints on edge types, use manual override. 
+            return [];
+        }
+
+        var label = mapping!.GetValue(null!)?.ToString();
+
+        foreach (var uniqueKey in Descriptor.UniqueProps)
+            configs.Add(string.Format(
+                _uniqueConstraintTemplate,
+                label,
+                uniqueKey));
+
+        return [.. configs];
     }
 
     public override string[] GetSeedingCommands()

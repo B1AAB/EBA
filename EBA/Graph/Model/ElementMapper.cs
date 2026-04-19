@@ -44,6 +44,11 @@ public class ElementMapper<T>
         throw new KeyNotFoundException($"No mapping found for property '{propertyName}'.");
     }
 
+    public int GetPropertyCsvIndex<V>(Expression<Func<T, V>> propertyExpression)
+    {
+        return GetPropertyCsvIndex(MappingBuilder.GetPropertyName(propertyExpression));
+    }
+
     public PropertyMapping<T> GetMapping(string propertyName)
     {
         if (_propertyIndices.TryGetValue(propertyName, out int index))
@@ -52,9 +57,32 @@ public class ElementMapper<T>
         throw new KeyNotFoundException($"No mapping found for property '{propertyName}'.");
     }
 
+    public bool TryGetMapping(string propertyName, out PropertyMapping<T>? mapping)
+    {   
+        if (_propertyIndices.TryGetValue(propertyName, out int index))
+        {
+            mapping = _mappings[index];
+            return true;
+        }
+
+        mapping = default;
+        return false;
+    }
+
     public PropertyMapping<T> GetMapping<V>(Expression<Func<T, V>> propertyExpression)
     {
         return GetMapping(MappingBuilder.GetPropertyName(propertyExpression));
+    }
+
+    public TValue GetValue<TValue, TReader>(Expression<Func<T, TValue>> propertyExpression, TReader reader)
+        where TReader : IValueReader
+    {
+        return reader.GetValue<TValue>(MappingBuilder.GetPropertyName(propertyExpression)) ?? default!;
+    }
+
+    public V? GetValue<V>(Expression<Func<T, V>> propertyExpression, string[] csvRow)
+    {
+        return GetValue<V>(MappingBuilder.GetPropertyName(propertyExpression), csvRow);
     }
 
     public V? GetValue<V>(string propertyName, string[] csvRow)

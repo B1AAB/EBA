@@ -1,4 +1,3 @@
-using EBA.Blockchains.Bitcoin.Utilities;
 using EBA.CLI;
 using EBA.Graph.Bitcoin;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -25,9 +24,8 @@ public class Orchestrator : IDisposable
             bitcoinAddressStatsHandlerAsync: BitcoinAddressStatsAsync,
             bitcoinImportCypherQueriesAsync: BitcoinImportCypherQueriesAsync,
             bitcoinMapMarketHandlerAsync: BitcoinMarketMapAsync,
-            bitcoinPostProcessHandlerAsync: BitcoinPostProcess,
             bitcoinAugmentHandlerAsync: BitcoinAugmentGraphAsync,
-            bitcoinMapSpendsHandlerAsync: BitcoinMapSpends,
+            bitcoinPostTraverseHandlerAsync: BitcoinPostTraverseAsync,
             exceptionHandler: (e, _) =>
             {
                 if (_logger != null)
@@ -66,10 +64,11 @@ public class Orchestrator : IDisposable
         await bitcoinOrchestrator.DeDupAsync(options, _cT);
     }
 
-    private async Task BitcoinMapSpends(Options options)
+    private async Task BitcoinPostTraverseAsync(Options options)
     {
-        var txoSpendingTracker = new TxoSpendingTracker();
-        await txoSpendingTracker.UpdatePostTraverse(options);
+        var host = await SetupAndGetHostAsync(options);
+        var bitcoinOrchestrator = host.Services.GetRequiredService<BitcoinOrchestrator>();
+        await bitcoinOrchestrator.PostTraverseAsync(options, _cT);
     }
 
     private async Task BitcoinMarketMapAsync(Options options)
@@ -95,15 +94,6 @@ public class Orchestrator : IDisposable
 
         var graphDb = host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>();
         graphDb.ReportQueries();
-    }
-
-    private async Task BitcoinPostProcess(Options options)
-    {
-        var host = await SetupAndGetHostAsync(options);
-        await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
-
-        var bitcoinGraphAgent = host.Services.GetRequiredService<BitcoinGraphAgent>();
-        await bitcoinGraphAgent.PostBullkImportFinalizeAsync(_cT);
     }
 
     private async Task BitcoinAugmentGraphAsync(Options options)

@@ -121,47 +121,33 @@ public class BitcoinStrategyFactory : IStrategyFactory
         using var writer = new StreamWriter(File.Create(Path.Join(outputDirectory, "schema.cypher")));
         writer.WriteLine("// EBA Bitcoin Graph Schema");
 
-        var x = ((Neo4jCodec<ScriptNode>)NodeStrategies[ScriptNode.Kind]).Descriptor.Mapper.GetMapping(x => x.SHA256Hash).Property.Name;
-        var scriptAddressUniqueness =
-            $"// Uniqueness constraint for {ScriptNode.Kind}.{x} property." +
-            $"\r\nCREATE CONSTRAINT {ScriptNode.Kind}_{x}_Unique " +
-            $"\r\nIF NOT EXISTS " +
-            $"\r\nFOR (v:{ScriptNode.Kind}) REQUIRE v.{x} IS UNIQUE;";
-        writer.WriteLine("");
-        writer.WriteLine(scriptAddressUniqueness);
+        var strategies = 
+            NodeStrategies.Select(n => (Label: $"{n.Key} nodes", Codec: n.Value))
+            .Concat(
+            EdgeStrategies.Select(e => (Label: $"{e.Key} edges", Codec: e.Value)));
 
-        var txidName = ((Neo4jCodec<TxNode>)NodeStrategies[TxNode.Kind]).Descriptor.Mapper.GetMapping(x => x.Txid).Property.Name;
-        var txidUniqueness =
-            $"// Uniqueness constraint for {TxNode.Kind}.{txidName} property." +
-            $"\r\nCREATE CONSTRAINT {TxNode.Kind}_{txidName}_Unique " +
-            $"\r\nIF NOT EXISTS " +
-            $"\r\nFOR (v:{TxNode.Kind}) REQUIRE v.{txidName} IS UNIQUE;";
-        writer.WriteLine("");
-        writer.WriteLine(txidUniqueness);
+        foreach (var (label, codec) in strategies)
+        {
+            var configs = new List<string>();
+            configs.AddRange(codec.GetSchemaConfigs());
+            configs.AddRange(codec.GetSeedingCommands());
 
-        var heightName = ((Neo4jCodec<BlockNode>)NodeStrategies[BlockNode.Kind]).Descriptor.Mapper.GetMapping(x => x.BlockMetadata.Height).Property.Name;
-        var blockHeightUniqueness =
-            $"// Uniqueness constraint for {BlockNode.Kind}.{heightName} property." +
-            $"\r\nCREATE CONSTRAINT {BlockNode.Kind}_{heightName}_Unique " +
-            $"\r\nIF NOT EXISTS " +
-            $"\r\nFOR (v:{BlockNode.Kind}) REQUIRE v.{heightName} IS UNIQUE;";
-        writer.WriteLine("");
-        writer.WriteLine(blockHeightUniqueness);
+            if (configs.Count > 0)
+            {
+                writer.WriteLine("");
+                writer.WriteLine("// -----------------------------------------------------");
+                writer.WriteLine($"// Schema for {label}");
+                writer.WriteLine("// -----------------------------------------------------");
 
-        var txidIndex =
-            $"// Create Txid index." +
-            $"\r\nCREATE INDEX tx_txid_index IF NOT EXISTS " +
-            $"\r\nFOR (t:{TxNode.Kind}) ON (t.{nameof(TxNode.Txid)});";
-        writer.WriteLine("");
-        writer.WriteLine(txidIndex);
+                foreach (var config in configs)
+                {
+                    writer.WriteLine("");
+                    writer.WriteLine(config);
+                }
 
-        var followsEdge = 
-            $"// Create edge (Block)-[{RelationType.Follows}]->(Block)" +
-            $"\r\nMATCH (target:Block), (source:Block)" +
-            $"\r\nWHERE target.{heightName} + 1 = source.{heightName}" +
-            $"\r\nMERGE (target)-[:{RelationType.Follows}]->(source)";
-        writer.WriteLine("");
-        writer.WriteLine(followsEdge);
+                writer.WriteLine("");
+            }
+        }
     }
 
     public bool TryCreateNode<T>(
@@ -216,11 +202,11 @@ public class BitcoinStrategyFactory : IStrategyFactory
     }
 
     public bool TryCreateNode(
-            Neo4j.Driver.INode node,
-            out Model.INode createdNode,
-            double? originalIndegree = null,
-            double? originalOutdegree = null,
-            double? outHopsFromRoot = null)
+        Neo4j.Driver.INode node,
+        out Model.INode createdNode,
+        double? originalIndegree = null,
+        double? originalOutdegree = null,
+        double? outHopsFromRoot = null)
     {
         return TryCreateNode<Model.INode>(
             node,
