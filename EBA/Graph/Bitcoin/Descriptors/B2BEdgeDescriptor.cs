@@ -24,7 +24,7 @@ public class B2BEdgeDescriptor : IElementDescriptor<B2BEdge>
         {
             return
             [
-                $"\r\nMATCH (target:Block), (source:Block) " +
+                $"MATCH (target:Block), (source:Block) " +
                 $"\r\nWHERE target.{nameof(B2BEdge.BlockHeight)} + 1 = source.{nameof(B2BEdge.BlockHeight)} " +
                 $"\r\nMERGE (target)-[:{RelationType.Follows}]->(source)"
             ];

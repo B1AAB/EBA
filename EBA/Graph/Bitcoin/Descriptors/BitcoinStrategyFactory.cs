@@ -137,11 +137,14 @@ public class BitcoinStrategyFactory : IStrategyFactory
                 writer.WriteLine("");
                 writer.WriteLine("// -----------------------------------------------------");
                 writer.WriteLine($"// Schema for {label}");
+                writer.WriteLine("// -----------------------------------------------------");
 
                 foreach (var config in configs)
+                {
+                    writer.WriteLine("");
                     writer.WriteLine(config);
+                }
 
-                writer.WriteLine("// -----------------------------------------------------");
                 writer.WriteLine("");
             }
         }
