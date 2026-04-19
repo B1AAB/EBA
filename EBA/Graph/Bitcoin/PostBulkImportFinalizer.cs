@@ -12,8 +12,6 @@ public class PostBulkImportFinalizer(
     public async Task Finalize(CancellationToken ct)
     {        
         await AddSchemaAndSeeding(ct);
-
-        await SetSupplyAmount(ct);
     }
 
     private async Task AddSchemaAndSeeding(CancellationToken ct)
@@ -40,66 +38,5 @@ public class PostBulkImportFinalizer(
         await _graphDb.ExecuteWriteQueryAsync(seedingCommands, ct);
 
         _logger.LogInformation("Completed setting schema and seeding data.");
-    }
-
-    private async Task SetSupplyAmount(CancellationToken ct)
-    {
-        _logger.LogInformation("Setting {f} property.", nameof(BlockMetadata.TotalSupply));
-
-        _logger.LogInformation("Fetching {n} nodes from graph database.", BlockNode.Kind);
-        var nodeVar = "n";
-        var records = await _graphDb.GetNodesAsync(NodeKind.Block, CancellationToken.None, nodeVariable: nodeVar);
-        _logger.LogInformation("Fetching {n} nodes from graph database succeeded, retrieved {count:n0} nodes.", BlockNode.Kind, records.Count);
-
-        _graphDb.StrategyFactory.TryCreateNodes<BlockNode>(records, out var blockNodes, nodeVar);
-
-        var blocks = new SortedList<long, BlockNode>();
-        foreach (var block in blockNodes)
-            blocks.Add(block.BlockMetadata.Height, block);        
-
-        if (blocks.First().Value.BlockMetadata.Height != 0)
-        {
-            throw new InvalidOperationException(
-                $"The first block in the graph has height " +
-                $"{blocks.First().Value.BlockMetadata.Height:,}, " +
-                $"expected 0.");
-        }
-
-        if (blocks.Last().Value.BlockMetadata.Height != blocks.Count - 1)
-        {
-            throw new InvalidOperationException(
-                $"This operation requires a continues set of blocks, there are missing blocks");
-        }
-
-        blocks[0].BlockMetadata.TotalSupply = blocks[0].BlockMetadata.MintedBitcoins;
-        blocks[0].BlockMetadata.TotalSupplyNominal = blocks[0].BlockMetadata.TotalSupply;
-        for (var i = 1; i < blocks.Count; i++)
-        {
-            blocks[i].BlockMetadata.TotalSupply =
-                blocks[i - 1].BlockMetadata.TotalSupply +
-                blocks[i].TripletTypeValueSum[C2TEdge.Kind] -
-                blocks[i].BlockMetadata.ProvablyUnspendableBitcoins;
-
-            blocks[i].BlockMetadata.TotalSupplyNominal =
-                blocks[i - 1].BlockMetadata.TotalSupplyNominal + blocks[i].BlockMetadata.MintedBitcoins;
-        }
-
-        var updates = blocks.Values.Select(b => new Dictionary<string, object?>
-        {
-            [nameof(BlockMetadata.Height)] = b.BlockMetadata.Height,
-            [nameof(BlockMetadata.TotalSupply)] = b.BlockMetadata.TotalSupply,
-            [nameof(BlockMetadata.TotalSupplyNominal)] = b.BlockMetadata.TotalSupplyNominal,
-        }).ToList();
-
-        _logger.LogInformation("Pushing {count:n0} {n} node updates to graph database.", updates.Count, BlockNode.Kind);
-        await _graphDb.BulkUpdateNodePropertiesAsync(
-            NodeKind.Block,
-            nameof(BlockMetadata.Height),
-            updates,
-            ct);
-
-        _logger.LogInformation(
-            "Successfully updated {f} property of {n} nodes.", 
-            nameof(BlockMetadata.TotalSupply), BlockNode.Kind);
     }
 }

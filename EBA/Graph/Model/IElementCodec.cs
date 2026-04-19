@@ -24,4 +24,17 @@ public interface IElementCodec : IDisposable
         while ((line = await reader.ReadLineAsync()) != null)
             yield return line.Split(Options.CsvDelimiter);
     }
+
+    public static IEnumerable<string[]> ReadCsv(string filename)
+    {
+        using var stream = File.OpenRead(filename);
+        using var reader = new StreamReader(
+            filename.EndsWith(".gz", StringComparison.OrdinalIgnoreCase)
+            ? new GZipStream(stream, CompressionMode.Decompress)
+            : stream);
+
+        string? line;
+        while ((line = reader.ReadLine()) != null)
+            yield return line.Split(Options.CsvDelimiter);
+    }
 }

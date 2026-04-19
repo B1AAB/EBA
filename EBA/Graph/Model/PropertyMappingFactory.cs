@@ -42,24 +42,6 @@ public static class PropertyMappingFactory
         return builder.ToArray();
     }
 
-    public static Dictionary<TEnum, TValue> GetDictionary<TEnum, TValue>(
-        string prefix,
-        IReadOnlyDictionary<string, object> properties)
-        where TEnum : struct, Enum
-    {
-        var enumTypeName = GetLabel<TEnum>();
-        var dict = new Dictionary<TEnum, TValue>();
-
-        foreach (var enumValue in Enum.GetValues<TEnum>())
-        {
-            var key = GetLabel(prefix, enumTypeName, enumValue.ToString());
-            if (properties.TryGetValue(key, out var rawValue) && rawValue != null)
-                dict[enumValue] = (TValue)Convert.ChangeType(rawValue, typeof(TValue));
-        }
-
-        return dict;
-    }
-
     public static PropertyMapping<T>[] ToMappings<T>(
         string prefix,
         Func<T, DescriptiveStatistics?> getStats,
@@ -90,10 +72,11 @@ public static class PropertyMappingFactory
             .ToArray();
     }
 
-    public static DescriptiveStatistics ReadDescriptiveStats(
-        IReadOnlyDictionary<string, object> properties,
+    public static DescriptiveStatistics ReadDescriptiveStats<TReader>(
+        TReader reader,
         string prefix,
         Func<double, double>? converter = null)
+        where TReader : IElementReader
     {
         DescriptiveStatistics d = null!;
         DescriptiveStatistics.Percentile p = null!;
@@ -102,23 +85,23 @@ public static class PropertyMappingFactory
 
         return new DescriptiveStatistics
         {
-            Sum = C((double)properties[$"{prefix}.{nameof(d.Sum)}"]),
-            Count = C((double)properties[$"{prefix}.{nameof(d.Count)}"]),
-            Min = C((double)properties[$"{prefix}.{nameof(d.Min)}"]),
-            Max = C((double)properties[$"{prefix}.{nameof(d.Max)}"]),
-            Mean = C((double)properties[$"{prefix}.{nameof(d.Mean)}"]),
-            Variance = C((double)properties[$"{prefix}.{nameof(d.Variance)}"]),
-            Skewness = C((double)properties[$"{prefix}.{nameof(d.Skewness)}"]),
-            Kurtosis = C((double)properties[$"{prefix}.{nameof(d.Kurtosis)}"]),
+            Sum = C(reader.GetValue<double>($"{prefix}.{nameof(d.Sum)}")),
+            Count = C(reader.GetValue<double>($"{prefix}.{nameof(d.Count)}")),
+            Min = C(reader.GetValue<double>($"{prefix}.{nameof(d.Min)}")),
+            Max = C(reader.GetValue<double>($"{prefix}.{nameof(d.Max)}")),
+            Mean = C(reader.GetValue<double>($"{prefix}.{nameof(d.Mean)}")),
+            Variance = C(reader.GetValue<double>($"{prefix}.{nameof(d.Variance)}")),
+            Skewness = C(reader.GetValue<double>($"{prefix}.{nameof(d.Skewness)}")),
+            Kurtosis = C(reader.GetValue<double>($"{prefix}.{nameof(d.Kurtosis)}")),
             Percentiles = new DescriptiveStatistics.Percentile
             {
-                P01 = C((double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P01)}"]),
-                P05 = C((double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P05)}"]),
-                P25 = C((double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P25)}"]),
-                P50 = C((double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P50)}"]),
-                P75 = C((double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P75)}"]),
-                P95 = C((double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P95)}"]),
-                P99 = C((double)properties[$"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P99)}"]),
+                P01 = C(reader.GetValue<double>($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P01)}")),
+                P05 = C(reader.GetValue<double>($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P05)}")),
+                P25 = C(reader.GetValue<double>($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P25)}")),
+                P50 = C(reader.GetValue<double>($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P50)}")),
+                P75 = C(reader.GetValue<double>($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P75)}")),
+                P95 = C(reader.GetValue<double>($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P95)}")),
+                P99 = C(reader.GetValue<double>($"{prefix}.{nameof(d.Percentiles)}.{nameof(p.P99)}")),
             }
         };
     }
@@ -140,21 +123,21 @@ public static class PropertyMappingFactory
     }
 
     public static OHLCV? ReadOHLCV(
-        IReadOnlyDictionary<string, object> properties,
+        IElementReader reader,
         string prefix = "OHLCV")
     {
-        OHLCV o;
-        if (!properties.TryGetValue($"{prefix}.{nameof(o.Open)}", out _))
+        OHLCV o = null!;
+        if (reader.GetValue<string>($"{prefix}.{nameof(o.Open)}") == null)
             return null;
 
         return new OHLCV(
             timestamp: 0,
-            open: (decimal)(double)properties[$"{prefix}.{nameof(o.Open)}"],
-            high: (decimal)(double)properties[$"{prefix}.{nameof(o.High)}"],
-            low: (decimal)(double)properties[$"{prefix}.{nameof(o.Low)}"],
-            close: (decimal)(double)properties[$"{prefix}.{nameof(o.Close)}"],
-            volume: (long)properties[$"{prefix}.{nameof(o.Volume)}"],
-            vwap: (decimal)(double)properties[$"{prefix}.{nameof(o.VWAP)}"]);
+            open: reader.GetValue<decimal>($"{prefix}.{nameof(o.Open)}"),
+            high: reader.GetValue<decimal>($"{prefix}.{nameof(o.High)}"),
+            low: reader.GetValue<decimal>($"{prefix}.{nameof(o.Low)}"),
+            close: reader.GetValue<decimal>($"{prefix}.{nameof(o.Close)}"),
+            volume: reader.GetValue<long>($"{prefix}.{nameof(o.Volume)}"),
+            vwap: reader.GetValue<decimal>($"{prefix}.{nameof(o.VWAP)}"));
     }
 
 
@@ -176,18 +159,38 @@ public static class PropertyMappingFactory
         return builder.ToArray();
     }
 
+    public static Dictionary<TEnum, TValue> GetDictionary<TEnum, TValue>(
+        IElementReader reader,
+        string prefix)
+        where TEnum : struct, Enum
+    {
+        var enumTypeName = GetLabel<TEnum>();
+        var dict = new Dictionary<TEnum, TValue>();
+
+        foreach (var enumValue in Enum.GetValues<TEnum>())
+        {
+            var key = GetLabel(prefix, enumTypeName, enumValue.ToString());
+
+            if (reader.GetValue<string>(key) != null)
+            {
+                dict[enumValue] = reader.GetValue<TValue>(key)!;
+            }
+        }
+
+        return dict;
+    }
+
     public static Dictionary<EdgeKind, TValue> GetDictionary<TValue>(
-        string prefix,
-        IReadOnlyDictionary<string, object> properties)
+        IElementReader reader,
+        string prefix)
     {
         var dict = new Dictionary<EdgeKind, TValue>();
 
         foreach (var kind in Schema.EdgeKinds)
         {
-            if (properties.TryGetValue(GetLabel(prefix, kind), out var rawValue) && rawValue != null)
-            {
-                dict[kind] = (TValue)Convert.ChangeType(rawValue, typeof(TValue));
-            }
+            var key = GetLabel(prefix, kind);
+            if (reader.GetValue<string>(key) != null)
+                dict[kind] = reader.GetValue<TValue>(key)!;
         }
 
         return dict;

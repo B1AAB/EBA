@@ -62,6 +62,17 @@ public class ElementMapper<T>
         return GetMapping(MappingBuilder.GetPropertyName(propertyExpression));
     }
 
+    public TValue GetValue<TValue, TReader>(Expression<Func<T, TValue>> propertyExpression, TReader reader)
+        where TReader : IElementReader
+    {
+        return reader.GetValue<TValue>(MappingBuilder.GetPropertyName(propertyExpression)) ?? default!;
+    }
+
+    public V? GetValue<V>(Expression<Func<T, V>> propertyExpression, string[] csvRow)
+    {
+        return GetValue<V>(MappingBuilder.GetPropertyName(propertyExpression), csvRow);
+    }
+
     public V? GetValue<V>(string propertyName, string[] csvRow)
     {
         if (!_propertyIndices.TryGetValue(propertyName, out int columnIndex))
