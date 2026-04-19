@@ -1,6 +1,4 @@
-﻿using EBA.Graph.Db.Neo4jDb;
-
-namespace EBA.Graph.Bitcoin.Descriptors;
+﻿namespace EBA.Graph.Bitcoin.Descriptors;
 
 public class B2BEdgeDescriptor : IElementDescriptor<B2BEdge>
 {
@@ -26,9 +24,9 @@ public class B2BEdgeDescriptor : IElementDescriptor<B2BEdge>
         {
             return
             [
-                $"MATCH (target:Block), (source:Block) " +
-                $"WHERE target.{nameof(B2BEdge.BlockHeight)} + 1 = source.{nameof(B2BEdge.BlockHeight)} " +
-                $"MERGE (target)-[:{RelationType.Follows}]->(source)"
+                $"\r\nMATCH (target:Block), (source:Block) " +
+                $"\r\nWHERE target.{nameof(B2BEdge.BlockHeight)} + 1 = source.{nameof(B2BEdge.BlockHeight)} " +
+                $"\r\nMERGE (target)-[:{RelationType.Follows}]->(source)"
             ];
         }
     }

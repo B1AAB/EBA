@@ -38,9 +38,9 @@ public class T2SEdgeDescriptor : IElementDescriptor<T2SEdge>
         {
             return
             [
-                $"CREATE INDEX utxo_spending_idx IF NOT EXISTS " +
-                $"FOR ()-[r:{T2SEdge.Kind.Relation}]-() " +
-                $"ON (r.{nameof(T2SEdge.CreationHeight)}, r.{nameof(T2SEdge.SpentHeight)})"
+                $"\r\nCREATE INDEX utxo_spending_idx IF NOT EXISTS " +
+                $"\r\nFOR ()-[r:{T2SEdge.Kind.Relation}]-() " +
+                $"\r\nON (r.{nameof(T2SEdge.CreationHeight)}, r.{nameof(T2SEdge.SpentHeight)})"
             ];
         }
     }

@@ -46,12 +46,12 @@ public class TxNodeDescriptor : IElementDescriptor<TxNode>
             var txidPropName = _mapper.GetMapping(x => x.Txid).Property.Name;
             return
             [
-                $"CREATE CONSTRAINT {TxNode.Kind}_{txidPropName}_Unique " +
-                $"IF NOT EXISTS " +
-                $"FOR (v:{TxNode.Kind}) REQUIRE v.{txidPropName} IS UNIQUE",
+                $"\r\nCREATE CONSTRAINT {TxNode.Kind}_{txidPropName}_Unique " +
+                $"\r\nIF NOT EXISTS " +
+                $"\r\nFOR (v:{TxNode.Kind}) REQUIRE v.{txidPropName} IS UNIQUE",
 
-                $"CREATE INDEX tx_txid_index IF NOT EXISTS " +
-                $"FOR (t:{TxNode.Kind}) ON (t.{txidPropName})"
+                $"\r\nCREATE INDEX tx_txid_index IF NOT EXISTS " +
+                $"\r\nFOR (t:{TxNode.Kind}) ON (t.{txidPropName})"
             ];
         }
     }

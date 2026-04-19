@@ -85,6 +85,20 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
             .MapLabel(_ => BlockNode.Kind)
             .ToArray());
 
+    public string[] Neo4jSchemaOverride
+    {
+        get
+        {
+            var height = _mapper.GetMapping(x => x.BlockMetadata.Height).Property.Name;
+            return
+            [
+                $"\r\nCREATE CONSTRAINT {BlockNode.Kind}_{height}_Unique " +
+                $"\r\nIF NOT EXISTS " +
+                $"\r\nFOR (v:{BlockNode.Kind}) REQUIRE v.{height} IS UNIQUE;",
+            ];
+        }
+    }
+
     public static BlockNode Deserialize(
         IReadOnlyDictionary<string, object> props,
         double? originalIndegree = null,

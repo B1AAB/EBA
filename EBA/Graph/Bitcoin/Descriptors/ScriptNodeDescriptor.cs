@@ -40,9 +40,9 @@ public class ScriptNodeDescriptor : IElementDescriptor<ScriptNode>
         {
             return
             [
-                $"CREATE CONSTRAINT {ScriptNode.Kind}_{nameof(ScriptNode.SHA256Hash)}_Unique " +
-                $"IF NOT EXISTS " +
-                $"FOR (v:{ScriptNode.Kind}) REQUIRE v.{nameof(ScriptNode.SHA256Hash)} IS UNIQUE"
+                $"\r\nCREATE CONSTRAINT {ScriptNode.Kind}_{nameof(ScriptNode.SHA256Hash)}_Unique " +
+                $"\r\nIF NOT EXISTS " +
+                $"\r\nFOR (v:{ScriptNode.Kind}) REQUIRE v.{nameof(ScriptNode.SHA256Hash)} IS UNIQUE"
             ];
         }
     }
