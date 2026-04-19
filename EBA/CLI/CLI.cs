@@ -21,7 +21,6 @@ internal class Cli
         Func<Options, Task> bitcoinMapMarketHandlerAsync,
         Func<Options, Task> bitcoinAddressStatsHandlerAsync,
         Func<Options, Task> bitcoinImportCypherQueriesAsync,
-        Func<Options, Task> bitcoinPostProcessHandlerAsync,
         Func<Options, Task> bitcoinAugmentHandlerAsync,
         Func<Options, Task> bitcoinPostTraverseHandlerAsync,
         Action<Exception, ParseResult> exceptionHandler)
@@ -91,7 +90,6 @@ internal class Cli
                 mapMarketHandlerAsync: bitcoinMapMarketHandlerAsync,
                 addressStatsHandlerAsync: bitcoinAddressStatsHandlerAsync,
                 importCypherQueriesAsync: bitcoinImportCypherQueriesAsync,
-                postProcessHandlerAsync: bitcoinPostProcessHandlerAsync,
                 bitcoinAugmentHandlerAsync: bitcoinAugmentHandlerAsync,
                 postTraverseHandlerAsync: bitcoinPostTraverseHandlerAsync)
         };
@@ -129,7 +127,6 @@ internal class Cli
         Func<Options, Task> mapMarketHandlerAsync,
         Func<Options, Task> addressStatsHandlerAsync,
         Func<Options, Task> importCypherQueriesAsync,
-        Func<Options, Task> postProcessHandlerAsync,
         Func<Options, Task> bitcoinAugmentHandlerAsync,
         Func<Options, Task> postTraverseHandlerAsync)
     {
@@ -144,7 +141,6 @@ internal class Cli
             GetBitcoinMapMarketCmd(defaultOptions, mapMarketHandlerAsync),
             GetBitcoinSampleCmd(defaultOptions, sampleHandlerAsync),
             GetBitcoinAddressStatsCmd(defaultOptions, addressStatsHandlerAsync),
-            GetPostProcessCmd(defaultOptions, postProcessHandlerAsync),
             GetBitcoinAugmentCmd(defaultOptions, bitcoinAugmentHandlerAsync),
             GetBitcoinPostTraverseCmd(defaultOptions, postTraverseHandlerAsync)
         };
@@ -453,27 +449,6 @@ internal class Cli
             }
         });
 
-        return cmd;
-    }
-
-    private Command GetPostProcessCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
-    {
-        var cmd = new Command(name: "post-process");
-        cmd.SetAction(async (parseResult, cancellationToken) =>
-        {
-            var options = OptionsBinder.Build(
-                parseResult,
-                workingDirOption: _workingDirOption,
-                statusFilenameOption: _statusFilenameOption);
-            try
-            {
-                await handlerAsync(options);
-            }
-            catch (Exception e)
-            {
-                _exceptionHandler(e, parseResult);
-            }
-        });
         return cmd;
     }
 

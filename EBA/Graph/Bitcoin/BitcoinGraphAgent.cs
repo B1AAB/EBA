@@ -46,12 +46,6 @@ public class BitcoinGraphAgent : IGraphAgent<BitcoinGraph>, IDisposable
         await _db.SerializeAsync(g, ct);
     }
 
-    public async Task PostBullkImportFinalizeAsync(CancellationToken ct)
-    {
-        var finalizer = new PostBulkImportFinalizer(_options, _db, _logger);
-        await finalizer.Finalize(ct);
-    }
-
     public async Task AddMarketData(CancellationToken ct)
     {
         var augmentor = new OffChain.EconomicAugmentor(_options, _db, _logger);

@@ -24,7 +24,6 @@ public class Orchestrator : IDisposable
             bitcoinAddressStatsHandlerAsync: BitcoinAddressStatsAsync,
             bitcoinImportCypherQueriesAsync: BitcoinImportCypherQueriesAsync,
             bitcoinMapMarketHandlerAsync: BitcoinMarketMapAsync,
-            bitcoinPostProcessHandlerAsync: BitcoinPostProcess,
             bitcoinAugmentHandlerAsync: BitcoinAugmentGraphAsync,
             bitcoinPostTraverseHandlerAsync: BitcoinPostTraverseAsync,
             exceptionHandler: (e, _) =>
@@ -95,15 +94,6 @@ public class Orchestrator : IDisposable
 
         var graphDb = host.Services.GetRequiredService<IGraphDb<BitcoinGraph>>();
         graphDb.ReportQueries();
-    }
-
-    private async Task BitcoinPostProcess(Options options)
-    {
-        var host = await SetupAndGetHostAsync(options);
-        await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
-
-        var bitcoinGraphAgent = host.Services.GetRequiredService<BitcoinGraphAgent>();
-        await bitcoinGraphAgent.PostBullkImportFinalizeAsync(_cT);
     }
 
     private async Task BitcoinAugmentGraphAsync(Options options)
