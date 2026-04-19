@@ -72,7 +72,7 @@ public class Startup
         services.AddSingleton(options);
         services.AddSingleton<IGraphDb<BitcoinGraph>, BitcoinNeo4jDb>();
         services.AddSingleton<BitcoinOrchestrator>();
-        services.AddSingleton<Graph.Bitcoin.BitcoinGraphAgent>();
+        services.AddSingleton<Graph.Bitcoin.BitcoinGraphOrchestrator>();
 
         // Passing BitcoinAgent type as the generic argument
         // to AddHttpClient will cause registering it 

@@ -2,11 +2,11 @@
 
 namespace EBA.Graph.Bitcoin.OffChain;
 
-public class EconomicAugmentor(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<BitcoinGraphAgent> logger)
+public class EconomicAugmentor(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<BitcoinGraphOrchestrator> logger)
 {
     private readonly Options _options = options;
     private readonly IGraphDb<BitcoinGraph> _graphDb = graphDb;
-    private readonly ILogger<BitcoinGraphAgent> _logger = logger;
+    private readonly ILogger<BitcoinGraphOrchestrator> _logger = logger;
 
     public async Task SetBlockMarketIndicators(CancellationToken ct)
     {
