@@ -15,6 +15,7 @@ internal class Cli
 
     public Cli(
         Func<Options, Task> bitcoinTraverseCmdHandlerAsync,
+        Func<Options, Task> bitcoinPostTraverseHandlerAsync,
         Func<Options, Task> bitcoinDeDupCmdHandlerAsync,
         Func<Options, Task> bitcoinSampleCmdHandlerAsync,
         Func<Options, Task> bitcoinImportCmdHandlerAsync,
@@ -22,7 +23,6 @@ internal class Cli
         Func<Options, Task> bitcoinAddressStatsHandlerAsync,
         Func<Options, Task> bitcoinImportCypherQueriesAsync,
         Func<Options, Task> bitcoinAugmentHandlerAsync,
-        Func<Options, Task> bitcoinPostTraverseHandlerAsync,
         Action<Exception, ParseResult> exceptionHandler)
     {
         _exceptionHandler = exceptionHandler;
@@ -121,28 +121,28 @@ internal class Cli
     private Command GetBitcoinCmd(
         Options defaultOptions,
         Func<Options, Task> traverseHandlerAsync,
+        Func<Options, Task> postTraverseHandlerAsync,
         Func<Options, Task> dedupHandlerAsync,
         Func<Options, Task> importHandlerAsync,
         Func<Options, Task> sampleHandlerAsync,
         Func<Options, Task> mapMarketHandlerAsync,
         Func<Options, Task> addressStatsHandlerAsync,
         Func<Options, Task> importCypherQueriesAsync,
-        Func<Options, Task> bitcoinAugmentHandlerAsync,
-        Func<Options, Task> postTraverseHandlerAsync)
+        Func<Options, Task> bitcoinAugmentHandlerAsync)
     {
         var cmd = new Command(
             name: "bitcoin",
             description: "Implements methods for working with the Bitcoin blockchain.")
         {
             GetBitcoinTraverseCmd(defaultOptions, traverseHandlerAsync),
+            GetBitcoinPostTraverseCmd(defaultOptions, postTraverseHandlerAsync),
             GetBitcoinDedupCmd(defaultOptions, dedupHandlerAsync),
             GetBitcoinImportCmd(defaultOptions, importHandlerAsync),
             GetBitcoinImportCypherQueriesCmd(defaultOptions, importCypherQueriesAsync),
             GetBitcoinMapMarketCmd(defaultOptions, mapMarketHandlerAsync),
             GetBitcoinSampleCmd(defaultOptions, sampleHandlerAsync),
             GetBitcoinAddressStatsCmd(defaultOptions, addressStatsHandlerAsync),
-            GetBitcoinAugmentCmd(defaultOptions, bitcoinAugmentHandlerAsync),
-            GetBitcoinPostTraverseCmd(defaultOptions, postTraverseHandlerAsync)
+            GetBitcoinAugmentCmd(defaultOptions, bitcoinAugmentHandlerAsync)
         };
         return cmd;
     }
@@ -710,7 +710,12 @@ internal class Cli
             Required = true
         };
 
-        var cmd = new Command(name: "post-traverse")
+        var cmd = new Command(
+            name: "post-traverse",
+            description:
+                "Updates the serialized graph prior to database import. " +
+                "Computes node and edge properties that depend on cross-block information, " +
+                "such as UTxO spending and total Bitcoin supply per block.")
         {
             batchesFilenameOption
         };
