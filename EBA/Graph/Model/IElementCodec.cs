@@ -1,4 +1,5 @@
 ﻿using System.IO.Compression;
+using System.Runtime.CompilerServices;
 
 namespace EBA.Graph.Model;
 
@@ -12,7 +13,9 @@ public interface IElementCodec : IDisposable
     public Task WriteCsvAsync(IGraphElement element, string filename);
     public Task WriteCsvAsync<E>(IEnumerable<E> elements, string filename) where E : IGraphElement;
 
-    public static async IAsyncEnumerable<string[]> ReadCsvAsync(string filename)
+    public static async IAsyncEnumerable<string[]> ReadCsvAsync(
+        string filename, 
+        [EnumeratorCancellation] CancellationToken ct)
     {
         using var stream = File.OpenRead(filename);
         using var reader = new StreamReader(
@@ -21,7 +24,7 @@ public interface IElementCodec : IDisposable
             : stream);
 
         string? line;
-        while ((line = await reader.ReadLineAsync()) != null)
+        while ((line = await reader.ReadLineAsync(ct)) != null)
             yield return line.Split(Options.CsvDelimiter);
     }
 
