@@ -202,11 +202,11 @@ public class BitcoinStrategyFactory : IStrategyFactory
     }
 
     public bool TryCreateNode(
-            Neo4j.Driver.INode node,
-            out Model.INode createdNode,
-            double? originalIndegree = null,
-            double? originalOutdegree = null,
-            double? outHopsFromRoot = null)
+        Neo4j.Driver.INode node,
+        out Model.INode createdNode,
+        double? originalIndegree = null,
+        double? originalOutdegree = null,
+        double? outHopsFromRoot = null)
     {
         return TryCreateNode<Model.INode>(
             node,
