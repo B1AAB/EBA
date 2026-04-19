@@ -75,7 +75,7 @@ public class ElementMapper<T>
     }
 
     public TValue GetValue<TValue, TReader>(Expression<Func<T, TValue>> propertyExpression, TReader reader)
-        where TReader : IElementReader
+        where TReader : IValueReader
     {
         return reader.GetValue<TValue>(MappingBuilder.GetPropertyName(propertyExpression)) ?? default!;
     }

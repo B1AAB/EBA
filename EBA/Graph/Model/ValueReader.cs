@@ -1,13 +1,13 @@
 ﻿namespace EBA.Graph.Model;
 
-public interface IElementReader // TODO: not sure if this name is accurate
+public interface IValueReader
 {
     TValue? GetValue<TValue>(string propName);
 }
 
-public readonly struct ElementReader(
+public readonly struct ValueReader(
     IReadOnlyDictionary<string, object> props) 
-    : IElementReader
+    : IValueReader
 {
     public TValue? GetValue<TValue>(string propName)
     {
@@ -17,10 +17,10 @@ public readonly struct ElementReader(
     }
 }
 
-public readonly struct ElementReader<TElement>(
+public readonly struct ValueReader<TElement>(
     string[] cols, 
     ElementMapper<TElement> mapper) 
-    : IElementReader
+    : IValueReader
 {
     public TValue? GetValue<TValue>(string propName)
     {

@@ -98,7 +98,7 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
         string? idInGraphDb = null)
     {
         return Deserialize(
-            new ElementReader(props),
+            new ValueReader(props),
             originalIndegree, originalOutdegree, hopsFromRoot, idInGraphDb);
     }
 
@@ -106,7 +106,7 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
     public static BlockNode Deserialize(string[] csvRow)
     {
         return Deserialize(
-            new ElementReader<BlockNode>(csvRow, _mapper));
+            new ValueReader<BlockNode>(csvRow, _mapper));
     }
 
     public static BlockNode Deserialize<TReader>(
@@ -115,7 +115,7 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
         double? originalOutdegree = null,
         double? hopsFromRoot = null,
         string? idInGraphDb = null)
-        where TReader : IElementReader
+        where TReader : IValueReader
     {
         var blockMetadata = new BlockMetadata
         {

@@ -76,7 +76,7 @@ public static class PropertyMappingFactory
         TReader reader,
         string prefix,
         Func<double, double>? converter = null)
-        where TReader : IElementReader
+        where TReader : IValueReader
     {
         DescriptiveStatistics d = null!;
         DescriptiveStatistics.Percentile p = null!;
@@ -123,7 +123,7 @@ public static class PropertyMappingFactory
     }
 
     public static OHLCV? ReadOHLCV(
-        IElementReader reader,
+        IValueReader reader,
         string prefix = "OHLCV")
     {
         OHLCV o = null!;
@@ -160,7 +160,7 @@ public static class PropertyMappingFactory
     }
 
     public static Dictionary<TEnum, TValue> GetDictionary<TEnum, TValue>(
-        IElementReader reader,
+        IValueReader reader,
         string prefix)
         where TEnum : struct, Enum
     {
@@ -181,7 +181,7 @@ public static class PropertyMappingFactory
     }
 
     public static Dictionary<EdgeKind, TValue> GetDictionary<TValue>(
-        IElementReader reader,
+        IValueReader reader,
         string prefix)
     {
         var dict = new Dictionary<EdgeKind, TValue>();
