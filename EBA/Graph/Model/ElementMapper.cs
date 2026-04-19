@@ -57,6 +57,18 @@ public class ElementMapper<T>
         throw new KeyNotFoundException($"No mapping found for property '{propertyName}'.");
     }
 
+    public bool TryGetMapping(string propertyName, out PropertyMapping<T>? mapping)
+    {   
+        if (_propertyIndices.TryGetValue(propertyName, out int index))
+        {
+            mapping = _mappings[index];
+            return true;
+        }
+
+        mapping = default;
+        return false;
+    }
+
     public PropertyMapping<T> GetMapping<V>(Expression<Func<T, V>> propertyExpression)
     {
         return GetMapping(MappingBuilder.GetPropertyName(propertyExpression));

@@ -126,7 +126,7 @@ public class MappingBuilder<T>
                 propName,
                 FieldType.String,
                 x => selector(x),
-                _ => propName));
+                _ => ":TYPE"));
 
         return this;
     }
