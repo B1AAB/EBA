@@ -151,3 +151,11 @@ node files.
     ```shell
     .\eba.exe bitcoin dedup --sorted-script-nodes-file sorted_nodes_Script.csv --sorted-tx-nodes-file sorted_nodes_Tx.csv
     ```
+
+
+## Post-Traverse
+
+
+```shell
+.\eba.exe bitcoin post-traverse --batches-filename batches.json
+```
