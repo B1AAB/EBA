@@ -5,6 +5,8 @@ sidebar_position: 4
 slug: /bitcoin/etl/import
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 :::tip Do I need to run the bulk import process? 
 
@@ -83,10 +85,27 @@ meaning it does not support incremental updates to an existing graph.
 
 4.  Set an environment variable pointing to the directory containing the Bitcoin graph TSV files.
 
-
+    <Tabs
+        groupId="os"
+        defaultValue="linux"
+        values={[
+            { label: 'Linux', value: 'linux' },
+            { label: 'Windows', value: 'windows' }
+        ]
+    }>
+    <TabItem value="linux">
     ```shell
     export GDIR="<set to the dir that contains graph data>"
     ```
+    </TabItem>
+
+    <TabItem value="windows">
+    ```bash
+    $env:GDIR = "<set to the dir that contains graph data>"
+    $env:NDIR = "<set to the neo4j database dir>"
+    ```
+    </TabItem>
+    </Tabs>
 
     Verify that your data directory contains the correctly batched files. 
     You can use the following command to inspect the file distribution by type 
@@ -136,6 +155,15 @@ meaning it does not support incremental updates to an existing graph.
 6.  Execute the import command. 
     Note that we use regex patterns (e.g., .`*BitcoinS2S.tsv.gz`) to ingest the batched edge files automatically.
 
+    <Tabs
+        groupId="os"
+        defaultValue="linux"
+        values={[
+            { label: 'Linux', value: 'linux' },
+            { label: 'Windows', value: 'windows' }
+        ]
+    }>
+    <TabItem value="linux">
     ```shell
     sudo -u neo4j HEAP_SIZE=4G neo4j-admin database import full \
         --overwrite-destination neo4j \
@@ -153,6 +181,28 @@ meaning it does not support incremental updates to an existing graph.
         --array-delimiter=";" \
         --verbose
     ```
+    </TabItem>
+
+    <TabItem value="windows">
+    ```bash
+    & "$env:NDIR\bin\neo4j-admin.bat" database import full `
+        --overwrite-destination neo4j `
+        --nodes="$env:GDIR\Coinbase.csv.gz" `
+        --nodes="$env:GDIR\header_nodes_Block.csv.gz,$env:GDIR\[0-9].*_nodes_Block_supply_updated.csv.gz" `
+        --nodes="$env:GDIR\header_nodes_Script.csv.gz,$env:GDIR\unique_nodes_Script.csv.gz" `
+        --nodes="$env:GDIR\header_nodes_Tx.csv.gz,$env:GDIR\unique_nodes_Tx.csv.gz" `
+        --relationships="$env:GDIR\header_edges_Block_Confirms_Tx.csv.gz,$env:GDIR\[0-9].*_edges_Block_Confirms_Tx.csv.gz" `
+        --relationships="$env:GDIR\header_edges_Coinbase_Mints_Tx.csv.gz,$env:GDIR\[0-9].*_edges_Coinbase_Mints_Tx.csv.gz" `
+        --relationships="$env:GDIR\header_edges_Tx_Credits_Script.csv.gz,$env:GDIR\[0-9].*_edges_Tx_Credits_Script_with_txo_spent_height_set.csv.gz" `
+        --relationships="$env:GDIR\header_edges_Script_Redeems_Tx.csv.gz,$env:GDIR\[0-9].*_edges_Script_Redeems_Tx.csv.gz" `
+        --relationships="$env:GDIR\header_edges_Tx_Fee_Tx.csv.gz,$env:GDIR\[0-9].*_edges_Tx_Fee_Tx.csv.gz" `
+        --relationships="$env:GDIR\header_edges_Tx_Transfers_Tx.csv.gz,$env:GDIR\[0-9].*_edges_Tx_Transfers_Tx.csv.gz" `
+        --delimiter="\t" `
+        --array-delimiter=";" `
+        --verbose
+    ```
+    </TabItem>
+    </Tabs>
 
 
 7.  Once the import concludes, restart the Neo4j service. 

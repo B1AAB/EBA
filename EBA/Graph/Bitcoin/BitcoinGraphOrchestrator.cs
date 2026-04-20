@@ -2,20 +2,20 @@
 
 namespace EBA.Graph.Bitcoin;
 
-public class BitcoinGraphAgent : IGraphAgent<BitcoinGraph>, IDisposable
+public class BitcoinGraphOrchestrator : IGraphOrchestrator<BitcoinGraph>, IDisposable
 {
     private readonly Options _options;
     private readonly IGraphDb<BitcoinGraph> _db;
-    private readonly ILogger<BitcoinGraphAgent> _logger;
+    private readonly ILogger<BitcoinGraphOrchestrator> _logger;
 
     private bool _hasSerializedConstants = false;
 
     private bool _disposed = false;
 
-    public BitcoinGraphAgent(
+    public BitcoinGraphOrchestrator(
         Options options,
         IGraphDb<BitcoinGraph> graphDb,
-        ILogger<BitcoinGraphAgent> logger)
+        ILogger<BitcoinGraphOrchestrator> logger)
     {
         _options = options;
         _db = graphDb;

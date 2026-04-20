@@ -4,11 +4,11 @@ public class ForestFire : ITraversalAlgorithm
 {
     private readonly Options _options;
     private readonly IGraphDb<BitcoinGraph> _graphDb;
-    private readonly ILogger<BitcoinGraphAgent> _logger;
+    private readonly ILogger<BitcoinGraphOrchestrator> _logger;
 
     private int _maxHopReached = 0;
 
-    public ForestFire(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<BitcoinGraphAgent> logger)
+    public ForestFire(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<BitcoinGraphOrchestrator> logger)
     {
         _options = options;
         _graphDb = graphDb;

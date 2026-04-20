@@ -50,6 +50,11 @@ public class Property
         return $"{Name}:ID({idGroup})";
     }
 
+    public string GetIdFieldCsvHeader(string propName, string idGroup)
+    {
+        return $"{propName}:ID({idGroup})";
+    }
+
     public string GetSetter()
     {
         return $"{Name}:{GetReader()}";

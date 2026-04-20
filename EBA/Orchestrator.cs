@@ -100,8 +100,8 @@ public class Orchestrator : IDisposable
     {
         var host = await SetupAndGetHostAsync(options);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
-        var bitcoinGraphAgent = host.Services.GetRequiredService<BitcoinGraphAgent>();
-        await bitcoinGraphAgent.AddMarketData(_cT);
+        var bitcoinGraphOrchestrator = host.Services.GetRequiredService<BitcoinGraphOrchestrator>();
+        await bitcoinGraphOrchestrator.AddMarketData(_cT);
     }
 
     private async Task BitcoinSampleGraphAsync(Options options)
@@ -109,8 +109,8 @@ public class Orchestrator : IDisposable
         var host = await SetupAndGetHostAsync(options);
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, _cT);
 
-        var bitcoinGraphAgent = host.Services.GetRequiredService<BitcoinGraphAgent>();
-        await bitcoinGraphAgent.SampleAsync(_cT);
+        var bitcoinGraphOrchestrator = host.Services.GetRequiredService<BitcoinGraphOrchestrator>();
+        await bitcoinGraphOrchestrator.SampleAsync(_cT);
     }
 
     private async Task BitcoinAddressStatsAsync(Options options)

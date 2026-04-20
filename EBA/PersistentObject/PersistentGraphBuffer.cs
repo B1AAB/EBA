@@ -4,7 +4,7 @@ namespace EBA.PersistentObject;
 
 public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposable, IAsyncDisposable
 {
-    private readonly Graph.Bitcoin.BitcoinGraphAgent? _graphAgent;
+    private readonly Graph.Bitcoin.BitcoinGraphOrchestrator? _graphOrchestrator;
     private readonly ILogger<PersistentGraphBuffer> _logger;
     private readonly PersistentTxoLifeCycleBuffer? _pTxoLifeCycleBuffer = null;
     private readonly SemaphoreSlim _semaphore;
@@ -20,7 +20,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     private readonly ConcurrentDictionary<long, byte> _blocksHeightsInBuffer = new();
 
     public PersistentGraphBuffer(
-        Graph.Bitcoin.BitcoinGraphAgent? graphAgent,
+        Graph.Bitcoin.BitcoinGraphOrchestrator? graphOrchestrator,
         ILogger<PersistentGraphBuffer> logger,
         ILogger<PersistentTxoLifeCycleBuffer>? pTxoLifeCyccleLogger,
         string? txoLifeCycleFilename,
@@ -30,7 +30,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         CancellationToken ct) :
         base(logger, ct)
     {
-        _graphAgent = graphAgent;
+        _graphOrchestrator = graphOrchestrator;
         _logger = logger;
 
         if (txoLifeCycleFilename != null && pTxoLifeCyccleLogger != null)
@@ -59,8 +59,8 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         // on cancellation and recovery, but that can add additional complexities.
         var tasks = new List<Task> { };
 
-        if (_graphAgent != null)
-            tasks.Add(_graphAgent.SerializeAsync(obj, default));
+        if (_graphOrchestrator != null)
+            tasks.Add(_graphOrchestrator.SerializeAsync(obj, default));
 
         if (_pTxoLifeCycleBuffer != null)
             tasks.Add(_pTxoLifeCycleBuffer.SerializeAsync(obj.Block.TxoLifecycle.Values, default));
@@ -107,7 +107,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 
             if (disposing)
             {
-                _graphAgent?.Dispose();
+                _graphOrchestrator?.Dispose();
             }
 
             _disposed = true;
@@ -120,7 +120,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         {
             base.Dispose(true);
 
-            if (_graphAgent is IAsyncDisposable asyncDisposable)
+            if (_graphOrchestrator is IAsyncDisposable asyncDisposable)
                 await asyncDisposable.DisposeAsync();
 
             _disposed = true;

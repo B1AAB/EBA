@@ -20,16 +20,16 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
         var batches = await Batch.DeserializeBatchesAsync(_options.Bitcoin.MapSpends.BatchesFilename);
         _logger.LogInformation("Deserialized {n} batches from {filename}.", batches.Count, _options.Bitcoin.MapSpends.BatchesFilename);
 
-        _processStep = "[1/4] Block-to-batch mapping: ";
+        _processStep = "[1/4] Block-to-batch mapping:";
         GetBlockHeightToBatchMapping(_options, batches, out var blockToBatch, out var blockNodes);
 
-        _processStep = "[2/4] Collecting Txo spending: ";
+        _processStep = "[2/4] Collecting Txo spending:";
         await CreatePerBatchSpentUtxo(batches, blockToBatch, ct);
 
-        _processStep = "[3/4] Setting UTxO spending: ";
+        _processStep = "[3/4] Setting UTxO spending:";
         await SetTxoSpentHeight(batches, ct);
 
-        _processStep = "[4/4] Setting supply amount: ";
+        _processStep = "[4/4] Setting supply amount:";
         await SetSupplyAmount(batches, blockNodes, ct);
     }
 
@@ -211,10 +211,10 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
         var totalSupplyIndex = BlockNodeDescriptor.StaticMapper.GetPropertyCsvIndex(x => x.BlockMetadata.TotalSupply);
         var totalSupplyNominalIndex = BlockNodeDescriptor.StaticMapper.GetPropertyCsvIndex(x => x.BlockMetadata.TotalSupplyNominal);
 
+        _logger.LogInformation("{s} Updating block node files with total supply information.", _processStep);
+        int counter = 0;
         foreach (var batch in batches)
         {
-            _logger.LogInformation("{s} Updating block node files with total supply information...", _processStep);
-
             var blockNodesFilename = batch.GetFilename(BlockNode.Kind);
             using var writer = new StreamWriter(new GZipStream(
                 File.Create(Helpers.AddPostfixToFilename(blockNodesFilename, "_supply_updated")),
@@ -235,9 +235,17 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
             finally
             {
                 writer.Close();
-            }
 
-            _logger.LogInformation("{s} Finished updating block node files with total supply information.", _processStep);
+                counter++;
+                if (counter % 10 == 0)
+                    _logger.LogInformation(
+                        "{s} Finished updating block node files with total supply information for {n}/{total} batches.", 
+                        _processStep, counter, batches.Count);
+            }
         }
+
+        _logger.LogInformation(
+            "{s} Finished updating block node files with total supply information for {n}/{total} batches.",
+            _processStep, counter, batches.Count);
     }
 }

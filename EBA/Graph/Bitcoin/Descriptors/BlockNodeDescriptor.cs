@@ -10,8 +10,12 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
     public static ElementMapper<BlockNode> StaticMapper => _mapper;
     private static readonly ElementMapper<BlockNode> _mapper = new(
         new MappingBuilder<BlockNode>()
-            .MapSourceId(_idSpace, n => n.BlockMetadata.Height)
+            // using empty string as propName in header override since height property is already defined.
+            // Height is defined twice because id is treated string, but we want a long height as property,
+            // so only option currently is double-prop definition.
+            .Map(n => n.BlockMetadata.Height).WithCsvHeader(p => p.GetIdFieldCsvHeader("", _idSpace))
             .Map(n => n.BlockMetadata.Height)
+
             .Map(n => n.BlockMetadata.Hash)
             .Map(n => n.BlockMetadata.Confirmations)
             .Map(n => n.BlockMetadata.Version)
@@ -67,12 +71,6 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
 
             .MapRange(PropertyMappingFactory.ToMappings<BlockNode, long>(
                     nameof(BlockNode.TripletTypeValueSum), n => n.TripletTypeValueSum))
-
-            .MapRange(PropertyMappingFactory.ToMappings(
-                nameof(BlockNode.TripletTypeCount), (BlockNode n) => n.TripletTypeCount))
-
-            .MapRange(PropertyMappingFactory.ToMappings(
-                nameof(BlockNode.TripletTypeValueSum), (BlockNode n) => n.TripletTypeValueSum))
 
             .Map(n => n.BlockMetadata.TotalSupply)
             .Map(n => n.BlockMetadata.TotalSupplyNominal)
