@@ -71,6 +71,8 @@ public class EconomicAugmentor(Options options, IGraphDb<BitcoinGraph> graphDb, 
                 .Map(n => (double?)n.BlockMetadata.RealizedCap)
                 .Map(n => (double?)n.BlockMetadata.MarketCap)
                 .Map(n => (double?)n.BlockMetadata.NUPL)
+                .Map(n => (double?)n.BlockMetadata.NUL)
+                .Map(n => (double?)n.BlockMetadata.NUP)
                 .MapRange(PropertyMappingFactory.ToMappings<BlockNode>(n => n.BlockMetadata.Ohlcv))
                 .ToArray());
 
