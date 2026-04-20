@@ -9,7 +9,7 @@ public class C2TEdgeDescriptor : IElementDescriptor<C2TEdge>
     public static ElementMapper<C2TEdge> StaticMapper => _mapper;
     private static readonly ElementMapper<C2TEdge> _mapper = new(
         new MappingBuilder<C2TEdge>()
-            .MapSourceId(_idSpace, _ => CoinbaseNode.Kind)
+            .MapSourceId(CoinbaseNode.Kind.ToString(), _ => CoinbaseNode.Kind)
             .MapTargetId(TxNodeDescriptor.IdSpace, e => e.Target.Txid)
             .Map(e => e.Value)
             .Map(e => e.BlockHeight)
