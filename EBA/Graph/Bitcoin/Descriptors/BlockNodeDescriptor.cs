@@ -75,9 +75,14 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
             .Map(n => n.BlockMetadata.TotalSupply)
             .Map(n => n.BlockMetadata.TotalSupplyNominal)
 
+            // Note that neo4j does not currently support decimal type, hence this casting is needed.
             .Map(n => (double?)n.BlockMetadata.RealizedCap)
+            .Map(n => (double?)n.BlockMetadata.UnrealizedLoss)
+            .Map(n => (double?)n.BlockMetadata.UnrealizedProfit)
             .Map(n => (double?)n.BlockMetadata.MarketCap)
             .Map(n => (double?)n.BlockMetadata.NUPL)
+            .Map(n => (double?)n.BlockMetadata.NUL)
+            .Map(n => (double?)n.BlockMetadata.NUP)
             .MapRange(PropertyMappingFactory.ToMappings<BlockNode>(n => n.BlockMetadata.Ohlcv))
 
             .MapLabel(_ => BlockNode.Kind)
@@ -137,9 +142,6 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
             Weight = _mapper.GetValue(n => n.BlockMetadata.Weight, reader),
             CoinbaseOutputsCount = _mapper.GetValue(n => n.BlockMetadata.CoinbaseOutputsCount, reader),
             MintedBitcoins = _mapper.GetValue(n => n.BlockMetadata.MintedBitcoins, reader),
-            TotalSupply = _mapper.GetValue(n => n.BlockMetadata.TotalSupply, reader),
-            TotalSupplyNominal = _mapper.GetValue(n => n.BlockMetadata.TotalSupplyNominal, reader),
-            RealizedCap = _mapper.GetValue(n => n.BlockMetadata.RealizedCap, reader),
 
             InputCountsStats = PropertyMappingFactory.ReadDescriptiveStats(reader, nameof(Block.InputCountsStats)),
             OutputCountsStats = PropertyMappingFactory.ReadDescriptiveStats(reader, nameof(Block.OutputCountsStats)),
@@ -152,6 +154,12 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
             OutputScriptTypeCount = PropertyMappingFactory.GetDictionary<ScriptType, long>(reader, "OutputsCount"),
             InputScriptTypeValue = PropertyMappingFactory.GetDictionary<ScriptType, long>(reader, "InputsValue"),
             OutputScriptTypeValue = PropertyMappingFactory.GetDictionary<ScriptType, long>(reader, "OutputsValue"),
+
+            TotalSupply = _mapper.GetValue(n => n.BlockMetadata.TotalSupply, reader),
+            TotalSupplyNominal = _mapper.GetValue(n => n.BlockMetadata.TotalSupplyNominal, reader),
+            RealizedCap = _mapper.GetValue(n => n.BlockMetadata.RealizedCap, reader),
+            UnrealizedLoss = _mapper.GetValue(n => n.BlockMetadata.UnrealizedLoss, reader),
+            UnrealizedProfit = _mapper.GetValue(n => n.BlockMetadata.UnrealizedProfit, reader),
 
             Ohlcv = PropertyMappingFactory.ReadOHLCV(reader)
         };

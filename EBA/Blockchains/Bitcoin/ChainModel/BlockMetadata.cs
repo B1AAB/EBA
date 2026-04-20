@@ -92,6 +92,8 @@ public class BlockMetadata
     public long? TotalSupplyNominal { set; get; } = null;
 
     public decimal? RealizedCap { set; get; } = null;
+    public decimal? UnrealizedLoss { set; get; } = null;
+    public decimal? UnrealizedProfit { set; get; } = null;
     public decimal? MarketCap
     {
         get
@@ -111,6 +113,26 @@ public class BlockMetadata
                 return null;
 
             return (MarketCap - RealizedCap) / MarketCap;
+        }
+    }
+
+    public decimal? NUL
+    {
+        get
+        {
+            if (UnrealizedLoss == null || MarketCap == null || MarketCap == 0)
+                return null;
+            return UnrealizedLoss / MarketCap;
+        }
+    }
+
+    public decimal? NUP
+    {
+        get
+        {
+            if (UnrealizedProfit == null || MarketCap == null || MarketCap == 0)
+                return null;
+            return UnrealizedProfit / MarketCap;
         }
     }
 
