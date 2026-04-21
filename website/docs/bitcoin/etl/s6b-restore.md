@@ -1,7 +1,7 @@
 ---
 title: Restore Database Dump
-description: Step 5b. Load a database dump
-sidebar_position: 5
+description: Step 7. Load a database dump
+sidebar_position: 6
 slug: /bitcoin/etl/restore
 ---
 
