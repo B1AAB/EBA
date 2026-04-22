@@ -102,7 +102,7 @@ public class EconomicAugmentor(Options options, IGraphDb<BitcoinGraph> graphDb, 
                 .MapRange(PropertyMappingFactory.ToMappings<BlockNode>(n => n.BlockMetadata.Ohlcv))
                 .ToArray());
 
-        _logger.LogInformation("Saving realized cap for {count:n0} block nodes.", blockNodes.Count);
+        _logger.LogInformation("Saving updated properties for {count:n0} block nodes.", blockNodes.Count);
         var updates = blockNodes.Values
             .Select(b => economicMappings.ToProperties(b))
             .ToList();
