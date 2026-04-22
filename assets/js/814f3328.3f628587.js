@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkwebsite=self.webpackChunkwebsite||[]).push([[7472],{5513:e=>{e.exports=JSON.parse('{"title":"Releases","items":[{"title":"Bitcoin Graph v1","permalink":"/releases/data-release/v1","unlisted":false,"date":"2026-04-20T03:46:53.000Z"}]}')}}]);
