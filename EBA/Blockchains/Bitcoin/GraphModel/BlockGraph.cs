@@ -166,7 +166,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         if (!equal)
             return false;
 
-        throw new NotImplementedException();
+        throw new NotImplementedException("Comparing BlockGraphs with different properties is not implemented.");
     }
 
     public override bool Equals(object? obj)
@@ -176,6 +176,6 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 
     public override int GetHashCode()
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("BlockGraph.GetHashCode is not implemented.");
     }
 }

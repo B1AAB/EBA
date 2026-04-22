@@ -157,17 +157,17 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
     public Task ImportAsync(CancellationToken ct, string batchName = "")
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("ImportAsync is not implemented.");
     }
 
     public void ReportQueries()
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("ReportQueries is not implemented.");
     }
 
     public Task SampleAsync(CancellationToken ct)
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("SampleAsync is not implemented.");
     }
 
     public async Task SerializeConstantsAndConstraintsAsync(CancellationToken ct)

@@ -78,7 +78,7 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 
     public override Task SerializeAsync(IEnumerable<BlockGraph> objs, CancellationToken cT)
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("SerializeAsync for multiple BlockGraphs is not implemented.");
     }
 
     public int GetBufferSize()

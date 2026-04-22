@@ -120,11 +120,11 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
 
     public int CompareTo(TxNode? other)
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("TxNode.CompareTo is not implemented.");
     }
 
     public bool Equals(TxNode? other)
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("TxNode.Equals is not implemented.");
     }
 }

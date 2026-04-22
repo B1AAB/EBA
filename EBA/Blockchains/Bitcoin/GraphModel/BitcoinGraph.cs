@@ -44,6 +44,6 @@ public class BitcoinGraph : GraphBase, IEquatable<BitcoinGraph>
 
     public override int GetHashCode()
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("BitcoinGraph.GetHashCode is not implemented.");
     }
 }

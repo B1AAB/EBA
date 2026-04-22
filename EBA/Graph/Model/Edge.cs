@@ -78,7 +78,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
 
     public void AddValue(long value)
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("Edge.AddValue is not implemented.");
     }
 
     public string GetHashCode(bool ignoreValue)
