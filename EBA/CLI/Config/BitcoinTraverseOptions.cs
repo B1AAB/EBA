@@ -1,7 +1,18 @@
-﻿namespace EBA.CLI.Config;
+﻿using System.Text.Json.Serialization;
 
-public class BitcoinTraverseOptions(long timestamp)
+namespace EBA.CLI.Config;
+
+public class BitcoinTraverseOptions
 {
+    public BitcoinTraverseOptions(long timestamp)
+    {
+        BlocksToProcessListFilename = $"{timestamp}_bitcoin_blocks_to_process.eba";
+        BlocksFailedToProcessListFilename = $"{timestamp}_bitcoin_blocks_failed_to_process.eba";
+    }
+
+    [JsonConstructor]
+    public BitcoinTraverseOptions() { }
+    
     public Uri ClientUri
     {
         init
@@ -66,8 +77,8 @@ public class BitcoinTraverseOptions(long timestamp)
     }
     private int _granularity = 1;
 
-    public string BlocksToProcessListFilename { init; get; } = $"{timestamp}_bitcoin_blocks_to_process.eba";
-    public string BlocksFailedToProcessListFilename { init; get; } = $"{timestamp}_bitcoin_blocks_failed_to_process.eba";
+    public string BlocksToProcessListFilename { init; get; }
+    public string BlocksFailedToProcessListFilename { init; get; }
 
     public int MaxBlocksInBuffer { init; get; } = 100;
 
