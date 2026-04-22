@@ -94,6 +94,10 @@ public class BlockMetadata
     public decimal? RealizedCap { set; get; } = null;
     public decimal? UnrealizedLoss { set; get; } = null;
     public decimal? UnrealizedProfit { set; get; } = null;
+
+    /// <summary>
+    /// Market Value (MV) or Market Capitalization (MC).
+    /// </summary>
     public decimal? MarketCap
     {
         get
@@ -105,6 +109,9 @@ public class BlockMetadata
         }
     }
 
+    /// <summary>
+    /// Net Unrealized Profit/Loss
+    /// </summary>
     public decimal? NUPL
     {
         get
@@ -116,6 +123,9 @@ public class BlockMetadata
         }
     }
 
+    /// <summary>
+    /// Net Unrealized Loss
+    /// </summary>
     public decimal? NUL
     {
         get
@@ -126,6 +136,9 @@ public class BlockMetadata
         }
     }
 
+    /// <summary>
+    /// Net Unrealized Profit
+    /// </summary>
     public decimal? NUP
     {
         get
@@ -136,7 +149,26 @@ public class BlockMetadata
         }
     }
 
-    public OHLCV? Ohlcv { set; get; } = null;
+    /// <summary>
+    /// Market Value to Realized Value
+    /// </summary>
+    public decimal? MVRV
+    {
+        get
+        {
+            if (RealizedCap == null || MarketCap == null || RealizedCap == 0)
+                return null;
+            return MarketCap / RealizedCap;
+        }
+    }
 
-    // TODO: add MVRV, NVT, Thermocap
+    /// <summary>
+    /// Thermodynamic Cap
+    /// </summary>
+    public decimal? Thermocap { set; get; }
+
+    /// <summary>
+    /// Open-High-Low-Close-Volume data for the block, if available.
+    /// </summary>
+    public OHLCV? Ohlcv { set; get; } = null;
 }

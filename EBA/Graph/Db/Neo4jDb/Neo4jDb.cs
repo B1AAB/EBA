@@ -383,10 +383,10 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     }
 
     public async Task BulkUpdateNodePropertiesAsync(
-    NodeKind label,
-    string idProperty,
-    IReadOnlyList<Dictionary<string, object?>> updates,
-    CancellationToken ct)
+        NodeKind label,
+        string idProperty,
+        IReadOnlyList<Dictionary<string, object?>> updates,
+        CancellationToken ct)
     {
         if (updates.Count == 0)
             return;
