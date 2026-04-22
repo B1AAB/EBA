@@ -92,11 +92,11 @@ public class BlockNode(
 
     public int CompareTo(BlockNode? other)
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("BlockNode.CompareTo is not implemented.");
     }
 
     public bool Equals(BlockNode? other)
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("BlockNode.Equals is not implemented.");
     }
 }

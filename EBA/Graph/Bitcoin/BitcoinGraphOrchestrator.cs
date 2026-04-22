@@ -29,7 +29,7 @@ public class BitcoinGraphOrchestrator : IGraphOrchestrator<BitcoinGraph>, IDispo
             GraphTraversal.FFS => new ForestFire(_options, _db, _logger),
             //GraphTraversal.BFS => throw new NotImplementedException(),
             //GraphTraversal.DFS => throw new NotImplementedException(),
-            _ => throw new NotImplementedException(),
+            _ => throw new NotImplementedException("Unsupported graph traversal algorithm."),
         };
 
         await sampler.SampleAsync(ct);

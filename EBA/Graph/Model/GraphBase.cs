@@ -77,21 +77,6 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
         return _edges.ToImmutableDictionary(x => x.Key, x => x.Value.Values);
     }
 
-    public void GetNode(string id, out INode node) // TODO: you can change this to return node instead of void
-    {
-        foreach (var nodeTypes in _nodes)
-        {
-            nodeTypes.Value.TryGetValue(id, out var n);
-            if (n != null)
-            {
-                node = n;
-                return;
-            }
-        }
-
-        throw new NotImplementedException();
-    }
-
     public bool ContainsNode(string id)
     {
         foreach (var nodeTypes in _nodes)
@@ -257,7 +242,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
     }
     public override int GetHashCode()
     {
-        throw new NotImplementedException();
+        throw new NotImplementedException("GraphBase.GetHashCode is not implemented.");
     }
 
     public void Dispose()
