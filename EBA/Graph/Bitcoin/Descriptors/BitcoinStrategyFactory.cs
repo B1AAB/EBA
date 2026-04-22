@@ -142,7 +142,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
                 foreach (var config in configs)
                 {
                     writer.WriteLine("");
-                    writer.WriteLine(config);
+                    writer.WriteLine(config + ";");
                 }
 
                 writer.WriteLine("");

@@ -21,12 +21,6 @@ For this task, you may take the following steps.
     .\eba.exe bitcoin traverse --from 0 --to 1000
     ```
 
-    or if you want to track txo (for downstream statistics only) and the traverse window is wide, then you may use:
-
-    ```shell
-    .\eba.exe bitcoin traverse --to 863000 --track-txo --max-entries-per-batch 50000000
-    ```
-
     You may use the following to get all the arguments and their documentation.
 
     ```shell

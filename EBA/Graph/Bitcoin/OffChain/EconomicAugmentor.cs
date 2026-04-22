@@ -29,9 +29,11 @@ public class EconomicAugmentor(Options options, IGraphDb<BitcoinGraph> graphDb, 
 
         foreach (var block in blockNodes)
             if (blockOHLCVMapping.TryGetValue(block.Key, out var ohlcv))
-                block.Value.BlockMetadata.Ohlcv = ohlcv;        
+                block.Value.BlockMetadata.Ohlcv = ohlcv;
 
         await ComputeBlockValuationMetrics(blockNodes, blockOHLCVMapping, ct);
+        await ComputeThermocap(blockNodes, blockOHLCVMapping, ct);
+        await SaveChanges(blockNodes, ct);
     }
 
     private async Task<SortedDictionary<long, BlockNode>> GetBlockNodes(CancellationToken ct)
@@ -58,24 +60,50 @@ public class EconomicAugmentor(Options options, IGraphDb<BitcoinGraph> graphDb, 
     // instead of being computed and updated after the fact.
     // This would require reordering the import steps to ensure that the OHLCV data is available before the block nodes are created.
     private async Task ComputeBlockValuationMetrics(
-        SortedDictionary<long, BlockNode> blocks, 
-        Dictionary<long, OHLCV> blockOHLCVMapping, 
+        SortedDictionary<long, BlockNode> blockNodes,
+        Dictionary<long, OHLCV> blockOHLCVMapping,
         CancellationToken ct)
     {
-        _logger.LogInformation("Setting realized cap for {count:n0} block nodes.", blocks.Count);
-        await _graphDb.SetRealizedCap(blocks, blockOHLCVMapping, CancellationToken.None);
+        _logger.LogInformation("Setting realized cap for {count:n0} block nodes.", blockNodes.Count);
+        await _graphDb.SetRealizedCap(blockNodes, blockOHLCVMapping, CancellationToken.None);
+    }
 
+    private async Task ComputeThermocap(
+        SortedDictionary<long, BlockNode> blockNodes,
+        Dictionary<long, OHLCV> blockOHLCVMapping,
+        CancellationToken ct)
+    {
+        foreach (var block in blockNodes)
+        {
+            if (block.Key == 0)
+                continue;
+
+            if (blockOHLCVMapping.TryGetValue(block.Value.BlockMetadata.Height, out var ohlcv))
+            {
+                block.Value.BlockMetadata.Thermocap = 
+                    blockNodes[block.Key - 1].BlockMetadata.Thermocap + 
+                    ohlcv.GetFiatValue(block.Value.TripletTypeValueSum[C2TEdge.Kind]);
+            }
+        }
+    }
+
+    private async Task SaveChanges(SortedDictionary<long, BlockNode> blockNodes, CancellationToken ct)
+    {
         var economicMappings = new ElementMapper<BlockNode>(
             new MappingBuilder<BlockNode>()
                 .Map(n => n.BlockMetadata.Height)
                 .Map(n => (double?)n.BlockMetadata.RealizedCap)
                 .Map(n => (double?)n.BlockMetadata.MarketCap)
                 .Map(n => (double?)n.BlockMetadata.NUPL)
+                .Map(n => (double?)n.BlockMetadata.NUL)
+                .Map(n => (double?)n.BlockMetadata.NUP)
+                .Map(n => (double?)n.BlockMetadata.MVRV)
+                .Map(n => (double?)n.BlockMetadata.Thermocap)
                 .MapRange(PropertyMappingFactory.ToMappings<BlockNode>(n => n.BlockMetadata.Ohlcv))
                 .ToArray());
 
-        _logger.LogInformation("Saving realized cap for {count:n0} block nodes.", blocks.Count);
-        var updates = blocks.Values
+        _logger.LogInformation("Saving realized cap for {count:n0} block nodes.", blockNodes.Count);
+        var updates = blockNodes.Values
             .Select(b => economicMappings.ToProperties(b))
             .ToList();
 

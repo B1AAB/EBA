@@ -12,7 +12,15 @@ public readonly struct ValueReader(
     public TValue? GetValue<TValue>(string propName)
     {
         if (props.TryGetValue(propName, out var val) && val != null)
-            return (TValue)Convert.ChangeType(val, typeof(TValue));
+        {
+            // This is needed for types whose value are provided, but the type is nullable. 
+            // when the value is provided but type is nullable, the following error is thrown:
+            // Invalid cast from 'System.Int64' to 'System.Nullable`
+            var targetType = typeof(TValue);
+            var safeType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+            
+            return (TValue)Convert.ChangeType(val, safeType);
+        }
         return default;
     }
 }

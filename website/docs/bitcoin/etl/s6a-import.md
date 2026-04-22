@@ -1,7 +1,7 @@
 ---
 title: Import into Neo4j
-description: Step 5. Import into neo4j
-sidebar_position: 4
+description: Step 6. Import into neo4j
+sidebar_position: 5
 slug: /bitcoin/etl/import
 ---
 
@@ -211,3 +211,12 @@ meaning it does not support incremental updates to an existing graph.
     as it is needed in EBA for sampling communities.
 
 8.  [Update Neo4j database configuration](./db-conf).
+
+9. Create indexes and apply constraints.
+
+    ```shell
+    & "$env:NDIR\bin\cypher-shell.bat" `
+        -u neo4j `
+        -p password `
+        -f "$env:GDIR\schema.cypher"
+    ```

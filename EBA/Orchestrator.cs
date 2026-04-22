@@ -29,7 +29,7 @@ public class Orchestrator : IDisposable
             exceptionHandler: (e, _) =>
             {
                 if (_logger != null)
-                    _logger.LogCritical("{error}", e.Message);
+                    _logger.LogCritical("{error} Inner error: {innerError}", e.Message, e.InnerException?.Message);
                 else
                     Console.Error.WriteLine($"Error: {e.Message}");
             });

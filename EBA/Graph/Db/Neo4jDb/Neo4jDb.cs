@@ -344,15 +344,26 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                 var spentHeight = cursor.Current["spentHeight"].As<long>();
                 var value = cursor.Current["value"].As<long>();
 
-                if (!ohlcv.TryGetValue(creationHeight, out var blockOHLCV))
+                if (!ohlcv.TryGetValue(creationHeight, out var creationBlockOHLCV))
                 {
                     skippedEdgeCounter++;
                 }
                 else
                 {
-                    var fiatValue = blockOHLCV.GetFiatValue(value);
+                    var utxoFiatValueAtCreation = creationBlockOHLCV.GetFiatValue(value);
                     foreach (var h in sortedHeights.GetViewBetween(creationHeight, spentHeight))
-                        blockNodes[h].BlockMetadata.RealizedCap += fiatValue;
+                    {
+                        var block = blockNodes[h];
+                        block.BlockMetadata.RealizedCap += utxoFiatValueAtCreation;
+
+                        if (block.BlockMetadata.Ohlcv != null)
+                        {
+                            if (utxoFiatValueAtCreation < block.BlockMetadata.Ohlcv.VWAP)
+                                block.BlockMetadata.UnrealizedLoss += block.BlockMetadata.Ohlcv.VWAP - utxoFiatValueAtCreation;
+                            else
+                                block.BlockMetadata.UnrealizedProfit += utxoFiatValueAtCreation - block.BlockMetadata.Ohlcv.VWAP;
+                        }
+                    }
 
                     processedEdgeCount++;
                 }
@@ -372,10 +383,10 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     }
 
     public async Task BulkUpdateNodePropertiesAsync(
-    NodeKind label,
-    string idProperty,
-    IReadOnlyList<Dictionary<string, object?>> updates,
-    CancellationToken ct)
+        NodeKind label,
+        string idProperty,
+        IReadOnlyList<Dictionary<string, object?>> updates,
+        CancellationToken ct)
     {
         if (updates.Count == 0)
             return;

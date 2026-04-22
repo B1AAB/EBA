@@ -1,8 +1,8 @@
 ---
 title: Augmentation
-description: Step 7. Augment graph using off-chain data
+description: Step 5. Augment graph using off-chain data
 sidebar_label: Augmentation
-sidebar_position: 7
+sidebar_position: 4
 slug: /bitcoin/etl/augment
 ---
 
