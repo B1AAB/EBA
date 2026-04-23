@@ -4,14 +4,14 @@ public class T2TEdge : Edge<TxNode, TxNode>
 {
     public T2TEdge(
         TxNode source, TxNode target,
-        long value, RelationType type, uint timestamp, long blockHeight) :
+        long value, RelationType type, uint timestamp, long height) :
         base(
             source: source,
             target: target,
             value: value,
             relation: type,
             timestamp: timestamp,
-            blockHeight: blockHeight)
+            height: height)
     { }
 
     public static EdgeKind KindTransfers => new(TxNode.Kind, TxNode.Kind, RelationType.Transfers);
@@ -40,6 +40,6 @@ public class T2TEdge : Edge<TxNode, TxNode>
             newEdge.Value,
             newEdge.Relation,
             newEdge.Timestamp,
-            newEdge.BlockHeight);
+            newEdge.Height);
     }
 }

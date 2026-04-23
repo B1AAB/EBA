@@ -153,18 +153,18 @@ public class BitcoinChainAgent : IDisposable
     }
 
     public async Task<List<BlockMetadata>> GetBlockMetadataAsync(
-        long startBlockHeight,
-        long endBlockHeight,
+        long startHeight,
+        long endHeight,
         CancellationToken cT)
     {
         _logger.LogInformation(
             "Getting block metadata for blocks {start:n0} to {end:n0}.",
-            startBlockHeight, endBlockHeight);
+            startHeight, endHeight);
 
         var pageSize = 2000;
         var pages = new List<long[]>();
-        for (var i = startBlockHeight; i <= endBlockHeight; i += pageSize)
-            pages.Add([i, i + pageSize < endBlockHeight ? pageSize : endBlockHeight - i + 1]);
+        for (var i = startHeight; i <= endHeight; i += pageSize)
+            pages.Add([i, i + pageSize < endHeight ? pageSize : endHeight - i + 1]);
 
         var blocksMetadata = new ConcurrentBag<BlockMetadata>();
 
@@ -191,7 +191,7 @@ public class BitcoinChainAgent : IDisposable
             });
 
         _logger.LogInformation("Finished Getting block metadata for blocks {start:n0} to {end:n0}.",
-            startBlockHeight, endBlockHeight);
+            startHeight, endHeight);
 
         return [.. blocksMetadata];
     }
@@ -216,7 +216,7 @@ public class BitcoinChainAgent : IDisposable
                 },
                 new Context()
                     .SetLogger<BitcoinOrchestrator>(_logger)
-                    .SetBlockHeight(height),
+                    .SetHeight(height),
                 cT);
         }
         catch (Polly.CircuitBreaker.BrokenCircuitException e)
@@ -336,7 +336,7 @@ public class BitcoinChainAgent : IDisposable
 
                 g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
                 {
-                    oldValue.SpentInBlockHeight = g.Block.Height;
+                    oldValue.SpentInHeight = g.Block.Height;
                     return oldValue;
                 });
             }
@@ -360,7 +360,7 @@ public class BitcoinChainAgent : IDisposable
                     value: output.Value,
                     scriptType: output.ScriptPubKey.ScriptType,
                     isGenerated: false,
-                    createdInBlockHeight: g.Block.Height);
+                    createdInHeight: g.Block.Height);
 
                 g.Block.TxoLifecycle.TryAdd(utxo.Id, utxo);
             }

@@ -9,7 +9,7 @@ public class B2BEdge(
         value: 0,
         relation: Kind.Relation,
         timestamp: 0,
-        blockHeight: 0)
+        height: 0)
 {
     public static new EdgeKind Kind => new(BlockNode.Kind, BlockNode.Kind, RelationType.Follows);
 

@@ -11,7 +11,7 @@ public class B2TEdgeDescriptor : IElementDescriptor<B2TEdge>
             .MapSourceId(BlockNodeDescriptor.IdSpace, e => e.Source.BlockMetadata.Height)
             .MapTargetId(TxNodeDescriptor.IdSpace, e => e.Target.Txid)
             .Map(e => e.Value)
-            .Map(e => e.BlockHeight)
+            .Map(e => e.Height)
             .MapEdgeType(e => e.Relation)
             .ToArray());
 
@@ -24,7 +24,7 @@ public class B2TEdgeDescriptor : IElementDescriptor<B2TEdge>
             source: source,
             target: target,
             timestamp: 0,
-            blockHeight: _mapper.GetValue(e => e.BlockHeight, props),
+            height: _mapper.GetValue(e => e.Height, props),
             value: _mapper.GetValue(e => e.Value, props));
     }
 }

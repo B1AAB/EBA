@@ -1,7 +1,4 @@
-﻿using EBA.Graph.Bitcoin.Descriptors;
-using EBA.Utilities;
-
-namespace EBA.Graph.Model;
+﻿namespace EBA.Graph.Model;
 
 public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<TSource, TTarget>>
     where TSource : notnull, INode
@@ -16,23 +13,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
     public long Value { get; }
     public RelationType Relation { get; }
     public uint Timestamp { get; }
-    public long BlockHeight { get; }
-
-    public static string Header
-    {
-        get
-        {
-            return string.Join(_delimiter, new string[]
-            {
-                "Source",
-                "Target",
-                "Value",
-                "EdgeType",
-                "TimeOffsetFromGenesisBlock",
-                "BlockHeight"
-            });
-        }
-    }
+    public long Height { get; }
 
     private const string _delimiter = "\t";
 
@@ -42,14 +23,14 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
         RelationType relation,
         long value,
         uint timestamp,
-        long blockHeight)
+        long height)
     {
         Source = source;
         Target = target;
         Value = value;
         Relation = relation;
         Timestamp = timestamp;
-        BlockHeight = blockHeight;
+        Height = height;
 
         Id = GetHashCode().ToString();
 
@@ -62,7 +43,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
         [
             nameof(Value),
             nameof(Relation),
-            nameof(BlockHeight)
+            nameof(Height)
         ];
     }
 
@@ -72,7 +53,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
         [
             Value,
             (double)Relation,
-            BlockHeight
+            Height
         ];
     }
 

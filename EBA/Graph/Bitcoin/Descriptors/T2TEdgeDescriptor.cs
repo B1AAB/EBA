@@ -11,7 +11,7 @@ public class T2TEdgeDescriptor : IElementDescriptor<T2TEdge>
             .MapSourceId(TxNodeDescriptor.IdSpace, e => e.Source.Txid)
             .MapTargetId(TxNodeDescriptor.IdSpace, e => e.Target.Txid)
             .Map(e => e.Value)
-            .Map(e => e.BlockHeight)
+            .Map(e => e.Height)
             .MapEdgeType(e => e.Relation)
             .ToArray());
 
@@ -25,7 +25,7 @@ public class T2TEdgeDescriptor : IElementDescriptor<T2TEdge>
             source: source,
             target: target,
             timestamp: 0,
-            blockHeight: _mapper.GetValue(e => e.BlockHeight, props),
+            height: _mapper.GetValue(e => e.Height, props),
             value: _mapper.GetValue(e => e.Value, props),
             type: Enum.Parse<RelationType>(relationType, ignoreCase: true)); 
     }

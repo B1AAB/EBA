@@ -8,8 +8,8 @@ public class B2BEdgeDescriptor : IElementDescriptor<B2BEdge>
     public static ElementMapper<B2BEdge> StaticMapper => _mapper;
     private static readonly ElementMapper<B2BEdge> _mapper = new(
         new MappingBuilder<B2BEdge>()
-            .MapSourceId(BlockNodeDescriptor.IdSpace, e => e.BlockHeight)
-            .MapTargetId(BlockNodeDescriptor.IdSpace, e => e.BlockHeight)
+            .MapSourceId(BlockNodeDescriptor.IdSpace, e => e.Height)
+            .MapTargetId(BlockNodeDescriptor.IdSpace, e => e.Height)
             .MapEdgeType(e => e.Relation)
             .ToArray());
 
@@ -25,7 +25,7 @@ public class B2BEdgeDescriptor : IElementDescriptor<B2BEdge>
             return
             [
                 $"MATCH (target:Block), (source:Block) " +
-                $"\r\nWHERE target.{nameof(B2BEdge.BlockHeight)} + 1 = source.{nameof(B2BEdge.BlockHeight)} " +
+                $"\r\nWHERE target.{nameof(B2BEdge.Height)} + 1 = source.{nameof(B2BEdge.Height)} " +
                 $"\r\nMERGE (target)-[:{RelationType.Follows}]->(source)"
             ];
         }

@@ -21,7 +21,7 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
         _logger.LogInformation("Deserialized {n} batches from {filename}.", batches.Count, _options.Bitcoin.MapSpends.BatchesFilename);
 
         _processStep = "[1/4] Block-to-batch mapping:";
-        GetBlockHeightToBatchMapping(_options, batches, out var blockToBatch, out var blockNodes);
+        GetHeightToBatchMapping(_options, batches, out var blockToBatch, out var blockNodes);
 
         _processStep = "[2/4] Collecting Txo spending:";
         await CreatePerBatchSpentUtxo(batches, blockToBatch, ct);
@@ -33,7 +33,7 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
         await SetSupplyAmount(batches, blockNodes, ct);
     }
 
-    private void GetBlockHeightToBatchMapping(
+    private void GetHeightToBatchMapping(
         Options options,
         List<Batch> batches,
         out Dictionary<long, Batch> blockToBatch,
@@ -73,7 +73,7 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
             batch.FilenamePrefix + "_spent_utxos.csv");
     }
 
-    private async Task CreatePerBatchSpentUtxo(List<Batch> batches, Dictionary<long, Batch> blockHeightToBatchMapping, CancellationToken ct)
+    private async Task CreatePerBatchSpentUtxo(List<Batch> batches, Dictionary<long, Batch> heightToBatchMapping, CancellationToken ct)
     {
         _logger.LogInformation("{s} Creating per-batch spent Txo files; these are temporary files and can be deleted after process ends.", _processStep);
 
@@ -95,7 +95,7 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
 
                 await foreach (var cols in IElementCodec.ReadCsvAsync(batch.GetFilename(S2TEdge.Kind), ct))
                 {
-                    var writer = blockToWriterMapping[blockHeightToBatchMapping[creationHeightParser(cols)].Name];
+                    var writer = blockToWriterMapping[heightToBatchMapping[creationHeightParser(cols)].Name];
                     writer.WriteLine(string.Join(Options.CsvDelimiter,
                         txidParser(cols), // preout txid
                         voutParser(cols),  // preout vout

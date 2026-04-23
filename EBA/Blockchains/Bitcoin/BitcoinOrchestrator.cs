@@ -28,11 +28,11 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         _logger.LogInformation("Head of the chain is at block {block:n0}.", chainInfo.Blocks);
         options.Bitcoin.Traverse.To ??= chainInfo.Blocks;
 
-        SetupPersistedQueues(options, out var blockHeightQueue, out var failedBlocksQueue);
+        SetupPersistedQueues(options, out var heightQueue, out var failedBlocksQueue);
 
         await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile, cT);
 
-        if (blockHeightQueue.Count == 0)
+        if (heightQueue.Count == 0)
         {
             _logger.LogInformation("No blocks to process.");
             return;
@@ -44,7 +44,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         try
         {
             stopwatch.Start();
-            await TraverseBlocksAsync(options, blockHeightQueue, failedBlocksQueue, cT);
+            await TraverseBlocksAsync(options, heightQueue, failedBlocksQueue, cT);
 
             stopwatch.Stop();
             _logger.LogInformation("Successfully finished traverse in {et}.", stopwatch.Elapsed);

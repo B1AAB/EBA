@@ -5,17 +5,17 @@ namespace EBA.Infrastructure.StartupSolutions;
 internal static class ContextExtension
 {
     private static readonly string _loggerKey = "ILogger";
-    private static readonly string _blockHeightKey = "BlockHeight";
+    private static readonly string _heightKey = "Height";
 
-    public static Context SetBlockHeight(this Context context, long height)
+    public static Context SetHeight(this Context context, long height)
     {
-        context[_blockHeightKey] = height;
+        context[_heightKey] = height;
         return context;
     }
 
-    public static long? GetBlockHeight(this Context context)
+    public static long? GetHeight(this Context context)
     {
-        if (context.TryGetValue(_blockHeightKey, out var h))
+        if (context.TryGetValue(_heightKey, out var h))
             return (long)h;
 
         return null;
