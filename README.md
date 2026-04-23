@@ -4,9 +4,9 @@
 </p>
 
 
-**EBA addresses a long-standing issue that has hindered 
-the ML community from developing applications for Bitcoin: 
-a lack of ML-first data.** 
+**EBA eliminates the steepest barrier to building machine 
+learning applications for Bitcoin: 
+the lack of structured, ML-native data.** 
 EBA interfaces with the Bitcoin network and 
 creates a graph of the full history of transactions recorded on-chain. 
 On this graph, the nodes are Bitcoin _scripts_ (aka _addresses_), 
@@ -28,18 +28,19 @@ by traversing these paths.
 
 
 
-This graph is built for machine learning, 
-particularly Graph Neural Networks (GNNs),
-allowing a graph-based model to 
-aggregate information from neighbors through message passing and 
-learn the topology of fund flows for various applications 
-across the vibrant cryptocurrency ecosystem, including:
+> [!IMPORTANT]
+> [See the graph in action!](https://demo.b1aab.ai) 🚀
+>
+> Trace the real-world transaction topology of the mysterious Individual X in [our live interactive demo](https://demo.b1aab.ai); a sneak peek into the upcoming **EBA v2**! 
+[(Context slides)](https://docs.google.com/presentation/d/1BWJutm-5GMxFCUB59og05l6nmS2xhJ7yJ6xZMG7ufro/edit?usp=sharing)
 
-*   Exploring economic evolution and temporal behaviors.
-*   Analyzing network dynamics and trading patterns.
-*   Identifying suspicious or illicit activities.
-*   Benchmarking large-scale, graph-based machine learning models.
 
+
+This graph is built natively for machine learning, 
+particularly Graph Neural Networks (GNNs). 
+It enables models to aggregate information from neighbors 
+through message passing and learn the deep topology of 
+fund flows across the cryptocurrency ecosystem.
 
 <p align="center">
     |
@@ -67,7 +68,6 @@ We share the complete ETL pipeline and all the data it generates.
     <a href="https://eba.b1aab.ai/releases/tags/data-releases">Data Releases</a> 
     |
 </p>
-
 
 
 To simplify working with the pipeline and its resources, 
