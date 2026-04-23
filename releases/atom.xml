@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://eba.b1aab.ai/releases</id>
     <title>EBA Blog</title>
-    <updated>2026-04-22T00:58:49.000Z</updated>
+    <updated>2026-04-23T02:25:12.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://eba.b1aab.ai/releases"/>
     <subtitle>EBA Blog</subtitle>
@@ -10,7 +10,7 @@
         <title type="html"><![CDATA[Bitcoin Graph v1]]></title>
         <id>https://eba.b1aab.ai/releases/data-release/v1</id>
         <link href="https://eba.b1aab.ai/releases/data-release/v1"/>
-        <updated>2026-04-22T00:58:49.000Z</updated>
+        <updated>2026-04-23T02:25:12.000Z</updated>
         <summary type="html"><![CDATA[Initial data release.]]></summary>
         <content type="html"><![CDATA[<p>This data release provides the full output of the ETL pipeline,
 covering the Bitcoin blockchain up to block height <code>863 000</code>.
@@ -31,14 +31,12 @@ alongside pre-sampled communities and per-block summary statistics.</p>
 <li class="">
 <p>Download Neo4j format (<code>1.17TB</code>) from:</p>
 <ul>
-<li class=""><a href="https://drive.google.com/drive/folders/11X6QiVvWSOzxvDIAD0OWu3g2Sa0as3UQ?usp=drive_link" target="_blank" rel="noopener noreferrer" class="">Google Drive</a></li>
 <li class="">AWS: <code>s3://bitcoin-graph/v1/data_to_import_neo4j/</code> (<a class="" href="https://eba.b1aab.ai/docs/bitcoin/etl/import">Walkthrough</a>)</li>
 </ul>
 </li>
 <li class="">
 <p>Download Neo4j database dump (<code>731GB</code>) from:</p>
 <ul>
-<li class=""><a href="https://drive.google.com/drive/folders/1bAsjgVaIQrG2TDGkMtIEDPX8xKoiHJUf?usp=drive_link" target="_blank" rel="noopener noreferrer" class="">Google Drive</a></li>
 <li class="">AWS: <code>s3://bitcoin-graph/v1/neo4j_db_dump/</code> (<a class="" href="https://eba.b1aab.ai/docs/bitcoin/etl/restore">Walkthrough</a>)</li>
 </ul>
 </li>
