@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using Microsoft.Extensions.Primitives;
+using System.Linq.Expressions;
 
 namespace EBA.Graph.Model;
 
@@ -111,11 +112,7 @@ public class ElementMapper<T>
             throw new KeyNotFoundException(
                 $"No mapping found for property '{propertyName}'.");
 
-        return
-            _mappings[index].Deserialize<V>(properties)
-            ?? throw new InvalidOperationException(
-                $"The property '{propertyName}' returned null, " +
-                $"but the requested type '{typeof(V).Name}' does not accept nulls.");
+        return _mappings[index].Deserialize<V>(properties)!;
     }
 
     public Func<string[], TProperty> GetFieldParser<TProperty>(Expression<Func<T, TProperty>> e)
