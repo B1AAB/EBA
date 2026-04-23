@@ -243,7 +243,7 @@ public class BitcoinStrategyFactory : IStrategyFactory
         return (source, target) switch
         {
             (CoinbaseNode, TxNode v) => C2TEdgeDescriptor.Deserialize(v, properties),
-            (TxNode u, TxNode v) => T2TEdgeDescriptor.Deserialize(u, v, properties),
+            (TxNode u, TxNode v) => T2TEdgeDescriptor.Deserialize(u, v, properties, relationship.Type),
             (BlockNode u, TxNode v) => B2TEdgeDescriptor.Deserialize(u, v, properties),
             (TxNode u, ScriptNode v) => T2SEdgeDescriptor.Deserialize(u, v, properties),
             (ScriptNode u, TxNode v) => S2TEdgeDescriptor.Deserialize(u, v, properties),

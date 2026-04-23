@@ -18,7 +18,8 @@ public class T2TEdgeDescriptor : IElementDescriptor<T2TEdge>
     public static T2TEdge Deserialize(
         TxNode source, 
         TxNode target, 
-        IReadOnlyDictionary<string, object> props)
+        IReadOnlyDictionary<string, object> props,
+        string relationType)
     {
         return new T2TEdge(
             source: source,
@@ -26,6 +27,6 @@ public class T2TEdgeDescriptor : IElementDescriptor<T2TEdge>
             timestamp: 0,
             blockHeight: _mapper.GetValue(e => e.BlockHeight, props),
             value: _mapper.GetValue(e => e.Value, props),
-            type: _mapper.GetValue(e => e.Relation, props));
+            type: Enum.Parse<RelationType>(relationType, ignoreCase: true)); 
     }
 }

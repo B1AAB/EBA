@@ -9,7 +9,7 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
 
     public ScriptType ScriptType { get; }
 
-    public string HexBase64 { get; } = string.Empty;
+    public string? HexBase64 { get; }
 
     public string SHA256Hash { get; }
 
@@ -17,7 +17,7 @@ public class ScriptNode : Node, IComparable<ScriptNode>, IEquatable<ScriptNode>
         string address,
         ScriptType scriptType,
         string sha256Hash,
-        string hexBase64 = "",
+        string? hexBase64 = null,
         double? originalIndegree = null,
         double? originalOutdegree = null,
         double? hopsFromRoot = null,
