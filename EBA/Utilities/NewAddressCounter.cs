@@ -8,7 +8,7 @@ internal class NewAddressCounter(ILogger logger)
 
     private class Stats
     {
-        public int BlockHeight { set; get; }
+        public int Height { set; get; }
         public int AddressesInBlockCount { get; set; }
         public int UniqueAddressesInBlockCount { set; get; }
         public int UniqueAddressesCount { set; get; }
@@ -34,18 +34,18 @@ internal class NewAddressCounter(ILogger logger)
             var cols = line.Split(_delimiter);
             return new Stats()
             {
-                BlockHeight = int.Parse(cols[0]),
+                Height = int.Parse(cols[0]),
                 AddressesInBlockCount = int.Parse(cols[1]),
                 UniqueAddressesInBlockCount = int.Parse(cols[2]),
                 UniqueAddressesCount = int.Parse(cols[3])
             };
         }
 
-        public static string ToString(string blockHeight, int addressInBlockCount, int uniqueAddressesInBlockCount, int uniqueAddressCount)
+        public static string ToString(string height, int addressInBlockCount, int uniqueAddressesInBlockCount, int uniqueAddressCount)
         {
             return string.Join(
                 _delimiter,
-                blockHeight, addressInBlockCount, uniqueAddressesInBlockCount, uniqueAddressCount);
+                height, addressInBlockCount, uniqueAddressesInBlockCount, uniqueAddressCount);
         }
 
         public string ToStringWithoutHeight()
@@ -59,7 +59,7 @@ internal class NewAddressCounter(ILogger logger)
         {
             return string.Join(
                 _delimiter,
-                BlockHeight, AddressesInBlockCount, UniqueAddressesInBlockCount, UniqueAddressesCount);
+                Height, AddressesInBlockCount, UniqueAddressesInBlockCount, UniqueAddressesCount);
         }
     }
 
@@ -108,7 +108,7 @@ internal class NewAddressCounter(ILogger logger)
                 _logger.LogInformation("Read {counter} Lines.", lineCounter.ToString("N0"));
 
             var cols = line.Split('\t');
-            var blockHeight = cols[0];
+            var height = cols[0];
             var blockAddresses = cols[1].Split(';');
             var newAddressesCounter = 0;
 
@@ -153,11 +153,11 @@ internal class NewAddressCounter(ILogger logger)
             }
             */
             // the following is a simplified alternative to the above.
-            if (!blocks.Add(blockHeight))
+            if (!blocks.Add(height))
             {
                 _logger.LogWarning(
                     "Duplicate block {b} found, manually check the files if the duplicated " +
-                    "entries have the same addresses. This process considers the addresses in the first entry.", blockHeight);
+                    "entries have the same addresses. This process considers the addresses in the first entry.", height);
                 continue;
             }
 
@@ -177,7 +177,7 @@ internal class NewAddressCounter(ILogger logger)
             if (ct.IsCancellationRequested)
                 return;
 
-            streamWriter.WriteLine(Stats.ToString(blockHeight, blockAddresses.Length, blockSpecificAddresses.Count, newAddressesCounter));
+            streamWriter.WriteLine(Stats.ToString(height, blockAddresses.Length, blockSpecificAddresses.Count, newAddressesCounter));
         }
 
         _logger.LogInformation("Finished extracting address stats, and persisting them in a temp file ({tmpFilename}).", outFilename);
@@ -201,7 +201,7 @@ internal class NewAddressCounter(ILogger logger)
         while ((line = addressesStreamReader.ReadLine()) != null)
         {
             var stat = Stats.Parse(line);
-            stats.Add(stat.BlockHeight, stat);
+            stats.Add(stat.Height, stat);
         }
 
         if (ct.IsCancellationRequested)
@@ -222,8 +222,8 @@ internal class NewAddressCounter(ILogger logger)
 
             line = line.TrimEnd('\r', '\n', '\t');
 
-            var blockHeight = int.Parse(line.Split('\t')[0]);
-            var stat = stats[blockHeight];
+            var height = int.Parse(line.Split('\t')[0]);
+            var stat = stats[height];
             streamWriter.WriteLine($"{line}\t{stat.ToStringWithoutHeight()}");
         }
 

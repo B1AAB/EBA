@@ -9,7 +9,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
     public bool Generated { get; }
     public long CreationHeight { get; }
 
-    public long SpentHeight { get { return BlockHeight; } }
+    public long SpentHeight { get { return Height; } }
 
     public S2TEdge(
         ScriptNode source,
@@ -45,7 +45,7 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
             value: value,
             relation: Kind.Relation,
             timestamp: timestamp,
-            blockHeight: spentHeight)
+            height: spentHeight)
     {
         Txid = txid;
         Vout = vout;

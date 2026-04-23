@@ -12,7 +12,7 @@ public class C2TEdgeDescriptor : IElementDescriptor<C2TEdge>
             .MapSourceId(CoinbaseNode.Kind.ToString(), _ => CoinbaseNode.Kind)
             .MapTargetId(TxNodeDescriptor.IdSpace, e => e.Target.Txid)
             .Map(e => e.Value)
-            .Map(e => e.BlockHeight)
+            .Map(e => e.Height)
             .MapEdgeType(e => e.Relation)
             .ToArray());
 
@@ -24,6 +24,6 @@ public class C2TEdgeDescriptor : IElementDescriptor<C2TEdge>
             target: target,
             value: _mapper.GetValue(e => e.Value, props),
             timestamp: 0,
-            blockHeight: _mapper.GetValue(e => e.BlockHeight, props));
+            height: _mapper.GetValue(e => e.Height, props));
     }
 }

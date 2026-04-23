@@ -8,7 +8,7 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
 
     public long SpentHeight { get; }
 
-    public long CreationHeight => BlockHeight;
+    public long CreationHeight => Height;
 
     public T2SEdge(
         TxNode source,
@@ -23,7 +23,7 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
             relation: Kind.Relation,
             value: output.Value,
             timestamp: timestamp,
-            blockHeight: creationHeight)
+            height: creationHeight)
     {
         Vout = output.N;
         SpentHeight = spentHeight;
@@ -43,7 +43,7 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
             relation: Kind.Relation,
             value: value, 
             timestamp: timestamp, 
-            blockHeight: creationHeight)
+            height: creationHeight)
     {
         Vout = outputIndex;
         SpentHeight = spentHeight;

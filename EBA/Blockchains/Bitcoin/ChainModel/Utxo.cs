@@ -14,22 +14,22 @@ public class Utxo
 
     public bool IsGenerated { set; get; }
 
-    public long CreatedInBlockHeight { get; }
+    public long CreatedInHeight { get; }
 
-    public long? SpentInBlockHeight { set; get; }
+    public long? SpentInHeight { set; get; }
 
     public Utxo(
         string id, string? address, long value, ScriptType scriptType, bool isGenerated,
-        long createdInBlockHeight,
-        long? spentInBlockHeight = null)
+        long createdInHeight,
+        long? spentInHeight = null)
     {
         Id = id;
         Address = address ?? Id;
         Value = value;
         ScriptType = scriptType;
         IsGenerated = isGenerated;
-        CreatedInBlockHeight = createdInBlockHeight;
-        SpentInBlockHeight = spentInBlockHeight;
+        CreatedInHeight = createdInHeight;
+        SpentInHeight = spentInHeight;
     }
 
     public Utxo(
@@ -57,19 +57,5 @@ public class Utxo
     public static string GetTxid(string id)
     {
         return id.Split('-')[1];
-    }
-
-    public static string GetHeader()
-    {
-        return string.Join(
-            '\t',
-            "Id",
-            "Value",
-            "CreatedInBlockHeights",
-            "CreatedInBlockHeightsCount",
-            "SpentInBlockHeights",
-            "SpentInBlockHeightsCount",
-            "ScriptType",
-            "IsGenerated(0=No,1=Yes)");
     }
 }
