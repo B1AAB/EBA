@@ -35,6 +35,9 @@ public class CodecBase<TElement> : IElementCodec
 
             var bufferSize = 1 << 16; // 2^16 = 65536 --> 64KB
 
+            // exclude BOM for UTF-8 (utf identifier) since it breaks Neo4j import. 
+            var encoding = new UTF8Encoding(false);
+
             if (_serializeCompressed)
             {
                 _writer = new StreamWriter(
@@ -48,7 +51,7 @@ public class CodecBase<TElement> : IElementCodec
                             FileOptions.Asynchronous | FileOptions.SequentialScan),
                         CompressionLevel.Fastest,
                         leaveOpen: false),
-                    Encoding.UTF8,
+                    encoding,
                     bufferSize: bufferSize,
                     leaveOpen: false);
             }
@@ -57,7 +60,7 @@ public class CodecBase<TElement> : IElementCodec
                 _writer = new StreamWriter(
                     _filename, 
                     append: false,
-                    Encoding.UTF8,
+                    encoding,
                     bufferSize: bufferSize);
             }
         }
