@@ -52,7 +52,7 @@ public class PropertyMapping<T>
         if (value is not string && value is IEnumerable enumerable)
         {
             return string.Join(
-                ";", 
+                ";",
                 enumerable.Cast<object>().Select(x => x?.ToString() ?? string.Empty));
         }
 
@@ -76,7 +76,7 @@ public class PropertyMapping<T>
         if (typeof(V).IsArray)
         {
             var elementType = typeof(V).GetElementType()!;
-            
+
             if (rawValue is string csvString)
             {
                 var parts = csvString.Split(';');
@@ -84,14 +84,14 @@ public class PropertyMapping<T>
                 for (int i = 0; i < parts.Length; i++)
                     if (!string.IsNullOrEmpty(parts[i]))
                         array.SetValue(Convert.ChangeType(parts[i], elementType), i);
-                        
+
                 return (V)(object)array;
             }
             else if (rawValue is IList list)
             {
                 int count = 0;
                 for (int i = 0; i < list.Count; i++)
-                    if (list[i] is not null) 
+                    if (list[i] is not null)
                         count++;
 
                 var array = Array.CreateInstance(elementType, count);
@@ -115,13 +115,54 @@ public class PropertyMapping<T>
 
     public V? Deserialize<V>(IReadOnlyDictionary<string, object> properties)
     {
-        return properties.TryGetValue(Property.Name, out var value) 
-            ? ConvertValue<V>(value) 
+        return properties.TryGetValue(Property.Name, out var value)
+            ? ConvertValue<V>(value)
             : default;
     }
 
     public V? DeserializeCsv<V>(string stringValue)
     {
         return ConvertValue<V>(stringValue);
+    }
+
+    public void WriteValue(TextWriter w, T source)
+    {
+        var value = _propertySelector(source);
+        if (value is null)
+            return;
+
+        if (value is string s)
+        {
+            w.Write(s);
+            return;
+        }
+
+        if (value is IFormattable f)
+        {
+            w.Write(f.ToString(null, System.Globalization.CultureInfo.InvariantCulture));
+            return;
+        }
+
+        if (value is IEnumerable e)
+        {
+            var first = true;
+            foreach (var item in e)
+            {
+                if (!first)
+                    w.Write(';');
+
+                first = false;
+                if (item is null)
+                    continue;
+
+                if (item is IFormattable fi)
+                    w.Write(fi.ToString(null, System.Globalization.CultureInfo.InvariantCulture));
+                else
+                    w.Write(item.ToString());
+            }
+            return;
+        }
+
+        w.Write(value.ToString());
     }
 }

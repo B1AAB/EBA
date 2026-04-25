@@ -213,13 +213,15 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             _batches = await Batch.DeserializeBatchesAsync(_options.Neo4j.BatchesFilename);
 
         if (_batches.Count == 0 || _batches[^1].GetMaxCount() >= _options.Neo4j.MaxEntitiesPerBatch)
+        {
             _batches.Add(new Batch(
                 _batches.Count.ToString(),
                 _options.WorkingDir,
                 _strategyFactory.NodeStrategies,
                 _strategyFactory.EdgeStrategies));
 
-        await Batch.SerializeBatchesAsync(_options.Neo4j.BatchesFilename, _batches);
+            await Batch.SerializeBatchesAsync(_options.Neo4j.BatchesFilename, _batches);
+        }
 
         return _batches[^1];
     }

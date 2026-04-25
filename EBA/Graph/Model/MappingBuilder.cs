@@ -77,11 +77,16 @@ public class MappingBuilder<T>
 
     public MappingBuilder<T> Map<TProperty>(Expression<Func<T, TProperty>> e)
     {
+        // this was a hot path in cpu profiling, 
+        // so compiling it once and caching it to avoid repeated compilation,
+        // resulted in better performance.
+        var compiled = e.Compile();
+
         _mappings.Add(new PropertyMapping<T>(
             new Property(
                 MappingBuilder.GetPropertyName(e),
                 MappingBuilder.ToFieldType(typeof(TProperty))),
-            x => e.Compile()(x)
+            x => compiled(x)
         ));
 
         return this;

@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Primitives;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
 namespace EBA.Graph.Model;
 
@@ -14,7 +13,7 @@ public class ElementMapper<T>
         _mappings = mappings;
 
         _propertyIndices = new Dictionary<string, int>(_mappings.Length);
-        for (int i = 0; i < _mappings.Length; i++)
+        for (var i = 0; i < _mappings.Length; i++)
             _propertyIndices[_mappings[i].Property.Name] = i;
 
         _cachedCsvHeader = string.Join(
@@ -27,6 +26,18 @@ public class ElementMapper<T>
     public string ToCsvRow(T source)
     {
         return string.Join(Options.CsvDelimiter, _mappings.Select(m => m.SerializeValue(source)));
+    }
+
+    public void WriteCsvRow(TextWriter writer, T source)
+    {
+        for (var i = 0; i < _mappings.Length; i++)
+        {
+            if (i > 0)
+                writer.Write(Options.CsvDelimiter);
+
+            _mappings[i].WriteValue(writer, source);
+        }
+        writer.WriteLine();
     }
 
     public Dictionary<string, object?> ToProperties(T source)
