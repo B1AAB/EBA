@@ -128,7 +128,7 @@ node files.
     Note: Since these files can be very large, 
     the command below is configured to use temporary on-disk files. 
     Ensure you have sufficient disk space (at least as much as the `combined_*` files) 
-    and are running on performant media (e.g., NVMe). 
+    and are running on performant media (e.g., SSD with NVMe interface). 
     Adjust the `--buffer-size` according to the available memory on your machine.
 
 

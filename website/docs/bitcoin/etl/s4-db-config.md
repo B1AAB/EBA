@@ -1,8 +1,8 @@
 ---
 title: Neo4j Config & Schema Init
-description: Step 8. Database Tuning and Constraint Definitions
+description: Step 4. Database Tuning and Constraint Definitions
 sidebar_label: Neo4j Configuration
-sidebar_position: 7
+sidebar_position: 5
 slug: /bitcoin/etl/db-conf
 ---
 

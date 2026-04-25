@@ -39,7 +39,7 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
         out Dictionary<long, Batch> blockToBatch,
         out SortedDictionary<long, BlockNode> blockNodes)
     {
-        _logger.LogInformation("{s} Reading Block node files to create block-to-batch mapping...", _processStep);
+        _logger.LogInformation("{s} Reading Block node files to create block-to-batch mapping.", _processStep);
 
         blockToBatch = [];
         blockNodes = [];
