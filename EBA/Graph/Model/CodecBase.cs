@@ -33,12 +33,33 @@ public class CodecBase<TElement> : IElementCodec
             _filename = filename;
             _writer?.Dispose();
 
-            if (_serializeCompressed)
-                _writer = new StreamWriter(new GZipStream(File.Create(_filename), CompressionLevel.Optimal));
-            else
-                _writer = new StreamWriter(_filename);
+            var bufferSize = 1 << 16; // 2^16 = 65536 --> 64KB
 
-            _writer.AutoFlush = true;
+            if (_serializeCompressed)
+            {
+                _writer = new StreamWriter(
+                    new GZipStream(
+                        new FileStream(
+                            _filename,
+                            FileMode.Create,
+                            FileAccess.Write,
+                            FileShare.None,
+                            bufferSize: bufferSize,
+                            FileOptions.Asynchronous | FileOptions.SequentialScan),
+                        CompressionLevel.Fastest,
+                        leaveOpen: false),
+                    Encoding.UTF8,
+                    bufferSize: bufferSize,
+                    leaveOpen: false);
+            }
+            else
+            {
+                _writer = new StreamWriter(
+                    _filename, 
+                    append: false,
+                    Encoding.UTF8,
+                    bufferSize: bufferSize);
+            }
         }
         return _writer;
     }
@@ -51,9 +72,23 @@ public class CodecBase<TElement> : IElementCodec
     public async Task WriteCsvAsync(IEnumerable<TElement> elements, string filename)
     {
         var writer = GetStreamWriter(filename);
-        foreach (var x in elements)
+        var mapper = Descriptor.Mapper;
+        
+        // This piece shows better performance in cpu profile compared to using one foreach loop.
+        if (elements is TElement[] eArray)
         {
-            await writer.WriteLineAsync(Descriptor.Mapper.ToCsvRow(x));
+            for (var i = 0; i < eArray.Length; i++)
+                mapper.WriteCsvRow(writer, eArray[i]);
+        }
+        else if (elements is List<TElement> eList)
+        {
+            for (var i = 0; i < eList.Count; i++)
+                mapper.WriteCsvRow(writer, eList[i]);
+        }
+        else
+        {
+            foreach (var x in elements)
+                mapper.WriteCsvRow(writer, x);
         }
     }
 
@@ -74,7 +109,16 @@ public class CodecBase<TElement> : IElementCodec
 
     public Task WriteCsvAsync<T>(IEnumerable<T> elements, string filename) where T : IGraphElement
     {
-        return WriteCsvAsync(elements.Cast<TElement>(), filename);
+        if (elements is IEnumerable<TElement> typed)
+            return WriteCsvAsync(typed, filename);
+
+        return WriteCsvAsync(CastIter(elements), filename);
+
+        static IEnumerable<TElement> CastIter(IEnumerable<T> src)
+        {
+            foreach (var e in src) 
+                yield return (TElement)(object)e!;
+        }
     }
 
     public void Dispose()
