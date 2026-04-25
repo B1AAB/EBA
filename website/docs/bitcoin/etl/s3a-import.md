@@ -1,7 +1,7 @@
 ---
 title: Import into Neo4j
-description: Step 6. Import into neo4j
-sidebar_position: 5
+description: Step 3. Import into neo4j
+sidebar_position: 3
 slug: /bitcoin/etl/import
 ---
 
@@ -107,45 +107,60 @@ meaning it does not support incremental updates to an existing graph.
     </TabItem>
     </Tabs>
 
-    Verify that your data directory contains the correctly batched files. 
-    You can use the following command to inspect the file distribution by type 
-    (ignoring timestamp prefixes):
+5. [Optional] Verify that your data directory contains the correctly batched files. 
 
+    <details>
 
-    ```shell
-    ls -1 | sed -E "s/^[0-9]+_/[Timestamp]_/" | sort | uniq -c
-    ```
+        <summary>Details</summary>
 
-    You should see header files (e.g., `BitcoinGraph_header.tsv.gz`), 
-    batched edge files (e.g., `195 [Timestamp]_BitcoinS2S.tsv.gz`), and the unique node files.
+        You can use the following command to inspect the file distribution by type 
+        (ignoring timestamp prefixes):
 
-    ```text 
-    1   BitcoinB2S_header.tsv.gz
-    1   BitcoinB2T_header.tsv.gz
-    1   BitcoinC2S_header.tsv.gz
-    1   BitcoinC2T_header.tsv.gz
-    1   BitcoinCoinbase.tsv.gz
-    1   BitcoinGraph_header.tsv.gz
-    1   BitcoinS2B_header.tsv.gz
-    1   BitcoinS2S_header.tsv.gz
-    1   BitcoinScriptNode_header.tsv.gz
-    1   BitcoinT2B_header.tsv.gz
-    1   BitcoinT2T_header.tsv.gz
-    1   BitcoinTxNode_header.tsv.gz
-    195 [Timestamp]_BitcoinC2S.tsv.gz
-    195 [Timestamp]_BitcoinC2T.tsv.gz
-    1   [Timestamp]_BitcoinGraph.tsv.gz
-    195 [Timestamp]_BitcoinS2S.tsv.gz
-    195 [Timestamp]_BitcoinT2T.tsv.gz
-    195 [Timestamp]_byC2S_BitcoinB2S.tsv.gz
-    195 [Timestamp]_byC2T_BitcoinB2T.tsv.gz
-    195 [Timestamp]_byS2S_BitcoinB2S.tsv.gz
-    195 [Timestamp]_byS2S_BitcoinS2B.tsv.gz
-    195 [Timestamp]_byT2T_BitcoinB2T.tsv.gz
-    195 [Timestamp]_byT2T_BitcoinT2B.tsv.gz
-    1   unique_BitcoinScriptNode.tsv.gz
-    1   unique_BitcoinTxNode.tsv.gz
-    ```
+        ```shell
+        ls -1 | sed -E "s/^[0-9]+_/[Timestamp]_/" | sort | uniq -c
+        ```
+
+        You should see header files (e.g., `BitcoinGraph_header.tsv.gz`), 
+        batched edge files (e.g., `195 [Timestamp]_BitcoinS2S.tsv.gz`), and the unique node files.
+
+        ```text 
+        1 Coinbase.csv.gz
+        1 [Timestamp]_bitcoin_blocks_failed_to_process.eba
+        1 [Timestamp]_bitcoin_blocks_to_process.eba
+        254 [Timestamp]_edges_Block_Confirms_Tx.csv.gz
+        254 [Timestamp]_edges_Coinbase_Mints_Tx.csv.gz
+        254 [Timestamp]_edges_Script_Redeems_Tx.csv.gz
+        254 [Timestamp]_edges_Tx_Credits_Script.csv.gz
+        254 [Timestamp]_edges_Tx_Credits_Script_with_txo_spent_height_set.csv.gz
+        254 [Timestamp]_edges_Tx_Fee_Tx.csv.gz
+        254 [Timestamp]_edges_Tx_Transfers_Tx.csv.gz
+        254 [Timestamp]_nodes_Block.csv.gz
+        254 [Timestamp]_nodes_Block_supply_updated.csv.gz
+        254 [Timestamp]_nodes_Script.csv.gz
+        254 [Timestamp]_nodes_Tx.csv.gz
+        254 [Timestamp]_spent_utxos.csv
+        1 [Timestamp]_status.json
+        1 batches.json
+        1 combined_nodes_Script.csv
+        1 combined_nodes_Tx.csv
+        1 header_edges_Block_Confirms_Tx.csv.gz
+        1 header_edges_Block_Follows_Block.csv.gz
+        1 header_edges_Coinbase_Mints_Tx.csv.gz
+        1 header_edges_Script_Redeems_Tx.csv.gz
+        1 header_edges_Tx_Credits_Script.csv.gz
+        1 header_edges_Tx_Fee_Tx.csv.gz
+        1 header_edges_Tx_Transfers_Tx.csv.gz
+        1 header_nodes_Block.csv.gz
+        1 header_nodes_Script.csv.gz
+        1 header_nodes_Tx.csv.gz
+        1 schema.cypher
+        1 sorted_nodes_Script.csv
+        1 sorted_nodes_Tx.csv
+        1 unique_nodes_Script.csv.gz
+        1 unique_nodes_Tx.csv.gz
+        ```
+
+    </details>
 
 5.  Determine the optimal heap size for the import process. 
     For a graph of this magnitude, memory configuration is critical for performance. 
@@ -205,18 +220,25 @@ meaning it does not support incremental updates to an existing graph.
     </Tabs>
 
 
-7.  Once the import concludes, restart the Neo4j service. 
-    We also recommend installing the 
-    [APOC library](https://neo4j.com/docs/apoc/current/installation/), 
-    as it is needed in EBA for sampling communities.
+7.  Once the import concludes, restart the Neo4j service, and install the
+    [APOC library](https://neo4j.com/docs/apoc/current/installation/).
 
 8.  [Update Neo4j database configuration](./db-conf).
 
 9. Create indexes and apply constraints.
 
+    <Tabs
+        groupId="os"
+        values={[
+            { label: 'Windows', value: 'windows' }
+        ]
+    }>
+    <TabItem value="windows">
     ```shell
     & "$env:NDIR\bin\cypher-shell.bat" `
         -u neo4j `
         -p password `
         -f "$env:GDIR\schema.cypher"
     ```
+    </TabItem>
+    </Tabs>

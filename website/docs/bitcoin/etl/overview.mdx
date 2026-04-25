@@ -79,7 +79,7 @@ based on your specific goals and available resources.
         </TabItem>
         <TabItem value="resources">
 
-            ~1 week runtime, ~900GB storage, ~800GB Internet traffic.
+            `~1` week runtime, `~900GB` storage, `~800GB` Internet traffic.
 
         </TabItem>
         </Tabs>
@@ -100,10 +100,7 @@ based on your specific goals and available resources.
         <TabItem value="when">
 
             After completing Step 1, 
-            to generate the Bitcoin graph in TSV files, 
-            block-level summary statistics, 
-            TXO lifecycle, 
-            or Bitcoin address statistics.
+            to generate the Bitcoin graph in TSV files.
 
         </TabItem>
         <TabItem value="checkpoint">
@@ -117,15 +114,14 @@ based on your specific goals and available resources.
         </TabItem>
         <TabItem value="resources">
 
-            2-3 days runtime, ~1.5TB storage.
+            `2-3` days runtime, `~1.5TB` storage.
 
         </TabItem>
         </Tabs>
 
 
-
     ---
-    * [**Step 3**: Address Statistics](./address-stats)
+    * [**Step 3**: Import Data into Neo4j](./import)
 
         <Tabs
             groupId="operating-systems"
@@ -138,73 +134,7 @@ based on your specific goals and available resources.
         }>
         <TabItem value="when">
 
-            You may run this optional step if 
-            you need detailed summary statistics about script addresses. 
-            This step runs on the raw address statistics generated in step 2.
-
-
-        </TabItem>
-        <TabItem value="checkpoint">
-
-            * [Block summary statistics](https://www.kaggle.com/datasets/aab/bitcoin-block-metadata)
-
-        </TabItem>
-        <TabItem value="resources">
-
-            ~1 day runtime, ~300GB storage.
-
-        </TabItem>
-        </Tabs>
-
-
-
-    ---
-    * [**Step 4**: TXO Lifecycle](./txo-lifecycle)
-
-        <Tabs
-            groupId="operating-systems"
-            defaultValue="when"
-            values={[
-                { label: 'When to Run', value: 'when' },
-                { label: 'System Requirements', value: 'resources' },
-                { label: 'Checkpoint', value: 'checkpoint' }
-            ]
-        }>
-        <TabItem value="when">
-
-            You may run this optional step if 
-            you need summary statistics on transaction output (TXO) lifecycles, such as coin dormancy.
-            This step runs on the raw TXO lifecycle data generated in step 2. 
-
-        </TabItem>
-        <TabItem value="checkpoint">
-
-            * [Block summary statistics](https://www.kaggle.com/datasets/aab/bitcoin-block-metadata)
-
-        </TabItem>
-        <TabItem value="resources">
-
-            ~1 day runtime, ~300GB storage.
-
-        </TabItem>
-        </Tabs>
-    
-
-    ---
-    * [**Step 5**: Import Data into Neo4j](./import)
-
-        <Tabs
-            groupId="operating-systems"
-            defaultValue="when"
-            values={[
-                { label: 'When to Run', value: 'when' },
-                { label: 'System Requirements', value: 'resources' },
-                { label: 'Checkpoint', value: 'checkpoint' }
-            ]
-        }>
-        <TabItem value="when">
-
-            This step imports the formatted TSV files from Step 5 into a Neo4j database to enable efficient graph exploration and custom graph sampling.
+            This step imports the formatted TSV files from Step 2 into a Neo4j database to enable efficient graph exploration and custom graph sampling.
 
         </TabItem>
         <TabItem value="checkpoint">
@@ -216,7 +146,7 @@ based on your specific goals and available resources.
         </TabItem>
         <TabItem value="resources">
 
-            ~2-3 weeks runtime, ~6TB storage.
+            `~2-3` weeks runtime, `~6TB` storage.
 
         </TabItem>
         </Tabs>
