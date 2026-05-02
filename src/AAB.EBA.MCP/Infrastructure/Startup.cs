@@ -6,7 +6,7 @@ using EBA.Graph.Db.Neo4jDb;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
-namespace AAB.EBA.MCP.Infrastructure.StartupSolutions;
+namespace AAB.EBA.MCP.Infrastructure;
 
 public class Startup
 {

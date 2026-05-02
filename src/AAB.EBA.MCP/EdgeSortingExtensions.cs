@@ -15,7 +15,7 @@ public static class EdgeSortingExtensions
         string t2sRelation = T2SEdge.Kind.Relation.ToString();
         string s2tRelation = S2TEdge.Kind.Relation.ToString();
 
-        return edges.OrderBy(edge =>
+        return [.. edges.OrderBy(edge =>
         {
             if (edge.Type == t2sRelation)
             {
@@ -29,6 +29,6 @@ public static class EdgeSortingExtensions
 
             // Fallback for any unknown edge types to push them to the end
             return long.MaxValue;
-        }).ToList();
+        })];
     }
 }

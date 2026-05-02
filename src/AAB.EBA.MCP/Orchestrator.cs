@@ -1,4 +1,4 @@
-﻿using AAB.EBA.MCP.Infrastructure.StartupSolutions;
+﻿using AAB.EBA.MCP.Infrastructure;
 using EBA.CLI.Config;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 

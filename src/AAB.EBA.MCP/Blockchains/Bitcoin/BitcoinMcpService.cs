@@ -42,7 +42,6 @@ public class BitcoinMcpService(IGraphDb db)
         return ScriptNodeDescriptor.Deserialize(node.Properties, null, null, null, null);
     }
 
-    // test with DLy2CSDGtuqFpdeyUZn7nx12viBEu97HNw34jQ5StRrV
     public async Task<long?> GetScriptBalanceAsync(
         string sha, 
         long height = long.MaxValue, 

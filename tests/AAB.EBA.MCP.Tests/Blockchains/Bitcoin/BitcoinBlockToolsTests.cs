@@ -26,14 +26,11 @@ public class BitcoinBlockToolsTests
         Assert.NotNull(jsonResult);
         Assert.NotEqual("Block at height 10 not found.", jsonResult);
 
-        // Parse the JSON into a JsonNode
         var node = JsonNode.Parse(jsonResult);
-        Assert.NotNull(node); // Prevents possible null reference on node
+        Assert.NotNull(node);
 
-        // Access the property and ensure it exists before casting
         var medianTimeNode = node["MedianTime"];
-        Assert.NotNull(medianTimeNode); // Prevents possible null reference on property
-
+        Assert.NotNull(medianTimeNode);
         Assert.Equal(1L, (long)medianTimeNode);
     }
 }
