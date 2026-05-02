@@ -1,0 +1,6 @@
+﻿namespace AAB.EBA.Blockchains;
+
+public interface IBlockchainOrchestrator
+{
+    public Task TraverseAsync(Options options, CancellationToken cT);
+}

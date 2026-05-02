@@ -1,5 +1,5 @@
-﻿using EBA.Blockchains.Bitcoin.GraphModel;
-using EBA.CLI.Config;
+﻿using AAB.EBA.Blockchains.Bitcoin.GraphModel;
+using AAB.EBA.CLI.Config;
 using Microsoft.Extensions.Logging.Abstractions;
 using Neo4j.Driver;
 

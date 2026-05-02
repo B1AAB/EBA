@@ -1,0 +1,174 @@
+﻿using AAB.EBA.Utilities;
+
+namespace AAB.EBA.Blockchains.Bitcoin.ChainModel;
+
+public class BlockMetadata
+{
+    [JsonPropertyName("hash")]
+    public string Hash { init; get; } = string.Empty;
+
+    [JsonPropertyName("confirmations")]
+    public int Confirmations { init; get; }
+
+    [JsonPropertyName("height")]
+    public long Height { init; get; }
+
+    [JsonPropertyName("version")]
+    public ulong Version { init; get; }
+
+    [JsonPropertyName("versionHex")]
+    public string VersionHex { init; get; } = string.Empty;
+
+    [JsonPropertyName("merkleroot")]
+    public string Merkleroot { init; get; } = string.Empty;
+
+    [JsonPropertyName("time")]
+    public uint Time { init; get; }
+
+    /// <summary>
+    /// See the following BIP on mediantime diff. compared to time.
+    /// https://github.com/bitcoin/bips/blob/master/bip-0113.mediawiki
+    /// </summary>
+    [JsonPropertyName("mediantime")]
+    public uint MedianTime { init; get; }
+
+    [JsonPropertyName("nonce")]
+    public ulong Nonce { init; get; }
+
+    [JsonPropertyName("bits")]
+    public string Bits { init; get; } = string.Empty;
+
+    [JsonPropertyName("difficulty")]
+    public double Difficulty { init; get; }
+
+    [JsonPropertyName("chainwork")]
+    public string Chainwork { init; get; } = string.Empty;
+
+    [JsonPropertyName("nTx")]
+    public int TransactionsCount { init; get; }
+
+    [JsonPropertyName("previousblockhash")]
+    public string PreviousBlockHash { init; get; } = string.Empty;
+
+    [JsonPropertyName("nextblockhash")]
+    public string NextBlockHash { init; get; } = string.Empty;
+
+    [JsonPropertyName("strippedsize")]
+    public int StrippedSize { init; get; }
+
+    [JsonPropertyName("size")]
+    public int Size { init; get; }
+
+    [JsonPropertyName("weight")]
+    public int Weight { init; get; }
+
+    public virtual int CoinbaseOutputsCount { init; get; }
+    public virtual long MintedBitcoins { init; get; }
+    public long ProvablyUnspendableOutputsCount
+    {
+        get { return OutputScriptTypeCount[ScriptType.NullData]; }
+    }
+    public long ProvablyUnspendableBitcoins
+    {
+        get { return OutputScriptTypeValue[ScriptType.NullData]; }
+    }
+
+    public virtual DescriptiveStatistics InputCountsStats { init; get; } = new DescriptiveStatistics();
+    public virtual DescriptiveStatistics OutputCountsStats { init; get; } = new DescriptiveStatistics();
+    public virtual DescriptiveStatistics InputValuesStats { init; get; } = new DescriptiveStatistics();
+    public virtual DescriptiveStatistics OutputValuesStats { init; get; } = new DescriptiveStatistics();
+    public virtual DescriptiveStatistics SpentOutputAgeStats { init; get; } = new DescriptiveStatistics();
+    public virtual DescriptiveStatistics FeesStats { init; get; } = new DescriptiveStatistics();
+
+    private static readonly ScriptType[] CachedScriptTypes = Enum.GetValues<ScriptType>();
+
+    public virtual Dictionary<ScriptType, long> InputScriptTypeCount { init; get; } = CachedScriptTypes.ToDictionary(k => k, v => 0L);
+    public virtual Dictionary<ScriptType, long> OutputScriptTypeCount { init; get; } = CachedScriptTypes.ToDictionary(k => k, v => 0L);
+
+    public virtual Dictionary<ScriptType, long> InputScriptTypeValue { init; get; } = CachedScriptTypes.ToDictionary(k => k, v => 0L);
+    public virtual Dictionary<ScriptType, long> OutputScriptTypeValue { init; get; } = CachedScriptTypes.ToDictionary(k => k, v => 0L);
+
+    public long? TotalSupply { set; get; } = null;
+    public long? TotalSupplyNominal { set; get; } = null;
+
+    public decimal? RealizedCap { set; get; } = null;
+    public decimal? UnrealizedLoss { set; get; } = null;
+    public decimal? UnrealizedProfit { set; get; } = null;
+
+    /// <summary>
+    /// Market Value (MV) or Market Capitalization (MC).
+    /// </summary>
+    public decimal? MarketCap
+    {
+        get
+        {
+            if (TotalSupply == null || Ohlcv == null)
+                return null;
+
+            return Ohlcv.GetFiatValue((long)TotalSupply);
+        }
+    }
+
+    /// <summary>
+    /// Net Unrealized Profit/Loss
+    /// </summary>
+    public decimal? NUPL
+    {
+        get
+        {
+            if (RealizedCap == null || MarketCap == null || MarketCap == 0)
+                return null;
+
+            return (MarketCap - RealizedCap) / MarketCap;
+        }
+    }
+
+    /// <summary>
+    /// Net Unrealized Loss
+    /// </summary>
+    public decimal? NUL
+    {
+        get
+        {
+            if (UnrealizedLoss == null || MarketCap == null || MarketCap == 0)
+                return null;
+            return UnrealizedLoss / MarketCap;
+        }
+    }
+
+    /// <summary>
+    /// Net Unrealized Profit
+    /// </summary>
+    public decimal? NUP
+    {
+        get
+        {
+            if (UnrealizedProfit == null || MarketCap == null || MarketCap == 0)
+                return null;
+            return UnrealizedProfit / MarketCap;
+        }
+    }
+
+    /// <summary>
+    /// Market Value to Realized Value
+    /// </summary>
+    public decimal? MVRV
+    {
+        get
+        {
+            if (RealizedCap == null || MarketCap == null || RealizedCap == 0)
+                return null;
+            return MarketCap / RealizedCap;
+        }
+    }
+
+    /// <summary>
+    /// Thermodynamic Cap
+    /// </summary>
+    public decimal? Thermocap { set; get; }
+
+    /// <summary>
+    /// Open-High-Low-Close-Volume data for the block, if available.
+    /// </summary>
+    public OHLCV? Ohlcv { set; get; } = null;
+}

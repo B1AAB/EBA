@@ -1,0 +1,31 @@
+﻿namespace AAB.EBA.Graph.Model;
+
+public interface INode : IGraphElement, IEquatable<INode>
+{
+    public string Id { get; }
+    public NodeKind NodeKind { get; }
+    public string? IdInGraphDb { get; }
+    public int InDegree { get; }
+    public int OutDegree { get; }
+
+    public List<IEdge<INode, INode>> IncomingEdges { get; }
+    public List<IEdge<INode, INode>> OutgoingEdges { get; }
+
+    public string[] GetFeatures();
+
+    public bool HasNullFeatures();
+
+    /// <summary>
+    /// this can return ID, or any unique label (e.g., script SHA256, or tx hash).
+    /// The goal of this method is to return unique label that would be more intuitive 
+    /// for the user than ID (such as Neo4j ID). 
+    /// </summary>
+    /// <returns></returns>
+    public abstract string GetIdPropertyName();
+
+    public void AddIncomingEdge(IEdge<INode, INode> incomingEdge);
+    public void AddOutgoingEdge(IEdge<INode, INode> outgoingEdge);
+
+    public void AddIncomingEdges(List<IEdge<INode, INode>> incomingEdges);
+    public void AddOutgoingEdges(List<IEdge<INode, INode>> outgoingEdges);
+}

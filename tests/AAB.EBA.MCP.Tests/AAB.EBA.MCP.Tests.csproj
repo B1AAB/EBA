@@ -24,8 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\EBA\EBA.csproj" />
     <ProjectReference Include="..\..\src\AAB.EBA.MCP\AAB.EBA.MCP.csproj" />
+    <ProjectReference Include="..\..\src\AAB.EBA\AAB.EBA.csproj" />
     <ProjectReference Include="..\AAB.EBA.GraphDb.Tests\AAB.EBA.GraphDb.Tests.csproj" />
   </ItemGroup>
 

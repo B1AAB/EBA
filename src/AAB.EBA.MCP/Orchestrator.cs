@@ -1,5 +1,5 @@
 ﻿using AAB.EBA.MCP.Infrastructure;
-using EBA.CLI.Config;
+using AAB.EBA.CLI.Config;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace AAB.EBA.MCP;

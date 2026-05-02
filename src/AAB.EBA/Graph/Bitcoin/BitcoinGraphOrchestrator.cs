@@ -1,0 +1,72 @@
+﻿using AAB.EBA.Graph.Bitcoin.TraversalAlgorithms;
+
+namespace AAB.EBA.Graph.Bitcoin;
+
+public class BitcoinGraphOrchestrator : IGraphOrchestrator<BitcoinGraph>, IDisposable
+{
+    private readonly Options _options;
+    private readonly IGraphDb<BitcoinGraph> _db;
+    private readonly ILogger<BitcoinGraphOrchestrator> _logger;
+
+    private bool _hasSerializedConstants = false;
+
+    private bool _disposed = false;
+
+    public BitcoinGraphOrchestrator(
+        Options options,
+        IGraphDb<BitcoinGraph> graphDb,
+        ILogger<BitcoinGraphOrchestrator> logger)
+    {
+        _options = options;
+        _db = graphDb;
+        _logger = logger;
+    }
+
+    public async Task SampleAsync(CancellationToken ct)
+    {
+        var sampler = _options.Bitcoin.GraphSample.TraversalAlgorithm switch
+        {
+            GraphTraversal.FFS => new ForestFire(_options, _db, _logger),
+            //GraphTraversal.BFS => throw new NotImplementedException(),
+            //GraphTraversal.DFS => throw new NotImplementedException(),
+            _ => throw new NotImplementedException("Unsupported graph traversal algorithm."),
+        };
+
+        await sampler.SampleAsync(ct);
+    }
+
+    public async Task SerializeAsync(BitcoinGraph g, CancellationToken ct)
+    {
+        if (!_hasSerializedConstants)
+        {
+            await _db.SerializeConstantsAndConstraintsAsync(ct);
+            _hasSerializedConstants = true;
+        }
+
+        await _db.SerializeAsync(g, ct);
+    }
+
+    public async Task AddMarketData(CancellationToken ct)
+    {
+        var augmentor = new OffChain.EconomicAugmentor(_options, _db, _logger);
+        await augmentor.SetBlockMarketIndicators(ct);
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _db.Dispose();
+            }
+
+            _disposed = true;
+        }
+    }
+}

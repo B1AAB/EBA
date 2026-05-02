@@ -1,6 +1,6 @@
-﻿using EBA.Blockchains.Bitcoin.ChainModel;
-using EBA.Blockchains.Bitcoin.GraphModel;
-using EBA.Graph.Model;
+﻿using AAB.EBA.Blockchains.Bitcoin.ChainModel;
+using AAB.EBA.Blockchains.Bitcoin.GraphModel;
+using AAB.EBA.Graph.Model;
 
 namespace AAB.EBA.GraphDb.Tests;
 

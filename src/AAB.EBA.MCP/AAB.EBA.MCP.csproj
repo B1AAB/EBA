@@ -23,8 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\EBA\EBA.csproj" />
     <ProjectReference Include="..\AAB.EBA.GraphDb\AAB.EBA.GraphDb.csproj" />
+    <ProjectReference Include="..\AAB.EBA\AAB.EBA.csproj" />
   </ItemGroup>
 
 </Project>
