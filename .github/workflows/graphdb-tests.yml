@@ -1,0 +1,32 @@
+name: GraphDB Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    # ubuntu-latest has Docker daemon pre-installed, 
+    # which is essential for Testcontainers to run Neo4j db.    
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore tests/AAB.EBA.GraphDb.Tests
+
+    - name: Build
+      run: dotnet build tests/AAB.EBA.GraphDb.Tests --no-restore --configuration Release
+
+    - name: Test
+      run: dotnet test tests/AAB.EBA.GraphDb.Tests --no-build --configuration Release --verbosity normal
