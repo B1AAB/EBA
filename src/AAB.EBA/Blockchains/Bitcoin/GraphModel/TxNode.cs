@@ -1,0 +1,130 @@
+﻿namespace AAB.EBA.Blockchains.Bitcoin.GraphModel;
+
+// A note on the nullable properties: 
+// These properties can be null when the Tx
+// this type corresponds to is an input transaction (vin) 
+// when reading transactions from the Bitcoin blockchain.
+// In this case, minimal information about the Tx is available, 
+// as opposed to when the Tx is an output transaction (vout).
+// An example is:
+//  {"txid": "0437cd7f8525ceed2324359c2d0ba26006d92d856a9c20fa0241106ee5a597c9"}
+// This Tx is referenced as input in Tx #2 at block height 170. 
+
+public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
+{
+    public new static NodeKind Kind => NodeKind.Tx;
+    public override NodeKind NodeKind => Kind;
+
+    public string Txid { get; }
+    public ulong? Version { get; }
+    public int? Size { get; }
+    public int? VSize { get; }
+    public int? Weight { get; }
+    public long? LockTime { get; }
+
+    public Tx? Tx { get; }
+
+    public TxNode(string txid) : base(txid)
+    {
+        Txid = txid;
+    }
+
+    public TxNode(
+        string txid,
+        ulong? version,
+        int? size,
+        int? vSize,
+        int? weight,
+        long? lockTime) : base(txid)
+    {
+        Txid = txid;
+        Version = version;
+        Size = size;
+        VSize = vSize;
+        Weight = weight;
+        LockTime = lockTime;
+    }
+
+    public TxNode(
+        string txid,
+        ulong? version,
+        int? size,
+        int? vSize,
+        int? weight,
+        long? lockTime,
+        double? originalIndegree = null,
+        double? originalOutdegree = null,
+        double? hopsFromRoot = null,
+        string? idInGraphDb = null) :
+        base(
+            txid,
+            originalInDegree: originalIndegree,
+            originalOutDegree: originalOutdegree,
+            outHopsFromRoot: hopsFromRoot,
+            idInGraphDb: idInGraphDb)
+    {
+        Txid = txid;
+        Version = version;
+        Size = size;
+        VSize = vSize;
+        Weight = weight;
+        LockTime = lockTime;
+    }
+
+    public TxNode(Tx tx) :
+        this(
+            tx.Txid,
+            tx.Version,
+            tx.Size,
+            tx.VSize,
+            tx.Weight,
+            tx.LockTime)
+    { }
+
+    public override string GetIdPropertyName()
+    {
+        return nameof(Txid);
+    }
+
+    public static new string[] GetFeaturesName()
+    {
+        return
+        [
+            nameof(Size),
+            nameof(Weight),
+            nameof(LockTime),
+            .. Node.GetFeaturesName()
+        ];
+    }
+
+    public override bool HasNullFeatures()
+    {
+        return Size == null
+               || Version == null
+               || VSize == null
+               || Weight == null
+               || LockTime == null
+               || base.HasNullFeatures();
+    }
+
+    public override string[] GetFeatures()
+    {
+        return
+        [
+            (Size == null ? double.NaN : (double)Size).ToString(),
+            (Weight == null ? double.NaN :(double)Weight).ToString(),
+            (LockTime == null ? double.NaN :(double) LockTime).ToString(),
+            .. base.GetFeatures(),
+        ];
+    }
+
+    public int CompareTo(TxNode? other)
+    {
+        throw new NotImplementedException("TxNode.CompareTo is not implemented.");
+    }
+
+    public bool Equals(TxNode? other)
+    {
+        throw new NotImplementedException("TxNode.Equals is not implemented.");
+    }
+}

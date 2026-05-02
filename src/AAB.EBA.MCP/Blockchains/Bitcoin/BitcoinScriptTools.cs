@@ -1,5 +1,5 @@
 ﻿using AAB.EBA.MCP.Infrastructure;
-using EBA.Blockchains.Bitcoin.GraphModel;
+using AAB.EBA.Blockchains.Bitcoin.GraphModel;
 using System.Text.Json;
 
 namespace AAB.EBA.MCP.Blockchains.Bitcoin;

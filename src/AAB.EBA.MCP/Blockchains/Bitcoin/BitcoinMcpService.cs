@@ -1,7 +1,7 @@
 ﻿using AAB.EBA.GraphDb;
-using EBA.Blockchains.Bitcoin.GraphModel;
-using EBA.Graph.Bitcoin.Descriptors;
-using EBA.Graph.Model;
+using AAB.EBA.Blockchains.Bitcoin.GraphModel;
+using AAB.EBA.Graph.Bitcoin.Descriptors;
+using AAB.EBA.Graph.Model;
 
 namespace AAB.EBA.MCP.Blockchains.Bitcoin;
 

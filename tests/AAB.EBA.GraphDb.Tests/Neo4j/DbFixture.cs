@@ -1,4 +1,4 @@
-﻿using EBA.CLI.Config;
+﻿using AAB.EBA.CLI.Config;
 using Neo4j.Driver;
 using Testcontainers.Neo4j;
 

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "EBA": {
+      "commandName": "Project",
+      "commandLineArgs": " bitcoin post-traverse --batches-filename z:\\eba\\data\\batches.json"
+    }
+  }
+}
