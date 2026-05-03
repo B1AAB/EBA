@@ -6,18 +6,15 @@ namespace AAB.EBA.MCP.Tests.Blockchains.Bitcoin;
 
 public class BitcoinScriptToolsTests
 {
-    private readonly BitcoinMcpService _mcpService;
     private readonly BitcoinScriptTools _tools;
 
     public BitcoinScriptToolsTests()
     {
-        var mockDb = GraphMockSeeder.CreateMockDb(BitcoinGraphScenarios.GetCommunity1());
-        //var options = new Options { Neo4j = new Neo4jOptions { CompressOutput = false } };
-        //var factory = new BitcoinStrategyFactory(options);
+        var graph = BitcoinGraphScenarios.GetCommunity1();
+        var fakeDb = new FakeGraphDb(graph);
+        var mcpService = new BitcoinMcpService(fakeDb);
 
-        _mcpService = new BitcoinMcpService(mockDb.Object);
-
-        _tools = new BitcoinScriptTools(_mcpService);
+        _tools = new BitcoinScriptTools(mcpService);
     }
 
     [Fact]

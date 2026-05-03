@@ -11,6 +11,7 @@ public class BitcoinMcpService(IGraphDb db)
 
     private static readonly BlockNodeDescriptor _blockNodeDescriptor = new();
     private static readonly Property _blockNodeHeightProp = _blockNodeDescriptor.Mapper.GetMapping(x => x.BlockMetadata.Height).Property;
+    private static readonly ElementMapper<BlockNode> _blockNodeMapper = BlockNodeDescriptor.StaticMapper;
 
     private static readonly ScriptNodeDescriptor _scriptNodeDescriptor = new();
     private static readonly Property _addressProp = _scriptNodeDescriptor.Mapper.GetMapping(x => x.Address).Property;
@@ -19,7 +20,7 @@ public class BitcoinMcpService(IGraphDb db)
     private static readonly ElementMapper<T2SEdge> _t2sMapper = T2SEdgeDescriptor.StaticMapper;
 
     public async Task<ScriptNode?> GetScriptByAddressAsync(
-        string address, 
+        string address,
         CancellationToken ct = default)
     {
         var node = await _db.GetNodeAsync(NodeKind.Script, _addressProp.Name, address, ct);
@@ -31,7 +32,7 @@ public class BitcoinMcpService(IGraphDb db)
     }
 
     public async Task<ScriptNode?> GetScriptBySHA256Async(
-        string sha, 
+        string sha,
         CancellationToken ct = default)
     {
         var node = await _db.GetNodeAsync(NodeKind.Script, _sha256Prop.Name, sha, ct);
@@ -43,8 +44,8 @@ public class BitcoinMcpService(IGraphDb db)
     }
 
     public async Task<long?> GetScriptBalanceAsync(
-        string sha, 
-        long height = long.MaxValue, 
+        string sha,
+        long height = long.MaxValue,
         CancellationToken ct = default)
     {
         var edges = await _db.GetEdgesAsync(NodeKind.Script, _sha256Prop.Name, sha, ct);
@@ -72,7 +73,7 @@ public class BitcoinMcpService(IGraphDb db)
     }
 
     public async Task<ScriptTxSummaryStats?> GetScriptTxSummaryStatsAsync(
-        string sha, 
+        string sha,
         CancellationToken ct = default)
     {
         var edges = await _db.GetEdgesAsync(NodeKind.Script, _sha256Prop.Name, sha, ct);
@@ -151,14 +152,34 @@ public class BitcoinMcpService(IGraphDb db)
     }
 
     public async Task<BlockNode?> GetBlockByHeightAsync(
-        long height, 
+        long height,
         CancellationToken ct = default)
     {
-        var node = await _db.GetNodeAsync(NodeKind.Block, _blockNodeHeightProp.Name, height.ToString(), ct);
+        var node = await _db.GetNodeAsync(NodeKind.Block, _blockNodeHeightProp.Name, height, ct);
 
         if (node == null)
             return null;
 
         return BlockNodeDescriptor.Deserialize(node.Properties, null, null, null, null);
+    }
+
+    public async Task<long?> GetLatestBlockHeightAsync(CancellationToken ct = default)
+    {
+        var nodes = await _db.FindNodesAsync(
+            NodeKind.Block,
+            ct,
+            orderByProperty: _blockNodeHeightProp.Name,
+            descending: true,
+            limit: 1);
+
+        if (nodes == null)
+            return null;
+
+        var node = nodes[0];
+
+        if (node == null)
+            return null;
+
+        return _blockNodeMapper.GetValue(x => x.BlockMetadata.Height, node.Properties);
     }
 }

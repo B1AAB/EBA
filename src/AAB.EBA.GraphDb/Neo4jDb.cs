@@ -2,6 +2,7 @@
 using AAB.EBA.CLI.Config;
 using Microsoft.Extensions.Logging;
 using Neo4j.Driver;
+using System.Text;
 
 namespace AAB.EBA.GraphDb;
 
@@ -40,7 +41,7 @@ public class Neo4jDb : IGraphDb
     public async Task<INode?> GetNodeAsync(
         NodeKind label,
         string propertyKey,
-        string propertyValue,
+        object propertyValue,
         CancellationToken ct)
     {
         await VerifyConnectivityAsync(ct);
@@ -49,17 +50,20 @@ public class Neo4jDb : IGraphDb
 
         var nodeVar = "n";
 
-        var records = await session.ExecuteReadAsync(async x =>
-        {
-            var q = 
+        // do not use interpolated strings for property values,
+        // use parameter placeholder ($propValue) instead,
+        // because otherwise it can treat all values as strings,
+        // which will fail to match if the value of property is not a string in the database.
+        var q = 
             $"MATCH ({nodeVar}:{label} " +
-            $"{{ {propertyKey}: \"{propertyValue}\" }}) " +
+            $"{{ {propertyKey}: $propValue }}) " +
             $"RETURN {nodeVar}";
 
-            _logger.LogDebug("Executing query: {q}", q);
-
-            var result = await x.RunAsync(q);
-
+        _logger.LogDebug("Executing query: {q} with property {prop}", q, propertyValue);
+        
+        var records = await session.ExecuteReadAsync(async x =>
+        {
+            var result = await x.RunAsync(q, new { propValue = propertyValue });
             return await result.ToListAsync(cancellationToken: ct);
         });
 
@@ -80,33 +84,63 @@ public class Neo4jDb : IGraphDb
     public async Task<List<IRelationship>> GetEdgesAsync(
         NodeKind nodeKind,
         string nodePropertyKey,
-        string nodePropertyValue,
+        object nodePropertyValue,
         CancellationToken ct,
         int? queryLimit = null)
     {
         await VerifyConnectivityAsync(ct);
 
-        var query =
-            $"MATCH " +
-            $"(n:{nodeKind} {{ `{nodePropertyKey}`: \"{nodePropertyValue}\" }})" +
-            $"-[r]-" +
-            $"() " +
+        // do not use interpolated strings for property values,
+        // use parameter placeholder ($propValue) instead,
+        // because otherwise it can treat all values as strings,
+        // which will fail to match if the value of property is not a string in the database.
+        var q =
+            $"MATCH (n:{nodeKind} {{ `{nodePropertyKey}`: $propValue }})-[r]-() " +
             $"RETURN r";
 
         if (queryLimit != null && queryLimit.Value > 0)
-            query += $" LIMIT {queryLimit.Value}";
+            q += $" LIMIT {queryLimit.Value}";
 
         using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
 
-        _logger.LogDebug("Executing query: {Query}", query);
+        _logger.LogDebug("Executing query: {Query} with property {prop}", q, nodePropertyValue);
 
         var records = await session.ExecuteReadAsync(async x =>
         {
-            var cursor = await x.RunAsync(query);
+            var cursor = await x.RunAsync(q, new { propValue = nodePropertyValue });
             return await cursor.ToListAsync(cancellationToken: ct);
         });
 
         return [.. records.Select(record => record["r"].As<IRelationship>())];
+    }
+
+    public async Task<IReadOnlyList<INode>> FindNodesAsync(
+        NodeKind nodeKind, 
+        CancellationToken ct, 
+        string? orderByProperty = null, 
+        bool descending = false, 
+        int? limit = null)
+    {
+        var qBuilder = new StringBuilder($"MATCH (n:{nodeKind}) RETURN n ");
+
+        if (!string.IsNullOrWhiteSpace(orderByProperty))
+        {
+            var direction = descending ? "DESC" : "ASC";
+            qBuilder.Append($"ORDER BY n.`{orderByProperty}` {direction} ");
+        }
+
+        if (limit.HasValue)
+            qBuilder.Append($"LIMIT {limit.Value}");
+
+        await VerifyConnectivityAsync(ct);
+        await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+        var cursor = await session.RunAsync(qBuilder.ToString());
+
+        var nodes = new List<INode>();
+        await foreach (var record in cursor)
+            nodes.Add(record["n"].As<INode>());
+
+        return nodes;
     }
 
     public void Dispose()
