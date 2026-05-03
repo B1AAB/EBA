@@ -49,4 +49,24 @@ public class NodeTests : IClassFixture<DbFixture>
         // Assert
         Assert.Null(node);
     }
+
+    [Fact]
+    public async Task FindNodesAsync_FindLatestNode_ReturnHeight()
+    {
+        // Act
+        var nodes = await _db.FindNodesAsync(
+            nodeKind: BlockNode.Kind,
+            ct: CancellationToken.None,
+            orderByProperty: "Height",
+            descending: true,
+            limit: 1);
+
+        // Assert
+        Assert.NotNull(nodes);
+        Assert.Single(nodes);
+
+        var height = nodes[0].Properties["Height"].As<long>();
+
+        Assert.Equal(50, height);
+    }
 }

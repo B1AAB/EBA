@@ -1,6 +1,7 @@
 ﻿using AAB.EBA.Blockchains.Bitcoin.ChainModel;
 using AAB.EBA.Blockchains.Bitcoin.GraphModel;
 using AAB.EBA.Graph.Model;
+using AAB.EBA.Utilities;
 
 namespace AAB.EBA.GraphDb.Tests;
 
@@ -13,7 +14,13 @@ public static class BitcoinGraphScenarios
         var b10 = new BlockNode(new Block() { Height = 10, MedianTime = 1 });
         var b20 = new BlockNode(new Block() { Height = 20, MedianTime = 2 });
         var b30 = new BlockNode(new Block() { Height = 30, MedianTime = 3 });
-        var b50 = new BlockNode(new Block() { Height = 50, MedianTime = 5 });
+        var b50 = new BlockNode(new Block()
+        {
+            Height = 50,
+            MedianTime = 5,
+            TotalSupply = 100,
+            Ohlcv = new OHLCV(0, 5, 9, 1, 8, 9, 7)
+        });
 
         var s1 = new ScriptNode(address: "add1", scriptType: ScriptType.PubKey, sha256Hash: "hash1");
         var s2 = new ScriptNode(address: "add2", scriptType: ScriptType.PubKey, sha256Hash: "hash2");

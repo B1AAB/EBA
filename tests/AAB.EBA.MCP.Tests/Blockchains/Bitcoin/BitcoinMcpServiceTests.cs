@@ -5,18 +5,20 @@ namespace AAB.EBA.MCP.Tests.Blockchains.Bitcoin;
 
 public class BitcoinMcpServiceTests
 {
+    private readonly BitcoinMcpService _mcpService;
+
+    public BitcoinMcpServiceTests()
+    {
+        var graph = BitcoinGraphScenarios.GetCommunity1();
+        var fakeDb = new FakeGraphDb(graph);
+        _mcpService = new BitcoinMcpService(fakeDb);
+    }
+
     [Fact]
     public async Task GetScriptBalance_WhenNodeExists_ReturnsMappedScriptNode()
     {
-        // Arrange
-        var graph = BitcoinGraphScenarios.GetCommunity1();
-        var mockDb = GraphMockSeeder.CreateMockDb(graph);
-        //var ops = new Options { Neo4j = new Neo4jOptions { CompressOutput = false } };
-        //var realFactory = new BitcoinStrategyFactory(ops);
-        var service = new BitcoinMcpService(mockDb.Object);
-
         // Act
-        var balance = await service.GetScriptBalanceAsync("hash1", ct: TestContext.Current.CancellationToken);
+        var balance = await _mcpService.GetScriptBalanceAsync("hash1", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(balance);
@@ -26,15 +28,8 @@ public class BitcoinMcpServiceTests
     [Fact]
     public async Task GetScriptByAddress_WhenValidAddress_ReturnScriptNode()
     {
-        // Arrange
-        var graph = BitcoinGraphScenarios.GetCommunity1();
-        var mockDb = GraphMockSeeder.CreateMockDb(graph);
-        //var ops = new Options { Neo4j = new Neo4jOptions { CompressOutput = false } };
-        //var realFactory = new BitcoinStrategyFactory(ops);
-        var service = new BitcoinMcpService(mockDb.Object);
-
         // Act
-        var scriptNode = await service.GetScriptByAddressAsync("add1", ct: TestContext.Current.CancellationToken);
+        var scriptNode = await _mcpService.GetScriptByAddressAsync("add1", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(scriptNode);
@@ -45,15 +40,8 @@ public class BitcoinMcpServiceTests
     [Fact]
     public async Task GetScriptBySHA256_WhenValidSHA256_ReturnScriptNode()
     {
-        // Arrange
-        var graph = BitcoinGraphScenarios.GetCommunity1();
-        var mockDb = GraphMockSeeder.CreateMockDb(graph);
-        //var ops = new Options { Neo4j = new Neo4jOptions { CompressOutput = false } };
-        //var realFactory = new BitcoinStrategyFactory(ops);
-        var service = new BitcoinMcpService(mockDb.Object);
-
         // Act
-        var scriptNode = await service.GetScriptBySHA256Async("hash1", ct: TestContext.Current.CancellationToken);
+        var scriptNode = await _mcpService.GetScriptBySHA256Async("hash1", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(scriptNode);
@@ -64,13 +52,8 @@ public class BitcoinMcpServiceTests
     [Fact]
     public async Task GetScriptTxSummaryStats_WhenValidSHA_ReturnStats()
     {
-        // Arrange
-        var graph = BitcoinGraphScenarios.GetCommunity1();
-        var mockDb = GraphMockSeeder.CreateMockDb(graph);
-        var service = new BitcoinMcpService(mockDb.Object);
-
         // Act
-        var stats = await service.GetScriptTxSummaryStatsAsync("hash1", ct: TestContext.Current.CancellationToken);
+        var stats = await _mcpService.GetScriptTxSummaryStatsAsync("hash1", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(stats);
