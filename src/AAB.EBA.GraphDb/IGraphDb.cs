@@ -10,13 +10,13 @@ public interface IGraphDb : IDisposable, IAsyncDisposable
     public Task<INode?> GetNodeAsync(
         NodeKind label,
         string propertyKey,
-        string propertyValue,
+        object propertyValue,
         CancellationToken ct);
 
     public Task<List<IRelationship>> GetEdgesAsync(
         NodeKind nodeKind,
         string nodePropertyKey,
-        string nodePropertyValue,
+        object nodePropertyValue,
         CancellationToken ct,
         int? queryLimit = null);
 

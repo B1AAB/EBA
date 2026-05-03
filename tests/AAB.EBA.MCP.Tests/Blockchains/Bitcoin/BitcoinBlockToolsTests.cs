@@ -59,10 +59,13 @@ public class BitcoinBlockToolsTests
         var node = JsonNode.Parse(jsonResult);
         Assert.NotNull(node);
 
+        var h = node["Height"];
+        Assert.NotNull(h);
+        Assert.Equal(50L, (long)h);
+
         var marketCapNode = node["MarketCap"];
         Assert.NotNull(marketCapNode);
         Assert.Equal("0.000007", marketCapNode.ToString());
-
 
         var ohlcvNode = node["OHLCV"];
         Assert.NotNull(ohlcvNode);

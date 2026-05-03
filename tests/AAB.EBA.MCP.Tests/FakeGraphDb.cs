@@ -40,17 +40,31 @@ public class FakeGraphDb(GraphBase graph) : IGraphDb
         return Task.FromResult<IReadOnlyList<INode>>(nodes.ToList());
     }
 
+    public Task<INode?> GetNodeAsync(
+        NodeKind label,
+        string propertyKey,
+        object propertyValue,
+        CancellationToken ct)
+    {
+        var node = _nodes.FirstOrDefault(n =>
+            n.Labels.Contains(label.ToString()) &&
+            n.Properties.TryGetValue(propertyKey, out var prop) &&
+            Equals(prop, propertyValue));
+
+        return Task.FromResult(node);
+    }
+
     public Task<List<IRelationship>> GetEdgesAsync(
         NodeKind nodeKind,
         string nodePropertyKey,
-        string nodePropertyValue,
+        object nodePropertyValue,
         CancellationToken ct,
         int? queryLimit = null)
     {
         var rootId = _nodes.FirstOrDefault(n =>
             n.Labels.Contains(nodeKind.ToString()) &&
             n.Properties.TryGetValue(nodePropertyKey, out var prop) &&
-            prop?.ToString() == nodePropertyValue)?.ElementId;
+            Equals(prop, nodePropertyValue))?.ElementId;
 
         if (rootId == null)
             return Task.FromResult(new List<IRelationship>());
@@ -60,16 +74,6 @@ public class FakeGraphDb(GraphBase graph) : IGraphDb
         var result = queryLimit is > 0 ? edges.Take(queryLimit.Value).ToList() : edges.ToList();
 
         return Task.FromResult(result);
-    }
-
-    public Task<INode?> GetNodeAsync(NodeKind label, string propertyKey, string propertyValue, CancellationToken ct)
-    {
-        var node = _nodes.FirstOrDefault(n =>
-            n.Labels.Contains(label.ToString()) &&
-            n.Properties.TryGetValue(propertyKey, out var prop) &&
-            prop?.ToString() == propertyValue);
-
-        return Task.FromResult(node);
     }
 
     public Task VerifyConnectivityAsync(CancellationToken ct)

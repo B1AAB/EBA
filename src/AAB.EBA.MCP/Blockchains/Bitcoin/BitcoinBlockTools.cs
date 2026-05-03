@@ -34,7 +34,7 @@ public class BitcoinBlockTools(BitcoinMcpService mcpService)
         if (blockNode == null)
             return $"Block at height {height} not found.";
 
-        var responsePayload = new Dictionary<string, object>();
+        var responsePayload = new Dictionary<string, object>() { { "Height", blockNode.BlockMetadata.Height } };
 
         if (includeMedianTime)
             responsePayload["MedianTime"] = blockNode.BlockMetadata.MedianTime;

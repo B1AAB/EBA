@@ -155,7 +155,7 @@ public class BitcoinMcpService(IGraphDb db)
         long height,
         CancellationToken ct = default)
     {
-        var node = await _db.GetNodeAsync(NodeKind.Block, _blockNodeHeightProp.Name, height.ToString(), ct);
+        var node = await _db.GetNodeAsync(NodeKind.Block, _blockNodeHeightProp.Name, height, ct);
 
         if (node == null)
             return null;
