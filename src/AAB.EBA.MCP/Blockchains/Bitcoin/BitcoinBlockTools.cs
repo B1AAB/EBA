@@ -9,6 +9,13 @@ public class BitcoinBlockTools(BitcoinMcpService mcpService)
 {
     private readonly BitcoinMcpService _mcpService = mcpService;
 
+    [McpServerTool, Description("Get the latest bitcoin block height in this service (database cutoff point)")]
+    public async Task<string> GetLatestBlock()
+    {
+        var height = await _mcpService.GetLatestBlockHeightAsync();        
+        return height.ToString() ?? "No blocks found in the database.";
+    }
+
     [McpServerTool, Description("Get information about a bitcoin block by its height.")]
     public async Task<string> GetBlockInfo(
         [Description("The block height to get info for")] long height,

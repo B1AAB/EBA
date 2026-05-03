@@ -19,4 +19,11 @@ public interface IGraphDb : IDisposable, IAsyncDisposable
         string nodePropertyValue,
         CancellationToken ct,
         int? queryLimit = null);
+
+    public Task<IReadOnlyList<INode>> FindNodesAsync(
+        NodeKind nodeKind,
+        CancellationToken ct,
+        string? orderByProperty = null,
+        bool descending = false,
+        int? limit = null);
 }

@@ -2,6 +2,7 @@
 using AAB.EBA.CLI.Config;
 using Microsoft.Extensions.Logging;
 using Neo4j.Driver;
+using System.Text;
 
 namespace AAB.EBA.GraphDb;
 
@@ -107,6 +108,35 @@ public class Neo4jDb : IGraphDb
         });
 
         return [.. records.Select(record => record["r"].As<IRelationship>())];
+    }
+
+    public async Task<IReadOnlyList<INode>> FindNodesAsync(
+        NodeKind nodeKind, 
+        CancellationToken ct, 
+        string? orderByProperty = null, 
+        bool descending = false, 
+        int? limit = null)
+    {
+        var qBuilder = new StringBuilder($"MATCH (n:{nodeKind}) RETURN n ");
+
+        if (!string.IsNullOrWhiteSpace(orderByProperty))
+        {
+            var direction = descending ? "DESC" : "ASC";
+            qBuilder.Append($"ORDER BY n.`{orderByProperty}` {direction} ");
+        }
+
+        if (limit.HasValue)
+            qBuilder.Append($"LIMIT {limit.Value}");
+
+        await VerifyConnectivityAsync(ct);
+        await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+        var cursor = await session.RunAsync(qBuilder.ToString());
+
+        var nodes = new List<INode>();
+        await foreach (var record in cursor)
+            nodes.Add(record["n"].As<INode>());
+
+        return nodes;
     }
 
     public void Dispose()
