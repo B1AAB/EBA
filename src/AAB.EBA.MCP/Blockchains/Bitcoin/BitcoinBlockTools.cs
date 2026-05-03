@@ -23,7 +23,12 @@ public class BitcoinBlockTools(BitcoinMcpService mcpService)
         [Description("Whether to include the transaction count of the block")] bool includeTxCount = false,
         [Description("Whether to include the minted coins of the block")] bool includeMintedCoins = false,
         [Description("Whether to include the burned coins of the block")] bool includeBurnedCoins = false,
-        [Description("Whether to include the total supply of the block")] bool includeTotalSupply = false)
+        [Description("Whether to include the total supply of the block")] bool includeTotalSupply = false,
+        [Description("Whether to include the OHLCV data of the block")] bool includeOHLCV = false,
+        [Description("Whether to include the market capitalization of the block")] bool includeMarketCap = false,
+        [Description("Whether to include the Net Unrealized Profit/Loss of the block")] bool includeNUPL = false,
+        [Description("Whether to include Market Value to Realized Value")] bool includeMVRV = false,
+        [Description("Whether to include Thermodynamic cap")] bool includeThermocap = false)
     {
         var blockNode = await _mcpService.GetBlockByHeightAsync(height);
         if (blockNode == null)
@@ -44,7 +49,22 @@ public class BitcoinBlockTools(BitcoinMcpService mcpService)
             responsePayload["BurnedCoins"] = blockNode.BlockMetadata.ProvablyUnspendableBitcoins;
 
         if (includeTotalSupply)
-            responsePayload["TotalSupply"] = blockNode.BlockMetadata.TotalSupply?.ToString() ?? "";
+            responsePayload["TotalSupply"] = blockNode.BlockMetadata.TotalSupply?.ToString() ?? "Undefined";
+
+        if (includeOHLCV)
+            responsePayload["OHLCV"] = JsonSerializer.Serialize(blockNode.BlockMetadata.Ohlcv, McpJsonOptions.Default);
+        
+        if (includeMarketCap)
+            responsePayload["MarketCap"] = blockNode.BlockMetadata.MarketCap?.ToString() ?? "Undefined";
+
+        if (includeNUPL)
+            responsePayload["NUPL"] = blockNode.BlockMetadata.NUPL.ToString() ?? "Undefined";
+
+        if (includeMVRV)
+            responsePayload["MVRV"] = blockNode.BlockMetadata.MVRV.ToString() ?? "Undefined";
+
+        if (includeThermocap)
+            responsePayload["Thermocap"] = blockNode.BlockMetadata.Thermocap.ToString() ?? "Undefined";
 
         return JsonSerializer.Serialize(responsePayload, McpJsonOptions.Default);
     }
