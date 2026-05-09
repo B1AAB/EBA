@@ -98,17 +98,14 @@ public class BitcoinTxTools(BitcoinMcpService mcpService)
 
             var utxo = new Dictionary<string, object>
             {
+                ["ScriptSHA256"] = scriptNode.SHA256Hash,
+                ["ScriptAddress"] = string.IsNullOrEmpty(scriptNode.Address) ? "Undefined" : scriptNode.Address,
                 ["Value"] = edge.Value,
                 ["TxCreatingTxo_Txid"] = edge.Txid,
                 ["TxCreatingTxo_Vout"] = edge.Vout,
                 ["CreationHeight"] = edge.CreationHeight,
                 ["AgeAtSpending"] = edge.SpentHeight - edge.CreationHeight
             };
-
-            if (string.IsNullOrEmpty(scriptNode.Address))
-                utxo["ScriptSHA256"] = scriptNode.SHA256Hash;
-            else
-                utxo["ScriptAddress"] = scriptNode.Address;
 
             spentUTxOs.Add(utxo);
         }
@@ -129,15 +126,11 @@ public class BitcoinTxTools(BitcoinMcpService mcpService)
             var txo = new Dictionary<string, object>
             {
                 ["ScriptSHA256"] = scriptNode.SHA256Hash,
+                ["ScriptAddress"] = string.IsNullOrEmpty(scriptNode.Address) ? "Undefined" : scriptNode.Address,
                 ["Value"] = edge.Value,
                 ["CreationHeight"] = edge.CreationHeight,
                 ["SpentHeight"] = edge.SpentHeight == long.MaxValue ? "Not spent as of the cutoff height" : edge.SpentHeight
             };
-
-            if (string.IsNullOrEmpty(scriptNode.Address))
-                txo["ScriptSHA256"] = scriptNode.SHA256Hash;
-            else
-                txo["ScriptAddress"] = scriptNode.Address;
 
             createdUTxOs.Add(txo);
         }

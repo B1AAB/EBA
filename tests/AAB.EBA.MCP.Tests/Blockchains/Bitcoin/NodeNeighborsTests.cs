@@ -101,14 +101,12 @@ public class NodeNeighborsTests : IClassFixture<DbFixture>
         Assert.Equal(JsonValueKind.Array, rewardedIn.ValueKind);
         Assert.Equal(2, rewardedIn.GetArrayLength());
 
-        var rewarded0 = rewardedIn[0];
-        Assert.Equal(25m, rewarded0.GetProperty("Value").GetDecimal());
-        Assert.Equal("tx1", rewarded0.GetProperty("Txid").GetString());
-        Assert.Equal(20, rewarded0.GetProperty("Height").GetInt64());
+        var tx1Reward = rewardedIn.EnumerateArray().Single(e => e.GetProperty("Txid").GetString() == "tx1");
+        Assert.Equal(25m, tx1Reward.GetProperty("Value").GetDecimal());
+        Assert.Equal(20, tx1Reward.GetProperty("Height").GetInt64());
 
-        var rewarded1 = rewardedIn[1];
-        Assert.Equal(50m, rewarded1.GetProperty("Value").GetDecimal());
-        Assert.Equal("tx2", rewarded1.GetProperty("Txid").GetString());
-        Assert.Equal(30, rewarded1.GetProperty("Height").GetInt64());
+        var tx2Reward = rewardedIn.EnumerateArray().Single(e => e.GetProperty("Txid").GetString() == "tx2");
+        Assert.Equal(50m, tx2Reward.GetProperty("Value").GetDecimal());
+        Assert.Equal(30, tx2Reward.GetProperty("Height").GetInt64());
     }
 }
