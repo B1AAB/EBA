@@ -1,8 +1,10 @@
-﻿using AAB.EBA.GraphDb;
-using AAB.EBA.MCP.Blockchains.Bitcoin;
+﻿using AAB.EBA.Blockchains.Bitcoin.GraphModel;
 using AAB.EBA.CLI.Config;
 using AAB.EBA.Graph.Bitcoin.Descriptors;
+using AAB.EBA.Graph.Db;
 using AAB.EBA.Graph.Db.Neo4jDb;
+using AAB.EBA.GraphDb;
+using AAB.EBA.MCP.Blockchains.Bitcoin;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 
@@ -78,6 +80,9 @@ public class Startup
         services.AddSingleton<BitcoinMcpService>();
         services.AddSingleton<IStrategyFactory, BitcoinStrategyFactory>();
         services.AddSingleton<IGraphDb, Neo4jDb>();
+
+        // TODO: this is a hack. Need it to access strategy factory from the service
+        services.AddSingleton<IGraphDb<BitcoinGraph>, BitcoinNeo4jDb>(); 
 
         services.AddHttpClient();
 

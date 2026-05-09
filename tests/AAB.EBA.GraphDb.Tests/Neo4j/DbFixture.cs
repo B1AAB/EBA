@@ -15,6 +15,7 @@ public class DbFixture : IAsyncLifetime
         var password = "testpassword";
         Neo4jContainer = new Neo4jBuilder("neo4j:5")
             .WithEnvironment("NEO4J_AUTH", $"{username}/{password}")
+            .WithEnvironment("NEO4J_PLUGINS", "[\"apoc\"]")
             .Build();
 
         await Neo4jContainer.StartAsync();

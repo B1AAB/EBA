@@ -5,6 +5,9 @@ using AAB.EBA.GraphDb.Tests;
 using Neo4j.Driver;
 using DomainNode = AAB.EBA.Graph.Model.INode;
 using INode = Neo4j.Driver.INode;
+using Moq;
+using System.Diagnostics.CodeAnalysis;
+using System.Collections;
 
 namespace AAB.EBA.MCP.Tests;
 
@@ -103,9 +106,110 @@ public class FakeGraphDb(GraphBase graph) : IGraphDb
         };
     }
 
-    public void Dispose() { }
+    public Task<List<IRecord>> GetNeighborsAsync(
+        NodeKind rootNodeLabel,
+        string rootNodeIdProperty,
+        string rootNodeId,
+        int queryLimit,
+        int maxLevel,
+        bool useBFS,
+        CancellationToken ct,
+        string relationshipFilter = "")
+    {
+        throw new NotImplementedException("GetNeighborsAsync method not implemented.");
+        /*
+        var rootNode = _nodes.FirstOrDefault(n =>
+            n.Labels.Contains(rootNodeLabel.ToString()) &&
+            n.Properties.TryGetValue(rootNodeIdProperty, out var prop) &&
+            Equals(prop, rootNodeId));
 
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        if (rootNode == null)
+            return Task.FromResult(new List<IRecord>());
+
+        // Start with the root, then expand level by level up to maxLevel.
+        var visitedIds = new List<string> { rootNode.ElementId };
+        var currentLevelNodes = new List<INode> { rootNode };
+        var neighborNodes = new List<INode>();
+        var collectedRels = new List<IRelationship>();
+
+        for (int level = 0; level < maxLevel; level++)
+        {
+            var nextLevelNodes = new List<INode>();
+
+            foreach (var current in currentLevelNodes)
+            {
+                foreach (var edge in _rels)
+                {
+                    bool startsHere = edge.StartNodeElementId == current.ElementId;
+                    bool endsHere = edge.EndNodeElementId == current.ElementId;
+                    if (!startsHere && !endsHere) continue;
+
+                    if (!string.IsNullOrWhiteSpace(relationshipFilter) && edge.Type != relationshipFilter)
+                        continue;
+
+                    var neighborId = startsHere ? edge.EndNodeElementId : edge.StartNodeElementId;
+                    if (visitedIds.Contains(neighborId)) continue;
+
+                    var neighbor = _nodes.FirstOrDefault(n => n.ElementId == neighborId);
+                    if (neighbor == null) continue;
+
+                    visitedIds.Add(neighborId);
+                    neighborNodes.Add(neighbor);
+                    collectedRels.Add(edge);
+                    nextLevelNodes.Add(neighbor);
+
+                    if (neighborNodes.Count >= queryLimit) break;
+                }
+                if (neighborNodes.Count >= queryLimit) break;
+            }
+
+            if (neighborNodes.Count >= queryLimit) break;
+            currentLevelNodes = nextLevelNodes;
+        }
+
+        // Build a single record matching the shape consumers expect.
+        var rootDict = new List<object>
+        {
+            new Dictionary<string, object>
+            {
+                ["node"] = rootNode,
+                ["inDegree"] = (long)_rels.Count(r => r.EndNodeElementId == rootNode.ElementId),
+                ["outDegree"] = (long)_rels.Count(r => r.StartNodeElementId == rootNode.ElementId)
+            }
+        };
+
+        var nodeDicts = new List<object>();
+        foreach (var n in neighborNodes)
+        {
+            nodeDicts.Add(new Dictionary<string, object>
+            {
+                ["node"] = n,
+                ["inDegree"] = (long)_rels.Count(r => r.EndNodeElementId == n.ElementId),
+                ["outDegree"] = (long)_rels.Count(r => r.StartNodeElementId == n.ElementId)
+            });
+        }
+
+        var record = new FakeNeo4jRecord(new Dictionary<string, object>
+        {
+            ["root"] = rootDict,
+            ["nodes"] = nodeDicts,
+            ["relationships"] = collectedRels
+        });
+
+        // Consumer reads index 0 for "root" and indices >= 1 for "nodes"/"relationships",
+        // so include the same record twice.
+        return Task.FromResult(new List<IRecord> { record, record });*/
+    }
+
+    public void Dispose()
+    {
+        throw new NotImplementedException();
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        throw new NotImplementedException();
+    }
 
     private class FakeNeo4jNode : INode
     {
