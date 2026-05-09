@@ -13,6 +13,13 @@ public interface IGraphDb : IDisposable, IAsyncDisposable
         object propertyValue,
         CancellationToken ct);
 
+    public Task<IReadOnlyList<INode>> FindNodesAsync(
+        NodeKind nodeKind,
+        CancellationToken ct,
+        string? orderByProperty = null,
+        bool descending = false,
+        int? limit = null);
+
     public Task<List<IRelationship>> GetEdgesAsync(
         NodeKind nodeKind,
         string nodePropertyKey,
@@ -20,10 +27,13 @@ public interface IGraphDb : IDisposable, IAsyncDisposable
         CancellationToken ct,
         int? queryLimit = null);
 
-    public Task<IReadOnlyList<INode>> FindNodesAsync(
-        NodeKind nodeKind,
+    public Task<List<IRecord>> GetNeighborsAsync(
+        NodeKind rootNodeLabel,
+        string rootNodeIdProperty,
+        string rootNodeId,
+        int queryLimit,
+        int maxLevel,
+        bool useBFS,
         CancellationToken ct,
-        string? orderByProperty = null,
-        bool descending = false,
-        int? limit = null);
+        string relationshipFilter = "");
 }

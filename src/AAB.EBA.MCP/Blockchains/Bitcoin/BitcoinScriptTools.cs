@@ -70,4 +70,74 @@ public class BitcoinScriptTools(BitcoinMcpService mcpService)
 
         return JsonSerializer.Serialize(stats, McpJsonOptions.Default);
     }
+
+    [McpServerTool, Description(
+        "For a Bitcoin script returns the following: " +
+        "* Transactions where the script was referenced in the input (i.e., redeeming UTxO) with value, txid, and block height; " +
+        "* Transactions where the script was referenced in the output (i.e., rewarding UTxO) with value, txid, and block height. ")]
+    public async Task<string> GetScriptNeighbors(
+        [Description("The SHA256 hash of the bitcoin script (optional; require SHA256 or address)")] string? sha = null,
+        [Description("The address of the bitcoin script (optional; require SHA256 or address)")] string? address = null,
+        [Description("Maximum number of spent UTxOs to return (default 10--do not increase unless asked specifically)")] int maxRedeemedIn = 10,
+        [Description("Maximum number of created UTxOs to return (default 10--do not increase unless asked specifically)")] int maxRewardedIn = 10)
+    {
+        if (string.IsNullOrEmpty(sha) && string.IsNullOrEmpty(address))
+            return "Either address or SHA256 hash must be provided.";
+
+        // This gets neighbors at 0 hop, so immediate neighbors only
+        var neighborhood = await _mcpService.GetScriptNodeNeighbors(sha: sha, address: address);
+
+        if (neighborhood.NodeCount == 0 || neighborhood.EdgeCount == 0)
+            return $"Script not found: {sha ?? address}";
+
+        var counter = 0;
+        var redeemedIn = new List<Dictionary<string, object>>();
+        foreach (var e in neighborhood.EdgesByType[S2TEdge.Kind])
+        {
+            if (++counter == maxRedeemedIn)
+                break;
+
+            neighborhood.TryGetNode(e.Target.Id, out var v);
+            if (v == null) continue;
+
+            var txNode = (TxNode)v;
+            var edge = (S2TEdge)e;
+
+            redeemedIn.Add(new Dictionary<string, object>
+            {
+                ["Value"] = edge.Value,
+                ["Txid"] = txNode.Txid,
+                ["Height"] = edge.Height
+            });
+        }
+
+        counter = 0;
+        var rewardedIn = new List<Dictionary<string, object>>();
+        foreach (var e in neighborhood.EdgesByType[T2SEdge.Kind])
+        {
+            if (++counter == maxRewardedIn)
+                break;
+
+            neighborhood.TryGetNode(e.Source.Id, out var v);
+            if (v == null) continue;
+
+            var txNode = (TxNode)v;
+            var edge = (T2SEdge)e;
+
+            rewardedIn.Add(new Dictionary<string, object>
+            {
+                ["Value"] = edge.Value,
+                ["Txid"] = txNode.Txid,
+                ["Height"] = edge.Height
+            });
+        }
+
+        var responsePayload = new Dictionary<string, object>
+        {
+            ["RedeemedIn"] = redeemedIn,
+            ["RewardedIn"] = rewardedIn
+        };
+
+        return JsonSerializer.Serialize(responsePayload, McpJsonOptions.Default);
+    }
 }

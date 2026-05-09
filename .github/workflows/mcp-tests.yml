@@ -9,6 +9,8 @@ on:
 jobs:
   build-and-test:
     name: Build and Test
+    # ubuntu-latest has Docker daemon pre-installed, 
+    # which is essential for Testcontainers to run Neo4j db. 
     runs-on: ubuntu-latest
 
     steps:
