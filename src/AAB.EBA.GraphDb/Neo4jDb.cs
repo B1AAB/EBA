@@ -81,6 +81,35 @@ public class Neo4jDb : IGraphDb
         return records[0][nodeVar].As<INode>();
     }
 
+    public async Task<IReadOnlyList<INode>> FindNodesAsync(
+        NodeKind nodeKind,
+        CancellationToken ct,
+        string? orderByProperty = null,
+        bool descending = false,
+        int? limit = null)
+    {
+        var qBuilder = new StringBuilder($"MATCH (n:{nodeKind}) RETURN n ");
+
+        if (!string.IsNullOrWhiteSpace(orderByProperty))
+        {
+            var direction = descending ? "DESC" : "ASC";
+            qBuilder.Append($"ORDER BY n.`{orderByProperty}` {direction} ");
+        }
+
+        if (limit.HasValue)
+            qBuilder.Append($"LIMIT {limit.Value}");
+
+        await VerifyConnectivityAsync(ct);
+        await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+        var cursor = await session.RunAsync(qBuilder.ToString());
+
+        var nodes = new List<INode>();
+        await foreach (var record in cursor)
+            nodes.Add(record["n"].As<INode>());
+
+        return nodes;
+    }
+
     public async Task<List<IRelationship>> GetEdgesAsync(
         NodeKind nodeKind,
         string nodePropertyKey,
@@ -114,34 +143,68 @@ public class Neo4jDb : IGraphDb
         return [.. records.Select(record => record["r"].As<IRelationship>())];
     }
 
-    public async Task<IReadOnlyList<INode>> FindNodesAsync(
-        NodeKind nodeKind, 
-        CancellationToken ct, 
-        string? orderByProperty = null, 
-        bool descending = false, 
-        int? limit = null)
+    public async Task<List<IRecord>> GetNeighborsAsync(
+        NodeKind rootNodeLabel,
+        string rootNodeIdProperty,
+        string rootNodeId,
+        int queryLimit,
+        int maxLevel,
+        bool useBFS,
+        CancellationToken ct,
+        string relationshipFilter = "")
     {
-        var qBuilder = new StringBuilder($"MATCH (n:{nodeKind}) RETURN n ");
+        ct.ThrowIfCancellationRequested();
 
-        if (!string.IsNullOrWhiteSpace(orderByProperty))
+        var qBuilder = new StringBuilder();
+        qBuilder.Append($"MATCH (root:{rootNodeLabel} {{ {rootNodeIdProperty}: \"{rootNodeId}\" }}) ");
+
+        qBuilder.Append($"CALL apoc.path.spanningTree(root, {{");
+        qBuilder.Append($"maxLevel: {maxLevel}, ");
+        qBuilder.Append($"limit: {queryLimit}, ");
+
+        if (useBFS)
+            qBuilder.Append($"bfs: true ");
+        else
+            qBuilder.Append($"bfs: false ");
+
+        //qBuilder.Append($", labelFilter: '{labelFilters}'");
+
+        if (!string.IsNullOrWhiteSpace(relationshipFilter))
+            qBuilder.Append($", relationshipFilter: '{relationshipFilter}'");
+
+        qBuilder.Append($"}}) ");
+        qBuilder.Append($"YIELD path ");
+        qBuilder.Append($"WITH root, ");
+        qBuilder.Append($"nodes(path) AS pathNodes, ");
+        qBuilder.Append($"relationships(path) AS pathRels ");
+        qBuilder.Append($"LIMIT {queryLimit} ");
+        qBuilder.Append($"RETURN ");
+        qBuilder.Append($"[ {{");
+        qBuilder.Append($"node: root, ");
+        qBuilder.Append($"inDegree: COUNT {{ (root)<--() }}, ");
+        qBuilder.Append($"outDegree: COUNT {{ (root)-->() }} ");
+        qBuilder.Append($"}}] AS root, ");
+        qBuilder.Append($"[ ");
+        qBuilder.Append($"n IN pathNodes WHERE n <> root ");
+        qBuilder.Append($"| ");
+        qBuilder.Append($"{{ ");
+        qBuilder.Append($"node: n, ");
+        qBuilder.Append($"inDegree: COUNT {{ (n)<--() }}, ");
+        qBuilder.Append($"outDegree: COUNT {{ (n)-->() }} ");
+        qBuilder.Append($"}} ");
+        qBuilder.Append($"] AS nodes, ");
+        qBuilder.Append($"pathRels AS relationships");
+
+        using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+        var samplingResult = await session.ExecuteReadAsync(async x =>
         {
-            var direction = descending ? "DESC" : "ASC";
-            qBuilder.Append($"ORDER BY n.`{orderByProperty}` {direction} ");
-        }
+            var result = await x.RunAsync(qBuilder.ToString());
+            return await result.ToListAsync(ct);
+        });
 
-        if (limit.HasValue)
-            qBuilder.Append($"LIMIT {limit.Value}");
-
-        await VerifyConnectivityAsync(ct);
-        await using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
-        var cursor = await session.RunAsync(qBuilder.ToString());
-
-        var nodes = new List<INode>();
-        await foreach (var record in cursor)
-            nodes.Add(record["n"].As<INode>());
-
-        return nodes;
+        return samplingResult;
     }
+
 
     public void Dispose()
     {
