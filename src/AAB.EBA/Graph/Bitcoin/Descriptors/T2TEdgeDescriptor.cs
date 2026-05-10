@@ -24,7 +24,6 @@ public class T2TEdgeDescriptor : IElementDescriptor<T2TEdge>
         return new T2TEdge(
             source: source,
             target: target,
-            timestamp: 0,
             height: _mapper.GetValue(e => e.Height, props),
             value: _mapper.GetValue(e => e.Value, props),
             type: Enum.Parse<RelationType>(relationType, ignoreCase: true)); 

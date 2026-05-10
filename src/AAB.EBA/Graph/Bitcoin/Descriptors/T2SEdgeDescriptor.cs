@@ -25,7 +25,6 @@ public class T2SEdgeDescriptor : IElementDescriptor<T2SEdge>
         return new T2SEdge(
             source: source,
             target: target,
-            timestamp: 0,
             creationHeight: _mapper.GetValue(n => n.CreationHeight, props),
             value: _mapper.GetValue(n => n.Value, props),
             outputIndex: _mapper.GetValue(n => n.Vout, props),

@@ -7,18 +7,17 @@ public class B2TEdge : Edge<BlockNode, TxNode>
     public B2TEdge(
         BlockNode source, TxNode target,
         long value, 
-        uint timestamp, long height) :
+        long height) :
         base(
             source: source,
             target: target,
             value: value,
             relation: Kind.Relation,
-            timestamp: timestamp,
             height: height)
     { }    
 
     public B2TEdge Update(long value)
     {
-        return new B2TEdge(Source, Target, Value + value, Timestamp, Height);
+        return new B2TEdge(Source, Target, Value + value, Height);
     }
 }

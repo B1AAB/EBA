@@ -72,7 +72,6 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         TryAddNode(BlockNode);
 
         var v = _coinbaseTxGraph.TxNode;
-        var t = Timestamp;
         var h = Block.Height;
 
         Parallel.ForEach(_txGraphsQueue,
@@ -96,7 +95,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         foreach (var u in _coinbaseTxGraph.Outputs)
         {
             TryGetOrAddEdge(
-                new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, u),
+                new T2SEdge(v, new ScriptNode(u.ScriptPubKey), h, u),
                 out T2SEdge _);
 
             Block.ProfileCreatedOutput(u);
@@ -105,8 +104,8 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
 
         var mintedCoins = miningReward - (long)Block.FeesStats.Sum;
         Block.SetMintedBitcoins(mintedCoins);
-        AddOrUpdateEdge(new C2TEdge(v, mintedCoins, t, h));
-        AddOrUpdateEdge(new B2TEdge(BlockNode, v, mintedCoins, t, h));
+        AddOrUpdateEdge(new C2TEdge(v, mintedCoins, h));
+        AddOrUpdateEdge(new B2TEdge(BlockNode, v, mintedCoins, h));
 
         BlockNode.TripletTypeCount = _edgeLabelCount.ToDictionary(x => x.Key, x => x.Value);
         BlockNode.TripletTypeValueSum = _edgeLabelValueSum.ToDictionary(x => x.Key, x => x.Value);
@@ -116,15 +115,14 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
     {
         var v = txGraph.TxNode;
         var h = Block.Height;
-        var t = Timestamp;
 
         foreach (var u in txGraph.SourceTxes)
-            AddOrUpdateEdge(new T2TEdge(new TxNode(u.Key), v, u.Value, RelationType.Transfers, t, h));
+            AddOrUpdateEdge(new T2TEdge(new TxNode(u.Key), v, u.Value, RelationType.Transfers, h));
 
         foreach (var u in txGraph.Inputs)
         {
             TryGetOrAddEdge(
-                new S2TEdge(new ScriptNode(u.PrevOut.ScriptPubKey), v, t, h, u),
+                new S2TEdge(new ScriptNode(u.PrevOut.ScriptPubKey), v, h, u),
                 out S2TEdge _);
 
             Block.ProfileSpentOutput(u);
@@ -133,7 +131,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         foreach (var u in txGraph.Outputs)
         {
             TryGetOrAddEdge(
-                new T2SEdge(v, new ScriptNode(u.ScriptPubKey), t, h, u), 
+                new T2SEdge(v, new ScriptNode(u.ScriptPubKey), h, u), 
                 out T2SEdge _);
 
             Block.ProfileCreatedOutput(u);
@@ -142,8 +140,8 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         Block.ProfileTxes(txGraph.InputsCount, txGraph.OutputsCount);
         Block.ProfileFee(txGraph.Fee);
         
-        AddOrUpdateEdge(new T2TEdge(v, _coinbaseTxGraph.TxNode, txGraph.Fee, RelationType.Fee, t, h));
-        AddOrUpdateEdge(new B2TEdge(BlockNode, v, txGraph.TotalInputValue, t, h));
+        AddOrUpdateEdge(new T2TEdge(v, _coinbaseTxGraph.TxNode, txGraph.Fee, RelationType.Fee, h));
+        AddOrUpdateEdge(new B2TEdge(BlockNode, v, txGraph.TotalInputValue, h));
     }
 
     public void AddOrUpdateEdge<T>(T edge)

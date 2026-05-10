@@ -40,17 +40,17 @@ public static class BitcoinGraphScenarios
         g.TryAddNode(b30);
         g.TryAddNode(b50);
 
-        g.AddOrUpdateEdge(new B2TEdge(b10, tx1, height: b10.BlockMetadata.Height, value: 25, timestamp: 0));
-        g.AddOrUpdateEdge(new S2TEdge(s02, tx1, creationHeight: 10, spentHeight: 20, value: 25, txid: "tx_created_1", vout: 1, generated: false, timestamp: 0));
-        g.AddOrUpdateEdge(new T2SEdge(tx1, s01, creationHeight: 20, spentHeight: 50, value: 25, outputIndex: 0, timestamp: 0));
+        g.AddOrUpdateEdge(new B2TEdge(b10, tx1, height: b10.BlockMetadata.Height, value: 25));
+        g.AddOrUpdateEdge(new S2TEdge(s02, tx1, creationHeight: 10, spentHeight: 20, value: 25, txid: "tx_created_1", vout: 1, generated: false));
+        g.AddOrUpdateEdge(new T2SEdge(tx1, s01, creationHeight: 20, spentHeight: 50, value: 25, outputIndex: 0));
 
-        g.AddOrUpdateEdge(new B2TEdge(b20, tx2, height: b20.BlockMetadata.Height, value: 50, timestamp: 0));
-        g.AddOrUpdateEdge(new S2TEdge(s03, tx2, creationHeight: 10, spentHeight: 30, value: 50, txid: "tx_created_2", vout: 1, generated: false, timestamp: 0));
-        g.AddOrUpdateEdge(new T2SEdge(tx2, s01, creationHeight: 30, spentHeight: mm, value: 50, outputIndex: 0, timestamp: 0));
+        g.AddOrUpdateEdge(new B2TEdge(b20, tx2, height: b20.BlockMetadata.Height, value: 50));
+        g.AddOrUpdateEdge(new S2TEdge(s03, tx2, creationHeight: 10, spentHeight: 30, value: 50, txid: "tx_created_2", vout: 1, generated: false));
+        g.AddOrUpdateEdge(new T2SEdge(tx2, s01, creationHeight: 30, spentHeight: mm, value: 50, outputIndex: 0));
 
-        g.AddOrUpdateEdge(new B2TEdge(b30, tx3, height: b30.BlockMetadata.Height, value: 25, timestamp: 0));
-        g.AddOrUpdateEdge(new S2TEdge(s01, tx3, creationHeight: 20, spentHeight: 50, value: 25, txid: "tx_created_3", vout: 0, generated: false, timestamp: 0));
-        g.AddOrUpdateEdge(new T2SEdge(tx3, s04, creationHeight: 50, spentHeight: mm, value: 25, outputIndex: 0, timestamp: 0));
+        g.AddOrUpdateEdge(new B2TEdge(b30, tx3, height: b30.BlockMetadata.Height, value: 25));
+        g.AddOrUpdateEdge(new S2TEdge(s01, tx3, creationHeight: 20, spentHeight: 50, value: 25, txid: "tx_created_3", vout: 0, generated: false));
+        g.AddOrUpdateEdge(new T2SEdge(tx3, s04, creationHeight: 50, spentHeight: mm, value: 25, outputIndex: 0));
         return g;
     }
 }

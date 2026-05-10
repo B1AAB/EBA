@@ -13,7 +13,6 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
     public T2SEdge(
         TxNode source,
         ScriptNode target,
-        uint timestamp,
         long creationHeight,
         Output output,
         long spentHeight = long.MaxValue)
@@ -22,7 +21,6 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
             target: target,
             relation: Kind.Relation,
             value: output.Value,
-            timestamp: timestamp,
             height: creationHeight)
     {
         Vout = output.N;
@@ -32,7 +30,6 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
     public T2SEdge(
         TxNode source,
         ScriptNode target,
-        uint timestamp,
         long creationHeight,
         long value,
         int outputIndex,
@@ -42,7 +39,6 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
             target: target,
             relation: Kind.Relation,
             value: value, 
-            timestamp: timestamp, 
             height: creationHeight)
     {
         Vout = outputIndex;
