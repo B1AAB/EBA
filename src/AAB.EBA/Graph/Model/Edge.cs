@@ -12,7 +12,6 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
     public TTarget Target { get; }
     public long Value { get; }
     public RelationType Relation { get; }
-    public uint Timestamp { get; }
     public long Height { get; }
 
     private const string _delimiter = "\t";
@@ -22,14 +21,12 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
         TTarget target,
         RelationType relation,
         long value,
-        uint timestamp,
         long height)
     {
         Source = source;
         Target = target;
         Value = value;
         Relation = relation;
-        Timestamp = timestamp;
         Height = height;
 
         Id = GetHashCode().ToString();
@@ -65,7 +62,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
     public string GetHashCode(bool ignoreValue)
     {
         if (ignoreValue)
-            return HashCode.Combine(Source.Id, Target.Id, Relation, Timestamp).ToString();
+            return HashCode.Combine(Source.Id, Target.Id, Relation).ToString();
         else
             return GetHashCode().ToString();
     }
@@ -73,14 +70,14 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
     public int GetHashCodeInt(bool ignoreValue)
     {
         if (ignoreValue)
-            return HashCode.Combine(Source.Id, Target.Id, Relation, Timestamp);
+            return HashCode.Combine(Source.Id, Target.Id, Relation);
         else
             return GetHashCode();
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Source.GetHashCode(), Target.GetHashCode(), Value, Relation, Timestamp);
+        return HashCode.Combine(Source.GetHashCode(), Target.GetHashCode(), Value, Relation);
     }
 
     public bool Equals(Edge<TSource, TTarget>? other)
@@ -90,8 +87,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
         return Source.Id == other.Source.Id
             && Target.Id == other.Target.Id
             && Value == other.Value
-            && Relation == other.Relation
-            && Timestamp == other.Timestamp;
+            && Relation == other.Relation;
     }
 
     public override bool Equals(object? obj)

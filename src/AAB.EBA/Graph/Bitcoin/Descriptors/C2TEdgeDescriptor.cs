@@ -23,7 +23,6 @@ public class C2TEdgeDescriptor : IElementDescriptor<C2TEdge>
         return new C2TEdge(
             target: target,
             value: _mapper.GetValue(e => e.Value, props),
-            timestamp: 0,
             height: _mapper.GetValue(e => e.Height, props));
     }
 }

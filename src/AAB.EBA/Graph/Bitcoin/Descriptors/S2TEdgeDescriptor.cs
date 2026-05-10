@@ -27,7 +27,6 @@ public class S2TEdgeDescriptor : IElementDescriptor<S2TEdge>
         return new S2TEdge(
             source: source,
             target: target,
-            timestamp: 0,
             creationHeight: _mapper.GetValue(e => e.CreationHeight, props),
             spentHeight: _mapper.GetValue(e => e.SpentHeight, props),
             value: _mapper.GetValue(e => e.Value, props),

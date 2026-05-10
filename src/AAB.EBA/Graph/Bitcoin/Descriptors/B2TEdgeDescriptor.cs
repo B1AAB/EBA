@@ -23,7 +23,6 @@ public class B2TEdgeDescriptor : IElementDescriptor<B2TEdge>
         return new B2TEdge(
             source: source,
             target: target,
-            timestamp: 0,
             height: _mapper.GetValue(e => e.Height, props),
             value: _mapper.GetValue(e => e.Value, props));
     }

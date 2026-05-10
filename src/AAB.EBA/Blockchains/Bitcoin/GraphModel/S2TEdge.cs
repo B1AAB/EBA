@@ -14,13 +14,11 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
     public S2TEdge(
         ScriptNode source,
         TxNode target,
-        uint timestamp,
         long spentHeight,
         Input spentUTxO)
         : this(
             source: source,
             target: target,
-            timestamp: timestamp,
             spentHeight: spentHeight,
             value: spentUTxO.PrevOut.Value,
             txid: spentUTxO.Txid,
@@ -32,7 +30,6 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
     public S2TEdge(
         ScriptNode source,
         TxNode target,
-        uint timestamp,
         long spentHeight,
         long value,
         string txid,
@@ -44,7 +41,6 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
             target: target,
             value: value,
             relation: Kind.Relation,
-            timestamp: timestamp,
             height: spentHeight)
     {
         Txid = txid;
