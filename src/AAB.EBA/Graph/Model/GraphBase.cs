@@ -59,7 +59,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
         }
     } 
     
-    private readonly ConcurrentDictionary<EdgeKind, ConcurrentDictionary<int, IEdge<INode, INode>>> _edges = new();
+    private readonly ConcurrentDictionary<EdgeKind, ConcurrentDictionary<IEdge<INode, INode>, IEdge<INode, INode>>> _edges = new();
 
     public ReadOnlyDictionary<string, string> Labels
     {
@@ -123,9 +123,9 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
     {
         var x = _edges.GetOrAdd(
             edge.EdgeKind,
-            new ConcurrentDictionary<int, IEdge<INode, INode>>());
+            new ConcurrentDictionary<IEdge<INode, INode>, IEdge<INode, INode>>());
 
-        resultingEdge = (T)x.GetOrAdd(edge.GetHashCode(), edge);
+        resultingEdge = (T)x.GetOrAdd(edge, edge);
 
         if (ReferenceEquals(resultingEdge, edge))
         {
@@ -146,10 +146,10 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
     {
         var x = _edges.GetOrAdd(
             edge.EdgeKind,
-            new ConcurrentDictionary<int, IEdge<INode, INode>>());
+            new ConcurrentDictionary<IEdge<INode, INode>, IEdge<INode, INode>>());
 
         x.AddOrUpdate(
-            edge.GetHashCode(),
+            edge,
             edge,
             (_, oldEdge) =>
             {

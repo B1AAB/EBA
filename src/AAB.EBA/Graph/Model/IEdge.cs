@@ -12,8 +12,6 @@ public interface IEdge<out TSource, out TTarget> : IGraphElement
     public long Value { get; }
 
     public double[] GetFeatures();
-    public string GetHashCode(bool ignoreValue);
-    public int GetHashCodeInt(bool ignoreValue);
 
     public void AddValue(long value);
 }
