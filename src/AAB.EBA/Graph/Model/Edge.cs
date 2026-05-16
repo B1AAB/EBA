@@ -67,8 +67,9 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
 
     public override int GetHashCode()
     {
+        // This method should include the same properties as the Equals() method.
         return HashCode.Combine(Source.Id, Target.Id, Value, Relation);
-    }       
+    }
 
     public bool Equals(Edge<TSource, TTarget>? other)
     {
