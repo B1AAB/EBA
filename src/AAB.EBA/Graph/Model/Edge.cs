@@ -7,6 +7,8 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
     public static EdgeKind Kind { get { throw new NotImplementedException($"Edge {nameof(Kind)} not defined"); } }
     public EdgeKind EdgeKind { get; }
 
+    private static long _idCounter;
+
     public string Id { get; }
     public TSource Source { get; }
     public TTarget Target { get; }
@@ -29,7 +31,7 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
         Relation = relation;
         Height = height;
 
-        Id = GetHashCode().ToString();
+        Id = Interlocked.Increment(ref _idCounter).ToString();
 
         EdgeKind = new EdgeKind(source.NodeKind, target.NodeKind, relation);
     }
@@ -56,34 +58,27 @@ public class Edge<TSource, TTarget> : IEdge<TSource, TTarget>, IEquatable<Edge<T
 
     public void AddValue(long value)
     {
+        // TODO: this method was called only a few times in ~400,000 blocks.
+        // I was not able to reproduce it on the very same blocks it happened,
+        // so it could be a race condition,
+        // or more probably, a colission in the GetHashCode() method in the edges.
         throw new NotImplementedException("Edge.AddValue is not implemented.");
-    }
-
-    public string GetHashCode(bool ignoreValue)
-    {
-        if (ignoreValue)
-            return HashCode.Combine(Source.Id, Target.Id, Relation).ToString();
-        else
-            return GetHashCode().ToString();
-    }
-
-    public int GetHashCodeInt(bool ignoreValue)
-    {
-        if (ignoreValue)
-            return HashCode.Combine(Source.Id, Target.Id, Relation);
-        else
-            return GetHashCode();
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(Source.GetHashCode(), Target.GetHashCode(), Value, Relation);
+        // This method should include the same properties as the Equals() method.
+        return HashCode.Combine(Source.Id, Target.Id, Value, Relation);
     }
 
     public bool Equals(Edge<TSource, TTarget>? other)
     {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
+        if (other is null) 
+            return false;
+
+        if (ReferenceEquals(this, other)) 
+            return true;
+
         return Source.Id == other.Source.Id
             && Target.Id == other.Target.Id
             && Value == other.Value

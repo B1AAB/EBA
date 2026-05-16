@@ -426,3 +426,4 @@ builds/
 !website/releases/
 
 
+/src/AAB.EBA/Properties/launchSettings.json

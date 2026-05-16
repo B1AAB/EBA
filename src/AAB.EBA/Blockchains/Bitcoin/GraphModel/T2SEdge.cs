@@ -49,4 +49,11 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
     {
         return HashCode.Combine(base.GetHashCode(), Vout);
     }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is T2SEdge other
+               && Equals(other)
+               && Vout == other.Vout;
+    }
 }
