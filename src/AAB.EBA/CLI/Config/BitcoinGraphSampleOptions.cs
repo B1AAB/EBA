@@ -19,7 +19,12 @@ public enum GraphTraversal
     // sampling algorithm 
     // non-deterministic sampling algorithm
     // Forest Fire sampling
-    FFS
+    FFS,
+
+    /// <summary>
+    /// Chain-informed sampler
+    /// </summary>
+    CIS
 }
 
 public class BitcoinGraphSampleOptions
@@ -54,5 +59,5 @@ public class BitcoinGraphSampleOptions
     // more details: https://neo4j.com/labs/apoc/4.1/overview/apoc.path/apoc.path.spanningTree/#expand-spanning-tree-label-filters
     //public string LabelFilters { init; get; } = $"{ScriptNodeStrategy.Label}|{BlockNodeStrategy.Label}";
 
-    public BitcoinForestFireOptions ForestFireOptions { init; get;  } = new BitcoinForestFireOptions();
+    public BitcoinPanoramaSamplingAlgorithmOptions PanoramaOptions { init; get;  } = new BitcoinPanoramaSamplingAlgorithmOptions();
 }

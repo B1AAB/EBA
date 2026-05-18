@@ -1,14 +1,18 @@
-﻿namespace AAB.EBA.Graph.Bitcoin.TraversalAlgorithms;
+﻿using AAB.EBA.Graph.Bitcoin.Descriptors;
 
-public class ForestFire : ITraversalAlgorithm
+namespace AAB.EBA.Graph.Bitcoin.TraversalAlgorithms;
+
+public class Panorama : ITraversalAlgorithm
 {
     private readonly Options _options;
     private readonly IGraphDb<BitcoinGraph> _graphDb;
     private readonly ILogger<BitcoinGraphOrchestrator> _logger;
 
+    private static readonly PropertyMapping<TxNode> _txidMapping = TxNodeDescriptor.StaticMapper.GetMapping(x => x.Txid);
+
     private int _maxHopReached = 0;
 
-    public ForestFire(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<BitcoinGraphOrchestrator> logger)
+    public Panorama(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<BitcoinGraphOrchestrator> logger)
     {
         _options = options;
         _graphDb = graphDb;
@@ -51,10 +55,10 @@ public class ForestFire : ITraversalAlgorithm
                     rootNodeLabel: ScriptNode.Kind,
                     rootNodeIdProperty: rootNode.GetIdPropertyName(),
                     rootNodeId: rootNode.Id,
-                    nodeSamplingCountAtRoot: _options.Bitcoin.GraphSample.ForestFireOptions.NodeSamplingCountAtRoot,
-                    maxHops: _options.Bitcoin.GraphSample.ForestFireOptions.MaxHops,
-                    queryLimit: _options.Bitcoin.GraphSample.ForestFireOptions.QueryLimit,
-                    nodeCountReductionFactorByHop: _options.Bitcoin.GraphSample.ForestFireOptions.NodeCountReductionFactorByHop,
+                    nodeSamplingCountAtRoot: _options.Bitcoin.GraphSample.PanoramaOptions.NodeSamplingCountAtRoot, // can set this to max int
+                    maxHops: _options.Bitcoin.GraphSample.PanoramaOptions.MaxHops,
+                    queryLimit: _options.Bitcoin.GraphSample.PanoramaOptions.QueryLimit,
+                    nodeCountReductionFactorByHop: _options.Bitcoin.GraphSample.PanoramaOptions.NodeCountReductionFactorByHop,
                     ct: ct);
 
                 var perBatchLabelsFilename = Path.Join(_options.WorkingDir, "labels.tsv");
@@ -155,8 +159,8 @@ public class ForestFire : ITraversalAlgorithm
 
         var rnd = new Random(31);
         var nodesToKeep = nodesUniqueToThisHop.Keys.OrderBy(
-            x => rnd.Next()).Take(
-                (int)Math.Floor(nodeSamplingCountAtRoot - hop * nodeCountReductionFactorByHop))
+        x => rnd.Next()).Take(
+            (int)Math.Floor(nodeSamplingCountAtRoot - hop * nodeCountReductionFactorByHop))
             .ToHashSet();
 
         foreach (var edge in edges)
@@ -244,6 +248,15 @@ public class ForestFire : ITraversalAlgorithm
                     return false;
                 }
 
+                if ((node.OriginalInDegree != null && node.OriginalInDegree > _options.Bitcoin.GraphSample.PanoramaOptions.MaxOriginalInDegree) ||
+                    (node.OriginalOutDegree != null && node.OriginalOutDegree > _options.Bitcoin.GraphSample.PanoramaOptions.MaxOriginalOutDegree))
+                {
+                    // skipping nodes that may belong to exchanges or mixers.
+                    // TODO: this is temporary. if this is mixer, then there could be
+                    // really informative information in the mixer (e.g., other scripts that usually 2 hop neighborhood from each other)
+                    continue;
+                }
+
                 await ProcessHops(
                     rootNodeLabel: node.NodeKind,
                     rootNodeIdProperty: node.GetIdPropertyName(),
@@ -294,6 +307,9 @@ public class ForestFire : ITraversalAlgorithm
             g: g,
             ct: ct);
 
+        if (_options.Bitcoin.GraphSample.PanoramaOptions.IncludeB2TEdges)
+            await EnsureB2T(g, ct);
+
         if (!completedWalk)
         {
             _logger.LogWarning(
@@ -314,6 +330,54 @@ public class ForestFire : ITraversalAlgorithm
             rootNodeLabelInLogs, g.NodeCount, g.EdgeCount);
 
         return g;
+    }
+
+    private async Task EnsureB2T(BitcoinGraph g, CancellationToken ct)
+    {
+        foreach (var txNode in g.NodesByType[NodeKind.Tx])
+        {
+            var v = (TxNode)txNode;
+            var found = false;
+            foreach (var edge in g.EdgesByType[B2TEdge.Kind])
+            {
+                var t = (B2TEdge)edge;
+                if (t.Target.Txid == v.Txid)
+                {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                var records = await _graphDb.GetEdgesAsync(
+                    edgeKind: B2TEdge.Kind,
+                    sourceNodeVariable: "block",
+                    targetNodeVariable: "tx",
+                    relationshipVariable: "b2t",
+                    targetNodeIdProperty: _txidMapping.Property.Name,
+                    targetNodeId: _txidMapping.GetValue(v),
+                    ct: ct);
+
+                var record = records[0];
+                double txNodeOutHops = v.OutHopsFromRoot ?? 0;
+
+                TryUnpackNodeDict(
+                    record["block"].As<object>().As<IDictionary<string, object>>(),
+                    txNodeOutHops + 1,
+                    out var builtBlockNode);
+
+                if (builtBlockNode != null)
+                {
+                    var blockNode = g.GetOrAddNode(builtBlockNode);
+
+                    var candidateEdge = _graphDb.StrategyFactory.CreateEdge(blockNode, v, record["b2t"].As<IRelationship>());
+
+                    if (candidateEdge != null)
+                        g.TryGetOrAddEdge(candidateEdge, out IEdge<Model.INode, Model.INode> _);
+                }
+            }
+        }
     }
 
     private async Task<List<ScriptNode>> GetRandomScriptNodes(int count, CancellationToken ct)

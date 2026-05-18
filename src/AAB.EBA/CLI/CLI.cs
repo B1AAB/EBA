@@ -597,7 +597,7 @@ internal class Cli
                         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
                         PropertyNameCaseInsensitive = true
                     };
-                    JsonSerializer.Deserialize<BitcoinForestFireOptions>(methodOptionsJson, serializationOptions);
+                    JsonSerializer.Deserialize<BitcoinPanoramaSamplingAlgorithmOptions>(methodOptionsJson, serializationOptions);
                 }
                 catch (JsonException e)
                 {
