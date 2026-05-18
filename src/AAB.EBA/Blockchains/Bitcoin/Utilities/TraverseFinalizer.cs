@@ -18,7 +18,7 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
     public async Task UpdatePostTraverse(CancellationToken ct)
     {
         var batches = await Batch.DeserializeBatchesAsync(_options.Bitcoin.MapSpends.BatchesFilename);
-        _logger.LogInformation("Deserialized {n} batches from {filename}.", batches.Count, _options.Bitcoin.MapSpends.BatchesFilename);
+        _logger.LogInformation("Deserialized {n:n0} batches from {filename}.", batches.Count, _options.Bitcoin.MapSpends.BatchesFilename);
 
         _processStep = "[1/4] Block-to-batch mapping:";
         GetHeightToBatchMapping(_options, batches, out var blockToBatch, out var blockNodes);
@@ -54,13 +54,23 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
             {
                 var blockNode = BlockNodeDescriptor.Deserialize(cols);
                 var h = blockNode.BlockMetadata.Height;
-                blockToBatch.Add(h, batch);
+
+                if (!blockToBatch.TryAdd(h, batch))
+                {
+                    _logger.LogError(
+                        "{s} Error on block height {h:n0}; " +
+                        "this block is defined at least twice, in batches with names {b1} and {b2}.",
+                        _processStep, h, blockToBatch[h].Name, batch.Name);
+    
+                    throw new InvalidDataException();
+                }
+
                 blockNodes[h] = blockNode;
             }
 
             counter++;
             if (counter % 100 == 0)
-                _logger.LogInformation("{s} Finished reading block node files for {n} batches", _processStep, counter);
+                _logger.LogInformation("{s} Finished reading block node files for {n:n0} batches", _processStep, counter);
         }
 
         _logger.LogInformation("{s} Finished reading Block node files to create block-to-batch mapping.", _processStep);
