@@ -19,12 +19,7 @@ public enum GraphTraversal
     // sampling algorithm 
     // non-deterministic sampling algorithm
     // Forest Fire sampling
-    FFS,
-
-    /// <summary>
-    /// Chain-informed sampler
-    /// </summary>
-    CIS
+    FFS
 }
 
 public class BitcoinGraphSampleOptions
