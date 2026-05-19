@@ -1,9 +1,9 @@
 ---
-id: forestfire
-title: Forest-Fire
-sidebar_label: Forest-Fire
+id: panorama
+title: Panorama
+sidebar_label: Panorama
 sidebar_position: 3
-slug: /bitcoin/sampling/forest-fire
+slug: /bitcoin/sampling/panorama
 ---
 
 **Motivation:** 
@@ -22,7 +22,7 @@ Then, for each of those selected nodes, it chooses a subset of their immediate n
 and continues this process until a termination criterion is met. 
 
 
-You may set the `sample` method to use the forest-fire algorithm 
+You may set the `sample` method to use the Panorama algorithm 
 and adjust the algorithm's parameters as follows.
 
 Example: 
@@ -30,12 +30,12 @@ Example:
 ```powershell
 .\eba.exe bitcoin sample `
     --count 1000 `
-    --method ffs `
+    --method panorama `
     --method-options '{\"maxHops\": 6, \"nodeCountAtRoot\": 10, \"reductionFactor\": 2, \"queryLimit\": 1000}'
 ```
 
 This command sets the method to `sample`, 
-aiming for `100` communities using the `ffs` (forest-fire sampling) strategy 
+aiming for `100` communities using the `ffs` (Panorama sampling) strategy 
 at a maximum depth of `6` hops from the root nodes.
 
 Alternatively, you may set the options using a JSON file as the following. 
@@ -45,19 +45,22 @@ Alternatively, you may set the options using a JSON file as the following.
 {
   "Bitcoin": {
     "GraphSample": {
-      "Count": 10,
+      "Count": 2,
       "TraversalAlgorithm": 0,
-      "MinNodeCount": 500,
-      "MaxNodeCount": 1000,
-      "MinEdgeCount": 499,
-      "MaxEdgeCount": 10000,
+      "MinNodeCount": 200,
+      "MaxNodeCount": 10000,
+      "MinEdgeCount": 199,
+      "MaxEdgeCount": 100000,
       "MaxAttempts": 25,
       "RootNodeSelectProb": 0.3,
-      "ForestFireOptions": {
-        "maxHops": 6,
-        "queryLimit": 1000,
+      "PanoramaOptions": {
+        "maxHops": 2,
+        "queryLimit": 100000,
         "reductionFactor": 4,
-        "nodeCountAtRoot": 100
+        "nodeCountAtRoot": 100,
+        "maxOriginalInDegree": 1000,
+        "maxOriginalOutDegree": 1000,
+        "includeBlockTxEdges": true
       }
     }
   }
@@ -86,7 +89,7 @@ Sets the maximum number of hops away from the root node that the algorithm is al
 ### `queryLimit` {#query-limit}
 
 Sets the maximum number of neighbors to query from the database for a given node. 
-These queried nodes become the candidate pool for the forest-fire algorithm 
+These queried nodes become the candidate pool for the Panorama algorithm 
 (i.e., the algorithm will select a subset from these).
 
 

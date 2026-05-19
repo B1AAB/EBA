@@ -23,12 +23,12 @@ that can be adjusted to fit the data requirements
 of a wide spectrum of application areas. 
 The strategies we currently provide are:
 
-- [Forest-Fire Sampling (FFS) algorithm](forest-fire)
+- [Panorama sampling algorithm](panorama)
 
 
 Additionally, we provide the following ready-to-use sampled communities:
 
-- `200k` communities sampled using [Forest Fire method](./forest-fire) containing only _Script-to-Script_ edges.
+- `200k` communities sampled using Forest Fire method containing only _Script-to-Script_ edges.
 
     * [Dataset](https://www.kaggle.com/datasets/aab/bitcoin-graph-sampled-communities)
     * [Tutorial](https://github.com/B1AAB/GraphStudio/tree/main/quickstart/script_classification)
@@ -50,7 +50,7 @@ Additionally, we provide the following ready-to-use sampled communities:
 
 -   You may refer to the following documentation on arguments specific to each sampling algorithm:
 
-    -   [Forest-Fire Sampling (FFS) algorithm](forest-fire)
+    -   [Panorama sampling algorithm](panorama)
 
 
 :::tip You can provide arguments via a JSON file
@@ -69,7 +69,7 @@ For instance:
       "MaxEdgeCount": 10000,
       "RootNodeSelectProb": 0.3,
       "TraversalAlgorithm": 0,
-      "ForestFireOptions": {
+      "PanoramaOptions": {
         "maxHops": 6,
         "queryLimit": 1000,
         "reductionFactor": 4,

@@ -12,17 +12,7 @@ public abstract class Node : INode
     public int InDegree { get { return IncomingEdges.Count; } }
     public int OutDegree { get { return OutgoingEdges.Count; } }
 
-    /// <summary>
-    /// This is the degree of the node in the entire graph 
-    /// (e.g., the one in the database), where the Indegree and Outdegree 
-    /// are the degrees in the graph where they are located (e.g., the sampled graph).
-    /// </summary>
     public double? OriginalInDegree { get; }
-    /// <summary>
-    /// This is the degree of the node in the entire graph 
-    /// (e.g., the one in the database), where the Indegree and Outdegree 
-    /// are the degrees in the graph where they are located (e.g., the sampled graph).
-    /// </summary>
     public double? OriginalOutDegree { get; }
 
     public double? OutHopsFromRoot { get; }

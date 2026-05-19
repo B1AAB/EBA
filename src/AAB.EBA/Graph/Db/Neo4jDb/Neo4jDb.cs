@@ -429,6 +429,55 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
             updates.Count, label);
     }
 
+    public async Task<List<IRecord>> GetEdgesAsync(
+        EdgeKind edgeKind,
+        CancellationToken ct,
+        string sourceNodeVariable = "source",
+        string targetNodeVariable = "target",
+        string relationshipVariable = "relationship",
+        string? sourceNodeIdProperty = null,
+        object? sourceNodeId = null,
+        string? targetNodeIdProperty = null,
+        object? targetNodeId = null)
+    {
+        await VerifyConnectivityAsync(ct);
+
+        using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+
+        var query =
+            $"MATCH " +
+            $"({sourceNodeVariable}:{edgeKind.Source} " +
+            (sourceNodeIdProperty != null ? $"{{{sourceNodeIdProperty}: $sourceNodeId}}" : "") +
+            $")" +
+            $"-[{relationshipVariable}:{edgeKind.Relation}]->" +
+            $"({targetNodeVariable}:{edgeKind.Target} " +
+            (targetNodeIdProperty != null ? $"{{{targetNodeIdProperty}: $targetNodeId}}" : "") +
+            $") " +
+            $"RETURN " +
+            $"{{ node: {sourceNodeVariable}, inDegree: COUNT {{ ({sourceNodeVariable})<--() }}, outDegree: COUNT {{ ({sourceNodeVariable})-->() }} }} AS {sourceNodeVariable}, " +
+            $"{relationshipVariable}, " +
+            $"{{ node: {targetNodeVariable}, inDegree: COUNT {{ ({targetNodeVariable})<--() }}, outDegree: COUNT {{ ({targetNodeVariable})-->() }} }} AS {targetNodeVariable}";
+
+        var parameters = new Dictionary<string, object>();
+        
+        if (sourceNodeIdProperty != null && sourceNodeId != null)
+        {
+            parameters.Add("sourceNodeId", sourceNodeId);
+        }
+        if (targetNodeIdProperty != null && targetNodeId != null)
+        {
+            parameters.Add("targetNodeId", targetNodeId);
+        }
+
+        var rndRecords = await session.ExecuteReadAsync(async x =>
+        {
+            var result = await x.RunAsync(query, parameters);
+            return await result.ToListAsync(cancellationToken: ct);
+        });
+
+        return rndRecords;
+    }
+
     public void Dispose()
     {
         Dispose(true);
