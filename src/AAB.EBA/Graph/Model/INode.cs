@@ -11,6 +11,19 @@ public interface INode : IGraphElement, IEquatable<INode>
     public List<IEdge<INode, INode>> IncomingEdges { get; }
     public List<IEdge<INode, INode>> OutgoingEdges { get; }
 
+    /// <summary>
+    /// This is the degree of the node in the entire graph 
+    /// (e.g., the one in the database), where the Indegree and Outdegree 
+    /// are the degrees in the graph where they are located (e.g., the sampled graph).
+    /// </summary>
+    public double? OriginalInDegree { get; }
+    /// <summary>
+    /// This is the degree of the node in the entire graph 
+    /// (e.g., the one in the database), where the Indegree and Outdegree 
+    /// are the degrees in the graph where they are located (e.g., the sampled graph).
+    /// </summary>
+    public double? OriginalOutDegree { get; }
+
     public string[] GetFeatures();
 
     public bool HasNullFeatures();

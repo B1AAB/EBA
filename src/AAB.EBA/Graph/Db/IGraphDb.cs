@@ -53,6 +53,17 @@ public interface IGraphDb<T> : IDisposable, IAsyncDisposable where T : GraphBase
         string nodeVariable = "n",
         int? count = null);
 
+    public Task<List<IRecord>> GetEdgesAsync(
+        EdgeKind edgeKind,
+        CancellationToken ct,
+        string sourceNodeVariable = "source",
+        string targetNodeVariable = "target",
+        string relationshipVariable = "relationship",
+        string? sourceNodeIdProperty = null,
+        object? sourceNodeId = null,
+        string? targetNodeIdProperty = null,
+        object? targetNodeId = null);
+
     public Task ExecuteWriteQueryAsync(
         List<string> schemas, 
         CancellationToken ct);

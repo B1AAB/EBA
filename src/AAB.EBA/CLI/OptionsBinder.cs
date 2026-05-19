@@ -63,16 +63,16 @@ internal class OptionsBinder
         };
 
         var traversalAlgorithm = GetValue(defs.Bitcoin.GraphSample.TraversalAlgorithm, graphSampleMethodOption, c);
-        var forestFireOptions = defs.Bitcoin.GraphSample.ForestFireOptions;
-        if (traversalAlgorithm == GraphTraversal.FFS)
+        var PanoramaOptions = defs.Bitcoin.GraphSample.PanoramaOptions;
+        if (traversalAlgorithm == GraphTraversal.Panorama)
         {
             if (graphSampleMethodOptionsOption != null && c.GetResult(graphSampleMethodOptionsOption) is not null)
             {
                 var jsonValue = c.GetValue(graphSampleMethodOptionsOption);
                 if (!string.IsNullOrWhiteSpace(jsonValue))
-                    forestFireOptions = JsonSerializer
-                        .Deserialize<BitcoinForestFireOptions>(jsonValue)
-                        ?? forestFireOptions;
+                    PanoramaOptions = JsonSerializer
+                        .Deserialize<BitcoinPanoramaSamplingAlgorithmOptions>(jsonValue)
+                        ?? PanoramaOptions;
             }
         }
 
@@ -80,7 +80,7 @@ internal class OptionsBinder
         {
             Count = GetValue(defs.Bitcoin.GraphSample.Count, graphSampleCountOption, c),
             TraversalAlgorithm = traversalAlgorithm,
-            ForestFireOptions = forestFireOptions,
+            PanoramaOptions = PanoramaOptions,
             MinNodeCount = GetValue(defs.Bitcoin.GraphSample.MinNodeCount, graphSampleMinNodeCount, c),
             MaxNodeCount = GetValue(defs.Bitcoin.GraphSample.MaxNodeCount, graphSampleMaxNodeCount, c),
             MinEdgeCount = GetValue(defs.Bitcoin.GraphSample.MinEdgeCount, graphSampleMinEdgeCount, c),

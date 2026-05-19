@@ -24,9 +24,9 @@ public class BitcoinGraphOrchestrator : IGraphOrchestrator<BitcoinGraph>, IDispo
 
     public async Task SampleAsync(CancellationToken ct)
     {
-        var sampler = _options.Bitcoin.GraphSample.TraversalAlgorithm switch
+        ITraversalAlgorithm sampler = _options.Bitcoin.GraphSample.TraversalAlgorithm switch
         {
-            GraphTraversal.FFS => new ForestFire(_options, _db, _logger),
+            GraphTraversal.Panorama => new Panorama(_options, _db, _logger),
             //GraphTraversal.BFS => throw new NotImplementedException(),
             //GraphTraversal.DFS => throw new NotImplementedException(),
             _ => throw new NotImplementedException("Unsupported graph traversal algorithm."),
