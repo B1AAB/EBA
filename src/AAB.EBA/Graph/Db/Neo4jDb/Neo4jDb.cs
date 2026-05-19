@@ -18,6 +18,8 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     private bool _disposed = false;
     private readonly ILogger<Neo4jDb<T>> _logger;
 
+    private readonly SemaphoreSlim _batchLock = new(1, 1);
+
     public Neo4jDb(Options options, ILogger<Neo4jDb<T>> logger, IStrategyFactory strategyFactory)
     {
         _options = options;
@@ -209,21 +211,35 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
 
     private async Task<Batch> GetBatchAsync()
     {
-        if (_batches.Count == 0)
-            _batches = await Batch.DeserializeBatchesAsync(_options.Neo4j.BatchesFilename);
+        // This locking is required here to avoid a rare race condition. 
+        // It has happened a few times that when traversing the whole chain, 
+        // there could be cases where two threads are asking for a batch at 
+        // the same time, and it ends up creating two batches with the same 
+        // filename prefix (timestamp), which results in corrupt output. 
 
-        if (_batches.Count == 0 || _batches[^1].GetMaxCount() >= _options.Neo4j.MaxEntitiesPerBatch)
+        await _batchLock.WaitAsync();
+        try
         {
-            _batches.Add(new Batch(
-                _batches.Count.ToString(),
-                _options.WorkingDir,
-                _strategyFactory.NodeStrategies,
-                _strategyFactory.EdgeStrategies));
+            if (_batches.Count == 0)
+                _batches = await Batch.DeserializeBatchesAsync(_options.Neo4j.BatchesFilename);
 
-            await Batch.SerializeBatchesAsync(_options.Neo4j.BatchesFilename, _batches);
+            if (_batches.Count == 0 || _batches[^1].GetMaxCount() >= _options.Neo4j.MaxEntitiesPerBatch)
+            {
+                _batches.Add(new Batch(
+                    _batches.Count.ToString(),
+                    _options.WorkingDir,
+                    _strategyFactory.NodeStrategies,
+                    _strategyFactory.EdgeStrategies));
+
+                await Batch.SerializeBatchesAsync(_options.Neo4j.BatchesFilename, _batches);
+            }
+
+            return _batches[^1];
         }
-
-        return _batches[^1];
+        finally
+        {
+            _batchLock.Release();
+        }
     }
 
     public async Task ExecuteWriteQueryAsync(List<string> queries, CancellationToken ct)
