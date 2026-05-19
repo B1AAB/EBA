@@ -338,13 +338,17 @@ public class Panorama : ITraversalAlgorithm
         {
             var v = (TxNode)txNode;
             var found = false;
-            foreach (var edge in g.EdgesByType[B2TEdge.Kind])
+
+            if (g.EdgesByType.TryGetValue(B2TEdge.Kind, out var b2tEdges))
             {
-                var t = (B2TEdge)edge;
-                if (t.Target.Txid == v.Txid)
+                foreach (var edge in b2tEdges)
                 {
-                    found = true;
-                    break;
+                    var t = (B2TEdge)edge;
+                    if (t.Target.Txid == v.Txid)
+                    {
+                        found = true;
+                        break;
+                    }
                 }
             }
 
