@@ -18,14 +18,13 @@ public enum GraphTraversal
 
     // sampling algorithm 
     // non-deterministic sampling algorithm
-    // Forest Fire sampling
-    FFS
+    Panorama
 }
 
 public class BitcoinGraphSampleOptions
 {
     public int Count { init; get; }
-    public GraphTraversal TraversalAlgorithm { init; get; } = GraphTraversal.FFS;
+    public GraphTraversal TraversalAlgorithm { init; get; } = GraphTraversal.Panorama;
     public int MinNodeCount { init; get; } = 500;
     public int MaxNodeCount { init; get; } = 1000;
     public int MinEdgeCount { init; get; } = 499;

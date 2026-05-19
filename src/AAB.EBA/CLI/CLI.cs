@@ -488,7 +488,7 @@ internal class Cli
         var methodsAliases = new Dictionary<GraphTraversal, string[]>
         {
             {
-                GraphTraversal.FFS,
+                GraphTraversal.Panorama,
                 [
                     "Forest-Fire"
                 ]
@@ -587,7 +587,7 @@ internal class Cli
             }
 
             var methodOptionsJson = commandResult.GetValue(methodOptionsOption);
-            if (commandResult.GetValue(methodOption) == GraphTraversal.FFS
+            if (commandResult.GetValue(methodOption) == GraphTraversal.Panorama
                 && !string.IsNullOrWhiteSpace(methodOptionsJson))
             {
                 try

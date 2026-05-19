@@ -64,7 +64,7 @@ internal class OptionsBinder
 
         var traversalAlgorithm = GetValue(defs.Bitcoin.GraphSample.TraversalAlgorithm, graphSampleMethodOption, c);
         var PanoramaOptions = defs.Bitcoin.GraphSample.PanoramaOptions;
-        if (traversalAlgorithm == GraphTraversal.FFS)
+        if (traversalAlgorithm == GraphTraversal.Panorama)
         {
             if (graphSampleMethodOptionsOption != null && c.GetResult(graphSampleMethodOptionsOption) is not null)
             {
