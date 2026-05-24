@@ -1,0 +1,88 @@
+{
+  "Timestamp": 1779656663,
+  "WorkingDir": "D:\\EBA_fork\\tests\\MockData\\Bitcoin\\ExpectedOutputs\\71036-71036",
+  "StatusFile": "D:\\EBA_fork\\tests\\MockData\\Bitcoin\\ExpectedOutputs\\71036-71036\\1779656663_status.json",
+  "DefaultConnectionLimit": 100,
+  "Logger": {
+    "RepoName": "events",
+    "LogFilename": "D:\\EBA_fork\\tests\\MockData\\Bitcoin\\ExpectedOutputs\\71036-71036\\events_.log",
+    "MessageTemplate": "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+  },
+  "Bitcoin": {
+    "Traverse": {
+      "ClientUri": "http://localhost:8332/rest/",
+      "From": 71036,
+      "To": 71036,
+      "BlocksListFile": null,
+      "Granularity": 1,
+      "BlocksToProcessListFilename": "D:\\EBA_fork\\tests\\MockData\\Bitcoin\\ExpectedOutputs\\71036-71036\\1779656663_bitcoin_blocks_to_process.eba",
+      "BlocksFailedToProcessListFilename": "D:\\EBA_fork\\tests\\MockData\\Bitcoin\\ExpectedOutputs\\71036-71036\\1779656663_bitcoin_blocks_failed_to_process.eba",
+      "MaxBlocksInBuffer": 100,
+      "MaxConcurrentBlocks": null,
+      "HttpClientTimeout": "00:10:00",
+      "MaxTxoPerFile": 500000000,
+      "TxoFilename": "D:\\EBA_fork\\tests\\MockData\\Bitcoin\\ExpectedOutputs\\71036-71036\\bitcoin_txo.tsv",
+      "TrackTxo": false,
+      "SkipGraphSerialization": false,
+      "HttpClientResilienceStrategy": {
+        "Timeout": "00:10:00",
+        "RetryCount": 5,
+        "MedianFirstRetryDelay": "00:00:15",
+        "SamplingDuration": "00:02:00",
+        "DurationOfBreak": "00:01:00",
+        "FailureThreshold": 0.5,
+        "MinimumThroughput": 2
+      },
+      "BitcoinAgentResilienceStrategy": {
+        "Timeout": "00:03:00",
+        "RetryCount": 3,
+        "MedianFirstRetryDelay": "00:00:15",
+        "SamplingDuration": "00:10:00",
+        "DurationOfBreak": "00:01:00",
+        "FailureThreshold": 0.7,
+        "MinimumThroughput": 2
+      }
+    },
+    "Dedup": {
+      "SortedTxNodesFilename": null,
+      "SortedScriptNodesFilename": null
+    },
+    "GraphSample": {
+      "Count": 0,
+      "TraversalAlgorithm": 0,
+      "MinNodeCount": 500,
+      "MaxNodeCount": 1000,
+      "MinEdgeCount": 499,
+      "MaxEdgeCount": 10000,
+      "MaxAttempts": 25,
+      "RootNodeSelectProb": 0.3,
+      "PanoramaOptions": {
+        "maxHops": 2,
+        "queryLimit": 1000,
+        "reductionFactor": 4,
+        "nodeCountAtRoot": 100,
+        "maxOriginalInDegree": 1000,
+        "maxOriginalOutDegree": 1000,
+        "includeBlockTxEdges": false
+      }
+    },
+    "MapMarket": {
+      "OhlcvSourceFilename": null,
+      "BlockOhlcvMappedFilename": null
+    },
+    "Augmentor": {
+      "BlockOhlcvMappedFilename": null
+    },
+    "MapSpends": {
+      "BatchesFilename": null
+    }
+  },
+  "Neo4j": {
+    "Uri": "bolt://localhost:7687",
+    "User": "neo4j",
+    "Password": "Password",
+    "BatchesFilename": "D:\\EBA_fork\\tests\\MockData\\Bitcoin\\ExpectedOutputs\\71036-71036\\batches.json",
+    "CompressOutput": true,
+    "MaxEntitiesPerBatch": 80000
+  }
+}
