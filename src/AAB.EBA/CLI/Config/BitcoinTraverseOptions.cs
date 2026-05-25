@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace AAB.EBA.CLI.Config;
+﻿namespace AAB.EBA.CLI.Config;
 
 public class BitcoinTraverseOptions
 {

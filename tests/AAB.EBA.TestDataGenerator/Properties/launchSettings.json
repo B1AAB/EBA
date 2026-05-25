@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TestDataGenerator": {
+      "commandName": "Project",
+      "commandLineArgs": "all 71036-71036 NewResources\\APIMock NewResources\\Expected"
+    }
+  }
+}
