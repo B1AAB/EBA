@@ -18,13 +18,13 @@ For this task, you may take the following steps.
 - Run `eba`.
 
     ```shell
-    .\eba.exe bitcoin traverse --from 0 --to 1000
+    .\aab.eba.exe bitcoin traverse --from 0 --to 1000
     ```
 
     You may use the following to get all the arguments and their documentation.
 
     ```shell
-    .\eba.exe bitcoin traverse --help
+    .\aab.eba.exe bitcoin traverse --help
     ```
 
 <details> 
@@ -156,7 +156,7 @@ node files.
 4.  Run the following command to deduplicate the files:
 
     ```shell
-    .\eba.exe bitcoin dedup --sorted-script-nodes-file sorted_nodes_Script.csv --sorted-tx-nodes-file sorted_nodes_Tx.csv
+    .\aab.eba.exe bitcoin dedup --sorted-script-nodes-file sorted_nodes_Script.csv --sorted-tx-nodes-file sorted_nodes_Tx.csv
     ```
 
 
@@ -164,5 +164,5 @@ node files.
 
 
 ```shell
-.\eba.exe bitcoin post-traverse --batches-filename batches.json
+.\aab.eba.exe bitcoin post-traverse --batches-filename batches.json
 ```
