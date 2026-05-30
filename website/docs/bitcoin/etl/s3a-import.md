@@ -162,12 +162,27 @@ meaning it does not support incremental updates to an existing graph.
 
     </details>
 
-5.  Determine the optimal heap size for the import process. 
+6.  Determine the optimal heap size for the import process. 
     For a graph of this magnitude, memory configuration is critical for performance. 
     Please refer to [Neo4j Memory Configuration Guide](https://neo4j.com/docs/operations-manual/current/performance/memory-configuration/).
 
+    <Tabs
+        groupId="os"
+        defaultValue="windows"
+        values={[
+            { label: 'Windows', value: 'windows' }
+        ]
+    }>
 
-6.  Execute the import command. 
+    <TabItem value="windows">
+    ```bash
+    $env:HEAP_SIZE = "16G"
+    ```
+    </TabItem>
+    </Tabs>
+
+
+7.  Execute the import command. 
     Note that we use regex patterns (e.g., .`*BitcoinS2S.tsv.gz`) to ingest the batched edge files automatically.
 
     <Tabs
@@ -220,12 +235,12 @@ meaning it does not support incremental updates to an existing graph.
     </Tabs>
 
 
-7.  Once the import concludes, restart the Neo4j service, and install the
+8.  Once the import concludes, restart the Neo4j service, and install the
     [APOC library](https://neo4j.com/docs/apoc/current/installation/).
 
-8.  [Update Neo4j database configuration](./db-conf).
+9.  [Update Neo4j database configuration](./db-conf).
 
-9. Create indexes and apply constraints.
+10. Create indexes and apply constraints.
 
     <Tabs
         groupId="os"
