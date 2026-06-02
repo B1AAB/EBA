@@ -334,47 +334,55 @@ public class Panorama : ITraversalAlgorithm
 
     private async Task EnsureB2T(BitcoinGraph g, CancellationToken ct)
     {
-        foreach (var txNode in g.NodesByType[NodeKind.Tx])
+        // there could be many reasons as to why a graph may not contain any Tx nodes;
+        // e.g., if the graph is empty, the traversal was so small that did not include any Tx nodes. 
+        if (g.NodesByType.TryGetValue(NodeKind.Tx, out var txNodes))
         {
-            var v = (TxNode)txNode;
-            var found = false;
-            foreach (var edge in g.EdgesByType[B2TEdge.Kind])
+            foreach (var txNode in txNodes)
             {
-                var t = (B2TEdge)edge;
-                if (t.Target.Txid == v.Txid)
+                var v = (TxNode)txNode;
+                var found = false;
+                if (g.EdgesByType.TryGetValue(B2TEdge.Kind, out var b2tEdges))
                 {
-                    found = true;
-                    break;
+                    foreach (var edge in b2tEdges)
+                    {
+                        var t = (B2TEdge)edge;
+                        if (t.Target.Txid == v.Txid)
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
                 }
-            }
 
-            if (!found)
-            {
-                var records = await _graphDb.GetEdgesAsync(
-                    edgeKind: B2TEdge.Kind,
-                    sourceNodeVariable: "block",
-                    targetNodeVariable: "tx",
-                    relationshipVariable: "b2t",
-                    targetNodeIdProperty: _txidMapping.Property.Name,
-                    targetNodeId: _txidMapping.GetValue(v),
-                    ct: ct);
-
-                var record = records[0];
-                double txNodeOutHops = v.OutHopsFromRoot ?? 0;
-
-                TryUnpackNodeDict(
-                    record["block"].As<object>().As<IDictionary<string, object>>(),
-                    txNodeOutHops + 1,
-                    out var builtBlockNode);
-
-                if (builtBlockNode != null)
+                if (!found)
                 {
-                    var blockNode = g.GetOrAddNode(builtBlockNode);
+                    var records = await _graphDb.GetEdgesAsync(
+                        edgeKind: B2TEdge.Kind,
+                        sourceNodeVariable: "block",
+                        targetNodeVariable: "tx",
+                        relationshipVariable: "b2t",
+                        targetNodeIdProperty: _txidMapping.Property.Name,
+                        targetNodeId: _txidMapping.GetValue(v),
+                        ct: ct);
 
-                    var candidateEdge = _graphDb.StrategyFactory.CreateEdge(blockNode, v, record["b2t"].As<IRelationship>());
+                    var record = records[0];
+                    double txNodeOutHops = v.OutHopsFromRoot ?? 0;
 
-                    if (candidateEdge != null)
-                        g.TryGetOrAddEdge(candidateEdge, out IEdge<Model.INode, Model.INode> _);
+                    TryUnpackNodeDict(
+                        record["block"].As<object>().As<IDictionary<string, object>>(),
+                        txNodeOutHops + 1,
+                        out var builtBlockNode);
+
+                    if (builtBlockNode != null)
+                    {
+                        var blockNode = g.GetOrAddNode(builtBlockNode);
+
+                        var candidateEdge = _graphDb.StrategyFactory.CreateEdge(blockNode, v, record["b2t"].As<IRelationship>());
+
+                        if (candidateEdge != null)
+                            g.TryGetOrAddEdge(candidateEdge, out IEdge<Model.INode, Model.INode> _);
+                    }
                 }
             }
         }
