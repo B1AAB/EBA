@@ -262,4 +262,44 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
             "{s} Finished updating block node files with total supply information for {n}/{total} batches.",
             _processStep, counter, batches.Count);
     }
+
+    private async Task SetBlockOHLCV(SortedDictionary<long, BlockNode> blockNodes)
+    {
+        if (!OHLCV.TryParseFile(_options.Bitcoin.Augmentor.BlockOhlcvMappedFilename, out var blockOHLCVMapping))
+        {
+            _logger.LogError(
+                "Failed to parse OHLCV data from file: {filename}",
+                _options.Bitcoin.Augmentor.BlockOhlcvMappedFilename);
+            return;
+        }
+        else
+        {
+            _logger.LogInformation(
+                "Successfully parsed OHLCV data for {count:n0} blocks from file: {filename}",
+                blockOHLCVMapping.Count,
+                _options.Bitcoin.Augmentor.BlockOhlcvMappedFilename);
+        }
+
+        var counter = 0;
+        foreach (var block in blockNodes)
+        {
+            if (blockOHLCVMapping.TryGetValue(block.Key, out var ohlcv))
+            {
+                counter++;
+                block.Value.BlockMetadata.Ohlcv = ohlcv;
+            }
+        }
+
+        _logger.LogInformation(
+            "Extended {n:n0}/{total:n0} block nodes with OHLCV data; did not find mapping OHLCV for {d:n0} block nodes.", 
+            counter, blockNodes.Count, blockNodes.Count - counter);
+    }
+
+    private async Task SetRealizedCap(
+        SortedDictionary<long, BlockNode> blockNodes, 
+        Dictionary<long, OHLCV> ohlcv,
+        CancellationToken ct)
+    {
+
+    }
 }
