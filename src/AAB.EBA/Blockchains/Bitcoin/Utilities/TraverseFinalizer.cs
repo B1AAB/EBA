@@ -33,47 +33,51 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
         await SetSupplyAmount(batches, blockNodes, ct);
     }
 
-    private void GetHeightToBatchMapping(
-        Options options,
+    private async Task<(Dictionary<long, Batch>, SortedDictionary<long, BlockNode>)> GetHeightToBatchMapping(
         List<Batch> batches,
-        out Dictionary<long, Batch> blockToBatch,
-        out SortedDictionary<long, BlockNode> blockNodes)
+        CancellationToken ct)
     {
         _logger.LogInformation("{s} Reading Block node files to create block-to-batch mapping.", _processStep);
 
-        blockToBatch = [];
-        blockNodes = [];
+        var concBlockToBatch = new ConcurrentDictionary<long, Batch>();
+        var concBlockNodes = new ConcurrentDictionary<long, BlockNode>();
 
         int counter = 0;
 
-        foreach (var batch in batches)
+        await Parallel.ForEachAsync(batches, ct, async (batch, ct) =>
         {
             var blockNodesFilename = batch.GetFilename(BlockNode.Kind);
 
-            foreach (var cols in IElementCodec.ReadCsv(blockNodesFilename))
+            await foreach (var cols in IElementCodec.ReadCsvAsync(blockNodesFilename, ct))
             {
                 var blockNode = BlockNodeDescriptor.Deserialize(cols);
                 var h = blockNode.BlockMetadata.Height;
 
-                if (!blockToBatch.TryAdd(h, batch))
+                if (!concBlockToBatch.TryAdd(h, batch))
                 {
                     _logger.LogError(
                         "{s} Error on block height {h:n0}; " +
                         "this block is defined at least twice, in batches with names {b1} and {b2}.",
-                        _processStep, h, blockToBatch[h].Name, batch.Name);
+                        _processStep, h, concBlockToBatch[h].Name, batch.Name);
     
                     throw new InvalidDataException();
                 }
 
-                blockNodes[h] = blockNode;
+                concBlockNodes.TryAdd(h, blockNode);
             }
 
-            counter++;
+            Interlocked.Increment(ref counter);
             if (counter % 100 == 0)
-                _logger.LogInformation("{s} Finished reading block node files for {n:n0} batches", _processStep, counter);
+            {
+                _logger.LogInformation(
+                    "{s} Finished reading block node files for {n:n0} / {total:n0} batches",
+                    _processStep, counter, batches.Count);
         }
+        });
 
         _logger.LogInformation("{s} Finished reading Block node files to create block-to-batch mapping.", _processStep);
+
+        return (new Dictionary<long, Batch>(concBlockToBatch), new SortedDictionary<long, BlockNode>(concBlockNodes));
     }
 
     private static string GetSpentTxoFilename(Batch batch)
