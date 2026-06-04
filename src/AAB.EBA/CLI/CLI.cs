@@ -710,6 +710,12 @@ internal class Cli
             Required = true
         };
 
+        var ohlcvFilenameOption = new Option<string>("--ohlcv-filename")
+        {
+            Required = false,
+            Description = "A TSV file containing block metadata (height, median time) mapped to aggregated OHLCV market data."
+        };
+
         var cmd = new Command(
             name: "post-traverse",
             description:
@@ -717,14 +723,18 @@ internal class Cli
                 "Computes node and edge properties that depend on cross-block information, " +
                 "such as UTxO spending and total Bitcoin supply per block.")
         {
-            batchesFilenameOption
+            batchesFilenameOption,
+            ohlcvFilenameOption
         };
 
         cmd.SetAction(async (parseResult, cancellationToken) =>
         {
             var options = OptionsBinder.Build(
                 parseResult,
-                batchesFilenameOption: batchesFilenameOption);
+                workingDirOption: _workingDirOption,
+                statusFilenameOption: _statusFilenameOption,
+                batchesFilenameOption: batchesFilenameOption,
+                augmentroOhlcvOption: ohlcvFilenameOption);
 
             try
             {
