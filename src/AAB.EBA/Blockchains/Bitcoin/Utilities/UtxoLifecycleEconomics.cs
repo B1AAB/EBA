@@ -13,18 +13,81 @@ public class UtxoEconomics(ILogger<BitcoinOrchestrator> logger)
     private readonly int _spentHeightIdx = T2SEdgeDescriptor.StaticMapper.GetPropertyCsvIndex(x => x.SpentHeight);
     private readonly int _valueIdx = T2SEdgeDescriptor.StaticMapper.GetPropertyCsvIndex(x => x.Value);
 
-    private int totalEdgesProcessed = 0;
-    private int totalSkippedEdges = 0;
+    private long edgesProcessedPerChunkCount = 0;
+    private long skippedEdgesPerChunkCount = 0;
     private long chunkUtxoId = 0;
     private int batchCounter = 0;
-    private ConcurrentDictionary<long, BlockUtxoChanges> utxoChangesByHeight = new();
+    private readonly ConcurrentDictionary<long, BlockUtxoDelta> utxoDeltaByHeight = new();
 
     private record struct MinimalUtxo(long Id, decimal FiatValue);
 
-    private class BlockUtxoChanges
+    /// <summary>
+    /// Holds a set of Utxo events in a block:
+    /// Utxos created and spent in the block, 
+    /// where each Utxo event is represented by a minimal set of properties. 
+    /// </summary>
+    private class BlockUtxoDelta
     {
-        public ConcurrentBag<MinimalUtxo> UtxosDefined { get; } = [];
+        public ConcurrentBag<MinimalUtxo> UtxosCreated { get; } = [];
         public ConcurrentBag<long> UtxosSpent { get; } = [];
+    }
+
+    public async Task SetBlockOnChainEconomics(
+        List<Batch> batches,
+        SortedDictionary<long, BlockNode> blockNodes,
+        Dictionary<long, OHLCV> ohlcv,
+        CancellationToken ct,
+        int batchesPerChunk = 100)
+    {
+        var sortedHeights = blockNodes.Keys.ToArray();
+
+        long totalEdgesProcessed = 0;
+        long totalSkippedEdges = 0;
+
+        foreach (var batchChunk in batches.Chunk(batchesPerChunk))
+        {
+            utxoDeltaByHeight.Clear();
+            chunkUtxoId = 0;
+
+            totalEdgesProcessed += edgesProcessedPerChunkCount;
+            edgesProcessedPerChunkCount = 0;
+
+            totalSkippedEdges += skippedEdgesPerChunkCount;
+            skippedEdgesPerChunkCount = 0;
+
+            await Parallel.ForEachAsync(batchChunk, new ParallelOptions
+            {
+                MaxDegreeOfParallelism = Environment.ProcessorCount,
+                CancellationToken = ct
+            },
+            async (batch, ct) =>
+            {
+                await ReadUtxoLifecycle(batch, ohlcv, ct);
+                Interlocked.Increment(ref batchCounter);
+
+                if (batchCounter % 100 == 0)
+                {
+                    _logger.LogInformation(
+                        "Read Utxo lifecycle from {batchCount} batches. Total edges processed: {edgesProcessed}, Total edges skipped: {edgesSkipped}",
+                        batchCounter, edgesProcessedPerChunkCount, skippedEdgesPerChunkCount);
+                }
+            });
+
+            _logger.LogInformation(
+                "Apply market indicators from Utxo lifecycle for chunk of {batchCount} batches. " +
+                "Total edges processed in chunk: {edgesProcessed}, Total edges skipped in chunk: {edgesSkipped}",
+                batchChunk.Count(), edgesProcessedPerChunkCount, skippedEdgesPerChunkCount);
+            ApplyMarketIndicatorsFromUtxoLifecycle(sortedHeights, blockNodes);
+
+            _logger.LogInformation(
+                "Completed processing chunk of {batchCount} batches. " +
+                "Total edges processed so far: {edgesProcessed}, Total edges skipped so far: {edgesSkipped}",
+                batchChunk.Count(), totalEdgesProcessed, totalSkippedEdges);
+        }
+
+        _logger.LogInformation(
+            "Completed processing all batches. Total edges processed: {edgesProcessed}, Total edges skipped: {edgesSkipped}",
+            totalEdgesProcessed, totalSkippedEdges);
     }
 
     private async Task ReadUtxoLifecycle(Batch batch, Dictionary<long, OHLCV> ohlcv, CancellationToken ct)
@@ -45,27 +108,36 @@ public class UtxoEconomics(ILogger<BitcoinOrchestrator> logger)
 
             if (!ohlcv.TryGetValue(creationHeight, out var creationBlockOHLCV))
             {
-                Interlocked.Increment(ref totalSkippedEdges);
+                Interlocked.Increment(ref skippedEdgesPerChunkCount);
                 continue;
             }
 
             var utxoFiatValueAtCreation = creationBlockOHLCV.GetFiatValue(value);
             if (utxoFiatValueAtCreation > 0)
             {
-                long utxoId = Interlocked.Increment(ref chunkUtxoId);
+                var utxoId = Interlocked.Increment(ref chunkUtxoId);
 
-                var utxoChangesAtCreationHeight = utxoChangesByHeight.GetOrAdd(creationHeight, _ => new BlockUtxoChanges());
-                utxoChangesAtCreationHeight.UtxosDefined.Add(new MinimalUtxo(utxoId, utxoFiatValueAtCreation));
+                // utxo deltas at the creation height
+                utxoDeltaByHeight.GetOrAdd(creationHeight, _ => new BlockUtxoDelta())
+                    .UtxosCreated.Add(new MinimalUtxo(utxoId, utxoFiatValueAtCreation));
 
-                var utxoChangesAtSpentHeight = utxoChangesByHeight.GetOrAdd(spentHeight, _ => new BlockUtxoChanges());
-                utxoChangesAtSpentHeight.UtxosSpent.Add(utxoId);
+                // utxo deltas at the spent height
+                utxoDeltaByHeight.GetOrAdd(spentHeight, _ => new BlockUtxoDelta())
+                    .UtxosSpent.Add(utxoId);
             }
 
-            Interlocked.Increment(ref totalEdgesProcessed);
+            Interlocked.Increment(ref edgesProcessedPerChunkCount);
+
+            if (edgesProcessedPerChunkCount % 100_000 == 0)
+            {
+                _logger.LogInformation(
+                    "Processed {edgesProcessed} edges in current chunk. Total edges skipped in current chunk: {edgesSkipped}",
+                    edgesProcessedPerChunkCount, skippedEdgesPerChunkCount);
+            }
         }
     }
 
-    private async Task ApplyMarketIndicatorsFromUtxoLifecycle(long[] sortedHeights, SortedDictionary<long, BlockNode> blockNodes)
+    private void ApplyMarketIndicatorsFromUtxoLifecycle(long[] sortedHeights, SortedDictionary<long, BlockNode> blockNodes)
     {
         var activeUtxos = new Dictionary<long, decimal>();
         decimal runningRealizedCap = 0;
@@ -74,9 +146,9 @@ public class UtxoEconomics(ILogger<BitcoinOrchestrator> logger)
         {
             var block = blockNodes[h];
 
-            if (utxoChangesByHeight.TryGetValue(h, out var blockUtxoChanges))
+            if (utxoDeltaByHeight.TryGetValue(h, out var blockUtxoChanges))
             {
-                foreach (var utxoChange in blockUtxoChanges.UtxosDefined)
+                foreach (var utxoChange in blockUtxoChanges.UtxosCreated)
                 {
                     activeUtxos[utxoChange.Id] = utxoChange.FiatValue;
                     runningRealizedCap += utxoChange.FiatValue;
@@ -118,51 +190,6 @@ public class UtxoEconomics(ILogger<BitcoinOrchestrator> logger)
                     block.BlockMetadata.UnrealizedProfit += totalProfit;
                 }
             }
-        }
-    }
-
-    public async Task SetBlockOnChainEconomics(
-        List<Batch> batches,
-        SortedDictionary<long, BlockNode> blockNodes,
-        Dictionary<long, OHLCV> ohlcv,
-        CancellationToken ct,
-        int batchesPerChunk = 100)
-    {
-        var sortedHeights = blockNodes.Keys.ToArray();
-
-        foreach (var batchChunk in batches.Chunk(batchesPerChunk))
-        {
-            utxoChangesByHeight.Clear();
-            chunkUtxoId = 0;
-
-            await Parallel.ForEachAsync(batchChunk, new ParallelOptions
-            {
-                MaxDegreeOfParallelism = Environment.ProcessorCount,
-                CancellationToken = ct
-            },
-            async (batch, ct) =>
-            {
-                await ReadUtxoLifecycle(batch, ohlcv, ct);
-                Interlocked.Increment(ref batchCounter);
-
-                if (batchCounter % 100 == 0)
-                {
-                    _logger.LogInformation(
-                        "Read Utxo lifecycle from {batchCount} batches. Total edges processed: {edgesProcessed}, Total edges skipped: {edgesSkipped}",
-                        batchCounter, totalEdgesProcessed, totalSkippedEdges);
-                }
-            });
-
-            _logger.LogInformation(
-                "Apply market indicators from Utxo lifecycle for chunk of {batchCount} batches. " +
-                "Total edges processed in chunk: {edgesProcessed}, Total edges skipped in chunk: {edgesSkipped}",
-                batchChunk.Count(), totalEdgesProcessed, totalSkippedEdges);
-            await ApplyMarketIndicatorsFromUtxoLifecycle(sortedHeights, blockNodes);
-
-            _logger.LogInformation(
-                "Completed processing chunk of {batchCount} batches. " +
-                "Total edges processed so far: {edgesProcessed}, Total edges skipped so far: {edgesSkipped}",
-                batchChunk.Count(), totalEdgesProcessed, totalSkippedEdges);
         }
     }
 }
