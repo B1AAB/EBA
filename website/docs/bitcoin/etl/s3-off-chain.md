@@ -35,7 +35,7 @@ used to compute aggregated OHLCV values.
 You may run the following command for this step.
 
 ```shell
-.\eba.exe bitcoin map-market --ohlcv-source-filename btcusd_1-min_data.csv --block-market-output-filename mapped-block-ohlcv.tsv
+.\aab.eba.exe bitcoin map-market --ohlcv-source-filename btcusd_1-min_data.csv --block-market-output-filename mapped-block-ohlcv.tsv
 ```
 
 ### Step 3: Augment the Graph
@@ -43,7 +43,7 @@ You may run the following command for this step.
 Run the following command to add market-related features to the graph.
 
 ```shell
-.\eba.exe bitcoin augment --ohlcv-filename mapped-block-ohlcv.tsv
+.\aab.eba.exe bitcoin augment --ohlcv-filename mapped-block-ohlcv.tsv
 ```
 
 Note that this process may take a considerable amount of time to complete.

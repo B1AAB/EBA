@@ -10,6 +10,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AAB.EBA.GraphDb", "src\AAB.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AAB.EBA.GraphDb.Tests", "tests\AAB.EBA.GraphDb.Tests\AAB.EBA.GraphDb.Tests.csproj", "{A8F13202-6D53-4FC1-BBAF-3F68E0470944}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AAB.EBA.TestDataGenerator", "tests\AAB.EBA.TestDataGenerator\AAB.EBA.TestDataGenerator.csproj", "{3FD7138E-1F92-78B1-EF3E-A159810AB28A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AAB.EBA.Tests", "tests\AAB.EBA.Tests\AAB.EBA.Tests.csproj", "{10C7328D-E149-737D-E62E-43BEB9BC2DFF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +40,14 @@ Global
 		{A8F13202-6D53-4FC1-BBAF-3F68E0470944}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A8F13202-6D53-4FC1-BBAF-3F68E0470944}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A8F13202-6D53-4FC1-BBAF-3F68E0470944}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3FD7138E-1F92-78B1-EF3E-A159810AB28A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3FD7138E-1F92-78B1-EF3E-A159810AB28A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3FD7138E-1F92-78B1-EF3E-A159810AB28A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3FD7138E-1F92-78B1-EF3E-A159810AB28A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10C7328D-E149-737D-E62E-43BEB9BC2DFF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10C7328D-E149-737D-E62E-43BEB9BC2DFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10C7328D-E149-737D-E62E-43BEB9BC2DFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10C7328D-E149-737D-E62E-43BEB9BC2DFF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -18,13 +18,13 @@ For this task, you may take the following steps.
 - Run `eba`.
 
     ```shell
-    .\eba.exe bitcoin traverse --from 0 --to 1000
+    .\aab.eba.exe bitcoin traverse --from 0 --to 1000
     ```
 
     You may use the following to get all the arguments and their documentation.
 
     ```shell
-    .\eba.exe bitcoin traverse --help
+    .\aab.eba.exe bitcoin traverse --help
     ```
 
 <details> 
@@ -117,12 +117,25 @@ node files.
 2.  Combine the files:
 
     ```shell
-    zcat [0-9]*_nodes_Tx.csv.gz > combined_nodes_Tx.csv
+    find . -maxdepth 1 -name "[0-9]*_nodes_Tx.csv.gz" -print0 \
+        | xargs -0 pigz -dc \
+        > combined_nodes_Tx.csv 2> combine_errors_Tx.log
     ```
 
     ```shell
-    zcat [0-9]*_nodes_Script.csv.gz > combined_nodes_Script.csv
+    find . -maxdepth 1 -name "[0-9]*_nodes_Script.csv.gz" -print0 \
+        | xargs -0 pigz -dc \
+        > combined_nodes_Script.csv 2> combine_errors_Script.log
     ```
+
+    Note that there may be many batches; 
+    hence, Methods that expand wildcards into filenames can be limiting 
+    because they may exceed the operating system's maximum command-line argument size, 
+    potentially causing some batches to be silently omitted. 
+    This issue may only become apparent during import into Neo4j, 
+    when edges reference nodes from omitted batches, 
+    causing the Neo4j import process to fail.
+    Therefore, the methods above use `find` instead of wildcard expansion.
 
 3.  Sort the files. 
     Note: Since these files can be very large, 
@@ -143,7 +156,7 @@ node files.
 4.  Run the following command to deduplicate the files:
 
     ```shell
-    .\eba.exe bitcoin dedup --sorted-script-nodes-file sorted_nodes_Script.csv --sorted-tx-nodes-file sorted_nodes_Tx.csv
+    .\aab.eba.exe bitcoin dedup --sorted-script-nodes-file sorted_nodes_Script.csv --sorted-tx-nodes-file sorted_nodes_Tx.csv
     ```
 
 
@@ -151,5 +164,5 @@ node files.
 
 
 ```shell
-.\eba.exe bitcoin post-traverse --batches-filename batches.json
+.\aab.eba.exe bitcoin post-traverse --batches-filename batches.json
 ```

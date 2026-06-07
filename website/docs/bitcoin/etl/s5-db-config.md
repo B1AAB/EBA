@@ -1,6 +1,6 @@
 ---
-title: Neo4j Config & Schema Init
-description: Step 6. Database Tuning and Constraint Definitions
+title: Neo4j Config
+description: Step 6. Database Tuning
 sidebar_label: Neo4j Configuration
 sidebar_position: 6
 slug: /bitcoin/etl/db-conf
@@ -35,22 +35,4 @@ Therefore, you need to update and increase the default memory settings.
     server.memory.heap.initial_size=4G
     server.memory.heap.max_size=16G
     server.memory.pagecache.size=16G
-    ```
-
-## Schema Application
-
-To improve query performance 
-(e.g., during neighborhood sampling), 
-we define database constraints, such as uniqueness constraints, 
-which index commonly used properties.
-
-Take the following steps to apply these constraints to your database:
-
-
-1.  Start the Neo4j database service.
-
-2.  Run the `post-process` subcommand.
-
-    ```Shell
-    .\eba.exe bitcoin post-process
     ```
