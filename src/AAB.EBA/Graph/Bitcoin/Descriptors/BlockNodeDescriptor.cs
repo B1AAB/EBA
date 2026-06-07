@@ -85,6 +85,7 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
             .Map(n => (double?)n.BlockMetadata.NUPL)
             .Map(n => (double?)n.BlockMetadata.NUL)
             .Map(n => (double?)n.BlockMetadata.NUP)
+            .Map(n => (double?)n.BlockMetadata.MVRV)
             .MapRange(PropertyMappingFactory.ToMappings<BlockNode>(n => n.BlockMetadata.Ohlcv, prefix: OhlcvPropNamePrefix))
 
             .MapLabel(_ => BlockNode.Kind)
