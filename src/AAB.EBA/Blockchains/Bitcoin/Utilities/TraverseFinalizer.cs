@@ -23,10 +23,10 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
         var maxSteps = 4;
         if (_options.Bitcoin.Augmentor.BlockOhlcvMappedFilename != null)
             maxSteps++;
-
+        
         _processStep = $"[1/{maxSteps}] Block-to-batch mapping:";
-        var (blockToBatch, blockNodes) = await GetHeightToBatchMapping(batches, ct);
-
+        var (blockToBatch, blockNodes) = await BitcoinHelpers.GetHeightToBatchMapping(batches, _logger, ct);
+        
         _processStep = $"[2/{maxSteps}] Collecting Txo spending:";    
         await CreatePerBatchSpentUtxo(batches, blockToBatch, ct);
 
@@ -35,62 +35,6 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
 
         _processStep = $"[4/{maxSteps}] Setting supply amount:";
         await SetSupplyAmount(batches, blockNodes, ct);
-
-        if (_options.Bitcoin.Augmentor.BlockOhlcvMappedFilename != null)
-        {
-            var blockOhlcvMapping = await SetBlockOHLCV(blockNodes, ct);
-            var utxoEconomics = new UtxoEconomics(_logger);
-            await utxoEconomics.SetBlockOnChainEconomicsAsync(batches, blockNodes, blockOhlcvMapping, ct);
-
-            await SaveBlockNodesWithUpdatedEconomicIndicators(batches, blockNodes, ct);
-        }
-    }
-
-    private async Task<(Dictionary<long, Batch>, SortedDictionary<long, BlockNode>)> GetHeightToBatchMapping(
-        List<Batch> batches,
-        CancellationToken ct)
-    {
-        _logger.LogInformation("{s} Reading Block node files to create block-to-batch mapping.", _processStep);
-
-        var concBlockToBatch = new ConcurrentDictionary<long, Batch>();
-        var concBlockNodes = new ConcurrentDictionary<long, BlockNode>();
-
-        int counter = 0;
-
-        await Parallel.ForEachAsync(batches, ct, async (batch, ct) =>
-        {
-            var blockNodesFilename = batch.GetFilename(BlockNode.Kind);
-
-            await foreach (var cols in IElementCodec.ReadCsvAsync(blockNodesFilename, ct))
-            {
-                var blockNode = BlockNodeDescriptor.Deserialize(cols);
-                var h = blockNode.BlockMetadata.Height;
-
-                if (!concBlockToBatch.TryAdd(h, batch))
-                {
-                    _logger.LogError(
-                        "{s} Error on block height {h:n0}; " +
-                        "this block is defined at least twice, in batches with names {b1} and {b2}.",
-                        _processStep, h, concBlockToBatch[h].Name, batch.Name);
-
-                    throw new InvalidDataException();
-                }
-
-                concBlockNodes.TryAdd(h, blockNode);
-            }
-
-            Interlocked.Increment(ref counter);
-            if (counter % 100 == 0)
-            {
-                _logger.LogInformation(
-                    "{s} Finished reading block node files for {n:n0} / {total:n0} batches",
-                    _processStep, counter, batches.Count);
-            }
-        });
-
-        _logger.LogInformation("{s} Finished reading Block node files to create block-to-batch mapping.", _processStep);
-
-        return (new Dictionary<long, Batch>(concBlockToBatch), new SortedDictionary<long, BlockNode>(concBlockNodes));
     }
 
     private static string GetSpentTxoFilename(Batch batch)
@@ -273,107 +217,5 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
         _logger.LogInformation(
             "{s} Finished updating block node files with total supply information for {n}/{total} batches.",
             _processStep, counter, batches.Count);
-    }
-
-    private async Task<Dictionary<long, OHLCV>> SetBlockOHLCV(SortedDictionary<long, BlockNode> blockNodes, CancellationToken ct)
-    {
-        if (!OHLCV.TryParseFile(_options.Bitcoin.Augmentor.BlockOhlcvMappedFilename, out var blockOhlcvMapping))
-        {
-            _logger.LogError(
-                "Failed to parse OHLCV data from file: {filename}",
-                _options.Bitcoin.Augmentor.BlockOhlcvMappedFilename);
-            return [];
-        }
-        else
-        {
-            _logger.LogInformation(
-                "Successfully parsed OHLCV data for {count:n0} blocks from file: {filename}",
-                blockOhlcvMapping.Count,
-                _options.Bitcoin.Augmentor.BlockOhlcvMappedFilename);
-        }
-
-        ct.ThrowIfCancellationRequested();
-
-        var counter = 0;
-        foreach (var block in blockNodes)
-        {
-            if (blockOhlcvMapping.TryGetValue(block.Key, out var ohlcv))
-            {
-                counter++;
-                block.Value.BlockMetadata.Ohlcv = ohlcv;
-            }
-        }
-
-        _logger.LogInformation(
-            "Extended {n:n0}/{total:n0} block nodes with OHLCV data; did not find mapping OHLCV for {d:n0} block nodes.",
-            counter, blockNodes.Count, blockNodes.Count - counter);
-
-        return blockOhlcvMapping;
-    }
-
-    private async Task SaveBlockNodesWithUpdatedEconomicIndicators(List<Batch> batches, SortedDictionary<long, BlockNode> blockNodes, CancellationToken ct)
-    {
-        var prefix = BlockNodeDescriptor.OhlcvPropNamePrefix;
-        var mapper = BlockNodeDescriptor.StaticMapper;
-        var heightIdx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.Height);
-        var oOpenIdx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.Ohlcv.Open, propertyNamePrefix: prefix);
-        var oCloseIdx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.Ohlcv.Close, propertyNamePrefix: prefix);
-        var oHighIdx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.Ohlcv.High, propertyNamePrefix: prefix);
-        var oLowIdx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.Ohlcv.Low, propertyNamePrefix: prefix);
-        var oHlc4Idx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.Ohlcv.OHLC4, propertyNamePrefix: prefix);
-        var oVolumeIdx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.Ohlcv.Volume, propertyNamePrefix: prefix);
-        var oVwapIdx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.Ohlcv.VWAP, propertyNamePrefix: prefix);
-
-        var realizedCapIdx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.RealizedCap);
-        var unrealizedProfitIdx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.UnrealizedProfit);
-        var unrealizedLossIdx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.UnrealizedLoss);
-
-        var marketCapIdx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.MarketCap);
-        var nuplIdx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.NUPL);
-        var nulIdx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.NUL);
-        var nupIdx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.NUP);
-        var mvrvIdx = mapper.GetPropertyCsvIndex(x => x.BlockMetadata.MVRV);
-
-        await Parallel.ForEachAsync(batches, new ParallelOptions { MaxDegreeOfParallelism = 1, CancellationToken = ct, }, async (batch, ct) =>
-        {
-            using var reader = new StreamReader(new GZipStream(
-                File.OpenRead(batch.GetFilename(BlockNode.Kind)),
-                CompressionMode.Decompress));
-
-            using var writer = new StreamWriter(new GZipStream(
-                File.Create(Helpers.AddPostfixToFilename(batch.GetFilename(BlockNode.Kind), "_with_economic_indicators")),
-                CompressionLevel.Optimal));
-
-            string? line;
-
-            while ((line = await reader.ReadLineAsync(ct)) != null)
-            {
-                var cols = line.Split(Options.CsvDelimiter);
-                var height = long.Parse(cols[heightIdx]);
-                var blockNode = blockNodes[height];
-                if (blockNode.BlockMetadata.Ohlcv != null)
-                {
-                    cols[oOpenIdx] = blockNode.BlockMetadata.Ohlcv.Open.ToString();
-                    cols[oCloseIdx] = blockNode.BlockMetadata.Ohlcv.Close.ToString();
-                    cols[oHighIdx] = blockNode.BlockMetadata.Ohlcv.High.ToString();
-                    cols[oLowIdx] = blockNode.BlockMetadata.Ohlcv.Low.ToString();
-                    cols[oHlc4Idx] = blockNode.BlockMetadata.Ohlcv.OHLC4.ToString();
-                    cols[oVolumeIdx] = blockNode.BlockMetadata.Ohlcv.Volume.ToString();
-                    cols[oVwapIdx] = blockNode.BlockMetadata.Ohlcv.VWAP.ToString();
-
-                    cols[realizedCapIdx] = blockNode.BlockMetadata.RealizedCap?.ToString() ?? "0";
-                    cols[unrealizedProfitIdx] = blockNode.BlockMetadata.UnrealizedProfit?.ToString() ?? "0";
-                    cols[unrealizedLossIdx] = blockNode.BlockMetadata.UnrealizedLoss?.ToString() ?? "0";
-
-                    cols[marketCapIdx] = blockNode.BlockMetadata.MarketCap?.ToString() ?? "0";
-                    cols[nuplIdx] = blockNode.BlockMetadata.NUPL?.ToString() ?? "0";
-                    cols[nulIdx] = blockNode.BlockMetadata.NUL?.ToString() ?? "0";
-                    cols[nupIdx] = blockNode.BlockMetadata.NUP?.ToString() ?? "0";
-                    cols[mvrvIdx] = blockNode.BlockMetadata.MVRV?.ToString() ?? "0";
-                }
-
-                await writer.WriteLineAsync(string.Join(Options.CsvDelimiter, cols));
-            }
-        });
     }
 }

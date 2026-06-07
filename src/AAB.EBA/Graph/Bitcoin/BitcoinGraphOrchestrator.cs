@@ -46,12 +46,6 @@ public class BitcoinGraphOrchestrator : IGraphOrchestrator<BitcoinGraph>, IDispo
         await _db.SerializeAsync(g, ct);
     }
 
-    public async Task AddMarketData(CancellationToken ct)
-    {
-        var augmentor = new OffChain.EconomicAugmentor(_options, _db, _logger);
-        await augmentor.SetBlockMarketIndicators(ct);
-    }
-
     public void Dispose()
     {
         Dispose(true);

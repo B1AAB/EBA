@@ -2,5 +2,5 @@
 
 public class BitcoinAugmentorOptions
 {
-    public string BlockOhlcvMappedFilename { init; get; }
+    public string BlockOhlcvMappedFilename { init; get; } = string.Empty;
 }
