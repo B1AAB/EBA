@@ -7,189 +7,276 @@ namespace AAB.EBA.Blockchains.Bitcoin.Utilities;
 
 public class UtxoEconomics(ILogger<BitcoinOrchestrator> logger)
 {
+    private class BatchUtxoDeltas(int maximumBlockHeight)
+    {
+        public readonly long[] CreatedSatoshis = new long[maximumBlockHeight + 1];
+        public readonly Dictionary<int, Dictionary<int, long>> SpentSatoshis = [];
+        public long EdgesProcessed;
+    }
+
+    private class ActiveUtxoSet(int maxBlockHeight)
+    {
+        public readonly long[] UnspentSatoshis = new long[maxBlockHeight + 1];
+        public readonly HashSet<int> ActiveCreationHeights = [];
+        public decimal RealizedCap { get; private set; }
+
+        public void AddCreatedSatoshis(int height, long satoshis, double fiatPrice)
+        {
+            if (satoshis <= 0)
+                return;
+
+            UnspentSatoshis[height] += satoshis;
+            RealizedCap += (decimal)(satoshis * fiatPrice);
+            ActiveCreationHeights.Add(height);
+        }
+
+        public void RemoveSpentSatoshis(int creationHeight, long satoshis, double fiatPrice)
+        {
+            UnspentSatoshis[creationHeight] -= satoshis;
+            RealizedCap -= (decimal)(satoshis * fiatPrice);
+
+            if (UnspentSatoshis[creationHeight] == 0)
+                ActiveCreationHeights.Remove(creationHeight);
+        }
+    }
+
     private readonly ILogger<BitcoinOrchestrator> _logger = logger;
 
     private readonly int _creationHeightIdx = T2SEdgeDescriptor.StaticMapper.GetPropertyCsvIndex(x => x.CreationHeight);
     private readonly int _spentHeightIdx = T2SEdgeDescriptor.StaticMapper.GetPropertyCsvIndex(x => x.SpentHeight);
     private readonly int _valueIdx = T2SEdgeDescriptor.StaticMapper.GetPropertyCsvIndex(x => x.Value);
 
-    private long edgesProcessedPerChunkCount = 0;
-    private long skippedEdgesPerChunkCount = 0;
-    private long chunkUtxoId = 0;
-    private int batchCounter = 0;
-    private readonly ConcurrentDictionary<long, BlockUtxoDelta> utxoDeltaByHeight = new();
-
-    private record struct MinimalUtxo(long Id, decimal FiatValue);
-
-    /// <summary>
-    /// Holds a set of Utxo events in a block:
-    /// Utxos created and spent in the block, 
-    /// where each Utxo event is represented by a minimal set of properties. 
-    /// </summary>
-    private class BlockUtxoDelta
-    {
-        public ConcurrentBag<MinimalUtxo> UtxosCreated { get; } = [];
-        public ConcurrentBag<long> UtxosSpent { get; } = [];
-    }
-
-    public async Task SetBlockOnChainEconomics(
+    public async Task SetBlockOnChainEconomicsAsync(
         List<Batch> batches,
         SortedDictionary<long, BlockNode> blockNodes,
         Dictionary<long, OHLCV> ohlcv,
-        CancellationToken ct,
-        int batchesPerChunk = 100)
+        CancellationToken ct)
     {
         var sortedHeights = blockNodes.Keys.ToArray();
+        int maxBlockHeight = (int)(sortedHeights.Length > 0 ? sortedHeights.Max() : 0);
 
-        long totalEdgesProcessed = 0;
-        long totalSkippedEdges = 0;
+        double[] satoshiFiatValueByHeight = GetSatoshiFiatPriceByBlockHeight(ohlcv, maxBlockHeight);
 
-        foreach (var batchChunk in batches.Chunk(batchesPerChunk))
-        {
-            utxoDeltaByHeight.Clear();
-            chunkUtxoId = 0;
+        var (createdSatoshisByHeight, spentSatoshisByHeight) = await AggregateUtxoDeltasAsync(
+            batches,
+            satoshiFiatValueByHeight,
+            maxBlockHeight,
+            ct);
 
-            totalEdgesProcessed += edgesProcessedPerChunkCount;
-            edgesProcessedPerChunkCount = 0;
-
-            totalSkippedEdges += skippedEdgesPerChunkCount;
-            skippedEdgesPerChunkCount = 0;
-
-            await Parallel.ForEachAsync(batchChunk, new ParallelOptions
-            {
-                MaxDegreeOfParallelism = Environment.ProcessorCount,
-                CancellationToken = ct
-            },
-            async (batch, ct) =>
-            {
-                await ReadUtxoLifecycle(batch, ohlcv, ct);
-                Interlocked.Increment(ref batchCounter);
-
-                if (batchCounter % 100 == 0)
-                {
-                    _logger.LogInformation(
-                        "Read Utxo lifecycle from {batchCount} batches. Total edges processed: {edgesProcessed}, Total edges skipped: {edgesSkipped}",
-                        batchCounter, edgesProcessedPerChunkCount, skippedEdgesPerChunkCount);
-                }
-            });
-
-            _logger.LogInformation(
-                "Apply market indicators from Utxo lifecycle for chunk of {batchCount} batches. " +
-                "Total edges processed in chunk: {edgesProcessed}, Total edges skipped in chunk: {edgesSkipped}",
-                batchChunk.Count(), edgesProcessedPerChunkCount, skippedEdgesPerChunkCount);
-            ApplyMarketIndicatorsFromUtxoLifecycle(sortedHeights, blockNodes);
-
-            _logger.LogInformation(
-                "Completed processing chunk of {batchCount} batches. " +
-                "Total edges processed so far: {edgesProcessed}, Total edges skipped so far: {edgesSkipped}",
-                batchChunk.Count(), totalEdgesProcessed, totalSkippedEdges);
-        }
-
-        _logger.LogInformation(
-            "Completed processing all batches. Total edges processed: {edgesProcessed}, Total edges skipped: {edgesSkipped}",
-            totalEdgesProcessed, totalSkippedEdges);
+        EvaluateChainStateEconomics(
+            blockNodes,
+            createdSatoshisByHeight,
+            spentSatoshisByHeight,
+            satoshiFiatValueByHeight,
+            maxBlockHeight);
     }
 
-    private async Task ReadUtxoLifecycle(Batch batch, Dictionary<long, OHLCV> ohlcv, CancellationToken ct)
+    private static double[] GetSatoshiFiatPriceByBlockHeight(Dictionary<long, OHLCV> ohlcv, int maximumBlockHeight)
     {
-        using var reader = new StreamReader(
-            new GZipStream(
-                File.OpenRead(batch.GetFilename(T2SEdge.Kind)),
-                CompressionMode.Decompress));
+        var fiatPrices = new double[maximumBlockHeight + 1];
+
+        for (var height = 0; height <= maximumBlockHeight; height++)
+            if (ohlcv.TryGetValue(height, out var blockPrice))
+                fiatPrices[height] = (double)blockPrice.GetFiatValue(1);
+
+        return fiatPrices;
+    }
+
+    private async Task<(long[] CreatedSatoshis, Dictionary<int, long>[] SpentSatoshis)> AggregateUtxoDeltasAsync(
+        List<Batch> batches,
+        double[] satoshiFiatValueByHeight,
+        int maxBlockHeight,
+        CancellationToken ct)
+    {
+        long totalEdgesProcessed = 0;
+        var totalCreatedSatoshisByHeight = new long[maxBlockHeight + 1];
+        var totalSpentSatoshisByHeight = new Dictionary<int, long>[maxBlockHeight + 1];
+        object dictionaryMergeLock = new();
+
+        var options = new ParallelOptions
+        {
+            #if DEBUG
+            MaxDegreeOfParallelism = 1,
+            #endif
+            CancellationToken = ct
+        };
+
+        await Parallel.ForEachAsync(batches, parallelOptions: options, async (batch, _ct) =>
+        {
+            var batchDeltas = await ParseBatchUtxoDeltasAsync(
+                batch,
+                satoshiFiatValueByHeight,
+                maxBlockHeight,
+                _ct);
+
+            Interlocked.Add(ref totalEdgesProcessed, batchDeltas.EdgesProcessed);
+
+            lock (dictionaryMergeLock)
+            {
+                MergeBatchDeltasIntoTotalState(
+                    batchDeltas,
+                    totalCreatedSatoshisByHeight,
+                    totalSpentSatoshisByHeight,
+                    maxBlockHeight);
+            }
+        });
+
+        _logger.LogInformation("Successfully aggregated {edgeCount:n0} UTXO edges.", totalEdgesProcessed);
+
+        return (totalCreatedSatoshisByHeight, totalSpentSatoshisByHeight);
+    }
+
+    private async Task<BatchUtxoDeltas> ParseBatchUtxoDeltasAsync(
+        Batch batch,
+        double[] fiatPricePerSatoshi,
+        int maxBlockHeight,
+        CancellationToken ct)
+    {
+        var deltas = new BatchUtxoDeltas(maxBlockHeight);
+
+        using var reader = new StreamReader(new GZipStream(
+            File.OpenRead(batch.GetFilename(T2SEdge.Kind)),
+            CompressionMode.Decompress));
 
         string? line;
+
         while ((line = await reader.ReadLineAsync(ct)) != null)
         {
-            var cols = line.Split(Options.CsvDelimiter);
+            var columns = line.Split(Options.CsvDelimiter);
 
-            var creationHeight = long.Parse(cols[_creationHeightIdx]);
-            var spentHeight = long.Parse(cols[_spentHeightIdx]);
-            var value = long.Parse(cols[_valueIdx]);
+            var creationHeight = int.Parse(columns[_creationHeightIdx]);
+            var rawSpentHeight = long.Parse(columns[_spentHeightIdx]);
+            var satoshis = long.Parse(columns[_valueIdx]);
 
-            if (!ohlcv.TryGetValue(creationHeight, out var creationBlockOHLCV))
-            {
-                Interlocked.Increment(ref skippedEdgesPerChunkCount);
+            if (creationHeight > maxBlockHeight || fiatPricePerSatoshi[creationHeight] <= 0)
                 continue;
+
+            deltas.CreatedSatoshis[creationHeight] += satoshis;
+
+            if (rawSpentHeight <= maxBlockHeight) // utxo is spent or not yet?
+            {
+                var spentHeight = (int)rawSpentHeight;
+
+                if (!deltas.SpentSatoshis.TryGetValue(spentHeight, out var spendsAtHeight))
+                {
+                    spendsAtHeight = [];
+                    deltas.SpentSatoshis[spentHeight] = spendsAtHeight;
+                }
+
+                if (!spendsAtHeight.TryGetValue(creationHeight, out var existingSatoshis))
+                    spendsAtHeight[creationHeight] = satoshis;
+                else
+                    spendsAtHeight[creationHeight] = existingSatoshis + satoshis;
             }
 
-            var utxoFiatValueAtCreation = creationBlockOHLCV.GetFiatValue(value);
-            if (utxoFiatValueAtCreation > 0)
+            deltas.EdgesProcessed++;
+        }
+
+        return deltas;
+    }
+
+    private static void MergeBatchDeltasIntoTotalState(
+        BatchUtxoDeltas batchDeltas,
+        long[] totalCreatedSatoshisByHeight,
+        Dictionary<int, long>[] totalSpentSatoshisByHeight,
+        int maxBlockHeight)
+    {
+        for (var h = 0; h <= maxBlockHeight; h++)
+            totalCreatedSatoshisByHeight[h] += batchDeltas.CreatedSatoshis[h];
+
+        foreach (var spentKVP in batchDeltas.SpentSatoshis)
+        {
+            var spentHeight = spentKVP.Key;
+            totalSpentSatoshisByHeight[spentHeight] ??= [];
+
+            foreach (var creationKVP in spentKVP.Value)
             {
-                var utxoId = Interlocked.Increment(ref chunkUtxoId);
+                var creationHeight = creationKVP.Key;
+                var satoshisToMerge = creationKVP.Value;
 
-                // utxo deltas at the creation height
-                utxoDeltaByHeight.GetOrAdd(creationHeight, _ => new BlockUtxoDelta())
-                    .UtxosCreated.Add(new MinimalUtxo(utxoId, utxoFiatValueAtCreation));
-
-                // utxo deltas at the spent height
-                utxoDeltaByHeight.GetOrAdd(spentHeight, _ => new BlockUtxoDelta())
-                    .UtxosSpent.Add(utxoId);
-            }
-
-            Interlocked.Increment(ref edgesProcessedPerChunkCount);
-
-            if (edgesProcessedPerChunkCount % 100_000 == 0)
-            {
-                _logger.LogInformation(
-                    "Processed {edgesProcessed} edges in current chunk. Total edges skipped in current chunk: {edgesSkipped}",
-                    edgesProcessedPerChunkCount, skippedEdgesPerChunkCount);
+                if (totalSpentSatoshisByHeight[spentHeight].TryGetValue(creationHeight, out var existingSatoshis))
+                    totalSpentSatoshisByHeight[spentHeight][creationHeight] = existingSatoshis + satoshisToMerge;
+                else
+                    totalSpentSatoshisByHeight[spentHeight][creationHeight] = satoshisToMerge;
             }
         }
     }
 
-    private void ApplyMarketIndicatorsFromUtxoLifecycle(long[] sortedHeights, SortedDictionary<long, BlockNode> blockNodes)
+    private void EvaluateChainStateEconomics(
+        SortedDictionary<long, BlockNode> blockNodes,
+        long[] createdSatoshisByHeight,
+        Dictionary<int, long>[] spentSatoshisByHeight,
+        double[] satoshiFiatValueByHeight,
+        int maxBlockHeight)
     {
-        var activeUtxos = new Dictionary<long, decimal>();
-        decimal runningRealizedCap = 0;
+        var activeUtxoSet = new ActiveUtxoSet(maxBlockHeight);
 
-        foreach (var h in sortedHeights)
+        for (var currentBlockHeight = 0; currentBlockHeight <= maxBlockHeight; currentBlockHeight++)
         {
-            var block = blockNodes[h];
+            if (!blockNodes.TryGetValue(currentBlockHeight, out var blockNode))
+                continue;
 
-            if (utxoDeltaByHeight.TryGetValue(h, out var blockUtxoChanges))
+            var newlyCreatedSatoshis = createdSatoshisByHeight[currentBlockHeight];
+            activeUtxoSet.AddCreatedSatoshis(
+                currentBlockHeight,
+                newlyCreatedSatoshis,
+                satoshiFiatValueByHeight[currentBlockHeight]);
+
+            if (spentSatoshisByHeight[currentBlockHeight] != null)
             {
-                foreach (var utxoChange in blockUtxoChanges.UtxosCreated)
+                foreach (var spendEvent in spentSatoshisByHeight[currentBlockHeight])
                 {
-                    activeUtxos[utxoChange.Id] = utxoChange.FiatValue;
-                    runningRealizedCap += utxoChange.FiatValue;
-                }
+                    var creationHeight = spendEvent.Key;
+                    var spentSatoshis = spendEvent.Value;
 
-                foreach (var id in blockUtxoChanges.UtxosSpent)
-                {
-                    if (activeUtxos.Remove(id, out var removedValue))
-                        runningRealizedCap -= removedValue;
+                    activeUtxoSet.RemoveSpentSatoshis(
+                        creationHeight,
+                        spentSatoshis,
+                        satoshiFiatValueByHeight[creationHeight]);
                 }
             }
 
-            block.BlockMetadata.RealizedCap ??= 0;
-            block.BlockMetadata.RealizedCap += runningRealizedCap;
+            blockNode.BlockMetadata.RealizedCap = activeUtxoSet.RealizedCap;
 
-            if (block.BlockMetadata.Ohlcv != null && activeUtxos.Count > 0)
+            SetUnrealizedProfitAndLoss(blockNode, activeUtxoSet, satoshiFiatValueByHeight);
+
+            if (currentBlockHeight > 0 && currentBlockHeight % 100_000 == 0)
             {
-                var vwap = block.BlockMetadata.Ohlcv.VWAP;
-                decimal totalLoss = 0;
-                decimal totalProfit = 0;
-
-                foreach (var fiatValue in activeUtxos.Values)
-                {
-                    if (fiatValue < vwap)
-                        totalLoss += vwap - fiatValue;
-                    else
-                        totalProfit += fiatValue - vwap;
-                }
-
-                if (totalLoss > 0)
-                {
-                    block.BlockMetadata.UnrealizedLoss ??= 0;
-                    block.BlockMetadata.UnrealizedLoss += totalLoss;
-                }
-
-                if (totalProfit > 0)
-                {
-                    block.BlockMetadata.UnrealizedProfit ??= 0;
-                    block.BlockMetadata.UnrealizedProfit += totalProfit;
-                }
+                _logger.LogInformation("Evaluated chain state up to block {height:n0}.", currentBlockHeight);
             }
         }
+    }
+
+    private static void SetUnrealizedProfitAndLoss(
+        BlockNode blockNode,
+        ActiveUtxoSet activeUtxoSet,
+        double[] fiatPricePerSatoshi)
+    {
+        if (blockNode.BlockMetadata.Ohlcv == null || activeUtxoSet.ActiveCreationHeights.Count == 0)
+        {
+            blockNode.BlockMetadata.UnrealizedLoss = 0m;
+            blockNode.BlockMetadata.UnrealizedProfit = 0m;
+            return;
+        }
+
+        var currentFiatPrice = (double)blockNode.BlockMetadata.Ohlcv.VWAP;
+        double totalUnrealizedLoss = 0;
+        double totalUnrealizedProfit = 0;
+
+        foreach (var creationHeight in activeUtxoSet.ActiveCreationHeights)
+        {
+            var unspentSatoshis = activeUtxoSet.UnspentSatoshis[creationHeight];
+
+            var currentFiatValue = unspentSatoshis * currentFiatPrice;
+            var creationFiatValue = unspentSatoshis * fiatPricePerSatoshi[creationHeight];
+
+            if (currentFiatValue > creationFiatValue)
+                totalUnrealizedProfit += currentFiatValue - creationFiatValue;
+            else
+                totalUnrealizedLoss += creationFiatValue - currentFiatValue;
+        }
+
+        blockNode.BlockMetadata.UnrealizedLoss = totalUnrealizedLoss > 0 ? (decimal)totalUnrealizedLoss : 0m;
+        blockNode.BlockMetadata.UnrealizedProfit = totalUnrealizedProfit > 0 ? (decimal)totalUnrealizedProfit : 0m;
     }
 }
