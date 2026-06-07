@@ -93,6 +93,8 @@ public class UtxoEconomics(ILogger<BitcoinOrchestrator> logger)
         var totalSpentSatoshisByHeight = new Dictionary<int, long>[maxBlockHeight + 1];
         object dictionaryMergeLock = new();
 
+        var batchCounter = 0;
+
         var options = new ParallelOptions
         {
             #if DEBUG
@@ -119,9 +121,17 @@ public class UtxoEconomics(ILogger<BitcoinOrchestrator> logger)
                     totalSpentSatoshisByHeight,
                     maxBlockHeight);
             }
+
+            Interlocked.Increment(ref batchCounter);
+            if (batchCounter % 100 == 0)
+            {
+                _logger.LogInformation(
+                    "Read and merged UTxO deltas in {batchCount:n0}/{totalBatches:n0} batches. Total UTxO edges processed so far: {edgeCount:n0}.",
+                    batchCounter, batches.Count, totalEdgesProcessed);
+            }
         });
 
-        _logger.LogInformation("Successfully aggregated {edgeCount:n0} UTXO edges.", totalEdgesProcessed);
+        _logger.LogInformation("Successfully aggregated {edgeCount:n0} UTxO edges.", totalEdgesProcessed);
 
         return (totalCreatedSatoshisByHeight, totalSpentSatoshisByHeight);
     }
