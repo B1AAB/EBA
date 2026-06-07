@@ -6,6 +6,8 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
     public static string IdSpace => _idSpace;
     private static readonly string _idSpace = BlockNode.Kind.ToString();
 
+    public static string OhlcvPropNamePrefix { get; } = nameof(BlockNode.BlockMetadata.Ohlcv);
+
     public ElementMapper<BlockNode> Mapper => StaticMapper;
     public static ElementMapper<BlockNode> StaticMapper => _mapper;
     private static readonly ElementMapper<BlockNode> _mapper = new(
@@ -83,7 +85,7 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
             .Map(n => (double?)n.BlockMetadata.NUPL)
             .Map(n => (double?)n.BlockMetadata.NUL)
             .Map(n => (double?)n.BlockMetadata.NUP)
-            .MapRange(PropertyMappingFactory.ToMappings<BlockNode>(n => n.BlockMetadata.Ohlcv))
+            .MapRange(PropertyMappingFactory.ToMappings<BlockNode>(n => n.BlockMetadata.Ohlcv, prefix: OhlcvPropNamePrefix))
 
             .MapLabel(_ => BlockNode.Kind)
             .ToArray());
@@ -161,7 +163,7 @@ public class BlockNodeDescriptor : IElementDescriptor<BlockNode>
             UnrealizedLoss = _mapper.GetValue(n => n.BlockMetadata.UnrealizedLoss, reader),
             UnrealizedProfit = _mapper.GetValue(n => n.BlockMetadata.UnrealizedProfit, reader),
 
-            Ohlcv = PropertyMappingFactory.ReadOHLCV(reader)
+            Ohlcv = PropertyMappingFactory.ReadOHLCV(reader, prefix: OhlcvPropNamePrefix)
         };
 
         var blockNode = new BlockNode(
