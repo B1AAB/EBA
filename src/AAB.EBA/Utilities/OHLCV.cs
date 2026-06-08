@@ -11,6 +11,8 @@ public class OHLCV(long timestamp, decimal open, decimal high, decimal low, deci
     public decimal Close { get; } = close;
     public long Volume { get; } = volume;
 
+    private const decimal _coin = (decimal)BitcoinChainAgent.Coin;
+
     /// <summary>
     /// Volume-Weighted Average Price (VWAP)
     /// </summary>
@@ -20,7 +22,7 @@ public class OHLCV(long timestamp, decimal open, decimal high, decimal low, deci
 
     public decimal GetFiatValue(long satoshiAmount)
     {
-        return satoshiAmount / (decimal)BitcoinChainAgent.Coin * VWAP;
+        return satoshiAmount / _coin * VWAP;
     }
 
     public static bool TryParse(string csvLine, out OHLCV? candle)

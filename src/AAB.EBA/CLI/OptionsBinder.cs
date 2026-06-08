@@ -10,7 +10,6 @@ internal class OptionsBinder
         Option<int>? granularityOption = null,
         Option<Uri>? bitcoinClientUri = null,
         Option<int>? graphSampleCountOption = null,
-        Option<int>? graphSampleHopOption = null,
         Option<int>? graphSampleMinNodeCount = null,
         Option<int>? graphSampleMaxNodeCount = null,
         Option<int>? graphSampleMinEdgeCount = null,
@@ -30,7 +29,6 @@ internal class OptionsBinder
         Option<string>? sortedScriptNodeFilenameOption = null,
         Option<string>? marketDataFilenameOption = null,
         Option<string>? outputFilenameOption = null,
-        Option<string>? blockMarketMappingOption = null,
         Option<string>? augmentroOhlcvOption = null,
         Option<string>? batchesFilenameOption = null)
     {

@@ -1,8 +1,8 @@
 ---
 title: Neo4j Config
-description: Step 4. Database Tuning
+description: Step 6. Database Tuning
 sidebar_label: Neo4j Configuration
-sidebar_position: 5
+sidebar_position: 6
 slug: /bitcoin/etl/db-conf
 ---
 

@@ -20,60 +20,21 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
         var batches = await Batch.DeserializeBatchesAsync(_options.Bitcoin.MapSpends.BatchesFilename);
         _logger.LogInformation("Deserialized {n:n0} batches from {filename}.", batches.Count, _options.Bitcoin.MapSpends.BatchesFilename);
 
-        _processStep = "[1/4] Block-to-batch mapping:";
-        GetHeightToBatchMapping(_options, batches, out var blockToBatch, out var blockNodes);
-
-        _processStep = "[2/4] Collecting Txo spending:";
+        var maxSteps = 4;
+        if (_options.Bitcoin.Augmentor.BlockOhlcvMappedFilename != null)
+            maxSteps++;
+        
+        _processStep = $"[1/{maxSteps}] Block-to-batch mapping:";
+        var (blockToBatch, blockNodes) = await BitcoinHelpers.GetHeightToBatchMapping(batches, _logger, ct);
+        
+        _processStep = $"[2/{maxSteps}] Collecting Txo spending:";    
         await CreatePerBatchSpentUtxo(batches, blockToBatch, ct);
 
-        _processStep = "[3/4] Setting UTxO spending:";
+        _processStep = $"[3/{maxSteps}] Setting UTxO spending:";
         await SetTxoSpentHeight(batches, ct);
 
-        _processStep = "[4/4] Setting supply amount:";
+        _processStep = $"[4/{maxSteps}] Setting supply amount:";
         await SetSupplyAmount(batches, blockNodes, ct);
-    }
-
-    private void GetHeightToBatchMapping(
-        Options options,
-        List<Batch> batches,
-        out Dictionary<long, Batch> blockToBatch,
-        out SortedDictionary<long, BlockNode> blockNodes)
-    {
-        _logger.LogInformation("{s} Reading Block node files to create block-to-batch mapping.", _processStep);
-
-        blockToBatch = [];
-        blockNodes = [];
-
-        int counter = 0;
-
-        foreach (var batch in batches)
-        {
-            var blockNodesFilename = batch.GetFilename(BlockNode.Kind);
-
-            foreach (var cols in IElementCodec.ReadCsv(blockNodesFilename))
-            {
-                var blockNode = BlockNodeDescriptor.Deserialize(cols);
-                var h = blockNode.BlockMetadata.Height;
-
-                if (!blockToBatch.TryAdd(h, batch))
-                {
-                    _logger.LogError(
-                        "{s} Error on block height {h:n0}; " +
-                        "this block is defined at least twice, in batches with names {b1} and {b2}.",
-                        _processStep, h, blockToBatch[h].Name, batch.Name);
-    
-                    throw new InvalidDataException();
-                }
-
-                blockNodes[h] = blockNode;
-            }
-
-            counter++;
-            if (counter % 100 == 0)
-                _logger.LogInformation("{s} Finished reading block node files for {n:n0} batches", _processStep, counter);
-        }
-
-        _logger.LogInformation("{s} Finished reading Block node files to create block-to-batch mapping.", _processStep);
     }
 
     private static string GetSpentTxoFilename(Batch batch)
@@ -189,7 +150,6 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
         _logger.LogInformation("{s} Finished setting Txo spent height for all T2S edges.", _processStep);
     }
 
-
     private async Task SetSupplyAmount(List<Batch> batches, SortedDictionary<long, BlockNode> blocks, CancellationToken ct)
     {
         if (blocks.First().Value.BlockMetadata.Height != 0)
@@ -249,7 +209,7 @@ public class TraverseFinalizer(ILogger<BitcoinOrchestrator> logger, Options opti
                 counter++;
                 if (counter % 10 == 0)
                     _logger.LogInformation(
-                        "{s} Finished updating block node files with total supply information for {n}/{total} batches.", 
+                        "{s} Finished updating block node files with total supply information for {n}/{total} batches.",
                         _processStep, counter, batches.Count);
             }
         }

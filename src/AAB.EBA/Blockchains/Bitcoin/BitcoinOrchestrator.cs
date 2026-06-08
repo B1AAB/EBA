@@ -1,4 +1,5 @@
-﻿using AAB.EBA.Blockchains.Bitcoin.Utilities;
+﻿using AAB.EBA.Blockchains.Bitcoin.OffChain;
+using AAB.EBA.Blockchains.Bitcoin.Utilities;
 
 namespace AAB.EBA.Blockchains.Bitcoin;
 
@@ -59,14 +60,18 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
 
             throw;
         }
-    }    
+    }
 
-    public async Task PostTraverseAsync(
-        Options options,
-        CancellationToken cT)
+    public async Task PostTraverseAsync(Options options, CancellationToken cT)
     {
         var finalizer = new TraverseFinalizer(_logger, options);
         await finalizer.UpdatePostTraverse(cT);
+    }
+
+    public async Task AugmentAsync(Options options, CancellationToken cT)
+    {
+        var augmentor = new EconomicAugmentor(_logger, options);
+        await augmentor.SetBlockMarketIndicatorsAsync(cT);
     }
 
     public async Task DeDupAsync(

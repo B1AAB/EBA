@@ -67,9 +67,4 @@ public interface IGraphDb<T> : IDisposable, IAsyncDisposable where T : GraphBase
     public Task ExecuteWriteQueryAsync(
         List<string> schemas, 
         CancellationToken ct);
-
-    public Task SetRealizedCap(
-        SortedDictionary<long, BlockNode> blockNodes, 
-        Dictionary<long, OHLCV> ohlcv, 
-        CancellationToken ct);
 }

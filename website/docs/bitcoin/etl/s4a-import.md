@@ -1,7 +1,7 @@
 ---
 title: Import into Neo4j
-description: Step 3. Import into neo4j
-sidebar_position: 3
+description: Step 4. Import into neo4j
+sidebar_position: 4
 slug: /bitcoin/etl/import
 ---
 
