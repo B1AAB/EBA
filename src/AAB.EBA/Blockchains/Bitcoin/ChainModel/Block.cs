@@ -7,8 +7,6 @@ public class Block : BlockMetadata
     [JsonPropertyName("tx")]
     public List<Tx> Transactions { init; get; } = [];
 
-    public ConcurrentDictionary<string, Utxo> TxoLifecycle { init; get; } = [];
-
     public override DescriptiveStatistics InputCountsStats { get { return new DescriptiveStatistics([.. _inputsCounts]); } }
     private readonly ConcurrentBag<int> _inputsCounts = [];
 
