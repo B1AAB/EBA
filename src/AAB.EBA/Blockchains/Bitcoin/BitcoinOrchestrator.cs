@@ -222,8 +222,6 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
         using var gBuffer = new PersistentGraphBuffer(
             graphOrchestrator: _host.Services.GetRequiredService<Graph.Bitcoin.BitcoinGraphOrchestrator>(),
             logger: _host.Services.GetRequiredService<ILogger<PersistentGraphBuffer>>(),
-            pTxoLifeCyccleLogger: options.Bitcoin.Traverse.TrackTxo ?_host.Services.GetRequiredService<ILogger<PersistentTxoLifeCycleBuffer>>() : null,
-            txoLifeCycleFilename: options.Bitcoin.Traverse.TrackTxo ? options.Bitcoin.Traverse.TxoFilename : null,
             maxTxoPerFile: options.Bitcoin.Traverse.MaxTxoPerFile,
             options: options,
             semaphore: pgbSemaphore,

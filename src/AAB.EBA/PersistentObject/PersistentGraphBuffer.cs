@@ -6,7 +6,6 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 {
     private readonly Graph.Bitcoin.BitcoinGraphOrchestrator? _graphOrchestrator;
     private readonly ILogger<PersistentGraphBuffer> _logger;
-    private readonly PersistentTxoLifeCycleBuffer? _pTxoLifeCycleBuffer = null;
     private readonly SemaphoreSlim _semaphore;
     private bool _disposed = false;
 
@@ -22,8 +21,6 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     public PersistentGraphBuffer(
         Graph.Bitcoin.BitcoinGraphOrchestrator? graphOrchestrator,
         ILogger<PersistentGraphBuffer> logger,
-        ILogger<PersistentTxoLifeCycleBuffer>? pTxoLifeCyccleLogger,
-        string? txoLifeCycleFilename,
         int maxTxoPerFile,
         SemaphoreSlim semaphore,
         Options options,
@@ -32,9 +29,6 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
     {
         _graphOrchestrator = graphOrchestrator;
         _logger = logger;
-
-        if (txoLifeCycleFilename != null && pTxoLifeCyccleLogger != null)
-            _pTxoLifeCycleBuffer = new(txoLifeCycleFilename, maxTxoPerFile, pTxoLifeCyccleLogger, ct);
 
         _semaphore = semaphore;
     }
@@ -61,9 +55,6 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
 
         if (_graphOrchestrator != null)
             tasks.Add(_graphOrchestrator.SerializeAsync(obj, default));
-
-        if (_pTxoLifeCycleBuffer != null)
-            tasks.Add(_pTxoLifeCycleBuffer.SerializeAsync(obj.Block.TxoLifecycle.Values, default));
 
         await Task.WhenAll(tasks);
 

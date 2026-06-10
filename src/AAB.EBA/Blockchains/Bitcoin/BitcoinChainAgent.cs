@@ -265,22 +265,7 @@ public class BitcoinChainAgent : IDisposable
 
         var mintingTxGraph = new TxGraph(coinbaseTx);
         foreach (var output in coinbaseTx.Outputs)
-        {
             mintingTxGraph.AddOutput(output);
-
-            if (options.Traverse.TrackTxo)
-            {
-                output.TryGetAddress(out string? address);
-                var utxo = new Utxo(
-                    output.ScriptPubKey,
-                    address,
-                    output.Value,
-                    output.ScriptPubKey.ScriptType,
-                    isGenerated: true,
-                    createdInHeight: block.Height);
-                g.Block.TxoLifecycle.TryAdd(utxo.Id, utxo);
-            }
-        }
 
         g.SetCoinbaseTx(mintingTxGraph);
 
@@ -317,53 +302,13 @@ public class BitcoinChainAgent : IDisposable
         foreach (var input in tx.Inputs)
         {
             cT.ThrowIfCancellationRequested();
-
             txGraph.AddInput(input);
-
-            if (options.Traverse.TrackTxo)
-            {
-                var prevOut = input.PrevOut.ConstructedOutput;
-                prevOut.TryGetAddress(out string? address);
-
-                var utxo = new Utxo(
-                    input.PrevOut.ScriptPubKey,
-                    address: address,
-                    value: input.PrevOut.Value,
-                    isGenerated: input.PrevOut.Generated,
-                    scriptType: input.PrevOut.ConstructedOutput.ScriptPubKey.ScriptType,
-                    createdInHeight: input.PrevOut.Height,
-                    spentInHeight: g.Block.Height);
-
-                g.Block.TxoLifecycle.AddOrUpdate(utxo.Id, utxo, (_, oldValue) =>
-                {
-                    oldValue.SpentInHeight = g.Block.Height;
-                    return oldValue;
-                });
-            }
         }
 
         foreach (var output in tx.Outputs)
         {
             cT.ThrowIfCancellationRequested();
-
             txGraph.AddOutput(output);
-
-            if (output.ScriptPubKey.ScriptType != ScriptType.NullData &&
-                output.ScriptPubKey.ScriptType != ScriptType.nonstandard &&
-                options.Traverse.TrackTxo)
-            {
-                output.TryGetAddress(out string? address);
-
-                var utxo = new Utxo(
-                    id: Utxo.GetId(txGraph.TxNode.Txid, output.N),
-                    address: address,
-                    value: output.Value,
-                    scriptType: output.ScriptPubKey.ScriptType,
-                    isGenerated: false,
-                    createdInHeight: g.Block.Height);
-
-                g.Block.TxoLifecycle.TryAdd(utxo.Id, utxo);
-            }
         }
 
         g.Enqueue(txGraph);

@@ -22,7 +22,6 @@ internal class OptionsBinder
         Option<string>? batchFilenameOption = null,
         Option<int>? maxBlocksInBufferOption = null,
         Option<string>? txoFilenameOption = null,
-        Option<bool>? trackTxoOption = null,
         Option<bool>? skipGraphSerializationOption = null,
         Option<int>? maxEntriesPerBatch = null,
         Option<string>? sortedTxNodeFilenameOption = null,
@@ -56,7 +55,6 @@ internal class OptionsBinder
             BlocksFailedToProcessListFilename = Path.Join(wd, defs.Bitcoin.Traverse.BlocksFailedToProcessListFilename),
             MaxBlocksInBuffer = GetValue(defs.Bitcoin.Traverse.MaxBlocksInBuffer, maxBlocksInBufferOption, c),
             TxoFilename = GetValue(defs.Bitcoin.Traverse.TxoFilename, txoFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
-            TrackTxo = GetValue(defs.Bitcoin.Traverse.TrackTxo, trackTxoOption, c),
             SkipGraphSerialization = GetValue(defs.Bitcoin.Traverse.SkipGraphSerialization, skipGraphSerializationOption, c)
         };
 
