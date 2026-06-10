@@ -43,7 +43,13 @@ You may run the following command for this step.
 Run the following command to add market-related features to the graph.
 
 ```shell
-.\aab.eba.exe bitcoin augment --ohlcv-filename mapped-block-ohlcv.tsv
+.\aab.eba.exe bitcoin augment --ohlcv-filename mapped-block-ohlcv.tsv --batches-filename batches.json
 ```
 
-Note that this process may take a considerable amount of time to complete.
+```shell
+mkdir -p pre_augment && \
+mv *_nodes_Block.csv.gz pre_augment/ 2>/dev/null; \
+for f in *_nodes_Block_with_economic_indicators.csv.gz; do \
+    [ -e "$f" ] && mv "$f" "${f/_with_economic_indicators/}"; \
+done
+```

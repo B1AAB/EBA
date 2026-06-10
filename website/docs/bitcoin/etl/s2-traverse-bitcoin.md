@@ -166,3 +166,22 @@ node files.
 ```shell
 .\aab.eba.exe bitcoin post-traverse --batches-filename batches.json
 ```
+
+For each `*_nodes_Block` and `*_edges_Tx_Credits_Script` file, 
+the above command creates a new file that contains the updated information. 
+To ensure the downstream steps of the pipeline correctly refer to the files 
+containing the updated information, we can run the following script, 
+which creates a backup folder named `original` and moves the unmodified data files into it. 
+It then takes the newly updated files and removes the extra text from their filenames. 
+
+
+```shell
+mkdir -p original && \
+mv *_nodes_Block.csv.gz *_edges_Tx_Credits_Script.csv.gz original/ 2>/dev/null; \
+for f in *_edges_Tx_Credits_Script_with_txo_spent_height_set.csv.gz; do \
+    [ -e "$f" ] && mv "$f" "${f/_with_txo_spent_height_set/}"; \
+done; \
+for f in *_nodes_Block_supply_updated.csv.gz; do \
+    [ -e "$f" ] && mv "$f" "${f/_supply_updated/}"; \
+done
+```
