@@ -47,9 +47,13 @@ Run the following command to add market-related features to the graph.
 ```
 
 ```shell
-mkdir -p pre_augment && \
-mv *_nodes_Block.csv.gz pre_augment/ 2>/dev/null; \
-for f in *_nodes_Block_with_economic_indicators.csv.gz; do \
-    [ -e "$f" ] && mv "$f" "${f/_with_economic_indicators/}"; \
-done
+mkdir -p pre_augment
+
+find . -maxdepth 1 -type f -name "[0-9]*_nodes_Block.csv.gz" -print0 \
+    | xargs -0 -I {} mv {} pre_augment/ 2>/dev/null
+
+find . -maxdepth 1 -type f -name "[0-9]*_nodes_Block_with_economic_indicators.csv.gz" -print0 \
+    | while IFS= read -r -d '' f; do
+        mv "$f" "${f/_with_economic_indicators/}"
+    done
 ```
