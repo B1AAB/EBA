@@ -10,7 +10,6 @@ internal class OptionsBinder
         Option<int>? granularityOption = null,
         Option<Uri>? bitcoinClientUri = null,
         Option<int>? graphSampleCountOption = null,
-        Option<int>? graphSampleHopOption = null,
         Option<int>? graphSampleMinNodeCount = null,
         Option<int>? graphSampleMaxNodeCount = null,
         Option<int>? graphSampleMinEdgeCount = null,
@@ -23,14 +22,12 @@ internal class OptionsBinder
         Option<string>? batchFilenameOption = null,
         Option<int>? maxBlocksInBufferOption = null,
         Option<string>? txoFilenameOption = null,
-        Option<bool>? trackTxoOption = null,
         Option<bool>? skipGraphSerializationOption = null,
         Option<int>? maxEntriesPerBatch = null,
         Option<string>? sortedTxNodeFilenameOption = null,
         Option<string>? sortedScriptNodeFilenameOption = null,
         Option<string>? marketDataFilenameOption = null,
         Option<string>? outputFilenameOption = null,
-        Option<string>? blockMarketMappingOption = null,
         Option<string>? augmentroOhlcvOption = null,
         Option<string>? batchesFilenameOption = null)
     {
@@ -58,7 +55,6 @@ internal class OptionsBinder
             BlocksFailedToProcessListFilename = Path.Join(wd, defs.Bitcoin.Traverse.BlocksFailedToProcessListFilename),
             MaxBlocksInBuffer = GetValue(defs.Bitcoin.Traverse.MaxBlocksInBuffer, maxBlocksInBufferOption, c),
             TxoFilename = GetValue(defs.Bitcoin.Traverse.TxoFilename, txoFilenameOption, c, (x) => { return Path.Join(wd, Path.GetFileName(x)); }),
-            TrackTxo = GetValue(defs.Bitcoin.Traverse.TrackTxo, trackTxoOption, c),
             SkipGraphSerialization = GetValue(defs.Bitcoin.Traverse.SkipGraphSerialization, skipGraphSerializationOption, c)
         };
 

@@ -338,22 +338,17 @@ public class Panorama : ITraversalAlgorithm
         // e.g., if the graph is empty, the traversal was so small that did not include any Tx nodes. 
         if (g.NodesByType.TryGetValue(NodeKind.Tx, out var txNodes))
         {
-            foreach (var txNode in txNodes)
+            var v = (TxNode)txNode;
+            var found = false;
+            foreach (var edge in g.EdgesByType[B2TEdge.Kind])
             {
-                var v = (TxNode)txNode;
-                var found = false;
-                if (g.EdgesByType.TryGetValue(B2TEdge.Kind, out var b2tEdges))
+                var t = (B2TEdge)edge;
+                if (t.Target.Txid == v.Txid)
                 {
-                    foreach (var edge in b2tEdges)
-                    {
-                        var t = (B2TEdge)edge;
-                        if (t.Target.Txid == v.Txid)
-                        {
-                            found = true;
-                            break;
-                        }
-                    }
+                    found = true;
+                    break;
                 }
+            }
 
                 if (!found)
                 {

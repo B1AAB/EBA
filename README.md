@@ -31,8 +31,10 @@ by traversing these paths.
 > [!IMPORTANT]
 > [See the graph in action!](https://demo.b1aab.ai) 🚀
 > 
-> Trace the real-world transaction topology of the mysterious _Individual X_ in [our live interactive demo](https://demo.b1aab.ai); a sneak peek into the upcoming **EBA v2**! 
-[(Context slides)](https://docs.google.com/presentation/d/1BWJutm-5GMxFCUB59og05l6nmS2xhJ7yJ6xZMG7ufro/edit?usp=sharing)
+> Trace the real-world transaction topology of the mysterious _Individual X_ in [our live interactive demo](https://demo.b1aab.ai);
+> a sneak peek into the upcoming **EBA v2**! 
+>
+>  Or [watch the presentation](https://www.youtube.com/watch?v=327Q97uo4pw) [(slides)](https://docs.google.com/presentation/d/1BWJutm-5GMxFCUB59og05l6nmS2xhJ7yJ6xZMG7ufro/edit?usp=sharing)
 
 
 

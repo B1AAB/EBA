@@ -73,21 +73,21 @@ You may take the following steps to build EBA from the source code.
     <TabItem value="linux">
 
     ```bash
-    dotnet publish ./EBA/EBA.csproj -c Release -r linux-x64 --self-contained true -o "build" -p:WarningLevel=0
+    dotnet publish ./src/AAB.EBA/AAB.EBA.csproj -c Release -r linux-x64 --self-contained true -o "build" -p:WarningLevel=0
     ```
 
     </TabItem>
     <TabItem value="mac">
 
     ```bash
-    dotnet publish ./EBA/EBA.csproj -c Release -r osx-arm64 --self-contained true -o "build" -p:WarningLevel=0
+    dotnet publish ./src/AAB.EBA/AAB.EBA.csproj -c Release -r osx-arm64 --self-contained true -o "build" -p:WarningLevel=0
     ```
 
     </TabItem>
     <TabItem value="windows">
 
     ```bash
-    dotnet publish .\EBA\EBA.csproj -c Release -r win-x64 --self-contained true -o "build" -p:WarningLevel=0
+    dotnet publish ./src/AAB.EBA/AAB.EBA.csproj -c Release -r win-x64 --self-contained true -o "build" -p:WarningLevel=0
     ```
 
     </TabItem>
@@ -108,21 +108,21 @@ You may take the following steps to build EBA from the source code.
     <TabItem value="linux">
 
     ```bash
-    cd build/ && ./eba --help
+    cd build/ && ./aab.eba --help
     ```
 
     </TabItem>
     <TabItem value="mac">
 
     ```bash
-    cd build/ && ./eba --help
+    cd build/ && ./aab.eba --help
     ```
 
     </TabItem>
     <TabItem value="windows">
 
     ```bash
-    cd .\build\ ; .\eba.exe --help
+    cd .\build\ ; .\aab.eba.exe --help
     ```
 
     </TabItem>

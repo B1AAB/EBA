@@ -1,7 +1,7 @@
 ---
 title: Import into Neo4j
-description: Step 3. Import into neo4j
-sidebar_position: 3
+description: Step 4. Import into neo4j
+sidebar_position: 4
 slug: /bitcoin/etl/import
 ---
 
@@ -39,28 +39,35 @@ _Note: If you **did run** the
 generated your own TSV files, you can skip this step and 
 proceed directly to the [import](#import) step below._
 
-:::danger Resource Requirements 
 
-This process involves downloading nearly `1.2 TB` of data; 
-ensure you are using a stable connection without data caps and 
-have at least `1.2 TB` of free disk space. 
-:::
+    <details>
 
-You may take the following steps to download the graph in TSV files.
+        <summary>Details</summary>
 
-1. [Install the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
+        :::note Resource Requirements 
 
-2. Configure environment variable to specify the target directory.
+        This process involves downloading nearly `1.2 TB` of data; 
+        ensure you are using a stable connection without data caps and 
+        have at least `1.2 TB` of free disk space. 
+        :::
 
-    ```shell
-    export GDIR="/mnt/download/path"
-    ```
+        You may take the following steps to download the graph in TSV files.
 
-3. Download the TSV files. 
+        1. [Install the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).
 
-    ```shell
-    aws s3 sync s3://bitcoin-graph/v1/data_to_import_neo4j/ "${GDIR}" --no-sign-request    
-    ```
+        2. Configure environment variable to specify the target directory.
+
+            ```shell
+            export GDIR="/mnt/download/path"
+            ```
+
+        3. Download the TSV files. 
+
+            ```shell
+            aws s3 sync s3://bitcoin-graph/v1/data_to_import_neo4j/ "${GDIR}" --no-sign-request    
+            ```
+
+    </details>
 
 
 
@@ -162,12 +169,27 @@ meaning it does not support incremental updates to an existing graph.
 
     </details>
 
-5.  Determine the optimal heap size for the import process. 
+6.  Determine the optimal heap size for the import process. 
     For a graph of this magnitude, memory configuration is critical for performance. 
     Please refer to [Neo4j Memory Configuration Guide](https://neo4j.com/docs/operations-manual/current/performance/memory-configuration/).
 
+    <Tabs
+        groupId="os"
+        defaultValue="windows"
+        values={[
+            { label: 'Windows', value: 'windows' }
+        ]
+    }>
 
-6.  Execute the import command. 
+    <TabItem value="windows">
+    ```bash
+    $env:HEAP_SIZE = "16G"
+    ```
+    </TabItem>
+    </Tabs>
+
+
+7.  Execute the import command. 
     Note that we use regex patterns (e.g., .`*BitcoinS2S.tsv.gz`) to ingest the batched edge files automatically.
 
     <Tabs
@@ -203,12 +225,12 @@ meaning it does not support incremental updates to an existing graph.
     & "$env:NDIR\bin\neo4j-admin.bat" database import full `
         --overwrite-destination neo4j `
         --nodes="$env:GDIR\Coinbase.csv.gz" `
-        --nodes="$env:GDIR\header_nodes_Block.csv.gz,$env:GDIR\[0-9].*_nodes_Block_supply_updated.csv.gz" `
+        --nodes="$env:GDIR\header_nodes_Block.csv.gz,$env:GDIR\[0-9].*_nodes_Block.csv.gz" `
         --nodes="$env:GDIR\header_nodes_Script.csv.gz,$env:GDIR\unique_nodes_Script.csv.gz" `
         --nodes="$env:GDIR\header_nodes_Tx.csv.gz,$env:GDIR\unique_nodes_Tx.csv.gz" `
         --relationships="$env:GDIR\header_edges_Block_Confirms_Tx.csv.gz,$env:GDIR\[0-9].*_edges_Block_Confirms_Tx.csv.gz" `
         --relationships="$env:GDIR\header_edges_Coinbase_Mints_Tx.csv.gz,$env:GDIR\[0-9].*_edges_Coinbase_Mints_Tx.csv.gz" `
-        --relationships="$env:GDIR\header_edges_Tx_Credits_Script.csv.gz,$env:GDIR\[0-9].*_edges_Tx_Credits_Script_with_txo_spent_height_set.csv.gz" `
+        --relationships="$env:GDIR\header_edges_Tx_Credits_Script.csv.gz,$env:GDIR\[0-9].*_edges_Tx_Credits_Script.csv.gz" `
         --relationships="$env:GDIR\header_edges_Script_Redeems_Tx.csv.gz,$env:GDIR\[0-9].*_edges_Script_Redeems_Tx.csv.gz" `
         --relationships="$env:GDIR\header_edges_Tx_Fee_Tx.csv.gz,$env:GDIR\[0-9].*_edges_Tx_Fee_Tx.csv.gz" `
         --relationships="$env:GDIR\header_edges_Tx_Transfers_Tx.csv.gz,$env:GDIR\[0-9].*_edges_Tx_Transfers_Tx.csv.gz" `
@@ -220,12 +242,12 @@ meaning it does not support incremental updates to an existing graph.
     </Tabs>
 
 
-7.  Once the import concludes, restart the Neo4j service, and install the
+8.  Once the import concludes, restart the Neo4j service, and install the
     [APOC library](https://neo4j.com/docs/apoc/current/installation/).
 
-8.  [Update Neo4j database configuration](./db-conf).
+9.  [Update Neo4j database configuration](./db-conf).
 
-9. Create indexes and apply constraints.
+10. Create indexes and apply constraints.
 
     <Tabs
         groupId="os"

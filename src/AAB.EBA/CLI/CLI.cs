@@ -190,16 +190,6 @@ internal class Cli
                 "be started with REST endpoint enabled."
         };
 
-        var trackTxoOption = new Option<bool>("--track-txo")
-        {
-            Description =
-                "If set, writes the list of txo it sees to a text file, this file will need to further processed" +
-                "and it will also add to storage requirements. " +
-                "Enabling this will slow down the traverse (e.g., from 7h to 11h for the first 500k blocks), and additional storage " +
-                "requirements (e.g., ~140GB for the first 500k blocks) that needs post-traverse processing. Aggregated stats about Txo " +
-                "are recoded in block stats, so set this flag only if you need the complete list of spent and unspent Tx outputs."
-        };
-
         var txoFilenameOption = new Option<string>("--txo-filename")
         {
             Description =
@@ -238,11 +228,6 @@ internal class Cli
                 "(reference: https://neo4j.com/blog/bulk-data-import-neo4j-3-0/)"
         };
 
-        var blockMarketMappingOption = new Option<string>("--map-block-market")
-        {
-            Required = false
-        };
-
         var cmd = new Command(
             name: "traverse",
             description: "Traverses the blockchain in the defined range collecting the set metrics.")
@@ -255,9 +240,7 @@ internal class Cli
             maxBlocksInBufferOption,
             txoFilenameOption,
             skipGraphSerialization,
-            trackTxoOption,
-            maxEntriesPerBatch,
-            blockMarketMappingOption
+            maxEntriesPerBatch
         };
 
 
@@ -304,11 +287,9 @@ internal class Cli
                 workingDirOption: _workingDirOption,
                 statusFilenameOption: _statusFilenameOption,
                 maxBlocksInBufferOption: maxBlocksInBufferOption,
-                trackTxoOption: trackTxoOption,
                 txoFilenameOption: txoFilenameOption,
                 skipGraphSerializationOption: skipGraphSerialization,
-                maxEntriesPerBatch: maxEntriesPerBatch,
-                blockMarketMappingOption: blockMarketMappingOption);
+                maxEntriesPerBatch: maxEntriesPerBatch);
 
             try
             {
@@ -674,14 +655,23 @@ internal class Cli
 
     private Command GetBitcoinAugmentCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
+        var batchesFilenameOption = new Option<string>("--batches-filename")
+        {
+            Required = true
+        };
+
         var ohlcvFilenameOption = new Option<string>("--ohlcv-filename")
         {
             Description = "A TSV file containing block metadata (height, median time) mapped to aggregated OHLCV market data."
         };
         var cmd = new Command(
             name: "augment",
-            description: "Augments the graph with additional features, such as NUPL, using the output of the map-market command and other similar files.")
+            description: 
+            "Computes UTxO-based economic metrics (e.g., realized cap, unrealized profit/loss, and NUPL) " +
+            "to augment the graph data. You may run this optional command after the 'post-traverse' command " +
+            "and before importing the graph into a graph database.")
         {
+            batchesFilenameOption,
             ohlcvFilenameOption
         };
         cmd.SetAction(async (parseResult, cancellationToken) =>
@@ -690,7 +680,8 @@ internal class Cli
                 parseResult,
                 workingDirOption: _workingDirOption,
                 statusFilenameOption: _statusFilenameOption,
-                augmentroOhlcvOption: ohlcvFilenameOption);
+                augmentroOhlcvOption: ohlcvFilenameOption,
+                batchesFilenameOption: batchesFilenameOption);
             try
             {
                 await handlerAsync(options);
@@ -724,6 +715,8 @@ internal class Cli
         {
             var options = OptionsBinder.Build(
                 parseResult,
+                workingDirOption: _workingDirOption,
+                statusFilenameOption: _statusFilenameOption,
                 batchesFilenameOption: batchesFilenameOption);
 
             try

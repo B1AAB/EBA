@@ -1,8 +1,8 @@
 ---
 title: Augmentation
-description: Step 6. Augment graph using off-chain data
+description: Step 3. Augment graph using off-chain data
 sidebar_label: Augmentation
-sidebar_position: 6
+sidebar_position: 3
 slug: /bitcoin/etl/augment
 ---
 
@@ -35,7 +35,7 @@ used to compute aggregated OHLCV values.
 You may run the following command for this step.
 
 ```shell
-.\eba.exe bitcoin map-market --ohlcv-source-filename btcusd_1-min_data.csv --block-market-output-filename mapped-block-ohlcv.tsv
+.\aab.eba.exe bitcoin map-market --ohlcv-source-filename btcusd_1-min_data.csv --block-market-output-filename mapped-block-ohlcv.tsv
 ```
 
 ### Step 3: Augment the Graph
@@ -43,7 +43,17 @@ You may run the following command for this step.
 Run the following command to add market-related features to the graph.
 
 ```shell
-.\eba.exe bitcoin augment --ohlcv-filename mapped-block-ohlcv.tsv
+.\aab.eba.exe bitcoin augment --ohlcv-filename mapped-block-ohlcv.tsv --batches-filename batches.json
 ```
 
-Note that this process may take a considerable amount of time to complete.
+```shell
+mkdir -p pre_augment
+
+find . -maxdepth 1 -type f -name "[0-9]*_nodes_Block.csv.gz" -print0 \
+    | xargs -0 -I {} mv {} pre_augment/ 2>/dev/null
+
+find . -maxdepth 1 -type f -name "[0-9]*_nodes_Block_with_economic_indicators.csv.gz" -print0 \
+    | while IFS= read -r -d '' f; do
+        mv "$f" "${f/_with_economic_indicators/}"
+    done
+```
