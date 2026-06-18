@@ -37,7 +37,7 @@ public interface IGraphDb<T> : IDisposable, IAsyncDisposable where T : GraphBase
         double rootNodeSelectProbability = 0.1,
         string nodeVariable = "randomNode");
 
-    public Task<List<IRecord>> GetNeighborsAsync(
+    public Task<List<IRecord>> GetNeighborhoodAsync(
         NodeKind rootNodeLabel,
         string rootNodeIdProperty,
         string rootNodeId,
