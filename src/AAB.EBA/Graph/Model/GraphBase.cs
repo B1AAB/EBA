@@ -1,4 +1,5 @@
-﻿using AAB.EBA.Utilities;
+﻿using AAB.EBA.Graph.Bitcoin;
+using AAB.EBA.Utilities;
 
 using System.Collections.Immutable;
 
@@ -189,7 +190,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
     }
 
     public void SerializeFeatures(
-        string workingDir,
+        string graphDir,
         string perBatchLabelsFilename,
         string perGraphLabelsFilename = "metadata.tsv")
     {
@@ -202,7 +203,7 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
 
             Helpers.CsvSerialize(
                 nodeType.Value,
-                Path.Join(workingDir, $"node_features_{nodeType.Key.ToString().ToLower().Replace('-', '_')}.tsv"),
+                Path.Join(graphDir, FeaturesSchema.GetElementFilename(nodeType.Key)),
                 gFeatures.NodeFeaturesHeader[nodeType.Key]);
         }
 
@@ -213,20 +214,20 @@ public class GraphBase(string? id = null) : IEquatable<GraphBase>, IDisposable
 
             Helpers.CsvSerialize(
                 edgeType.Value,
-                Path.Join(workingDir, $"edge_features_{edgeType.Key.ToString().ToLower().Replace('-', '_')}.tsv"),
+                Path.Join(graphDir, FeaturesSchema.GetElementFilename(edgeType.Key)),
                 gFeatures.EdgeFeaturesHeader[edgeType.Key]);
         }
 
         Helpers.CsvSerialize(
             [gFeatures.Labels.ToArray()],
-            Path.Combine(workingDir, perBatchLabelsFilename),
-            gFeatures.LabelsHeader,
-            append: true);
+            Path.Combine(graphDir, perGraphLabelsFilename),
+            gFeatures.LabelsHeader);
 
         Helpers.CsvSerialize(
             [gFeatures.Labels.ToArray()],
-            Path.Combine(workingDir, perGraphLabelsFilename),
-            gFeatures.LabelsHeader);
+            perBatchLabelsFilename,
+            gFeatures.LabelsHeader,
+            append: true);
     }
 
     public bool Equals(GraphBase? other)

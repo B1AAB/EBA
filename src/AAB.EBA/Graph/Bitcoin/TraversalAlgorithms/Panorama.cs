@@ -26,6 +26,8 @@ public class Panorama : ITraversalAlgorithm
 
         _logger.LogInformation("Sampling {n:N0} graphs.", _options.Bitcoin.GraphSample.Count - sampledSubGraphsCount);
 
+        JsonSerializer<FeaturesSchema>.Serialize(new FeaturesSchema(), Path.Combine(_options.WorkingDir, "schema.json"));
+
         while (
             sampledSubGraphsCount < _options.Bitcoin.GraphSample.Count &&
             ++attempts <= _options.Bitcoin.GraphSample.MaxAttempts)

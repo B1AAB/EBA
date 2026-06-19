@@ -27,8 +27,6 @@ public class BitcoinGraphOrchestrator : IGraphOrchestrator<BitcoinGraph>, IDispo
         ITraversalAlgorithm sampler = _options.Bitcoin.GraphSample.TraversalAlgorithm switch
         {
             GraphTraversal.Panorama => new Panorama(_options, _db, _logger),
-            //GraphTraversal.BFS => throw new NotImplementedException(),
-            //GraphTraversal.DFS => throw new NotImplementedException(),
             _ => throw new NotImplementedException("Unsupported graph traversal algorithm."),
         };
 
