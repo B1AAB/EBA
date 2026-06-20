@@ -19,21 +19,13 @@ public class Orchestrator : IDisposable
     public async Task<int> InvokeAsync(string[] args)
     {
         var options = new Options();
-        var host = await SetupAndGetHostAsync(options);
 
-        await host.RunAsync(_cT);
+        Directory.CreateDirectory(options.WorkingDir);
+        var app = Startup.GetWebApplication(args, options);
+        _logger = app.Services.GetRequiredService<ILogger<Orchestrator>>();
+        await app.RunAsync(_cT);
 
         return 0;
-    }
-
-    private async Task<IHost> SetupAndGetHostAsync(Options options)
-    {
-        Directory.CreateDirectory(options.WorkingDir);
-        var hostBuilder = Startup.GetHostBuilder(options);
-        var host = hostBuilder.Build();
-        _logger = host.Services.GetRequiredService<ILogger<Orchestrator>>();
-
-        return host;
     }
 
     public void Dispose()

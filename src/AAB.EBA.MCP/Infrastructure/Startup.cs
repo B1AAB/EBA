@@ -5,19 +5,52 @@ using AAB.EBA.Graph.Db;
 using AAB.EBA.Graph.Db.Neo4jDb;
 using AAB.EBA.GraphDb;
 using AAB.EBA.MCP.Blockchains.Bitcoin;
-using Microsoft.Extensions.Configuration;
 using Serilog;
+using Serilog.Sinks.SystemConsole.Themes;
 
 namespace AAB.EBA.MCP.Infrastructure;
 
 public class Startup
 {
-    public static HostBuilder GetHostBuilder(Options options)
+    /// <summary>
+    /// Builds and configures a <see cref="WebApplication"/> that exposes the MCP server
+    /// over HTTP using the Streamable-HTTP (SSE) transport.
+    /// Call <c>app.Run()</c> on the returned instance to start Kestrel.
+    /// </summary>
+    public static WebApplication GetWebApplication(string[] args, Options options)
     {
-        var hostBuilder = new HostBuilder();
+        ConfigureSerilog(options);
 
-        var logFilename = options.Logger.LogFilename;
+        var builder = WebApplication.CreateBuilder(args);
 
+        builder.Host.UseSerilog();
+
+        builder.Configuration.Sources.Clear();
+        builder.Configuration
+            .SetBasePath(builder.Environment.ContentRootPath)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+
+        builder.Configuration.GetSection(nameof(Options)).Bind(options);
+
+        ConfigureCommonServices(builder.Services, options);
+
+        builder.Services
+            .AddMcpServer()
+            .WithHttpTransport(options => { options.Stateless = true; })
+            .WithToolsFromAssembly();
+
+        var app = builder.Build();
+
+        app.MapMcp();
+
+        app.MapGet("/healthz", () => Results.Ok(new { status = "healthy" }));
+
+        return app;
+    }
+
+    private static void ConfigureSerilog(Options options)
+    {
         Log.Logger =
             new LoggerConfiguration()
             .MinimumLevel.Information()
@@ -26,55 +59,17 @@ public class Startup
                 Serilog.Events.LogEventLevel.Warning)
             .Enrich.FromLogContext()
             .WriteTo.File(
-                path: logFilename,
+                path: options.Logger.LogFilename,
                 rollingInterval: RollingInterval.Hour,
                 outputTemplate: options.Logger.MessageTemplate,
                 shared: true,
                 retainedFileCountLimit: null)
-            /*.WriteTo.Console(
-                theme: AnsiConsoleTheme.Code)*/
+            .WriteTo.Console(
+                theme: AnsiConsoleTheme.Code)
             .CreateLogger();
-        hostBuilder.UseSerilog();
-
-        hostBuilder.ConfigureAppConfiguration(
-            (hostingContext, configuration) =>
-            {
-                ConfigureApp(hostingContext, configuration, options);
-            });
-
-        hostBuilder.ConfigureServices(
-            services =>
-            {
-                ConfigureServices(services, options);
-            });
-
-        return hostBuilder;
     }
 
-    private static void ConfigureApp(
-        HostBuilderContext context,
-        IConfigurationBuilder config,
-        Options options)
-    {
-        config.Sources.Clear();
-        var env = context.HostingEnvironment;
-
-        config
-            .SetBasePath(env.ContentRootPath)
-            .AddJsonFile(
-                $"appsettings.json",
-                optional: true,
-                reloadOnChange: true)
-            .AddJsonFile(
-                $"appsettings.{env.EnvironmentName}.json",
-                optional: true,
-                reloadOnChange: true);
-
-        var configRoot = config.Build();
-        configRoot.GetSection(nameof(Options)).Bind(options);
-    }
-
-    private static void ConfigureServices(IServiceCollection services, Options options)
+    private static void ConfigureCommonServices(IServiceCollection services, Options options)
     {
         services.AddSingleton(options);
         services.AddSingleton<BitcoinMcpService>();
@@ -82,12 +77,8 @@ public class Startup
         services.AddSingleton<IGraphDb, Neo4jDb>();
 
         // TODO: this is a hack. Need it to access strategy factory from the service
-        services.AddSingleton<IGraphDb<BitcoinGraph>, BitcoinNeo4jDb>(); 
+        services.AddSingleton<IGraphDb<BitcoinGraph>, BitcoinNeo4jDb>();
 
         services.AddHttpClient();
-
-        services.AddMcpServer()
-            .WithStdioServerTransport()
-            .WithToolsFromAssembly();
     }
 }
