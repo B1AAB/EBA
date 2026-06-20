@@ -44,6 +44,8 @@ public class Startup
 
         app.MapMcp();
 
+        app.MapGet("/healthz", () => Results.Ok(new { status = "healthy" }));
+
         return app;
     }
 
