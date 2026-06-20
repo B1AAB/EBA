@@ -45,6 +45,26 @@ public class T2SEdge : Edge<TxNode, ScriptNode>
         SpentHeight = spentHeight;
     }
 
+    public static new string[] GetFeaturesName()
+    {
+        return
+        [
+            .. Edge<TxNode, ScriptNode>.GetFeaturesName(),
+            nameof(CreationHeight),
+            nameof(SpentHeight)
+        ];
+    }
+
+    public override double[] GetFeatures()
+    {
+        return
+        [
+            .. base.GetFeatures(),
+            CreationHeight,
+            SpentHeight,
+        ];
+    }
+
     public override int GetHashCode()
     {
         return HashCode.Combine(base.GetHashCode(), Vout);

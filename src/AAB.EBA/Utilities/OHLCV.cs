@@ -112,14 +112,13 @@ public class OHLCV(long timestamp, decimal open, decimal high, decimal low, deci
     {
         return
         [
-            nameof(Timestamp),
-            nameof(Open),
-            nameof(High),
-            nameof(Low),
-            nameof(Close),
-            nameof(VWAP),
-            nameof(OHLC4),
-            $"{nameof(Volume)}(Satoshi)"
+            $"OHLCV.{nameof(Open)}",
+            $"OHLCV.{nameof(High)}",
+            $"OHLCV.{nameof(Low)}",
+            $"OHLCV.{nameof(Close)}",
+            $"OHLCV.{nameof(VWAP)}",
+            $"OHLCV.{nameof(OHLC4)}",
+            $"OHLCV.{nameof(Volume)}(Satoshi)"
         ];
     }
 
@@ -127,7 +126,6 @@ public class OHLCV(long timestamp, decimal open, decimal high, decimal low, deci
     {
         return
         [
-            Timestamp.ToString(CultureInfo.InvariantCulture),
             Open.ToString(CultureInfo.InvariantCulture),
             High.ToString(CultureInfo.InvariantCulture),
             Low.ToString(CultureInfo.InvariantCulture),
@@ -135,6 +133,20 @@ public class OHLCV(long timestamp, decimal open, decimal high, decimal low, deci
             VWAP.ToString(CultureInfo.InvariantCulture),
             OHLC4.ToString(CultureInfo.InvariantCulture),
             Volume.ToString(CultureInfo.InvariantCulture)
+        ];
+    }
+
+    public static string[] GetEmptyFeatures()
+    {
+        return
+        [
+            "NA", // Open
+            "NA", // High
+            "NA", // Low
+            "NA", // Close
+            "NA", // VWAP
+            "NA", // OHLC4
+            "NA"  // Volume
         ];
     }
 }
