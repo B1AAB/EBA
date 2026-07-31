@@ -181,7 +181,7 @@ public class BitcoinMcpService(IGraphDb db, IGraphDb<BitcoinGraph>? bitcoinGraph
             descending: true,
             limit: 1);
 
-        if (nodes == null)
+        if (nodes == null || nodes.Count == 0)
             return null;
 
         var node = nodes[0];
