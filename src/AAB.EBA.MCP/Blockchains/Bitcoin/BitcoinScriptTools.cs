@@ -92,44 +92,50 @@ public class BitcoinScriptTools(BitcoinMcpService mcpService)
 
         var counter = 0;
         var redeemedIn = new List<Dictionary<string, object>>();
-        foreach (var e in neighborhood.EdgesByType[S2TEdge.Kind])
+        if (neighborhood.EdgesByType.TryGetValue(S2TEdge.Kind, out var s2tEdges))
         {
-            if (++counter == maxRedeemedIn)
-                break;
-
-            neighborhood.TryGetNode(e.Target.Id, out var v);
-            if (v == null) continue;
-
-            var txNode = (TxNode)v;
-            var edge = (S2TEdge)e;
-
-            redeemedIn.Add(new Dictionary<string, object>
+            foreach (var e in s2tEdges)
             {
-                ["Value"] = edge.Value,
-                ["Txid"] = txNode.Txid,
-                ["Height"] = edge.Height
-            });
+                if (++counter == maxRedeemedIn)
+                    break;
+
+                neighborhood.TryGetNode(e.Target.Id, out var v);
+                if (v == null) continue;
+
+                var txNode = (TxNode)v;
+                var edge = (S2TEdge)e;
+
+                redeemedIn.Add(new Dictionary<string, object>
+                {
+                    ["Value"] = edge.Value,
+                    ["Txid"] = txNode.Txid,
+                    ["Height"] = edge.Height
+                });
+            }
         }
 
         counter = 0;
         var rewardedIn = new List<Dictionary<string, object>>();
-        foreach (var e in neighborhood.EdgesByType[T2SEdge.Kind])
+        if (neighborhood.EdgesByType.TryGetValue(T2SEdge.Kind, out var t2sEdges))
         {
-            if (++counter == maxRewardedIn)
-                break;
-
-            neighborhood.TryGetNode(e.Source.Id, out var v);
-            if (v == null) continue;
-
-            var txNode = (TxNode)v;
-            var edge = (T2SEdge)e;
-
-            rewardedIn.Add(new Dictionary<string, object>
+            foreach (var e in t2sEdges)
             {
-                ["Value"] = edge.Value,
-                ["Txid"] = txNode.Txid,
-                ["Height"] = edge.Height
-            });
+                if (++counter == maxRewardedIn)
+                    break;
+
+                neighborhood.TryGetNode(e.Source.Id, out var v);
+                if (v == null) continue;
+
+                var txNode = (TxNode)v;
+                var edge = (T2SEdge)e;
+
+                rewardedIn.Add(new Dictionary<string, object>
+                {
+                    ["Value"] = edge.Value,
+                    ["Txid"] = txNode.Txid,
+                    ["Height"] = edge.Height
+                });
+            }
         }
 
         var responsePayload = new Dictionary<string, object>
