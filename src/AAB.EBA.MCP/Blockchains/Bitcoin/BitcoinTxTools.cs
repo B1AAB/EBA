@@ -71,68 +71,76 @@ public class BitcoinTxTools(BitcoinMcpService mcpService)
         "  ** height that created the UTxO, and " +
         "  ** if the UTxO is spent as of the cut-off block height, the height that spent it. ")]
     public async Task<string> GetTxNeighbors(
-        [Description("Id of the Bitcoin transaction")] string txid, 
-        [Description("Maximum number of spent UTxOs to return (default 10--do not increase unless asked specifically)")] int maxSpentTxo = 10, 
+        [Description("Id of the Bitcoin transaction")] string txid,
+        [Description("Maximum number of spent UTxOs to return (default 10--do not increase unless asked specifically)")] int maxSpentTxo = 10,
         [Description("Maximum number of created UTxOs to return (default 10--do not increase unless asked specifically)")] int maxCreatedTxo = 10)
     {
         // This gets neighbors at 0 hop, so immediate neighbors only
         var neighborhood = await _mcpService.GetTxNodeNeighborsAsync(txid);
 
         if (neighborhood.NodeCount == 0 || neighborhood.EdgeCount == 0)
-            return $"Tx not found: {txid}";        
+            return $"Tx not found: {txid}";
 
         var responsePayload = new Dictionary<string, object>();
 
         var counter = 0;
         var spentUTxOs = new List<Dictionary<string, object>>();
-        foreach (var e in neighborhood.EdgesByType[S2TEdge.Kind])
+
+        if (neighborhood.EdgesByType.TryGetValue(S2TEdge.Kind, out var s2tEdges))
         {
-            if (++counter == maxSpentTxo)
-                break;
-
-            neighborhood.TryGetNode(e.Source.Id, out var v);
-            if (v == null) continue;
-
-            var scriptNode = (ScriptNode)v;
-            var edge = (S2TEdge)e;
-
-            var utxo = new Dictionary<string, object>
+            foreach (var e in s2tEdges)
             {
-                ["ScriptSHA256"] = scriptNode.SHA256Hash,
-                ["ScriptAddress"] = string.IsNullOrEmpty(scriptNode.Address) ? "Undefined" : scriptNode.Address,
-                ["Value"] = edge.Value,
-                ["TxCreatingTxo_Txid"] = edge.Txid,
-                ["TxCreatingTxo_Vout"] = edge.Vout,
-                ["CreationHeight"] = edge.CreationHeight,
-                ["AgeAtSpending"] = edge.SpentHeight - edge.CreationHeight
-            };
+                if (++counter == maxSpentTxo)
+                    break;
 
-            spentUTxOs.Add(utxo);
+                neighborhood.TryGetNode(e.Source.Id, out var v);
+                if (v == null) continue;
+
+                var scriptNode = (ScriptNode)v;
+                var edge = (S2TEdge)e;
+
+                var utxo = new Dictionary<string, object>
+                {
+                    ["ScriptSHA256"] = scriptNode.SHA256Hash,
+                    ["ScriptAddress"] = string.IsNullOrEmpty(scriptNode.Address) ? "Undefined" : scriptNode.Address,
+                    ["Value"] = edge.Value,
+                    ["TxCreatingTxo_Txid"] = edge.Txid,
+                    ["TxCreatingTxo_Vout"] = edge.Vout,
+                    ["CreationHeight"] = edge.CreationHeight,
+                    ["AgeAtSpending"] = edge.SpentHeight - edge.CreationHeight
+                };
+
+                spentUTxOs.Add(utxo);
+            }
         }
 
         counter = 0;
         var createdUTxOs = new List<Dictionary<string, object>>();
-        foreach (var e in neighborhood.EdgesByType[T2SEdge.Kind])
+
+        if (neighborhood.EdgesByType.TryGetValue(T2SEdge.Kind, out var t2sEdges))
         {
-            if (++counter == maxCreatedTxo)
-                break;
-
-            neighborhood.TryGetNode(e.Target.Id, out var v);
-            if (v == null) continue;
-
-            var scriptNode = (ScriptNode)v;
-            var edge = (T2SEdge)e;
-
-            var txo = new Dictionary<string, object>
+            foreach (var e in t2sEdges)
             {
-                ["ScriptSHA256"] = scriptNode.SHA256Hash,
-                ["ScriptAddress"] = string.IsNullOrEmpty(scriptNode.Address) ? "Undefined" : scriptNode.Address,
-                ["Value"] = edge.Value,
-                ["CreationHeight"] = edge.CreationHeight,
-                ["SpentHeight"] = edge.SpentHeight == long.MaxValue ? "Not spent as of the cutoff height" : edge.SpentHeight
-            };
+                if (++counter == maxCreatedTxo)
+                    break;
 
-            createdUTxOs.Add(txo);
+                neighborhood.TryGetNode(e.Target.Id, out var v);
+                if (v == null) continue;
+
+                var scriptNode = (ScriptNode)v;
+                var edge = (T2SEdge)e;
+
+                var txo = new Dictionary<string, object>
+                {
+                    ["ScriptSHA256"] = scriptNode.SHA256Hash,
+                    ["ScriptAddress"] = string.IsNullOrEmpty(scriptNode.Address) ? "Undefined" : scriptNode.Address,
+                    ["Value"] = edge.Value,
+                    ["CreationHeight"] = edge.CreationHeight,
+                    ["SpentHeight"] = edge.SpentHeight == long.MaxValue ? "Not spent as of the cutoff height" : edge.SpentHeight
+                };
+
+                createdUTxOs.Add(txo);
+            }
         }
 
         responsePayload.Add("SpentUTxOs", spentUTxOs);

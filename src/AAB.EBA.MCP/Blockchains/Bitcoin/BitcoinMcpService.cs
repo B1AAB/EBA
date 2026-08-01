@@ -181,7 +181,7 @@ public class BitcoinMcpService(IGraphDb db, IGraphDb<BitcoinGraph>? bitcoinGraph
             descending: true,
             limit: 1);
 
-        if (nodes == null)
+        if (nodes == null || nodes.Count == 0)
             return null;
 
         var node = nodes[0];
@@ -374,7 +374,10 @@ public class BitcoinMcpService(IGraphDb db, IGraphDb<BitcoinGraph>? bitcoinGraph
             else
                 continue; // edge is not connected to rootNode
 
-            g.TryGetNode(nodeDbidToIdMap[subjectNodeGraphDbId], out var subjectNode);
+            if (!nodeDbidToIdMap.TryGetValue(subjectNodeGraphDbId, out var subjectNodeId))
+                continue;
+
+            g.TryGetNode(subjectNodeId, out var subjectNode);
             if (subjectNode == null)
                 continue;
 
