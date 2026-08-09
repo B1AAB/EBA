@@ -1,4 +1,6 @@
-﻿namespace AAB.EBA.Graph.Model;
+﻿using AAB.EBA.Graph.Bitcoin;
+
+namespace AAB.EBA.Graph.Model;
 
 public class GraphFeatures
 {
@@ -25,20 +27,12 @@ public class GraphFeatures
         LabelsHeader = new ReadOnlyCollection<string>(["GraphID", "RootNodeId", "RootNodeIdx", "NodeCount", "EdgeCount"]);
 
         NodeFeaturesHeader = [];
-        NodeFeaturesHeader.Add(BlockNode.Kind, ["Index", .. BlockNode.GetFeaturesName()]);
-        NodeFeaturesHeader.Add(TxNode.Kind, ["Index", .. TxNode.GetFeaturesName()]);
-        NodeFeaturesHeader.Add(ScriptNode.Kind, ["Index", .. ScriptNode.GetFeaturesName()]);
-        NodeFeaturesHeader.Add(CoinbaseNode.Kind, ["Index", .. CoinbaseNode.GetFeaturesName()]);
+        foreach(var nodeType in FeaturesSchema.StaticNodeTypes)
+            NodeFeaturesHeader.Add(nodeType.Key, [.. nodeType.Value.Features]);
 
-        var sourceAndTarget = new[] { "Source", "Target" };
         EdgeFeaturesHeader = [];
-        EdgeFeaturesHeader.Add(C2TEdge.Kind, [.. sourceAndTarget, .. C2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(B2TEdge.Kind, [.. sourceAndTarget, .. B2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(S2TEdge.Kind, [.. sourceAndTarget, .. S2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(T2SEdge.Kind, [.. sourceAndTarget, .. T2SEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(T2TEdge.KindFee, [.. sourceAndTarget, .. T2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(T2TEdge.KindTransfers, [.. sourceAndTarget, .. T2TEdge.GetFeaturesName()]);
-        EdgeFeaturesHeader.Add(B2BEdge.Kind, [.. sourceAndTarget, .. B2BEdge.GetFeaturesName()]);
+        foreach(var edgeType in FeaturesSchema.StaticEdgeTypes)
+            EdgeFeaturesHeader.Add(edgeType.Key, [.. edgeType.Value.Features]);
 
         var nodeFeatures = new Dictionary<NodeKind, List<string[]>>();
         var nodeIdToIdx = new Dictionary<NodeKind, Dictionary<string, int>>();

@@ -2,21 +2,6 @@ namespace AAB.EBA.CLI.Config;
 
 public enum GraphTraversal
 {
-    // path search algorithm
-    // traverse the graph using the given algorithm 
-    // deterministic sampling algorithm
-    // stops when a criteria is met (e.g., max number of nodes or edges sampled)
-    // Breadth-first Search
-    //BFS,
-
-    // path search algorithm
-    // traverse the graph using the given algorithm 
-    // deterministic sampling algorithm
-    // stops when a criteria is met (e.g., max number of nodes or edges sampled)
-    // Depth-first Search
-    //DFS,
-
-    // sampling algorithm 
     // non-deterministic sampling algorithm
     Panorama
 }

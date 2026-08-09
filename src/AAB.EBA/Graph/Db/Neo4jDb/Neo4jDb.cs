@@ -95,7 +95,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         return rndRecords;
     }
 
-    public async Task<List<IRecord>> GetNeighborsAsync(
+    public async Task<List<IRecord>> GetNeighborhoodAsync(
         NodeKind rootNodeLabel,
         string rootNodeIdProperty,
         string rootNodeId,

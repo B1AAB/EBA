@@ -48,4 +48,26 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
         Generated = generated;
         CreationHeight = creationHeight;
     }
+
+    public static new string[] GetFeaturesName()
+    {
+        return
+        [
+            .. Edge<ScriptNode, TxNode>.GetFeaturesName(), 
+            nameof(Generated),
+            nameof(CreationHeight),
+            nameof(SpentHeight)
+        ];
+    }
+
+    public override double[] GetFeatures()
+    {
+        return
+        [
+            .. base.GetFeatures(),
+            Generated ? 1.0 : 0.0,
+            CreationHeight,
+            SpentHeight,
+        ];
+    }
 }

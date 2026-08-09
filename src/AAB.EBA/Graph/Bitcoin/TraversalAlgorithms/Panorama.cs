@@ -26,6 +26,8 @@ public class Panorama : ITraversalAlgorithm
 
         _logger.LogInformation("Sampling {n:N0} graphs.", _options.Bitcoin.GraphSample.Count - sampledSubGraphsCount);
 
+        JsonSerializer<FeaturesSchema>.Serialize(new FeaturesSchema(), Path.Combine(_options.WorkingDir, "schema.json"));
+
         while (
             sampledSubGraphsCount < _options.Bitcoin.GraphSample.Count &&
             ++attempts <= _options.Bitcoin.GraphSample.MaxAttempts)
@@ -55,10 +57,6 @@ public class Panorama : ITraversalAlgorithm
                     rootNodeLabel: ScriptNode.Kind,
                     rootNodeIdProperty: rootNode.GetIdPropertyName(),
                     rootNodeId: rootNode.Id,
-                    nodeSamplingCountAtRoot: _options.Bitcoin.GraphSample.PanoramaOptions.NodeSamplingCountAtRoot, // can set this to max int
-                    maxHops: _options.Bitcoin.GraphSample.PanoramaOptions.MaxHops,
-                    queryLimit: _options.Bitcoin.GraphSample.PanoramaOptions.QueryLimit,
-                    nodeCountReductionFactorByHop: _options.Bitcoin.GraphSample.PanoramaOptions.NodeCountReductionFactorByHop,
                     ct: ct);
 
                 var perBatchLabelsFilename = Path.Join(_options.WorkingDir, "labels.tsv");
@@ -110,11 +108,9 @@ public class Panorama : ITraversalAlgorithm
     /// This method ensures that only unique nodes and edges not already present in the graph are added. 
     /// The number of nodes sampled at each hop decreases linearly based on the specified reduction factor.
     /// </summary>
-    private List<Model.INode> ProcessQueriedNeighborhood(
+    private List<Model.INode> ProcessNeighborhood(
         List<IRecord> samplingResult,
         int hop,
-        int nodeSamplingCountAtRoot,
-        double nodeCountReductionFactorByHop,
         BitcoinGraph g,
         CancellationToken ct)
     {
@@ -127,15 +123,16 @@ public class Panorama : ITraversalAlgorithm
         var edges = new List<IRelationship>();
 
         var rootList = samplingResult[0]["root"].As<List<object>>();
-        if (!TryUnpackNodeDict(rootList[0].As<IDictionary<string, object>>(), hop, out var builtRootNode) || builtRootNode == null)
+        if (!TryUnpackNodeDict(rootList[0].As<IDictionary<string, object>>(), hop, out var builtParentNode) || builtParentNode == null)
             return nodesAddedToGraph;
 
-        Model.INode rootNode = g.GetOrAddNode(builtRootNode);
+        Model.INode parentNode = g.GetOrAddNode(builtParentNode);
 
         if (hop == 0)
-            g.AddLabel("RootNodeId", rootNode.Id);
+            g.AddLabel("RootNodeId", parentNode.Id);
 
-        for (int i = 1; i < samplingResult.Count; i++)
+        var coinbaseNodeIdInGraphDb = "";
+        for (var i = 1; i < samplingResult.Count; i++)
         {
             var r = samplingResult[i];
             foreach (var nodeObject in r["nodes"].As<List<object>>())
@@ -146,9 +143,16 @@ public class Panorama : ITraversalAlgorithm
                     continue;
 
                 if (g.TryGetNode(node.Id, out var nodeInG))
+                {
                     nodesInThisHopAlreadyInGraph.TryAdd(node.IdInGraphDb, nodeInG);
+                }
                 else
+                {
                     nodesUniqueToThisHop.TryAdd(node.IdInGraphDb, node);
+
+                    if (node.NodeKind == NodeKind.Coinbase)
+                        coinbaseNodeIdInGraphDb = node.IdInGraphDb;
+                }
             }
 
             foreach (var edge in r.Values["relationships"].As<List<IRelationship>>())
@@ -158,10 +162,27 @@ public class Panorama : ITraversalAlgorithm
         ct.ThrowIfCancellationRequested();
 
         var rnd = new Random(31);
-        var nodesToKeep = nodesUniqueToThisHop.Keys.OrderBy(
-        x => rnd.Next()).Take(
-            (int)Math.Floor(nodeSamplingCountAtRoot - hop * nodeCountReductionFactorByHop))
-            .ToHashSet();
+
+        var parentNodeDegree = (parentNode.OriginalInDegree ?? 0) + (parentNode.OriginalOutDegree ?? 0);
+        var samplingPercentage =
+            _options.Bitcoin.GraphSample.PanoramaOptions.NodeSamplingPercentageAtRoot -
+            (hop * _options.Bitcoin.GraphSample.PanoramaOptions.NeighborhoodSamplePercentagePerHop);
+        var neighborsToKeep = (int)Math.Floor((parentNodeDegree * samplingPercentage) / 100.0);
+        var count = Math.Min(
+            _options.Bitcoin.GraphSample.PanoramaOptions.MaxNeighborsPerNode,
+            neighborsToKeep - nodesInThisHopAlreadyInGraph.Count);
+
+        var nodesToKeep = nodesUniqueToThisHop.Keys.OrderBy(x => rnd.Next()).Take(count).ToHashSet();
+
+        if (_options.Bitcoin.GraphSample.PanoramaOptions.ForceIncludeCoinbaseNode &&
+            !string.IsNullOrEmpty(coinbaseNodeIdInGraphDb))
+        {
+            if (!nodesToKeep.Contains(coinbaseNodeIdInGraphDb))
+            {
+                nodesToKeep.Remove(nodesToKeep.First());
+                nodesToKeep.Add(coinbaseNodeIdInGraphDb);
+            }
+        }
 
         foreach (var edge in edges)
         {
@@ -173,9 +194,9 @@ public class Panorama : ITraversalAlgorithm
             }
 
             string subjectNodeGraphDbId;
-            if (edge.StartNodeElementId == rootNode.IdInGraphDb)
+            if (edge.StartNodeElementId == parentNode.IdInGraphDb)
                 subjectNodeGraphDbId = edge.EndNodeElementId;
-            else if (edge.EndNodeElementId == rootNode.IdInGraphDb)
+            else if (edge.EndNodeElementId == parentNode.IdInGraphDb)
                 subjectNodeGraphDbId = edge.StartNodeElementId;
             else
                 continue; // edge is not connected to rootNode
@@ -196,46 +217,111 @@ public class Panorama : ITraversalAlgorithm
             }
 
             IEdge<Model.INode, Model.INode> candidateEdge =
-                edge.StartNodeElementId == rootNode.IdInGraphDb ?
-                _graphDb.StrategyFactory.CreateEdge(rootNode, subjectNode, edge) :
-                _graphDb.StrategyFactory.CreateEdge(subjectNode, rootNode, edge);
+                edge.StartNodeElementId == parentNode.IdInGraphDb ?
+                _graphDb.StrategyFactory.CreateEdge(parentNode, subjectNode, edge) :
+                _graphDb.StrategyFactory.CreateEdge(subjectNode, parentNode, edge);
             g.TryGetOrAddEdge(candidateEdge, out candidateEdge);
         }
 
         return nodesAddedToGraph;
     }
 
-    private async Task<bool> ProcessHops(
+    private async Task<bool> ProcessHopsBFS(
         NodeKind rootNodeLabel,
         string rootNodeIdProperty,
         string rootNodeId,
-        int maxHops,
+        int initialHop,
+        BitcoinGraph g,
+        CancellationToken ct)
+    {
+        var queue = new Queue<(NodeKind Label, string IdProperty, string Id, int Hop)>();
+        queue.Enqueue((rootNodeLabel, rootNodeIdProperty, rootNodeId, initialHop));
+
+        var expandedNodes = new HashSet<string> { rootNodeId };
+
+        while (queue.Count > 0)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var currentNode = queue.Dequeue();
+            _maxHopReached = Math.Max(_maxHopReached, currentNode.Hop);
+
+            var rawNeighborhood = await _graphDb.GetNeighborhoodAsync(
+                currentNode.Label,
+                currentNode.IdProperty,
+                currentNode.Id,
+                _options.Bitcoin.GraphSample.PanoramaOptions.QueryLimit,
+                1,
+                true,
+                ct: ct);
+
+            var nodesAddedToGraph = ProcessNeighborhood(
+                rawNeighborhood,
+                currentNode.Hop,
+                g: g,
+                ct: ct);
+
+            if (g.NodeCount >= _options.Bitcoin.GraphSample.MaxNodeCount ||
+                g.EdgeCount >= _options.Bitcoin.GraphSample.MaxEdgeCount)
+            {
+                return false;
+            }
+
+            if (currentNode.Hop < _options.Bitcoin.GraphSample.PanoramaOptions.MaxHops)
+            {
+                foreach (var node in nodesAddedToGraph)
+                {
+                    // Note that the `node` is already in the graph, we are just skipping expanding to its neighbors
+                    if (node.NodeKind == NodeKind.Block || 
+                        node.NodeKind == NodeKind.Coinbase)
+                    {
+                        continue;
+                    }
+
+                    // Note that the `node` is already in the graph, we are just skipping expanding to its neighbors
+                    if ((node.OriginalInDegree != null && node.OriginalInDegree > _options.Bitcoin.GraphSample.PanoramaOptions.MaxOriginalInDegree) ||
+                        (node.OriginalOutDegree != null && node.OriginalOutDegree > _options.Bitcoin.GraphSample.PanoramaOptions.MaxOriginalOutDegree))
+                    {
+                        continue;
+                    }
+
+                    // prevent expanding the same node twice
+                    if (expandedNodes.Add(node.Id))
+                    {
+                        queue.Enqueue((node.NodeKind, node.GetIdPropertyName(), node.Id, currentNode.Hop + 1));
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private async Task<bool> ProcessHopsDFS(
+        NodeKind rootNodeLabel,
+        string rootNodeIdProperty,
+        string rootNodeId,
         int hop,
-        int queryLimit,
-        int nodeSamplingCountAtRoot,
-        double nodeCountReductionFactorByHop,
         BitcoinGraph g,
         CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
-        var samplingResult = await _graphDb.GetNeighborsAsync(
+        var samplingResult = await _graphDb.GetNeighborhoodAsync(
             rootNodeLabel,
             rootNodeIdProperty,
             rootNodeId,
-            queryLimit,
+            _options.Bitcoin.GraphSample.PanoramaOptions.QueryLimit,
             1,
             true,
             ct: ct);
 
-        var selectedNodes = ProcessQueriedNeighborhood(
+        var selectedNodes = ProcessNeighborhood(
             samplingResult, hop,
-            nodeSamplingCountAtRoot: nodeSamplingCountAtRoot,
-            nodeCountReductionFactorByHop: nodeCountReductionFactorByHop,
             g: g,
             ct: ct);
 
-        if (hop < maxHops)
+        if (hop < _options.Bitcoin.GraphSample.PanoramaOptions.MaxHops)
         {
             _maxHopReached = Math.Max(_maxHopReached, hop);
 
@@ -257,15 +343,11 @@ public class Panorama : ITraversalAlgorithm
                     continue;
                 }
 
-                await ProcessHops(
+                await ProcessHopsDFS(
                     rootNodeLabel: node.NodeKind,
                     rootNodeIdProperty: node.GetIdPropertyName(),
                     rootNodeId: node.Id,
                     hop: hop + 1,
-                    maxHops: maxHops,
-                    queryLimit: queryLimit,
-                    nodeSamplingCountAtRoot: nodeSamplingCountAtRoot,
-                    nodeCountReductionFactorByHop: nodeCountReductionFactorByHop,
                     g: g,
                     ct: ct);
             }
@@ -278,10 +360,6 @@ public class Panorama : ITraversalAlgorithm
         NodeKind rootNodeLabel,
         string rootNodeIdProperty,
         string rootNodeId,
-        int nodeSamplingCountAtRoot,
-        int maxHops,
-        int queryLimit,
-        double nodeCountReductionFactorByHop,
         CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
@@ -292,18 +370,14 @@ public class Panorama : ITraversalAlgorithm
         _logger.LogInformation(
             "Retrieving neighbors for root node {rootNodeTag} up to {MaxHops} hop(s). ",
             rootNodeLabelInLogs,
-            maxHops);
+            _options.Bitcoin.GraphSample.PanoramaOptions.MaxHops);
 
         _maxHopReached = 0;
-        var completedWalk = await ProcessHops(
+        var completedWalk = await ProcessHopsBFS(
             rootNodeLabel: rootNodeLabel,
             rootNodeIdProperty: rootNodeIdProperty,
             rootNodeId: rootNodeId,
-            maxHops: maxHops,
-            hop: 0,
-            queryLimit: queryLimit,
-            nodeSamplingCountAtRoot: nodeSamplingCountAtRoot,
-            nodeCountReductionFactorByHop: nodeCountReductionFactorByHop,
+            initialHop: 0,
             g: g,
             ct: ct);
 
@@ -334,51 +408,55 @@ public class Panorama : ITraversalAlgorithm
 
     private async Task EnsureB2T(BitcoinGraph g, CancellationToken ct)
     {
-        foreach (var txNode in g.NodesByType[NodeKind.Tx])
+        // there could be many reasons as to why a graph may not contain any Tx nodes;
+        // e.g., if the graph is empty, the traversal was so small that did not include any Tx nodes. 
+        if (g.NodesByType.TryGetValue(NodeKind.Tx, out var txNodes))
         {
-            var v = (TxNode)txNode;
-            var found = false;
-
-            if (g.EdgesByType.TryGetValue(B2TEdge.Kind, out var b2tEdges))
+            foreach (var txNode in txNodes)
             {
-                foreach (var edge in b2tEdges)
+                var v = (TxNode)txNode;
+                var found = false;
+                if (g.EdgesByType.TryGetValue(B2TEdge.Kind, out var b2tEdges))
                 {
-                    var t = (B2TEdge)edge;
-                    if (t.Target.Txid == v.Txid)
+                    foreach (var edge in b2tEdges)
                     {
-                        found = true;
-                        break;
+                        var t = (B2TEdge)edge;
+                        if (t.Target.Txid == v.Txid)
+                        {
+                            found = true;
+                            break;
+                        }
                     }
                 }
-            }
 
-            if (!found)
-            {
-                var records = await _graphDb.GetEdgesAsync(
-                    edgeKind: B2TEdge.Kind,
-                    sourceNodeVariable: "block",
-                    targetNodeVariable: "tx",
-                    relationshipVariable: "b2t",
-                    targetNodeIdProperty: _txidMapping.Property.Name,
-                    targetNodeId: _txidMapping.GetValue(v),
-                    ct: ct);
-
-                var record = records[0];
-                double txNodeOutHops = v.OutHopsFromRoot ?? 0;
-
-                TryUnpackNodeDict(
-                    record["block"].As<object>().As<IDictionary<string, object>>(),
-                    txNodeOutHops + 1,
-                    out var builtBlockNode);
-
-                if (builtBlockNode != null)
+                if (!found)
                 {
-                    var blockNode = g.GetOrAddNode(builtBlockNode);
+                    var records = await _graphDb.GetEdgesAsync(
+                        edgeKind: B2TEdge.Kind,
+                        sourceNodeVariable: "block",
+                        targetNodeVariable: "tx",
+                        relationshipVariable: "b2t",
+                        targetNodeIdProperty: _txidMapping.Property.Name,
+                        targetNodeId: _txidMapping.GetValue(v),
+                        ct: ct);
 
-                    var candidateEdge = _graphDb.StrategyFactory.CreateEdge(blockNode, v, record["b2t"].As<IRelationship>());
+                    var record = records[0];
+                    double txNodeOutHops = v.OutHopsFromRoot ?? 0;
 
-                    if (candidateEdge != null)
-                        g.TryGetOrAddEdge(candidateEdge, out IEdge<Model.INode, Model.INode> _);
+                    TryUnpackNodeDict(
+                        record["block"].As<object>().As<IDictionary<string, object>>(),
+                        txNodeOutHops + 1,
+                        out var builtBlockNode);
+
+                    if (builtBlockNode != null)
+                    {
+                        var blockNode = g.GetOrAddNode(builtBlockNode);
+
+                        var candidateEdge = _graphDb.StrategyFactory.CreateEdge(blockNode, v, record["b2t"].As<IRelationship>());
+
+                        if (candidateEdge != null)
+                            g.TryGetOrAddEdge(candidateEdge, out IEdge<Model.INode, Model.INode> _);
+                    }
                 }
             }
         }
