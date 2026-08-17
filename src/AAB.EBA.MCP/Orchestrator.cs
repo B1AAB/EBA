@@ -18,7 +18,7 @@ public class Orchestrator : IDisposable
 
     public async Task<int> InvokeAsync(string[] args)
     {
-        var options = new Options();
+        var options = new Options() { WorkingDir = Path.GetTempPath() };
 
         Directory.CreateDirectory(options.WorkingDir);
         var app = Startup.GetWebApplication(args, options);
