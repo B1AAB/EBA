@@ -12,7 +12,7 @@ public class Neo4jOptions
 
     public string Password { init; get; } =
         Environment.GetEnvironmentVariable("NEO4J_PASSWORD") ??
-        "Password";
+        "password";
 
     public string BatchesFilename { init; get; } = "batches.json";
 
