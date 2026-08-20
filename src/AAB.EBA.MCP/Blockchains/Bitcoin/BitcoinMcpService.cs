@@ -263,7 +263,7 @@ public class BitcoinMcpService(IGraphDb db, IGraphDb<BitcoinGraph>? bitcoinGraph
             {
                 height = _b2tMapper.GetValue(x => x.Height, e.Properties);
             }
-            else if (e.Type == T2TEdge.KindFee.ToString())
+            else if (e.Type == T2TEdge.KindFee.Relation.ToString())
             {
                 fee = _t2tMapper.GetValue(x => x.Value, e.Properties);
             }
