@@ -107,50 +107,46 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     {
         ct.ThrowIfCancellationRequested();
 
+        // apoc.path.subgraphAll expands like apoc.path.spanningTree (each node
+        // is visited at most once, so the traversal stays bounded and `limit`
+        // caps the number of nodes), but unlike a spanning tree, which keeps
+        // only the single relationship used to discover each node, it returns
+        // *every* relationship existing between the visited nodes; e.g., when
+        // a neighbor has both incoming and outgoing edges to the root, both
+        // are included.
         var qBuilder = new StringBuilder();
-        qBuilder.Append($"MATCH (root:{rootNodeLabel} {{ {rootNodeIdProperty}: \"{rootNodeId}\" }}) ");
+        qBuilder.Append($"MATCH (root:{rootNodeLabel} {{ `{rootNodeIdProperty}`: $rootId }}) ");
 
-        qBuilder.Append($"CALL apoc.path.spanningTree(root, {{");
+        qBuilder.Append($"CALL apoc.path.subgraphAll(root, {{");
         qBuilder.Append($"maxLevel: {maxLevel}, ");
         qBuilder.Append($"limit: {queryLimit}, ");
-
-        if (useBFS)
-            qBuilder.Append($"bfs: true ");
-        else
-            qBuilder.Append($"bfs: false ");
+        qBuilder.Append(useBFS ? "bfs: true" : "bfs: false");
 
         //qBuilder.Append($", labelFilter: '{labelFilters}'");
 
         if (!string.IsNullOrWhiteSpace(relationshipFilter))
-            qBuilder.Append($", relationshipFilter: '{relationshipFilter}'");
+            qBuilder.Append(", relationshipFilter: $relationshipFilter");
 
-        qBuilder.Append($"}}) ");
-        qBuilder.Append($"YIELD path ");
-        qBuilder.Append($"WITH root, ");
-        qBuilder.Append($"nodes(path) AS pathNodes, ");
-        qBuilder.Append($"relationships(path) AS pathRels ");
-        qBuilder.Append($"LIMIT {queryLimit} ");
-        qBuilder.Append($"RETURN ");
-        qBuilder.Append($"[ {{");
-        qBuilder.Append($"node: root, ");
-        qBuilder.Append($"inDegree: COUNT {{ (root)<--() }}, ");
-        qBuilder.Append($"outDegree: COUNT {{ (root)-->() }} ");
-        qBuilder.Append($"}}] AS root, ");
-        qBuilder.Append($"[ ");
-        qBuilder.Append($"n IN pathNodes WHERE n <> root ");
-        qBuilder.Append($"| ");
-        qBuilder.Append($"{{ ");
-        qBuilder.Append($"node: n, ");
-        qBuilder.Append($"inDegree: COUNT {{ (n)<--() }}, ");
-        qBuilder.Append($"outDegree: COUNT {{ (n)-->() }} ");
-        qBuilder.Append($"}} ");
-        qBuilder.Append($"] AS nodes, ");
-        qBuilder.Append($"pathRels AS relationships");
+        qBuilder.Append("}) ");
+        qBuilder.Append("YIELD nodes, relationships ");
+        qBuilder.Append("RETURN ");
+        qBuilder.Append("[ { node: root, ");
+        qBuilder.Append("    inDegree:  COUNT { (root)<--() }, ");
+        qBuilder.Append("    outDegree: COUNT { (root)-->() } } ] AS root, ");
+        qBuilder.Append("[ n IN nodes WHERE n <> root | ");
+        qBuilder.Append("  { node: n, ");
+        qBuilder.Append("    inDegree:  COUNT { (n)<--() }, ");
+        qBuilder.Append("    outDegree: COUNT { (n)-->() } } ] AS nodes, ");
+        qBuilder.Append("relationships AS relationships");
+
+        var parameters = new Dictionary<string, object> { ["rootId"] = rootNodeId };
+        if (!string.IsNullOrWhiteSpace(relationshipFilter))
+            parameters["relationshipFilter"] = relationshipFilter;
 
         using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
         var samplingResult = await session.ExecuteReadAsync(async x =>
         {
-            var result = await x.RunAsync(qBuilder.ToString());
+            var result = await x.RunAsync(qBuilder.ToString(), parameters);
             return await result.ToListAsync(ct);
         });
 
