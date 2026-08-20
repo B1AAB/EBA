@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "AAB.EBA.MCP (http, debug)": {
+      "commandName": "Project",
+      "commandLineArgs": "--http",
+      "applicationUrl": "http://localhost:5000"
+    }
+  }
+}

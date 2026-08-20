@@ -47,6 +47,10 @@ const config = {
           editUrl: 'https://github.com/B1AAB/EBA/edit/main/website',
           remarkPlugins: [remarkMath],
           rehypePlugins: [rehypeKatex],
+          admonitions: {
+            keywords: ['prompt', 'response'],
+            extendDefaults: true,
+          },
           lastVersion: 'v1.0',
           includeCurrentVersion: true,
           versions: {
@@ -57,6 +61,10 @@ const config = {
           },
         },
         blog: {
+          admonitions: {
+            keywords: ['prompt', 'response'],
+            extendDefaults: true,
+          },
           blogSidebarTitle: 'Releases',
           showReadingTime: true,
           feedOptions: {
