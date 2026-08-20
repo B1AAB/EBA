@@ -132,7 +132,7 @@ public class Panorama : ITraversalAlgorithm
             g.AddLabel("RootNodeId", parentNode.Id);
 
         var coinbaseNodeIdInGraphDb = "";
-        for (var i = 1; i < samplingResult.Count; i++)
+        for (var i = 0; i < samplingResult.Count; i++)
         {
             var r = samplingResult[i];
             foreach (var nodeObject in r["nodes"].As<List<object>>())
