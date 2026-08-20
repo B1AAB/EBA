@@ -77,7 +77,6 @@ public class BitcoinMcpService(IGraphDb db, IGraphDb<BitcoinGraph>? bitcoinGraph
 
             if (edge.Type == T2SEdge.Kind.Relation.ToString())
                 balance += _t2sMapper.GetValue(x => x.Value, edge.Properties);
-            }
         }
 
         return balance;
@@ -311,7 +310,7 @@ public class BitcoinMcpService(IGraphDb db, IGraphDb<BitcoinGraph>? bitcoinGraph
         NodeKind nodeKind,
         string idPropertyName,
         string idValue,
-        int queryLimit = 100,
+        int queryLimit = int.MaxValue,
         int maxLevel = 1,
         bool useBFS = true,
         CancellationToken ct = default)
@@ -348,7 +347,7 @@ public class BitcoinMcpService(IGraphDb db, IGraphDb<BitcoinGraph>? bitcoinGraph
         g.AddLabel("RootNodeId", rootNode.Id);
         var nodeDbidToIdMap = new Dictionary<string, string>();
 
-        for (int i = 1; i < neighbors.Count; i++)
+        for (int i = 0; i < neighbors.Count; i++)
         {
             var r = neighbors[i];
             foreach (var nodeObject in r["nodes"].As<List<object>>())
