@@ -72,8 +72,10 @@ public class BitcoinMcpService(IGraphDb db, IGraphDb<BitcoinGraph>? bitcoinGraph
             if (creationH > height)
                 break;
 
-            if (edge.Type == T2SEdge.Kind.Relation.ToString() && spentH == long.MaxValue)
-            {
+            if (spentH < height)
+                continue;
+
+            if (edge.Type == T2SEdge.Kind.Relation.ToString())
                 balance += _t2sMapper.GetValue(x => x.Value, edge.Properties);
             }
         }
