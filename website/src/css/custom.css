@@ -25,6 +25,22 @@
   --features-text-description-color: #111e3c;
 
   --features-alt-background: #dad6dd;
+
+  /* Colors of the custom `:::prompt` admonition. */
+  --ifm-color-prompt-contrast-background: rgb(241, 239, 254);
+  --ifm-color-prompt-contrast-foreground: rgb(42, 28, 74);
+  --ifm-color-prompt-dark: #7d53dd;
+
+  /* Colors of the custom `:::response` admonition, derived the same way from
+     the teal #0d9488. Teal because the violet above is blue-leaning, so it
+     pairs with a cool partner; because violet's actual complement (gold, hue
+     ~40) is where `warning` and this site's own accent color live; and because
+     teal is the widest free gap between `tip` (hue 120) and `info` (hue 195).
+     It is deliberately a step deeper than the prompt's violet: the prompt is
+     what the eye should land on, the response is body text under it. */
+  --ifm-color-response-contrast-background: rgb(231, 244, 243);
+  --ifm-color-response-contrast-foreground: rgb(4, 44, 41);
+  --ifm-color-response-dark: #0b8578;
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
@@ -68,6 +84,16 @@
   ;*/
   --ifm--highlight-color: #240046;
   --ifm--highlight-background-color: #ff9e00;
+
+  /* Background and foreground are swapped in dark mode, as Infima does for
+     the built-in admonitions, and the border gets a lighter violet. */
+  --ifm-color-prompt-contrast-background: rgb(42, 28, 74);
+  --ifm-color-prompt-contrast-foreground: rgb(241, 239, 254);
+  --ifm-color-prompt-dark: #a78bfa;
+
+  --ifm-color-response-contrast-background: rgb(4, 44, 41);
+  --ifm-color-response-contrast-foreground: rgb(231, 244, 243);
+  --ifm-color-response-dark: #14b8a6;
 }
 
 .footer {
@@ -78,6 +104,26 @@
   --ifm-footer-background-color: #181818;
 }
 
+
+/* Alert variant used by the custom `:::prompt` admonition
+   (see src/theme/Admonition/Type/Prompt.js), mirroring Infima's
+   `.alert--info`, `.alert--tip`, etc. */
+.alert--prompt {
+  --ifm-alert-background-color: var(--ifm-color-prompt-contrast-background);
+  --ifm-alert-background-color-highlight: rgba(139, 92, 246, 0.15);
+  --ifm-alert-foreground-color: var(--ifm-color-prompt-contrast-foreground);
+  --ifm-alert-border-color: var(--ifm-color-prompt-dark);
+}
+
+/* Same for the collapsible `:::response` admonition
+   (see src/theme/Admonition/Type/Response.js). `@theme/Details` hardcodes
+   `alert--info`, so this needs to outweigh it. */
+.alert.alert--response {
+  --ifm-alert-background-color: var(--ifm-color-response-contrast-background);
+  --ifm-alert-background-color-highlight: rgba(13, 148, 136, 0.15);
+  --ifm-alert-foreground-color: var(--ifm-color-response-contrast-foreground);
+  --ifm-alert-border-color: var(--ifm-color-response-dark);
+}
 
 .highlight--emphasis {
   border-radius: 4px;

@@ -1,0 +1,26 @@
+/* Same heading/icon treatment theme-classic gives to admonition headings,
+   applied to the <summary> of the collapsible `:::response` admonition. */
+
+.responseHeading {
+  font: var(--ifm-heading-font-weight) var(--ifm-h5-font-size) /
+    var(--ifm-heading-line-height) var(--ifm-heading-font-family);
+  text-transform: uppercase;
+}
+
+.responseHeading code {
+  text-transform: none;
+}
+
+.responseIcon {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 0.4em;
+}
+
+.responseIcon svg {
+  display: inline-block;
+  height: 1.6em;
+  width: 1.6em;
+  vertical-align: middle;
+  fill: var(--ifm-alert-foreground-color);
+}
