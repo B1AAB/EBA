@@ -36,6 +36,7 @@ public class ScriptNodeDescriptor : IElementDescriptor<ScriptNode>
 
     public string[] UniqueProps =>
     [
-        _mapper.GetMapping(x => x.SHA256Hash).Property.Name,
+        _mapper.GetMapping(x => x.Address).Property.Name,
+        _mapper.GetMapping(x => x.SHA256Hash).Property.Name
     ];
 }
