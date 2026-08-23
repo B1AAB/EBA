@@ -1,5 +1,5 @@
 ---
-title: Design decisions
+title: Design Decisions
 description: Design decisions
 sidebar_position: 0
 slug: design-decisions
