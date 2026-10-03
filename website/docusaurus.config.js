@@ -212,6 +212,10 @@ const config = {
 
   stylesheets: [
     {
+      href: 'https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@100&display=swap',
+      type: 'text/css',
+    },
+    {
       href: 'https://cdn.jsdelivr.net/npm/katex@0.13.24/dist/katex.min.css',
       type: 'text/css',
       integrity:
