@@ -34,7 +34,8 @@
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "^3.9.2",
-    "@docusaurus/types": "^3.9.2"
+    "@docusaurus/types": "^3.9.2",
+    "javascript-obfuscator": "^5.8.1"
   },
   "browserslist": {
     "production": [
