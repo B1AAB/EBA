@@ -19,7 +19,7 @@ function GraphOverlay() {
           <RotatingPhrase />
         </span>
         <span className={styles.highlight}>in Bitcoin&apos;s</span>
-        <span className={styles.highlight}>Complete History</span>
+        <span className={styles.highlight}>complete history.</span>
       </p>
     </div>
   );
