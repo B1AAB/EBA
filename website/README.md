@@ -24,6 +24,34 @@ $ yarn build
 
 This command generates static content into the `build` directory and can be served using any static contents hosting service.
 
+### Update the hero graph
+
+The landing page's graph is a prebuilt from
+panorama in `static/graph-viz/`.
+To rebuild it from the latest panorama, run from `website/`:
+
+- Linux/macOS:
+
+    ```
+    export PANORAMA_DIR=/path/to/panorama
+    git -C "$PANORAMA_DIR" pull
+    npm --prefix "$PANORAMA_DIR" install
+    npm install
+    node graph-viz/build.mjs
+    ```
+
+- PowerShell:
+
+    ```
+    $env:PANORAMA_DIR = "C:\path\to\panorama"
+    git -C $env:PANORAMA_DIR pull
+    npm --prefix $env:PANORAMA_DIR install
+    npm install
+    node graph-viz/build.mjs
+    ```
+
+Commit `static/graph-viz/` and `src/data/graphViz.js`.
+
 ### Deployment
 
 Using SSH:
