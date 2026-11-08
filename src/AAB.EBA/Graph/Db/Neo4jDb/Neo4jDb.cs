@@ -153,6 +153,84 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         return samplingResult;
     }
 
+    public async Task<NodeActivityCounts> GetNodeActivityCountsAsync(
+        NodeKind label,
+        string idProperty,
+        string id,
+        IReadOnlyList<BlockHeightRange> ranges,
+        int scanLimit,
+        CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        if (ranges.Count == 0)
+            throw new ArgumentException("At least one range is required.", nameof(ranges));
+
+        if (scanLimit < 1)
+            throw new ArgumentOutOfRangeException(nameof(scanLimit), "Value must be >= 1.");
+
+        // Activity height per relationship type; see NodeActivityCounts.
+        var heightExpr =
+            $"CASE type(r) " +
+            $"WHEN '{RelationType.Credits}' THEN r.{nameof(T2SEdge.CreationHeight)} " +
+            $"WHEN '{RelationType.Redeems}' THEN r.{nameof(S2TEdge.SpentHeight)} " +
+            $"ELSE r.{nameof(T2TEdge.Height)} END";
+
+        var query =
+            $"MATCH (s:{label} {{ `{idProperty}`: $id }}) " +
+            // Exact degrees from the degree store, O(1) regardless of degree.
+            "WITH s, COUNT { (s)<--() } AS inTotal, COUNT { (s)-->() } AS outTotal " +
+            // OPTIONAL so a node with no relationships still yields rows (all zeros).
+            "OPTIONAL MATCH (s)-[r]-() " +
+            // Bound the scan: on a hub, reading one property per edge over millions of edges
+            // takes minutes. The scanned subset is reported so the caller can tell a sample
+            // from a complete scan.
+            "WITH s, inTotal, outTotal, r LIMIT $scanLimit " +
+            "WITH inTotal, outTotal, r, " +
+            "     (r IS NOT NULL AND endNode(r) = s) AS isIn, " +
+            $"     ({heightExpr}) AS h " +
+            // One group per requested range; the adjacency is scanned once, rows are
+            // multiplied by the (small) number of ranges before aggregation.
+            "UNWIND range(0, size($ranges) - 1) AS i " +
+            "WITH i, $ranges[i] AS rg, inTotal, outTotal, r, isIn, h " +
+            "RETURN i, inTotal, outTotal, " +
+            "  sum(CASE WHEN r IS NOT NULL AND isIn      THEN 1 ELSE 0 END) AS inScanned, " +
+            "  sum(CASE WHEN r IS NOT NULL AND NOT isIn  THEN 1 ELSE 0 END) AS outScanned, " +
+            "  sum(CASE WHEN r IS NOT NULL AND isIn     AND h >= rg.min AND h <= rg.max THEN 1 ELSE 0 END) AS inRange, " +
+            "  sum(CASE WHEN r IS NOT NULL AND NOT isIn AND h >= rg.min AND h <= rg.max THEN 1 ELSE 0 END) AS outRange " +
+            "ORDER BY i";
+
+        var parameters = new Dictionary<string, object>
+        {
+            ["id"] = id,
+            ["scanLimit"] = (long)scanLimit,
+            ["ranges"] = ranges
+                .Select(x => new Dictionary<string, object> { ["min"] = x.Min, ["max"] = x.Max })
+                .ToList(),
+        };
+
+        using var session = _driver.AsyncSession(x => x.WithDefaultAccessMode(AccessMode.Read));
+        var rows = await session.ExecuteReadAsync(async tx =>
+        {
+            var cursor = await tx.RunAsync(query, parameters);
+            return await cursor.ToListAsync(ct);
+        });
+
+        if (rows.Count != ranges.Count)
+            throw new InvalidOperationException(
+                $"Node ({label} {{{idProperty}={id}}}) not found or unexpected row count ({rows.Count}).");
+
+        var inTotal = rows[0]["inTotal"].As<long>();
+        var outTotal = rows[0]["outTotal"].As<long>();
+        var inScanned = rows[0]["inScanned"].As<long>();
+        var outScanned = rows[0]["outScanned"].As<long>();
+        var perRange = rows
+            .Select(x => (x["inRange"].As<long>(), x["outRange"].As<long>()))
+            .ToList();
+
+        return new NodeActivityCounts(inTotal, outTotal, inScanned, outScanned, perRange);
+    }
+
     public Task ImportAsync(CancellationToken ct, string batchName = "")
     {
         throw new NotImplementedException("ImportAsync is not implemented.");

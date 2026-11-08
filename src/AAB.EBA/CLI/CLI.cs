@@ -459,6 +459,32 @@ internal class Cli
         return cmd;
     }
 
+    private static void ValidateActivityWindow(
+        System.CommandLine.Parsing.CommandResult commandResult,
+        string optionName,
+        ActivityWindowOptions? w)
+    {
+        if (w == null)
+            return;
+
+        if (w.MinHeight < 0)
+            commandResult.AddError($"Option '{optionName}.minHeight' must be a non-negative integer.");
+
+        if (w.MaxHeight < 0)
+            commandResult.AddError($"Option '{optionName}.maxHeight' must be a non-negative integer.");
+
+        if (w.MinHeight > w.MaxHeight)
+            commandResult.AddError(
+                $"Option '{optionName}.minHeight' ({w.MinHeight}) " +
+                $"cannot be greater than '{optionName}.maxHeight' ({w.MaxHeight}).");
+
+        if (w.MinPercentage < 0 || w.MinPercentage > 100)
+            commandResult.AddError($"Option '{optionName}.minPercentage' must be between 0 and 100.");
+
+        if (w.MinActivityCount < 1)
+            commandResult.AddError($"Option '{optionName}.minActivityCount' must be a positive integer.");
+    }
+
     private Command GetBitcoinSampleCmd(Options defaultOptions, Func<Options, Task> handlerAsync)
     {
         var countOption = new Option<int>("--count")
@@ -586,6 +612,16 @@ internal class Cli
                         commandResult.AddError(
                             $"Option 'minEdgeActivityHeight' ({panoramaOptions.MinEdgeActivityHeight}) " +
                             $"cannot be greater than option 'maxEdgeActivityHeight' ({panoramaOptions.MaxEdgeActivityHeight}).");
+                    }
+
+                    if (panoramaOptions != null)
+                    {
+                        ValidateActivityWindow(commandResult, "incomingActivityWindow", panoramaOptions.IncomingActivityWindow);
+                        ValidateActivityWindow(commandResult, "outgoingActivityWindow", panoramaOptions.OutgoingActivityWindow);
+                        ValidateActivityWindow(commandResult, "totalActivityWindow", panoramaOptions.TotalActivityWindow);
+
+                        if (panoramaOptions.ActivityScanLimit < 1)
+                            commandResult.AddError("Option 'activityScanLimit' must be a positive integer.");
                     }
                 }
                 catch (JsonException e)

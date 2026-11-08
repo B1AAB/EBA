@@ -63,6 +63,8 @@ public class BitcoinPanoramaSamplingAlgorithmOptions
     /// For every Block node in the sampled community, also include this many
     /// earlier blocks (by height), chained through Block-[Follows]->Block edges.
     /// 0 (default) disables this.
+    /// 
+    /// Note that this will not count against the max node count per sampled community.
     /// </summary>
     [JsonPropertyName("earlierBlocksWindow")]
     public int EarlierBlocksWindow
@@ -141,7 +143,43 @@ public class BitcoinPanoramaSamplingAlgorithmOptions
     private int _maxEdgeActivityHeight = int.MaxValue;
 
     /// <summary>
-    /// As part of the random expansion, coinbase node gets 
+    /// If set, a Script node is included in the sampled neighborhood only if at least
+    /// MinPercentage of its *incoming* edges (Credits) have CreationHeight inside the window.
+    /// Tx, Block and Coinbase nodes are not judged: by design each is tied to a single block
+    /// height. Can be combined with OutgoingActivityWindow and TotalActivityWindow; a Script
+    /// must satisfy all configured ones. See ActivityScanLimit for how high-degree Scripts
+    /// are judged.
+    /// </summary>
+    [JsonPropertyName("incomingActivityWindow")]
+    public ActivityWindowOptions? IncomingActivityWindow { init; get; } = null;
+
+    /// <summary>
+    /// Same as IncomingActivityWindow, for the Script's *outgoing* edges (Redeems, judged on SpentHeight).
+    /// </summary>
+    [JsonPropertyName("outgoingActivityWindow")]
+    public ActivityWindowOptions? OutgoingActivityWindow { init; get; } = null;
+
+    /// <summary>
+    /// Same as IncomingActivityWindow, for *all* of the Script's edges (incoming + outgoing).
+    /// </summary>
+    [JsonPropertyName("totalActivityWindow")]
+    public ActivityWindowOptions? TotalActivityWindow { init; get; } = null;
+
+    /// <summary>
+    /// Maximum number of a Script's edges that are scanned to evaluate the activity
+    /// windows (incomingActivityWindow, outgoingActivityWindow, totalActivityWindow).
+    /// Bounds the cost of judging high-degree Scripts (e.g. exchange addresses with
+    /// millions of edges), which would otherwise take minutes per node. Scripts with at
+    /// most this many edges are judged exactly. For Scripts with more, the percentage is
+    /// estimated over the scanned edges (roughly the most recently added ones, as Neo4j
+    /// stores them), while minActivityCount is always checked against the exact degree.
+    /// Default 50,000.
+    /// </summary>
+    [JsonPropertyName("activityScanLimit")]
+    public int ActivityScanLimit { init; get; } = 50_000;
+
+    /// <summary>
+    /// As part of the random expansion, coinbase node gets
     /// the same selection probability as other nodes;
     /// hence, it may or may not be included in the sampled community.
     /// If this property is set to true, 
@@ -151,4 +189,40 @@ public class BitcoinPanoramaSamplingAlgorithmOptions
     /// </summary>
     [JsonPropertyName("forceIncludeCoinbaseNode")]
     public bool ForceIncludeCoinbaseNode {  init; get; } = true;
+}
+
+/// <summary>
+/// A block-height window together with the minimum share of a Script node's activity
+/// (incident edges) that must fall inside it for the Script to be included in a sampled
+/// neighborhood. See BitcoinPanoramaSamplingAlgorithmOptions.IncomingActivityWindow,
+/// OutgoingActivityWindow and TotalActivityWindow.
+/// </summary>
+public class ActivityWindowOptions
+{
+    /// <summary>Lowest block height (inclusive) of the window. Default 0.</summary>
+    [JsonPropertyName("minHeight")]
+    public int MinHeight { init; get; } = 0;
+
+    /// <summary>Highest block height (inclusive) of the window. Default int.MaxValue.</summary>
+    [JsonPropertyName("maxHeight")]
+    public int MaxHeight { init; get; } = int.MaxValue;
+
+    /// <summary>
+    /// Minimum percentage (0..100) of the Script's activity whose activity height must
+    /// lie inside [MinHeight, MaxHeight]. A Script with no activity in the considered
+    /// direction does not satisfy the window. Default 0.
+    /// </summary>
+    [JsonPropertyName("minPercentage")]
+    public double MinPercentage { init; get; } = 0;
+
+    /// <summary>
+    /// Minimum number of activities (edges) the Script must have in the considered
+    /// direction (incoming, outgoing, or both for the total window), counted over its whole
+    /// history, not only inside the window. Guards MinPercentage against tiny samples:
+    /// e.g. with MinPercentage 50, a Script with 2 edges, 1 of them in the window, passes
+    /// unless MinActivityCount is greater than 2. Default 1, i.e. at least one activity,
+    /// which matches the rule that a Script with no activity does not satisfy the window.
+    /// </summary>
+    [JsonPropertyName("minActivityCount")]
+    public int MinActivityCount { init; get; } = 1;
 }

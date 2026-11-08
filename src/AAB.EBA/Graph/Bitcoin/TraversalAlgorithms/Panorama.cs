@@ -33,11 +33,55 @@ public class Panorama : ITraversalAlgorithm
     // T2SEdge stores this sentinel as SpentHeight while the output is unspent.
     private const long _unspentSentinel = long.MaxValue;
 
+    // A database step that runs longer than this is reported (once at the threshold, then
+    // every repeat interval) naming the step, so a stall can be attributed from the log
+    // without logging every step. The report comes from an independent timer thread, so
+    // it fires even if the step blocks its own thread synchronously.
+    private static readonly TimeSpan _slowStepThreshold = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan _slowStepRepeat = TimeSpan.FromSeconds(60);
+    private static readonly TimeSpan _slowStepPoll = TimeSpan.FromSeconds(5);
+
+    private readonly object _stepLock = new();
+    private string? _currentStep;
+    private readonly Stopwatch _currentStepWatch = new();
+    private TimeSpan _currentStepLastReport;
+
+    // Progress of the neighborhood walk in progress (one root). A walk made of thousands
+    // of individually fast steps produces no log at all between its start and end lines,
+    // so the same timer reports a one-line progress summary at this interval while a walk
+    // is running, and a one-line total when a walk ran longer than the slow-step threshold.
+    private static readonly TimeSpan _walkProgressInterval = TimeSpan.FromSeconds(60);
+    private string? _walkRoot;
+    private readonly Stopwatch _walkWatch = new();
+    private TimeSpan _walkLastReport;
+    private int _walkQueries;
+    private int _walkHop;
+    private int _walkQueue;
+    private int _walkNodes;
+    private int _walkEdges;
+
     private int _maxHopReached = 0;
 
     private readonly bool _hasEdgeActivityWindow;
     private readonly long _minEdgeActivityHeight;
     private readonly long _maxEdgeActivityHeight;
+
+    private readonly ActivityWindowOptions? _incomingActivityWindow;
+    private readonly ActivityWindowOptions? _outgoingActivityWindow;
+    private readonly ActivityWindowOptions? _totalActivityWindow;
+    private readonly bool _hasActivityWindow;
+
+    // Ranges sent to the DB, in a fixed order: [incoming, outgoing, total]
+    private readonly List<BlockHeightRange> _activityRanges = [];
+    private readonly int _incomingRangeIndex = -1;
+    private readonly int _outgoingRangeIndex = -1;
+    private readonly int _totalRangeIndex = -1;
+
+    // Per sampled graph (reset in GetNeighborsAsync).
+    private readonly Dictionary<string, bool> _activityCheckCache = [];
+    private int _activityChecks = 0;
+    private int _activityRejections = 0;
+    private int _activityPartialScans = 0;
 
     public Panorama(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<BitcoinGraphOrchestrator> logger)
     {
@@ -49,6 +93,30 @@ public class Panorama : ITraversalAlgorithm
         _minEdgeActivityHeight = po.MinEdgeActivityHeight;
         _maxEdgeActivityHeight = po.MaxEdgeActivityHeight;
         _hasEdgeActivityWindow = po.MinEdgeActivityHeight > 0 || po.MaxEdgeActivityHeight < int.MaxValue;
+
+        _incomingActivityWindow = po.IncomingActivityWindow;
+        _outgoingActivityWindow = po.OutgoingActivityWindow;
+        _totalActivityWindow = po.TotalActivityWindow;
+        _hasActivityWindow =
+            _incomingActivityWindow != null ||
+            _outgoingActivityWindow != null ||
+            _totalActivityWindow != null;
+
+        if (_incomingActivityWindow != null)
+        {
+            _incomingRangeIndex = _activityRanges.Count;
+            _activityRanges.Add(new BlockHeightRange(_incomingActivityWindow.MinHeight, _incomingActivityWindow.MaxHeight));
+        }
+        if (_outgoingActivityWindow != null)
+        {
+            _outgoingRangeIndex = _activityRanges.Count;
+            _activityRanges.Add(new BlockHeightRange(_outgoingActivityWindow.MinHeight, _outgoingActivityWindow.MaxHeight));
+        }
+        if (_totalActivityWindow != null)
+        {
+            _totalRangeIndex = _activityRanges.Count;
+            _activityRanges.Add(new BlockHeightRange(_totalActivityWindow.MinHeight, _totalActivityWindow.MaxHeight));
+        }
     }
 
     public async Task SampleAsync(CancellationToken ct)
@@ -59,6 +127,10 @@ public class Panorama : ITraversalAlgorithm
         _logger.LogInformation("Sampling {n:N0} graphs.", _options.Bitcoin.GraphSample.Count - sampledSubGraphsCount);
 
         JsonSerializer<FeaturesSchema>.Serialize(new FeaturesSchema(), Path.Combine(_options.WorkingDir, "schema.json"));
+
+        // Reports the step currently in progress once it has run longer than the slow-step
+        // threshold; see WatchSlowStepAsync.
+        using var slowStepTimer = new Timer(_ => ReportSlowStep(), null, _slowStepPoll, _slowStepPoll);
 
         while (
             sampledSubGraphsCount < _options.Bitcoin.GraphSample.Count &&
@@ -140,7 +212,7 @@ public class Panorama : ITraversalAlgorithm
     /// This method ensures that only unique nodes and edges not already present in the graph are added. 
     /// The number of nodes sampled at each hop decreases linearly based on the specified reduction factor.
     /// </summary>
-    private List<Model.INode> ProcessNeighborhood(
+    private async Task<List<Model.INode>> ProcessNeighborhoodAsync(
         List<IRecord> samplingResult,
         int hop,
         BitcoinGraph g,
@@ -157,6 +229,15 @@ public class Panorama : ITraversalAlgorithm
         var rootList = samplingResult[0]["root"].As<List<object>>();
         if (!TryUnpackNodeDict(rootList[0].As<IDictionary<string, object>>(), hop, out var builtParentNode) || builtParentNode == null)
             return nodesAddedToGraph;
+
+        // Must run before the root is added to the graph.
+        if (hop == 0 && _hasActivityWindow && !await CheckScriptActivityAsync(builtParentNode, ct))
+        {
+            _logger.LogInformation(
+                "Root node {Id} rejected: its activity does not satisfy the configured activity window(s).",
+                builtParentNode.Id);
+            return nodesAddedToGraph; // empty; the sample fails MinNodeCount and is retried
+        }
 
         Model.INode parentNode = g.GetOrAddNode(builtParentNode);
 
@@ -243,7 +324,31 @@ public class Panorama : ITraversalAlgorithm
             _options.Bitcoin.GraphSample.PanoramaOptions.MaxNeighborsPerNode,
             neighborsToKeep - nodesInThisHopAlreadyInGraph.Count);
 
-        var nodesToKeep = nodesUniqueToThisHop.Keys.OrderBy(x => rnd.Next()).Take(count).ToHashSet();
+        var shuffled = nodesUniqueToThisHop.Keys.OrderBy(x => rnd.Next()).ToList();
+
+        HashSet<string> nodesToKeep;
+        if (!_hasActivityWindow)
+        {
+            nodesToKeep = shuffled.Take(count).ToHashSet();
+        }
+        else
+        {
+            // Walk the shuffled pool and keep the first `count` candidates that satisfy the
+            // configured activity window(s). Equivalent to filtering the pool and then drawing
+            // `count` at random, but issues one activity-count query per *examined* Script
+            // instead of one per pool member. Non-Script candidates always pass.
+            nodesToKeep = [];
+            foreach (var id in shuffled)
+            {
+                if (nodesToKeep.Count >= count)
+                    break;
+
+                ct.ThrowIfCancellationRequested();
+
+                if (await CheckScriptActivityAsync(nodesUniqueToThisHop[id], ct))
+                    nodesToKeep.Add(id);
+            }
+        }
 
         if (_options.Bitcoin.GraphSample.PanoramaOptions.ForceIncludeCoinbaseNode &&
             !string.IsNullOrEmpty(coinbaseNodeIdInGraphDb))
@@ -317,20 +422,30 @@ public class Panorama : ITraversalAlgorithm
             var currentNode = queue.Dequeue();
             _maxHopReached = Math.Max(_maxHopReached, currentNode.Hop);
 
-            var rawNeighborhood = await _graphDb.GetNeighborhoodAsync(
-                currentNode.Label,
-                currentNode.IdProperty,
-                currentNode.Id,
-                _options.Bitcoin.GraphSample.PanoramaOptions.QueryLimit,
-                1,
-                true,
-                ct: ct);
+            var rawNeighborhood = await WatchSlowStepAsync(
+                () => _graphDb.GetNeighborhoodAsync(
+                    currentNode.Label,
+                    currentNode.IdProperty,
+                    currentNode.Id,
+                    _options.Bitcoin.GraphSample.PanoramaOptions.QueryLimit,
+                    1,
+                    true,
+                    ct: ct),
+                $"neighborhood query for ({currentNode.Label} {{{currentNode.IdProperty}={currentNode.Id}}}) at hop {currentNode.Hop}");
 
-            var nodesAddedToGraph = ProcessNeighborhood(
+            var nodesAddedToGraph = await ProcessNeighborhoodAsync(
                 rawNeighborhood,
                 currentNode.Hop,
                 g: g,
                 ct: ct);
+
+            lock (_stepLock)
+            {
+                _walkHop = currentNode.Hop;
+                _walkQueue = queue.Count;
+                _walkNodes = g.NodeCount;
+                _walkEdges = g.EdgeCount;
+            }
 
             if (g.NodeCount >= _options.Bitcoin.GraphSample.MaxNodeCount ||
                 g.EdgeCount >= _options.Bitcoin.GraphSample.MaxEdgeCount)
@@ -378,16 +493,18 @@ public class Panorama : ITraversalAlgorithm
     {
         ct.ThrowIfCancellationRequested();
 
-        var samplingResult = await _graphDb.GetNeighborhoodAsync(
-            rootNodeLabel,
-            rootNodeIdProperty,
-            rootNodeId,
-            _options.Bitcoin.GraphSample.PanoramaOptions.QueryLimit,
-            1,
-            true,
-            ct: ct);
+        var samplingResult = await WatchSlowStepAsync(
+            () => _graphDb.GetNeighborhoodAsync(
+                rootNodeLabel,
+                rootNodeIdProperty,
+                rootNodeId,
+                _options.Bitcoin.GraphSample.PanoramaOptions.QueryLimit,
+                1,
+                true,
+                ct: ct),
+            $"neighborhood query for ({rootNodeLabel} {{{rootNodeIdProperty}={rootNodeId}}}) at hop {hop}");
 
-        var selectedNodes = ProcessNeighborhood(
+        var selectedNodes = await ProcessNeighborhoodAsync(
             samplingResult, hop,
             g: g,
             ct: ct);
@@ -448,6 +565,31 @@ public class Panorama : ITraversalAlgorithm
                 "Restricting sampled edges to block heights [{Min:N0}, {Max:N0}] (inclusive).",
                 _minEdgeActivityHeight, _maxEdgeActivityHeight);
 
+        if (_hasActivityWindow)
+            _logger.LogInformation(
+                "Script activity window(s) active: incoming={In}, outgoing={Out}, total={Total}; at most {ScanLimit:N0} edges scanned per Script.",
+                Describe(_incomingActivityWindow),
+                Describe(_outgoingActivityWindow),
+                Describe(_totalActivityWindow),
+                _options.Bitcoin.GraphSample.PanoramaOptions.ActivityScanLimit);
+
+        _activityCheckCache.Clear();
+        _activityChecks = 0;
+        _activityRejections = 0;
+        _activityPartialScans = 0;
+
+        lock (_stepLock)
+        {
+            _walkRoot = rootNodeLabelInLogs;
+            _walkLastReport = TimeSpan.Zero;
+            _walkQueries = 0;
+            _walkHop = 0;
+            _walkQueue = 0;
+            _walkNodes = 0;
+            _walkEdges = 0;
+            _walkWatch.Restart();
+        }
+
         _maxHopReached = 0;
         var completedWalk = await ProcessHopsBFS(
             rootNodeLabel: rootNodeLabel,
@@ -483,6 +625,25 @@ public class Panorama : ITraversalAlgorithm
             "Neighbor retrieval completed for root node {rootNodeTag}. Built graph with {NodeCount:N0} nodes and {EdgeCount:N0} edges.",
             rootNodeLabelInLogs, g.NodeCount, g.EdgeCount);
 
+        if (_hasActivityWindow)
+            _logger.LogInformation(
+                "Script activity window checks for root node {rootNodeTag}: checks={Checks:N0}, rejected={Rejected:N0}, judged on a partial scan={Partial:N0}.",
+                rootNodeLabelInLogs, _activityChecks, _activityRejections, _activityPartialScans);
+
+        TimeSpan walkElapsed;
+        int walkQueries;
+        lock (_stepLock)
+        {
+            walkElapsed = _walkWatch.Elapsed;
+            walkQueries = _walkQueries;
+            _walkRoot = null;
+        }
+
+        if (walkElapsed >= _slowStepThreshold)
+            _logger.LogInformation(
+                "Neighbor retrieval for root node {rootNodeTag} took {Elapsed:N0} s and {Queries:N0} database queries.",
+                rootNodeLabelInLogs, walkElapsed.TotalSeconds, walkQueries);
+
         return g;
     }
 
@@ -511,14 +672,16 @@ public class Panorama : ITraversalAlgorithm
 
                 if (!found)
                 {
-                    var records = await _graphDb.GetEdgesAsync(
-                        edgeKind: B2TEdge.Kind,
-                        sourceNodeVariable: "block",
-                        targetNodeVariable: "tx",
-                        relationshipVariable: "b2t",
-                        targetNodeIdProperty: _txidMapping.Property.Name,
-                        targetNodeId: _txidMapping.GetValue(v),
-                        ct: ct);
+                    var records = await WatchSlowStepAsync(
+                        () => _graphDb.GetEdgesAsync(
+                            edgeKind: B2TEdge.Kind,
+                            sourceNodeVariable: "block",
+                            targetNodeVariable: "tx",
+                            relationshipVariable: "b2t",
+                            targetNodeIdProperty: _txidMapping.Property.Name,
+                            targetNodeId: _txidMapping.GetValue(v),
+                            ct: ct),
+                        $"block lookup for Tx {v.Txid}");
 
                     var record = records[0];
                     double txNodeOutHops = v.OutHopsFromRoot ?? 0;
@@ -576,23 +739,25 @@ public class Panorama : ITraversalAlgorithm
         {
             ct.ThrowIfCancellationRequested();
 
-            var records = towardsEarlier
-                ? await _graphDb.GetEdgesAsync(
-                    edgeKind: B2BEdge.Kind,
-                    sourceNodeVariable: "earlier",
-                    targetNodeVariable: "later",
-                    relationshipVariable: "b2b",
-                    targetNodeIdProperty: _heightMapping.Property.Name,
-                    targetNodeId: current.BlockMetadata.Height,
-                    ct: ct)
-                : await _graphDb.GetEdgesAsync(
-                    edgeKind: B2BEdge.Kind,
-                    sourceNodeVariable: "earlier",
-                    targetNodeVariable: "later",
-                    relationshipVariable: "b2b",
-                    sourceNodeIdProperty: _heightMapping.Property.Name,
-                    sourceNodeId: current.BlockMetadata.Height,
-                    ct: ct);
+            var records = await WatchSlowStepAsync(
+                () => towardsEarlier
+                    ? _graphDb.GetEdgesAsync(
+                        edgeKind: B2BEdge.Kind,
+                        sourceNodeVariable: "earlier",
+                        targetNodeVariable: "later",
+                        relationshipVariable: "b2b",
+                        targetNodeIdProperty: _heightMapping.Property.Name,
+                        targetNodeId: current.BlockMetadata.Height,
+                        ct: ct)
+                    : _graphDb.GetEdgesAsync(
+                        edgeKind: B2BEdge.Kind,
+                        sourceNodeVariable: "earlier",
+                        targetNodeVariable: "later",
+                        relationshipVariable: "b2b",
+                        sourceNodeIdProperty: _heightMapping.Property.Name,
+                        sourceNodeId: current.BlockMetadata.Height,
+                        ct: ct),
+                $"{(towardsEarlier ? "earlier" : "later")} block lookup from Block {current.BlockMetadata.Height}");
 
             // can only happen when going backward from the first block, or forward from the last block
             if (records.Count == 0)
@@ -621,12 +786,14 @@ public class Panorama : ITraversalAlgorithm
     private async Task<List<ScriptNode>> GetRandomScriptNodes(int count, CancellationToken ct)
     {
         var nodeVar = "randomNode";
-        var rndRecords = await _graphDb.GetRandomNodesAsync(
-            ScriptNode.Kind,
-            count,
-            ct,
-            _options.Bitcoin.GraphSample.RootNodeSelectProb,
-            nodeVar);
+        var rndRecords = await WatchSlowStepAsync(
+            () => _graphDb.GetRandomNodesAsync(
+                ScriptNode.Kind,
+                count,
+                ct,
+                _options.Bitcoin.GraphSample.RootNodeSelectProb,
+                nodeVar),
+            $"random selection of {count:N0} root Script(s)");
 
         var rndNodes = new List<ScriptNode>();
         foreach (var n in rndRecords)
@@ -692,6 +859,196 @@ public class Panorama : ITraversalAlgorithm
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Activity-window check for a candidate. Non-Script nodes always pass: by design Tx and
+    /// Block nodes are tied to a single block height. For a Script, runs one aggregate query
+    /// that returns its in/out edge totals and, per configured window, how many of those
+    /// edges have their activity height inside the window; then applies the percentage
+    /// thresholds. Results are memoized per sampled graph.
+    /// </summary>
+    private async Task<bool> CheckScriptActivityAsync(Model.INode node, CancellationToken ct)
+    {
+        if (node.NodeKind != NodeKind.Script)
+            return true;
+
+        if (_activityCheckCache.TryGetValue(node.Id, out var cache))
+            return cache;
+
+        // The scan is bounded by activityScanLimit so a hub (an exchange or mixer address
+        // with millions of edges) cannot stall sampling; for such nodes the percentage is
+        // estimated over the scanned edges (see NodeActivityCounts).
+        var counts = await WatchSlowStepAsync(
+            () => _graphDb.GetNodeActivityCountsAsync(
+                node.NodeKind,
+                node.GetIdPropertyName(),
+                node.Id,
+                _activityRanges,
+                _options.Bitcoin.GraphSample.PanoramaOptions.ActivityScanLimit,
+                ct),
+            $"activity count query for Script {node.Id} (in={node.OriginalInDegree ?? 0:N0}, out={node.OriginalOutDegree ?? 0:N0})");
+
+        if (!counts.IsComplete)
+        {
+            _activityPartialScans++;
+            _logger.LogDebug(
+                "Script {Id} activity judged on a partial scan: scanned {Scanned:N0} of {Total:N0} edges.",
+                node.Id, counts.InScanned + counts.OutScanned, counts.InTotal + counts.OutTotal);
+        }
+
+        var ok =
+            SatisfiesActivityWindow(_incomingActivityWindow, _incomingRangeIndex, counts, incoming: true, outgoing: false) &&
+            SatisfiesActivityWindow(_outgoingActivityWindow, _outgoingRangeIndex, counts, incoming: false, outgoing: true) &&
+            SatisfiesActivityWindow(_totalActivityWindow, _totalRangeIndex, counts, incoming: true, outgoing: true);
+
+        _activityChecks++;
+        if (!ok)
+            _activityRejections++;
+
+        _activityCheckCache[node.Id] = ok;
+        return ok;
+    }
+
+    private static bool SatisfiesActivityWindow(
+        ActivityWindowOptions? w,
+        int rangeIndex,
+        NodeActivityCounts counts,
+        bool incoming,
+        bool outgoing)
+    {
+        if (w == null)
+            return true;
+
+        // Minimum activity is judged on the exact degree.
+        long activityCount = (incoming ? counts.InTotal : 0) + (outgoing ? counts.OutTotal : 0);
+
+        if (activityCount < w.MinActivityCount || activityCount <= 0)
+            return false;
+
+        // The percentage is judged on the scanned edges. When the scan was complete the
+        // scanned counts equal the degrees, so this is exact; otherwise it is an estimate
+        // over the scanned sample.
+        long scanned = (incoming ? counts.InScanned : 0) + (outgoing ? counts.OutScanned : 0);
+
+        // Partial scan that happened to cover no edge in the considered direction:
+        // nothing to estimate from.
+        if (scanned <= 0)
+            return false;
+
+        var (inRange, outRange) = counts.InRange[rangeIndex];
+        double numerator = (incoming ? inRange : 0) + (outgoing ? outRange : 0);
+
+        return (numerator * 100.0 / scanned) >= w.MinPercentage;
+    }
+
+    /// <summary>
+    /// Runs a database step while marking it as the step in progress. Logs nothing while
+    /// it is fast. The timer started in SampleAsync reports the marked step once it has
+    /// run longer than the slow-step threshold (see ReportSlowStep), and this method logs
+    /// the step's total duration when it ends if it was reported. The step is invoked
+    /// inside this method so that any synchronous blocking before its first await is
+    /// covered as well.
+    /// </summary>
+    private async Task<T> WatchSlowStepAsync<T>(Func<Task<T>> step, string description)
+    {
+        lock (_stepLock)
+        {
+            _currentStep = description;
+            _currentStepLastReport = TimeSpan.Zero;
+            _currentStepWatch.Restart();
+            _walkQueries++;
+        }
+
+        try
+        {
+            return await step();
+        }
+        finally
+        {
+            TimeSpan elapsed;
+            bool reported;
+            lock (_stepLock)
+            {
+                elapsed = _currentStepWatch.Elapsed;
+                reported = _currentStepLastReport > TimeSpan.Zero;
+                _currentStep = null;
+            }
+
+            if (reported)
+                _logger.LogWarning(
+                    "Slow step finished: {Step} took {Elapsed:N1} s.",
+                    description, elapsed.TotalSeconds);
+        }
+    }
+
+    /// <summary>
+    /// Timer callback: warns about the step in progress if it is slow, and reports the
+    /// progress of a long-running neighborhood walk once per interval.
+    /// </summary>
+    private void ReportSlowStep()
+    {
+        string? step = null;
+        TimeSpan stepElapsed = TimeSpan.Zero;
+
+        string? walkRoot = null;
+        TimeSpan walkElapsed = TimeSpan.Zero;
+        int walkQueries = 0, walkHop = 0, walkQueue = 0, walkNodes = 0, walkEdges = 0;
+        int activityChecks = 0, activityRejections = 0;
+
+        lock (_stepLock)
+        {
+            if (_currentStep != null)
+            {
+                stepElapsed = _currentStepWatch.Elapsed;
+                var due = _currentStepLastReport == TimeSpan.Zero
+                    ? stepElapsed >= _slowStepThreshold
+                    : stepElapsed - _currentStepLastReport >= _slowStepRepeat;
+
+                if (due)
+                {
+                    step = _currentStep;
+                    _currentStepLastReport = stepElapsed;
+                }
+            }
+
+            if (_walkRoot != null)
+            {
+                walkElapsed = _walkWatch.Elapsed;
+                if (walkElapsed - _walkLastReport >= _walkProgressInterval)
+                {
+                    walkRoot = _walkRoot;
+                    _walkLastReport = walkElapsed;
+                    walkQueries = _walkQueries;
+                    walkHop = _walkHop;
+                    walkQueue = _walkQueue;
+                    walkNodes = _walkNodes;
+                    walkEdges = _walkEdges;
+                    activityChecks = _activityChecks;
+                    activityRejections = _activityRejections;
+                }
+            }
+        }
+
+        if (step != null)
+            _logger.LogWarning(
+                "Slow step: {Step} has been running for {Elapsed:N0} s.",
+                step, stepElapsed.TotalSeconds);
+
+        if (walkRoot != null)
+            _logger.LogInformation(
+                "Still expanding root node {rootNodeTag} after {Elapsed:N0} s: hop {Hop}, {Queue:N0} node(s) queued, " +
+                "graph has {Nodes:N0} nodes and {Edges:N0} edges, {Queries:N0} database queries so far, " +
+                "activity checks={Checks:N0} (rejected={Rejected:N0}).",
+                walkRoot, walkElapsed.TotalSeconds, walkHop, walkQueue, walkNodes, walkEdges,
+                walkQueries, activityChecks, activityRejections);
+    }
+
+    private static string Describe(ActivityWindowOptions? w)
+    {
+        return w == null
+            ? "off"
+            : $"[{w.MinHeight:N0}, {w.MaxHeight:N0}] >= {w.MinPercentage}% of >= {w.MinActivityCount:N0} activities";
     }
 
     private bool TryUnpackNodeDict(IDictionary<string, object> dict, double hop, out Model.INode? v)
