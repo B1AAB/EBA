@@ -47,6 +47,22 @@ public interface IGraphDb<T> : IDisposable, IAsyncDisposable where T : GraphBase
         CancellationToken ct,
         string relationshipFilter = "");
 
+    /// <summary>
+    /// Returns the exact in/out degree of one node and, for each given inclusive height
+    /// range, how many of its relationships have their activity height inside it. The
+    /// range counts are computed in one pass over at most <paramref name="scanLimit"/> of
+    /// the node's relationships, so the cost is bounded for high-degree nodes; the result
+    /// says how many relationships were scanned (see NodeActivityCounts). Returns zero
+    /// counts when the node has no relationships. Throws if the node does not exist.
+    /// </summary>
+    public Task<NodeActivityCounts> GetNodeActivityCountsAsync(
+        NodeKind label,
+        string idProperty,
+        string id,
+        IReadOnlyList<BlockHeightRange> ranges,
+        int scanLimit,
+        CancellationToken ct);
+
     public Task<List<IRecord>> GetNodesAsync(
         NodeKind label,
         CancellationToken ct,

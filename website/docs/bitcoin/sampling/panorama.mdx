@@ -112,3 +112,135 @@ The number of nodes sampled at a specific hop is calculated as:
 ```
 floor(nodeCountAtRoot - (hop * reductionFactor))
 ```
+
+
+
+## Sample Scripts by their activity in a block-height window {#activity-windows}
+
+A Script node can be active over many years of the chain.
+You may want a sample that only holds Scripts that were active in a given period,
+for example the blocks of one year.
+The activity window options let you set that period as a range of block heights,
+and set how much of a Script's activity must fall inside that range.
+
+Each edge of a Script is one activity, and each activity has a block height:
+
+- An incoming edge (`Credits`) is active at its `CreationHeight`, which is the height of the block that created the output.
+- An outgoing edge (`Redeems`) is active at its `SpentHeight`, which is the height of the block that spent the output.
+
+Panorama applies the windows only to Script nodes.
+Tx, Block and Coinbase nodes always pass,
+because each of them belongs to a single block height.
+
+| Option                                                  | Type     | Default  | Description |
+| ------------------------------------------------------- | -------- | -------- | ----------- |
+| [`incomingActivityWindow`](#incoming-activity-window)   | `object` | not set  | Window that the incoming edges of a Script must satisfy. |
+| [`outgoingActivityWindow`](#outgoing-activity-window)   | `object` | not set  | Window that the outgoing edges of a Script must satisfy. |
+| [`totalActivityWindow`](#total-activity-window)         | `object` | not set  | Window that all edges of a Script, incoming and outgoing together, must satisfy. |
+| [`activityScanLimit`](#activity-scan-limit)             | `int`    | `50000`  | Maximum number of edges of a Script that Panorama reads to check the windows. |
+
+You may set any of the three windows, or several of them.
+When you set more than one window, a Script must satisfy every window that you set.
+When you set no window, Panorama does not check the activity of Scripts.
+
+Example:
+
+```json
+"PanoramaOptions": {
+  "maxHops": 2,
+  "queryLimit": 100000,
+  "nodeCountAtRoot": 100,
+  "reductionFactor": 4,
+  "totalActivityWindow": {
+    "minHeight": 700000,
+    "maxHeight": 750000,
+    "minPercentage": 80,
+    "minActivityCount": 5
+  },
+  "activityScanLimit": 50000
+}
+```
+
+With these options, Panorama includes a Script only if the Script has at least `5` edges,
+and at least `80` percent of those edges are active between block heights `700000` and `750000`.
+
+
+### Window fields {#activity-window-fields}
+
+Each of the three windows is an object with the following fields.
+
+| Field              | Type     | Default         | Description |
+| ------------------ | -------- | --------------- | ----------- |
+| `minHeight`        | `int`    | `0`             | Lowest block height of the window. The window includes this height. |
+| `maxHeight`        | `int`    | `2147483647`    | Highest block height of the window. The window includes this height. |
+| `minPercentage`    | `double` | `0`             | Minimum percentage, from `0` to `100`, of the Script's edges that must be active inside the window. |
+| `minActivityCount` | `int`    | `1`             | Minimum number of edges that the Script must have in the direction that the window checks. |
+
+Panorama counts `minActivityCount` over the whole history of the Script, not only inside the window.
+This field protects `minPercentage` from Scripts with very few edges.
+For example, with `minPercentage` set to `50`, a Script with only `2` edges passes when `1` of them is inside the window.
+If you set `minActivityCount` to `3`, that Script no longer passes.
+
+A Script that has no edge in the direction that the window checks never satisfies the window.
+So with the default `minPercentage` of `0`, a window still removes Scripts that have no activity in that direction.
+
+
+### `incomingActivityWindow` {#incoming-activity-window}
+
+Panorama checks this window against the incoming edges (`Credits`) of a Script,
+and uses the `CreationHeight` of each edge.
+Use it to sample Scripts that received most of their funds in the given period.
+
+
+### `outgoingActivityWindow` {#outgoing-activity-window}
+
+Panorama checks this window against the outgoing edges (`Redeems`) of a Script,
+and uses the `SpentHeight` of each edge.
+Use it to sample Scripts that spent most of their funds in the given period.
+
+
+### `totalActivityWindow` {#total-activity-window}
+
+Panorama checks this window against all edges of a Script, incoming and outgoing together.
+Use it to sample Scripts that were mostly active in the given period, whatever the direction of the activity.
+
+
+### `activityScanLimit` {#activity-scan-limit}
+
+Some Scripts, such as the addresses of exchanges, have millions of edges.
+Reading all of these edges would take minutes for each Script,
+so Panorama reads at most `activityScanLimit` edges of a Script to check the windows.
+
+- When a Script has at most `activityScanLimit` edges, Panorama reads all of them, so the check is exact.
+- When a Script has more edges, Panorama computes the percentage over the edges that it read.
+  The result is then an estimate.
+  The database usually returns the most recently added edges first, but it does not promise this order.
+- Panorama always checks `minActivityCount` against the exact number of edges of the Script,
+  because the database stores that number and does not need to read the edges.
+
+Raise this limit when you need exact results for large Scripts, and accept that sampling becomes slower.
+The value must be a positive integer.
+
+
+### How the windows change the sampling {#activity-windows-sampling}
+
+Panorama checks the windows at two points of the walk.
+
+- **At the root node.** If the root node is a Script that does not satisfy the windows,
+  Panorama stops this sample and starts again from another root node.
+- **At each hop.** Panorama shuffles the neighbors of a node as usual.
+  It then goes through the shuffled neighbors and keeps the first ones that satisfy the windows,
+  until it reaches the number of neighbors that the hop allows.
+  This gives the same result as removing every Script that fails the windows and then picking neighbors at random,
+  but it only checks the Scripts that it looks at.
+
+Panorama remembers the result of each check while it builds one sample, so it checks each Script at most once per sample.
+
+The windows filter the candidates that `queryLimit` returns.
+They do not change which neighbors the database returns.
+So, if you set a narrow window, a node may have few neighbors that pass.
+In that case, raise `queryLimit` so that Panorama has more candidates to choose from.
+
+At the end of each sample, Panorama logs how many Scripts it checked,
+how many of them failed the windows,
+and how many it judged on only part of their edges.
