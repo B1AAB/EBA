@@ -2,6 +2,10 @@
 
 namespace AAB.EBA.Graph.Bitcoin.TraversalAlgorithms;
 
+// TODO: this is an experimental implementation, it has a lot of patches and hotfixes.
+// We continue with these patches for now until we converge on how this sampling algorithm should function. 
+// Then, this class should be thoroughly reimplemented.
+
 public class Panorama : ITraversalAlgorithm
 {
     private readonly Options _options;
