@@ -60,6 +60,42 @@ public class BitcoinPanoramaSamplingAlgorithmOptions
     public bool IncludeB2TEdges { init; get; } = false;
 
     /// <summary>
+    /// For every Block node in the sampled community, also include this many
+    /// earlier blocks (by height), chained through Block-[Follows]->Block edges.
+    /// 0 (default) disables this.
+    /// </summary>
+    [JsonPropertyName("earlierBlocksWindow")]
+    public int EarlierBlocksWindow
+    {
+        init
+        {
+            if (value < 0)
+                throw new ArgumentOutOfRangeException(nameof(EarlierBlocksWindow), "Value must be >= 0.");
+            _earlierBlocksWindow = value;
+        }
+        get { return _earlierBlocksWindow; }
+    }
+    private int _earlierBlocksWindow = 0;
+
+    /// <summary>
+    /// For every Block node in the sampled community, also include this many
+    /// later blocks (by height), chained through Block-[Follows]->Block edges.
+    /// 0 (default) disables this.
+    /// </summary>
+    [JsonPropertyName("laterBlocksWindow")]
+    public int LaterBlocksWindow
+    {
+        init
+        {
+            if (value < 0)
+                throw new ArgumentOutOfRangeException(nameof(LaterBlocksWindow), "Value must be >= 0.");
+            _laterBlocksWindow = value;
+        }
+        get { return _laterBlocksWindow; }
+    }
+    private int _laterBlocksWindow = 0;
+
+    /// <summary>
     /// As part of the random expansion, coinbase node gets 
     /// the same selection probability as other nodes;
     /// hence, it may or may not be included in the sampled community.

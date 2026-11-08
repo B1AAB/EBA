@@ -9,6 +9,7 @@ public class Panorama : ITraversalAlgorithm
     private readonly ILogger<BitcoinGraphOrchestrator> _logger;
 
     private static readonly PropertyMapping<TxNode> _txidMapping = TxNodeDescriptor.StaticMapper.GetMapping(x => x.Txid);
+    private static readonly PropertyMapping<BlockNode> _heightMapping = BlockNodeDescriptor.StaticMapper.GetMapping(x => x.BlockMetadata.Height);
 
     private int _maxHopReached = 0;
 
@@ -384,6 +385,10 @@ public class Panorama : ITraversalAlgorithm
         if (_options.Bitcoin.GraphSample.PanoramaOptions.IncludeB2TEdges)
             await EnsureB2T(g, ct);
 
+        if (_options.Bitcoin.GraphSample.PanoramaOptions.EarlierBlocksWindow > 0 ||
+            _options.Bitcoin.GraphSample.PanoramaOptions.LaterBlocksWindow > 0)
+            await EnsureB2BWindow(g, ct);
+
         if (!completedWalk)
         {
             _logger.LogWarning(
@@ -459,6 +464,82 @@ public class Panorama : ITraversalAlgorithm
                     }
                 }
             }
+        }
+    }
+
+    private async Task EnsureB2BWindow(BitcoinGraph g, CancellationToken ct)
+    {
+        var earlier = _options.Bitcoin.GraphSample.PanoramaOptions.EarlierBlocksWindow;
+        var later = _options.Bitcoin.GraphSample.PanoramaOptions.LaterBlocksWindow;
+
+        // limit to only the blocks that were in the community before this method ran,
+        // so windows do not chain outward from the newly added context blocks.
+        if (!g.NodesByType.TryGetValue(NodeKind.Block, out var blockNodes))
+            return;
+
+        foreach (var n in blockNodes)
+        {
+            ct.ThrowIfCancellationRequested();
+            var block = (BlockNode)n;
+
+            await WalkB2BWindow(g, block, earlier, towardsEarlier: true, ct);
+            await WalkB2BWindow(g, block, later, towardsEarlier: false, ct);
+        }
+    }
+
+    /// <summary>
+    /// In the graph db, B2B edges are stored as (h)-[:Follows]->(h+1),
+    /// i.e., from the earlier block to the later block.
+    /// </summary>
+    private async Task WalkB2BWindow(
+        BitcoinGraph g, BlockNode start, int steps, bool towardsEarlier, CancellationToken ct)
+    {
+        var current = start;
+        double startHops = start.OutHopsFromRoot ?? 0;
+
+        for (var i = 1; i <= steps; i++)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var records = towardsEarlier
+                ? await _graphDb.GetEdgesAsync(
+                    edgeKind: B2BEdge.Kind,
+                    sourceNodeVariable: "earlier",
+                    targetNodeVariable: "later",
+                    relationshipVariable: "b2b",
+                    targetNodeIdProperty: _heightMapping.Property.Name,
+                    targetNodeId: current.BlockMetadata.Height,
+                    ct: ct)
+                : await _graphDb.GetEdgesAsync(
+                    edgeKind: B2BEdge.Kind,
+                    sourceNodeVariable: "earlier",
+                    targetNodeVariable: "later",
+                    relationshipVariable: "b2b",
+                    sourceNodeIdProperty: _heightMapping.Property.Name,
+                    sourceNodeId: current.BlockMetadata.Height,
+                    ct: ct);
+
+            // can only happen when going backward from the first block, or forward from the last block
+            if (records.Count == 0)
+                break;
+
+            var record = records[0];
+
+            if (!TryUnpackNodeDict(
+                    record[towardsEarlier ? "earlier" : "later"].As<object>().As<IDictionary<string, object>>(),
+                    startHops + i,
+                    out var builtNeighbor)
+                || builtNeighbor is not BlockNode)
+                break;
+
+            var neighbor = (BlockNode)g.GetOrAddNode(builtNeighbor);
+
+            var (src, dst) = towardsEarlier ? (neighbor, current) : (current, neighbor);
+            var candidateEdge = _graphDb.StrategyFactory.CreateEdge(src, dst, record["b2b"].As<IRelationship>());
+            if (candidateEdge != null)
+                g.TryGetOrAddEdge(candidateEdge, out IEdge<Model.INode, Model.INode> _);
+
+            current = neighbor;
         }
     }
 
