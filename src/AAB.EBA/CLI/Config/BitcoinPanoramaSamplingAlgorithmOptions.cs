@@ -189,6 +189,26 @@ public class BitcoinPanoramaSamplingAlgorithmOptions
     /// </summary>
     [JsonPropertyName("forceIncludeCoinbaseNode")]
     public bool ForceIncludeCoinbaseNode {  init; get; } = true;
+
+    /// <summary>
+    /// When true (default), the walk does not expand a node whose expansion cannot place a
+    /// Script node on the final layer. Every neighbor of a Script is a Tx, so a Script that
+    /// would be expanded at the last allowed hop (hop == maxHops) is added to the sampled graph
+    /// but its neighbors are not fetched; Tx nodes are always expanded since a Tx reaches a
+    /// Script in one hop. Block and Coinbase nodes are never expanded regardless.
+    ///
+    /// Note: this prunes expansions that can only produce non-Script leaves; it does not make
+    /// every leaf a Script. A Tx expanded at the last hop still adds its Tx, Block and Coinbase
+    /// neighbors, and nodes skipped for high degree or by maxNodeCount/maxEdgeCount cut-offs
+    /// also remain as non-Script leaves.
+    ///
+    /// Requires maxHops >= 1 (with maxHops 0 the root's Tx neighbors are the only layer).
+    /// With the default maxHops 2 this removes the Tx fringe around hop-2 Scripts, so sampled
+    /// graphs are smaller; raise maxHops or lower --min-node-count if too many roots are
+    /// rejected for size.
+    /// </summary>
+    [JsonPropertyName("ensureScriptTerminalNodes")]
+    public bool EnsureScriptTerminalNodes { init; get; } = true;
 }
 
 /// <summary>
