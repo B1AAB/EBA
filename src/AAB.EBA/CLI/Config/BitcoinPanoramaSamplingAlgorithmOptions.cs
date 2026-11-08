@@ -96,6 +96,51 @@ public class BitcoinPanoramaSamplingAlgorithmOptions
     private int _laterBlocksWindow = 0;
 
     /// <summary>
+    /// Lower bound (inclusive) of the block-height window that *every* height
+    /// recorded on an edge must fall into for the edge to be included in the
+    /// sampled neighborhood. Applies at every hop. 0 (default) means no lower bound.
+    /// See MaxEdgeActivityHeight.
+    ///
+    /// Heights checked per edge type:
+    ///   Credits (Tx->Script): CreationHeight and SpentHeight (SpentHeight is
+    ///                         skipped when the output is still unspent);
+    ///   Redeems (Script->Tx): CreationHeight and SpentHeight;
+    ///   all others:           Height.
+    /// An edge is excluded if any of its heights is outside the window.
+    /// </summary>
+    [JsonPropertyName("minEdgeActivityHeight")]
+    public int MinEdgeActivityHeight
+    {
+        init
+        {
+            if (value < 0)
+                throw new ArgumentOutOfRangeException(nameof(MinEdgeActivityHeight), "Value must be >= 0.");
+            _minEdgeActivityHeight = value;
+        }
+        get { return _minEdgeActivityHeight; }
+    }
+    private int _minEdgeActivityHeight = 0;
+
+    /// <summary>
+    /// Upper bound (inclusive) of the block-height window that *every* height
+    /// recorded on an edge must fall into for the edge to be included in the
+    /// sampled neighborhood. Applies at every hop. int.MaxValue (default) means no upper bound.
+    /// See MinEdgeActivityHeight for which heights are checked per edge type.
+    /// </summary>
+    [JsonPropertyName("maxEdgeActivityHeight")]
+    public int MaxEdgeActivityHeight
+    {
+        init
+        {
+            if (value < 0)
+                throw new ArgumentOutOfRangeException(nameof(MaxEdgeActivityHeight), "Value must be >= 0.");
+            _maxEdgeActivityHeight = value;
+        }
+        get { return _maxEdgeActivityHeight; }
+    }
+    private int _maxEdgeActivityHeight = int.MaxValue;
+
+    /// <summary>
     /// As part of the random expansion, coinbase node gets 
     /// the same selection probability as other nodes;
     /// hence, it may or may not be included in the sampled community.

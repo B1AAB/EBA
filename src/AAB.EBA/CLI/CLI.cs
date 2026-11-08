@@ -578,7 +578,15 @@ internal class Cli
                         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
                         PropertyNameCaseInsensitive = true
                     };
-                    JsonSerializer.Deserialize<BitcoinPanoramaSamplingAlgorithmOptions>(methodOptionsJson, serializationOptions);
+                    var panoramaOptions = JsonSerializer.Deserialize<BitcoinPanoramaSamplingAlgorithmOptions>(methodOptionsJson, serializationOptions);
+
+                    if (panoramaOptions != null &&
+                        panoramaOptions.MinEdgeActivityHeight > panoramaOptions.MaxEdgeActivityHeight)
+                    {
+                        commandResult.AddError(
+                            $"Option 'minEdgeActivityHeight' ({panoramaOptions.MinEdgeActivityHeight}) " +
+                            $"cannot be greater than option 'maxEdgeActivityHeight' ({panoramaOptions.MaxEdgeActivityHeight}).");
+                    }
                 }
                 catch (JsonException e)
                 {

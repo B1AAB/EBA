@@ -11,13 +11,44 @@ public class Panorama : ITraversalAlgorithm
     private static readonly PropertyMapping<TxNode> _txidMapping = TxNodeDescriptor.StaticMapper.GetMapping(x => x.Txid);
     private static readonly PropertyMapping<BlockNode> _heightMapping = BlockNodeDescriptor.StaticMapper.GetMapping(x => x.BlockMetadata.Height);
 
+    // Relationship property names holding block heights, per relationship type.
+    // Redeems (S2T) and Credits (T2S) carry both a creation and a spent height;
+    // B2TEdge and C2TEdge map their height under the same `Height` name as T2TEdge,
+    // so that single name covers Transfers, Fee, Confirms, and Mints.
+    private static readonly string[] _redeemsHeightProperties =
+    [
+        S2TEdgeDescriptor.StaticMapper.GetMapping(x => x.CreationHeight).Property.Name,
+        S2TEdgeDescriptor.StaticMapper.GetMapping(x => x.SpentHeight).Property.Name,
+    ];
+    private static readonly string[] _creditsHeightProperties =
+    [
+        T2SEdgeDescriptor.StaticMapper.GetMapping(x => x.CreationHeight).Property.Name,
+        T2SEdgeDescriptor.StaticMapper.GetMapping(x => x.SpentHeight).Property.Name,
+    ];
+    private static readonly string[] _defaultHeightProperties =
+    [
+        T2TEdgeDescriptor.StaticMapper.GetMapping(x => x.Height).Property.Name,
+    ];
+
+    // T2SEdge stores this sentinel as SpentHeight while the output is unspent.
+    private const long _unspentSentinel = long.MaxValue;
+
     private int _maxHopReached = 0;
+
+    private readonly bool _hasEdgeActivityWindow;
+    private readonly long _minEdgeActivityHeight;
+    private readonly long _maxEdgeActivityHeight;
 
     public Panorama(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<BitcoinGraphOrchestrator> logger)
     {
         _options = options;
         _graphDb = graphDb;
         _logger = logger;
+
+        var po = _options.Bitcoin.GraphSample.PanoramaOptions;
+        _minEdgeActivityHeight = po.MinEdgeActivityHeight;
+        _maxEdgeActivityHeight = po.MaxEdgeActivityHeight;
+        _hasEdgeActivityWindow = po.MinEdgeActivityHeight > 0 || po.MaxEdgeActivityHeight < int.MaxValue;
     }
 
     public async Task SampleAsync(CancellationToken ct)
@@ -157,7 +188,46 @@ public class Panorama : ITraversalAlgorithm
             }
 
             foreach (var edge in r.Values["relationships"].As<List<IRelationship>>())
+            {
+                // When an edge-activity height window is set, only edges whose activity height is
+                // inside the window are kept. Note the window is applied *after* the
+                // query's `queryLimit`, so the candidate pool is "the first queryLimit
+                // neighbors visited, then filtered"; raise queryLimit when sampling
+                // with narrow windows on high-degree nodes.
+                if (!IsWithinEdgeActivityWindow(edge))
+                    continue;
+
                 edges.Add(edge);
+            }
+        }
+
+        if (_hasEdgeActivityWindow)
+        {
+            // Keep only candidate nodes that are an endpoint of at least one in-window
+            // edge to the parent; otherwise a node with no surviving edge could be drawn
+            // into nodesToKeep and waste a slot without ever being added to the graph.
+            // Only edges incident to the parent count: subgraphAll also returns
+            // neighbor-to-neighbor relationships (e.g. a Transfers edge between two
+            // Tx neighbors of a Script root), and the edge loop below ignores those.
+            var inWindowEndpoints = new HashSet<string>(edges.Count * 2);
+            foreach (var edge in edges)
+            {
+                if (edge.StartNodeElementId != parentNode.IdInGraphDb &&
+                    edge.EndNodeElementId != parentNode.IdInGraphDb)
+                    continue;
+
+                inWindowEndpoints.Add(edge.StartNodeElementId);
+                inWindowEndpoints.Add(edge.EndNodeElementId);
+            }
+
+            foreach (var id in nodesUniqueToThisHop.Keys.Where(k => !inWindowEndpoints.Contains(k)).ToList())
+                nodesUniqueToThisHop.Remove(id);
+
+            foreach (var id in nodesInThisHopAlreadyInGraph.Keys.Where(k => !inWindowEndpoints.Contains(k)).ToList())
+                nodesInThisHopAlreadyInGraph.Remove(id);
+
+            if (!string.IsNullOrEmpty(coinbaseNodeIdInGraphDb) && !inWindowEndpoints.Contains(coinbaseNodeIdInGraphDb))
+                coinbaseNodeIdInGraphDb = "";
         }
 
         ct.ThrowIfCancellationRequested();
@@ -373,6 +443,11 @@ public class Panorama : ITraversalAlgorithm
             rootNodeLabelInLogs,
             _options.Bitcoin.GraphSample.PanoramaOptions.MaxHops);
 
+        if (_hasEdgeActivityWindow)
+            _logger.LogInformation(
+                "Restricting sampled edges to block heights [{Min:N0}, {Max:N0}] (inclusive).",
+                _minEdgeActivityHeight, _maxEdgeActivityHeight);
+
         _maxHopReached = 0;
         var completedWalk = await ProcessHopsBFS(
             rootNodeLabel: rootNodeLabel,
@@ -565,6 +640,58 @@ public class Panorama : ITraversalAlgorithm
         }
 
         return rndNodes;
+    }
+
+    /// <summary>
+    /// Returns true if *every* block height recorded on the given relationship lies
+    /// inside [minEdgeActivityHeight, maxEdgeActivityHeight] (inclusive). Which
+    /// properties hold heights depends on the relationship type (see the edge descriptors):
+    ///   Redeems (Script->Tx): CreationHeight and SpentHeight
+    ///   Credits (Tx->Script): CreationHeight and SpentHeight
+    ///                         (SpentHeight == long.MaxValue means still unspent and is skipped)
+    ///   everything else:      Height
+    /// An edge with any height outside the window is excluded. Relationships missing
+    /// an expected height property (e.g. Follows) are treated as outside the window.
+    /// </summary>
+    private bool IsWithinEdgeActivityWindow(IRelationship edge)
+    {
+        if (!_hasEdgeActivityWindow)
+            return true;
+
+        string[] propertyNames = _defaultHeightProperties;
+        if (Enum.TryParse<RelationType>(edge.Type, ignoreCase: true, out var relation))
+        {
+            propertyNames = relation switch
+            {
+                RelationType.Redeems => _redeemsHeightProperties,
+                RelationType.Credits => _creditsHeightProperties,
+                _ => _defaultHeightProperties,
+            };
+        }
+
+        foreach (var propertyName in propertyNames)
+        {
+            if (!edge.Properties.TryGetValue(propertyName, out var raw) || raw is null)
+                return false;
+
+            long height;
+            try
+            {
+                height = Convert.ToInt64(raw);
+            }
+            catch (Exception e) when (e is FormatException || e is InvalidCastException || e is OverflowException)
+            {
+                return false;
+            }
+
+            if (height == _unspentSentinel)
+                continue;
+
+            if (height < _minEdgeActivityHeight || height > _maxEdgeActivityHeight)
+                return false;
+        }
+
+        return true;
     }
 
     private bool TryUnpackNodeDict(IDictionary<string, object> dict, double hop, out Model.INode? v)
