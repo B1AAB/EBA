@@ -86,6 +86,7 @@ public class Panorama : ITraversalAlgorithm
     private int _activityChecks = 0;
     private int _activityRejections = 0;
     private int _activityPartialScans = 0;
+    private int _scriptTerminalPrunes = 0;
 
     public Panorama(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<BitcoinGraphOrchestrator> logger)
     {
@@ -129,6 +130,10 @@ public class Panorama : ITraversalAlgorithm
         var attempts = 0;
 
         _logger.LogInformation("Sampling {n:N0} graphs.", _options.Bitcoin.GraphSample.Count - sampledSubGraphsCount);
+
+        if (_options.Bitcoin.GraphSample.PanoramaOptions.EnsureScriptTerminalNodes)
+            _logger.LogInformation(
+                "Pruning expansions that cannot reach a Script node on the final layer (ensureScriptTerminalNodes).");
 
         JsonSerializer<FeaturesSchema>.Serialize(new FeaturesSchema(), Path.Combine(_options.WorkingDir, "schema.json"));
 
@@ -475,6 +480,16 @@ public class Panorama : ITraversalAlgorithm
                         continue;
                     }
 
+                    // Note that the `node` is already in the graph, we are just skipping expanding to its neighbors:
+                    // from here, the remaining hops cannot reach a Script node (e.g. a Script at the last hop
+                    // only has Tx neighbors).
+                    if (_options.Bitcoin.GraphSample.PanoramaOptions.EnsureScriptTerminalNodes &&
+                        !CanStillReachScript(node.NodeKind, currentNode.Hop + 1))
+                    {
+                        _scriptTerminalPrunes++;
+                        continue;
+                    }
+
                     // prevent expanding the same node twice
                     if (expandedNodes.Add(node.Id))
                     {
@@ -486,6 +501,24 @@ public class Panorama : ITraversalAlgorithm
 
         return true;
     }
+
+    // Smallest number of hops from a node of this kind to a Script node, derived from the
+    // graph schema: Script–Tx (Redeems/Credits), Tx–Tx (Transfers/Fee), Block–Tx (Confirms),
+    // Coinbase–Tx (Mints), Block–Block (Follows). Only Script and Tx are ever expanded, but
+    // the table is complete so the reasoning is explicit.
+    private static int MinHopsToScript(NodeKind kind) => kind switch
+    {
+        NodeKind.Tx => 1,
+        NodeKind.Script => 2,   // Script -> Tx -> Script
+        NodeKind.Block => 2,    // Block -> Tx -> Script
+        NodeKind.Coinbase => 2, // Coinbase -> Tx -> Script
+        _ => int.MaxValue,
+    };
+
+    // True when expanding `kind` at `hop` can still put a Script on the final layer of the walk.
+    // A node dequeued at `hop` adds MaxHops - hop + 1 more layers below it (see ProcessHopsBFS).
+    private bool CanStillReachScript(NodeKind kind, int hop) =>
+        _options.Bitcoin.GraphSample.PanoramaOptions.MaxHops - hop + 1 >= MinHopsToScript(kind);
 
     private async Task<bool> ProcessHopsDFS(
         NodeKind rootNodeLabel,
@@ -535,6 +568,13 @@ public class Panorama : ITraversalAlgorithm
                     continue;
                 }
 
+                if (_options.Bitcoin.GraphSample.PanoramaOptions.EnsureScriptTerminalNodes &&
+                    !CanStillReachScript(node.NodeKind, hop + 1))
+                {
+                    _scriptTerminalPrunes++;
+                    continue;
+                }
+
                 await ProcessHopsDFS(
                     rootNodeLabel: node.NodeKind,
                     rootNodeIdProperty: node.GetIdPropertyName(),
@@ -581,6 +621,7 @@ public class Panorama : ITraversalAlgorithm
         _activityChecks = 0;
         _activityRejections = 0;
         _activityPartialScans = 0;
+        _scriptTerminalPrunes = 0;
 
         lock (_stepLock)
         {
@@ -628,6 +669,11 @@ public class Panorama : ITraversalAlgorithm
         _logger.LogInformation(
             "Neighbor retrieval completed for root node {rootNodeTag}. Built graph with {NodeCount:N0} nodes and {EdgeCount:N0} edges.",
             rootNodeLabelInLogs, g.NodeCount, g.EdgeCount);
+
+        if (_options.Bitcoin.GraphSample.PanoramaOptions.EnsureScriptTerminalNodes)
+            _logger.LogInformation(
+                "Script-terminal pruning for root node {rootNodeTag}: skipped {Count:N0} expansion(s).",
+                rootNodeLabelInLogs, _scriptTerminalPrunes);
 
         if (_hasActivityWindow)
             _logger.LogInformation(

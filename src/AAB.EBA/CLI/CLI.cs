@@ -622,6 +622,11 @@ internal class Cli
 
                         if (panoramaOptions.ActivityScanLimit < 1)
                             commandResult.AddError("Option 'activityScanLimit' must be a positive integer.");
+
+                        if (panoramaOptions.EnsureScriptTerminalNodes && panoramaOptions.MaxHops < 1)
+                            commandResult.AddError(
+                                "Option 'ensureScriptTerminalNodes' requires 'maxHops' >= 1; " +
+                                "set \"ensureScriptTerminalNodes\": false to sample with maxHops 0.");
                     }
                 }
                 catch (JsonException e)
