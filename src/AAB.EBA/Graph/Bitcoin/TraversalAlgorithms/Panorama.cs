@@ -519,7 +519,7 @@ public class Panorama : ITraversalAlgorithm
                     sourceNodeId: current.BlockMetadata.Height,
                     ct: ct);
 
-            // can happen only when going backward from the first block, or forward from the last block
+            // can only happen when going backward from the first block, or forward from the last block
             if (records.Count == 0)
                 break;
 
