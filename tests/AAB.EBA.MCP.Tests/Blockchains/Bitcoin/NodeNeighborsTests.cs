@@ -53,7 +53,7 @@ public class NodeNeighborsTests : IClassFixture<DbFixture>
         Assert.Equal(1, spentUtxos.GetArrayLength());
 
         var spentTxo = spentUtxos[0];
-        Assert.Equal("hash2", spentTxo.GetProperty("ScriptSHA256").GetString());
+        Assert.Equal("add2", spentTxo.GetProperty("ScriptAddress").GetString());
         Assert.Equal(25m, spentTxo.GetProperty("Value").GetDecimal());
         Assert.Equal("tx_created_1", spentTxo.GetProperty("TxCreatingTxo_Txid").GetString());
         Assert.Equal(1, spentTxo.GetProperty("TxCreatingTxo_Vout").GetInt32());
@@ -66,21 +66,21 @@ public class NodeNeighborsTests : IClassFixture<DbFixture>
         Assert.Equal(1, createdUtxos.GetArrayLength());
 
         var createdTxo = createdUtxos[0];
-        Assert.Equal("hash1", createdTxo.GetProperty("ScriptSHA256").GetString());
+        Assert.Equal("add1", createdTxo.GetProperty("ScriptAddress").GetString());
         Assert.Equal(25m, createdTxo.GetProperty("Value").GetDecimal());
         Assert.Equal(20, createdTxo.GetProperty("CreationHeight").GetInt64());
         Assert.Equal(50, createdTxo.GetProperty("SpentHeight").GetInt64());
     }
 
     [Fact]
-    public async Task GetScriptNeighborsBySHA_WhenScriptExists_ReturnNeighbors()
+    public async Task GetScriptNeighborsByAddress_WhenScriptExists_ReturnNeighbors()
     {
         // Act
-        var response = await _scriptTools.GetScriptNeighbors(sha: "hash1");
+        var response = await _scriptTools.GetScriptNeighbors(address: "add1");
 
         // Assert
         Assert.NotNull(response);
-        Assert.DoesNotContain("Either address or SHA256 hash must be provided.", response);
+        Assert.DoesNotContain("Address must be provided.", response);
         Assert.DoesNotContain("Script not found", response);
 
         using var doc = JsonDocument.Parse(response);

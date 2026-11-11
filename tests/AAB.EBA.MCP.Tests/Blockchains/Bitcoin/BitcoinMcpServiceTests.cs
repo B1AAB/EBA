@@ -18,7 +18,7 @@ public class BitcoinMcpServiceTests
     public async Task GetScriptBalance_WhenNodeExists_ReturnsMappedScriptNode()
     {
         // Act
-        var balance = await _mcpService.GetScriptBalanceAsync("hash1", ct: TestContext.Current.CancellationToken);
+        var balance = await _mcpService.GetScriptBalanceAsync("add1", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(balance);
@@ -34,26 +34,13 @@ public class BitcoinMcpServiceTests
         // Assert
         Assert.NotNull(scriptNode);
         Assert.Equal("add1", scriptNode.Address);
-        Assert.Equal("hash1", scriptNode.SHA256Hash);
     }
 
     [Fact]
-    public async Task GetScriptBySHA256_WhenValidSHA256_ReturnScriptNode()
+    public async Task GetScriptTxSummaryStats_WhenValidAddress_ReturnStats()
     {
         // Act
-        var scriptNode = await _mcpService.GetScriptBySHA256Async("hash1", ct: TestContext.Current.CancellationToken);
-
-        // Assert
-        Assert.NotNull(scriptNode);
-        Assert.Equal("add1", scriptNode.Address);
-        Assert.Equal("hash1", scriptNode.SHA256Hash);
-    }
-
-    [Fact]
-    public async Task GetScriptTxSummaryStats_WhenValidSHA_ReturnStats()
-    {
-        // Act
-        var stats = await _mcpService.GetScriptTxSummaryStatsAsync("hash1", ct: TestContext.Current.CancellationToken);
+        var stats = await _mcpService.GetScriptTxSummaryStatsAsync("add1", ct: TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(stats);

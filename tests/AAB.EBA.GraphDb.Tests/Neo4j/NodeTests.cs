@@ -32,13 +32,13 @@ public class NodeTests : IClassFixture<DbFixture>
         // Act
         var node = await _db.GetNodeAsync(
             label: ScriptNode.Kind,
-            propertyKey: "SHA256Hash",
-            propertyValue: "hash1",
+            propertyKey: "Address",
+            propertyValue: "add1",
             ct: CancellationToken.None);
 
         // Assert
         Assert.NotNull(node);
-        Assert.Equal("hash1", node.Properties["SHA256Hash"].As<string>());
+        Assert.Equal("add1", node.Properties["Address"].As<string>());
         Assert.Equal("PubKey", node.Properties["ScriptType"].As<string>());
     }
 
@@ -48,8 +48,8 @@ public class NodeTests : IClassFixture<DbFixture>
         // Act
         var node = await _db.GetNodeAsync(
             label: ScriptNode.Kind,
-            propertyKey: "SHA256Hash",
-            propertyValue: "missing_hash",
+            propertyKey: "Address",
+            propertyValue: "missing_address",
             ct: CancellationToken.None);
 
         // Assert

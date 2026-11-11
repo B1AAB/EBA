@@ -11,7 +11,7 @@ CREATE CONSTRAINT Block_Height_Unique IF NOT EXISTS FOR (n:Block) REQUIRE n.Heig
 // Schema for Script nodes
 // -----------------------------------------------------
 
-CREATE CONSTRAINT Script_SHA256Hash_Unique IF NOT EXISTS FOR (n:Script) REQUIRE n.SHA256Hash IS UNIQUE;
+CREATE CONSTRAINT Script_Address_Unique IF NOT EXISTS FOR (n:Script) REQUIRE n.Address IS UNIQUE;
 
 
 // -----------------------------------------------------

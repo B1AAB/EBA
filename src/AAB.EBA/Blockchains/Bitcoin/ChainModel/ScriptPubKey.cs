@@ -22,24 +22,22 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
             _hex = value;
             _script = Script.FromHex(_hex);
 
+            _hexBase58 = EBA.Utilities.Encoder.Base58(Convert.FromHexString(_hex));
+
             byte[] rawBytes = Convert.FromHexString(_hex);
             byte[] hashBytes = SHA256.HashData(rawBytes);
-            SHA256HashBase58 = EBA.Utilities.Encoder.Base58(hashBytes);
+            _sha256HashBase58 = EBA.Utilities.Encoder.Base58(hashBytes);
         }
         get { return _hex; }
     }
     private string _hex = string.Empty;
-    private Script _script;
+    private Script _script = Script.Empty;
 
-    public string HexBase58
-    {
-        get
-        {
-            return EBA.Utilities.Encoder.Base58(Convert.FromHexString(_hex));
-        }
-    }
+    public string HexBase58 { get { return _hexBase58; } }
+    private string _hexBase58 = string.Empty;
 
-    public string SHA256HashBase58 { private set; get; }
+    public string SHA256HashBase58 { get { return _sha256HashBase58; } }
+    private string _sha256HashBase58 = string.Empty;
 
     [JsonPropertyName("address")]
     public string Address
@@ -50,7 +48,7 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
             if (!string.IsNullOrEmpty(_address))
                 return _address;
 
-            _address = ExtractAddress();
+            _address = ExtractOrBuildAddress();
 
             return _address;
         }
@@ -83,17 +81,43 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
         return Address;
     }
 
-    private string ExtractAddress()
-    {        
+    /// <summary>
+    /// The goal is to know which Tx outputs (utxo) are paid to which key-pairs. 
+    /// So, we're building an id that tries to identify the key-pair as best possible. 
+    /// In many cases, address is enough and can be easily extracted from the locking script (scriptPubKey).
+    /// But there are cases where address cannot be extracted, for instance, null-data scripts. 
+    /// So, for any case that we cannot extract the address, we build one aiming for a unique id for the key-pair, or a unique id for the locking script.
+    /// The alternative to this method is using a hash of the locking script as the id, and leave address strictly as the address extracted from the locking script; 
+    /// but an important downside of that is two different locking scripts that pay to the same key-pair will have different ids, 
+    /// and so tracking the flow of funds based on the key-pair will be more difficult.
+    /// 
+    /// TODO: also note that given that this will lead to different payments to the same key-pair having same ids, 
+    /// it means one node will correspond to multiple locking scripts. currently only one locking script per node is kept, 
+    /// but that should be extended to keep a list, such that you know different script types and locking mechanisims that pay to the same key-pair.
+    /// </summary>
+    /// <returns></returns>
+    private string ExtractOrBuildAddress()
+    {
+        // Both Hex and Type are needed to extract or build the address:
+        // ScriptType is derived from Type, and the made-up address uses the hash of Hex.
+        // Fail instead of returning (and caching) an incomplete address, e.g. "Unknown-".
+        // Note: _sha256HashBase58 is empty only when the Hex setter has never run;
+        // an empty script (Hex = "") still gets the non-empty hash of zero bytes.
+        if (string.IsNullOrEmpty(_sha256HashBase58) || string.IsNullOrEmpty(Type))
+            throw new InvalidOperationException(
+                $"Cannot extract or build the address before both " +
+                $"{nameof(Hex)} and {nameof(Type)} are set.");
+
         BitcoinAddress? address;
 
-        if (ScriptType == ScriptType.nonstandard)
+        if (ScriptType == ScriptType.nonstandard || ScriptType == ScriptType.NullData)
         {
-            _address = string.Empty;
-            return _address;
+            // examples: 
+            // non-standard:  71036
+            // nulldata: 325001
+            address = null;
         }
-
-        if (_script.IsScriptType(NBitcoin.ScriptType.P2PKH))
+        else if (_script.IsScriptType(NBitcoin.ScriptType.P2PKH))
         {
             address = _script.GetDestinationAddress(Network.Main);
         }
@@ -110,13 +134,14 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
                 // Example:
                 //   Height=292744,
                 //   HEX="410400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ac"
-                // 
-                return string.Empty;
+
+                address = null;
             }
         }
         else if (_script.IsScriptType(NBitcoin.ScriptType.MultiSig))
         {
-            return string.Empty;
+            // example: 164467
+            address = null;
         }
         else
         {
@@ -136,10 +161,13 @@ public class ScriptPubKey : BasePaymentType, IBase64Serializable
             address = _script.GetDestinationAddress(Network.Main);
         }
 
-        if (address != null)
-            return address.ToString();
+        // example height where address is still null here from the P2PK's if condition: 840000
+
+        var x = address?.ToString();
+        if (!string.IsNullOrEmpty(x))
+            return x;
         else
-            return string.Empty;  // example: Height = 840000
+            return $"{ScriptType}-{_sha256HashBase58}";
     }
 
     public string ToBase64String()

@@ -32,6 +32,7 @@ public class Utxo
         SpentInHeight = spentInHeight;
     }
 
+    /*
     public Utxo(
         ScriptPubKey scriptPubKey,
         string? address,
@@ -48,7 +49,7 @@ public class Utxo
         isGenerated,
         createdInHeight,
         spentInHeight)
-    { }
+    { }*/
 
     public static string GetId(string txid, int voutN)
     {

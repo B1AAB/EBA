@@ -9,8 +9,7 @@ public class ScriptNodeDescriptor : IElementDescriptor<ScriptNode>
     public static ElementMapper<ScriptNode> StaticMapper => _mapper;
     private static readonly ElementMapper<ScriptNode> _mapper = new(
         new MappingBuilder<ScriptNode>()
-            .Map(n => n.SHA256Hash).WithCsvHeader(p => p.GetIdFieldCsvHeader(_idSpace))
-            .Map(n => n.Address)
+            .Map(n => n.Address).WithCsvHeader(p => p.GetIdFieldCsvHeader(_idSpace))
             .Map(n => n.ScriptType)
             .Map(n => n.HexBase64)
             .MapLabel(_ => ScriptNode.Kind)
@@ -26,7 +25,6 @@ public class ScriptNodeDescriptor : IElementDescriptor<ScriptNode>
         return new ScriptNode(
             address: _mapper.GetValue(n => n.Address, props),
             scriptType: _mapper.GetValue(n => n.ScriptType, props),
-            sha256Hash: _mapper.GetValue(n => n.SHA256Hash, props)!,
             hexBase64: _mapper.GetValue(n => n.HexBase64, props),
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
@@ -36,7 +34,6 @@ public class ScriptNodeDescriptor : IElementDescriptor<ScriptNode>
 
     public string[] UniqueProps =>
     [
-        _mapper.GetMapping(x => x.Address).Property.Name,
-        _mapper.GetMapping(x => x.SHA256Hash).Property.Name
+        _mapper.GetMapping(x => x.Address).Property.Name
     ];
 }

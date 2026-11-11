@@ -22,10 +22,10 @@ public static class BitcoinGraphScenarios
             Ohlcv = new OHLCV(0, 5, 9, 1, 8, 9, 7)
         });
 
-        var s01 = new ScriptNode(address: "add1", scriptType: ScriptType.PubKey, sha256Hash: "hash1");
-        var s02 = new ScriptNode(address: "add2", scriptType: ScriptType.PubKey, sha256Hash: "hash2");
-        var s03 = new ScriptNode(address: "add3", scriptType: ScriptType.PubKey, sha256Hash: "hash3");
-        var s04 = new ScriptNode(address: "add4", scriptType: ScriptType.PubKey, sha256Hash: "hash4");
+        var s01 = new ScriptNode(address: "add1", scriptType: ScriptType.PubKey);
+        var s02 = new ScriptNode(address: "add2", scriptType: ScriptType.PubKey);
+        var s03 = new ScriptNode(address: "add3", scriptType: ScriptType.PubKey);
+        var s04 = new ScriptNode(address: "add4", scriptType: ScriptType.PubKey);
 
         // the all zero values in the following are needed
         // since some tests rely on rebuilding tx node that will fail if it has null properties.

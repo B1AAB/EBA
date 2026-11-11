@@ -31,7 +31,6 @@ public class BitcoinScriptToolsTests
         var root = doc.RootElement;
 
         Assert.Equal("PubKey", root.GetProperty("ScriptType").GetString());
-        Assert.Equal("hash1", root.GetProperty("SHA256Hash").GetString());
 
         Assert.False(root.TryGetProperty("Address", out _));
     }
@@ -47,13 +46,13 @@ public class BitcoinScriptToolsTests
     }
 
     [Fact]
-    public async Task GetScript_WhenScriptHashGivenAndIncludeBalanceTrue_ReturnsJsonWithBalance()
+    public async Task GetScript_WhenAddressGivenAndIncludeBalanceTrue_ReturnsJsonWithBalance()
     {
         // Act
-        // 'hash1' has two T2S (Credits) edges seeded:
+        // 'add1' has two T2S (Credits) edges seeded:
         // 1. Value = 25 (Spent at height 50)
         // 2. Value = 50 (Unspent / SpentHeight = long.MaxValue)
-        var result = await _tools.GetScript(sha: "hash1", includeBalance: true);
+        var result = await _tools.GetScript(address: "add1", includeBalance: true);
 
         // Assert
         Assert.NotNull(result);
@@ -63,7 +62,6 @@ public class BitcoinScriptToolsTests
         var root = doc.RootElement;
 
         Assert.Equal("PubKey", root.GetProperty("ScriptType").GetString());
-        Assert.Equal("hash1", root.GetProperty("SHA256Hash").GetString());
 
         Assert.True(
             root.TryGetProperty("Balance", out var balanceElement), 
