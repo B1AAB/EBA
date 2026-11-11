@@ -21,8 +21,8 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
     public int? VSize { get; }
     public int? Weight { get; }
     public long? LockTime { get; }
-
-    public Tx? Tx { get; }
+    public long? TotalInputValue { get; }
+    public long? TotalOutputValue { get; }
 
     public TxNode(string txid) : base(txid)
     {
@@ -35,23 +35,9 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         int? size,
         int? vSize,
         int? weight,
-        long? lockTime) : base(txid)
-    {
-        Txid = txid;
-        Version = version;
-        Size = size;
-        VSize = vSize;
-        Weight = weight;
-        LockTime = lockTime;
-    }
-
-    public TxNode(
-        string txid,
-        ulong? version,
-        int? size,
-        int? vSize,
-        int? weight,
         long? lockTime,
+        long? totalInputValue = null,
+        long? totalOutputValue = null,
         double? originalIndegree = null,
         double? originalOutdegree = null,
         double? hopsFromRoot = null,
@@ -69,6 +55,8 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
         VSize = vSize;
         Weight = weight;
         LockTime = lockTime;
+        TotalInputValue = totalInputValue;
+        TotalOutputValue = totalOutputValue;
     }
 
     public TxNode(Tx tx) :
@@ -78,7 +66,9 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
             tx.Size,
             tx.VSize,
             tx.Weight,
-            tx.LockTime)
+            tx.LockTime,
+            totalInputValue: tx.IsCoinbase ? 0 : tx.Inputs.Sum(i => i.PrevOut.Value),
+            totalOutputValue: tx.Outputs.Sum(o => o.Value))
     { }
 
     public override string GetIdPropertyName()
@@ -93,6 +83,8 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
             nameof(Size),
             nameof(Weight),
             nameof(LockTime),
+            nameof(TotalInputValue),
+            nameof(TotalOutputValue),
             .. Node.GetFeaturesName()
         ];
     }
@@ -104,6 +96,8 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
                || VSize == null
                || Weight == null
                || LockTime == null
+               || TotalInputValue == null
+               || TotalOutputValue == null
                || base.HasNullFeatures();
     }
 
@@ -114,6 +108,8 @@ public class TxNode : Node, IComparable<TxNode>, IEquatable<TxNode>
             (Size == null ? double.NaN : (double)Size).ToString(),
             (Weight == null ? double.NaN :(double)Weight).ToString(),
             (LockTime == null ? double.NaN :(double) LockTime).ToString(),
+            (TotalInputValue == null ? double.NaN : (double)TotalInputValue).ToString(),
+            (TotalOutputValue == null ? double.NaN : (double)TotalOutputValue).ToString(),
             .. base.GetFeatures(),
         ];
     }

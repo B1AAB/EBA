@@ -141,7 +141,7 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         Block.ProfileFee(txGraph.Fee);
         
         AddOrUpdateEdge(new T2TEdge(v, _coinbaseTxGraph.TxNode, txGraph.Fee, RelationType.Fee, h));
-        AddOrUpdateEdge(new B2TEdge(BlockNode, v, txGraph.TotalInputValue, h));
+        AddOrUpdateEdge(new B2TEdge(BlockNode, v, txGraph.TxNode.TotalInputValue ?? 0, h));
     }
 
     public void AddOrUpdateEdge<T>(T edge)

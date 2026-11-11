@@ -29,9 +29,9 @@ public static class BitcoinGraphScenarios
 
         // the all zero values in the following are needed
         // since some tests rely on rebuilding tx node that will fail if it has null properties.
-        var tx1 = new TxNode("tx1", 0, 0, 0, 0, 0);
-        var tx2 = new TxNode("tx2", 0, 0, 0, 0, 0);
-        var tx3 = new TxNode("tx3", 0, 0, 0, 0, 0);
+        var tx1 = new TxNode("tx1", 0, 0, 0, 0, 0, 0, 0);
+        var tx2 = new TxNode("tx2", 0, 0, 0, 0, 0, 0, 0);
+        var tx3 = new TxNode("tx3", 0, 0, 0, 0, 0, 0, 0);
 
         var mm = long.MaxValue;
 

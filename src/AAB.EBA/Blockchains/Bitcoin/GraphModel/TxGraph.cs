@@ -1,13 +1,21 @@
-using AAB.EBA.Utilities;
-
 namespace AAB.EBA.Blockchains.Bitcoin.GraphModel;
 
-public class TxGraph(Tx tx) : GraphBase()
+public class TxGraph(Tx tx) : GraphBase
 {
     public TxNode TxNode { get; } = new TxNode(tx);
 
+    // important TODO:
+    // must add a unit test to compare the sum of inputs to a tx node as built in the BlockGraph equals the TxNode.TotalInputValue property.
+    // Similarly, built a test for the sum of outputs to a tx node as built in the BlockGraph equals the TxNode.TotalOutputValue property.
+    // Currently they should be equal because the method is not skipping any inputs or outputs as parsed from the Bitcoin blockchain;
+    // but if that changes in the future, then the sum of inputs and outputs as built in the BlockGraph may not equal the
+    // TxNode.TotalInputValue and TxNode.TotalOutputValue properties, which can lead to inconsistencies. 
+    /*
     public long TotalInputValue { get { return _totalInputValue; } }
     private long _totalInputValue;
+
+    public long TotalOutputValue { get { return _totalOutputValue; } }
+    private long _totalOutputValue;*/
 
     public long Fee { set; get; }
 
@@ -40,13 +48,14 @@ public class TxGraph(Tx tx) : GraphBase()
         var prevOut = input.PrevOut;
 
         SourceTxes.AddOrUpdate(input.Txid, prevOut.Value, (_, oldValue) => oldValue + prevOut.Value);
-        Helpers.ThreadsafeAdd(ref _totalInputValue, prevOut.Value);
+        //Helpers.ThreadsafeAdd(ref _totalInputValue, prevOut.Value);
 
         _inputs.Add(input);
     }
 
     public void AddOutput(Output output)
     {
+        //Helpers.ThreadsafeAdd(ref _totalOutputValue, output.Value);
         _outputs.Add(output);
     }
 }

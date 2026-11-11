@@ -32,19 +32,6 @@ public class Output : IBase64Serializable
         ScriptPubKey = scriptPubKey;
     }
 
-    public bool TryGetAddress(out string? address)
-    {
-        address = ScriptPubKey.GetAddress();
-
-        if (string.IsNullOrEmpty(address))
-        {
-            address = null;
-            return false;
-        }
-
-        return true;
-    }
-
     public bool IsValueTransfer
     {
         get
