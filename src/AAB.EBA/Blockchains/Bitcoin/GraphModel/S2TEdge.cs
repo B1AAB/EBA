@@ -70,4 +70,24 @@ public class S2TEdge : Edge<ScriptNode, TxNode>
             SpentHeight,
         ];
     }
+
+    // Each S2T edge represents redeeming one specific UTxO, identified by (Txid, Vout).
+    // Without these in the equality, two inputs of the same Tx that spend
+    // different UTxOs of the same script with the same value would be considered
+    // equal, and the second would be silently dropped when added to the graph.
+    // 
+    // one example is at the following block: 100002
+    // txid: 220ebc64e21abece964927322cba69180ed853bb187fbc6923bac7d010b9d87a
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(base.GetHashCode(), Txid, Vout);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is S2TEdge other
+               && Equals(other)
+               && Txid == other.Txid
+               && Vout == other.Vout;
+    }
 }
