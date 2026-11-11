@@ -26,8 +26,8 @@ public class EdgeTests : IClassFixture<DbFixture>
         // Act
         var edges = await _db.GetEdgesAsync(
             nodeKind: ScriptNode.Kind,
-            nodePropertyKey: "SHA256Hash",
-            nodePropertyValue: "hash1",
+            nodePropertyKey: "Address",
+            nodePropertyValue: "add1",
             ct: CancellationToken.None);
 
         // Assert

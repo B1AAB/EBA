@@ -24,7 +24,9 @@ public class T2TEdge : Edge<TxNode, TxNode>
             newEdge.Source.Size ?? oldEdge.Source.Size,
             newEdge.Source.VSize ?? oldEdge.Source.VSize,
             newEdge.Source.Weight ?? oldEdge.Source.Weight,
-            newEdge.Source.LockTime ?? oldEdge.Source.LockTime);
+            newEdge.Source.LockTime ?? oldEdge.Source.LockTime,
+            newEdge.Source.TotalInputValue ?? oldEdge.Source.TotalInputValue,
+            newEdge.Source.TotalOutputValue ?? oldEdge.Source.TotalOutputValue);
 
         var target = new TxNode(
             newEdge.Target.Txid,
@@ -32,7 +34,9 @@ public class T2TEdge : Edge<TxNode, TxNode>
             newEdge.Target.Size ?? oldEdge.Target.Size,
             newEdge.Target.VSize ?? oldEdge.Target.VSize,
             newEdge.Target.Weight ?? oldEdge.Target.Weight,
-            newEdge.Target.LockTime ?? oldEdge.Target.LockTime);
+            newEdge.Target.LockTime ?? oldEdge.Target.LockTime,
+            newEdge.Target.TotalInputValue ?? oldEdge.Target.TotalInputValue,
+            newEdge.Target.TotalOutputValue ?? oldEdge.Target.TotalOutputValue);
 
         return new T2TEdge(
             source, target,

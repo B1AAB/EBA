@@ -11,35 +11,29 @@ public class BitcoinScriptTools(BitcoinMcpService mcpService)
     private readonly BitcoinMcpService _mcpService = mcpService;
 
     [McpServerTool, Description(
-        "Get a bitcoin script/address by its address or SHA256 hash, " +
-        "returns the script type and SHA256 hash and optionally the balance.")]
+        "Get a bitcoin script/address by its address, " +
+        "returns the script type and optionally the balance.")]
     public async Task<string> GetScript(
-        [Description("The address of the bitcoin script")] string? address = null,
-        [Description("The SHA256 hash of the bitcoin script")] string? sha = null,
+        [Description("The address of the bitcoin script")] string address,
         [Description("[Optional, default false] Whether to include the balance of the script")] bool includeBalance = false,
         [Description("[Optional, default latest] Block height to get the balance at; if includeBalance is true.")] long? block = null)
     {
-        ScriptNode? scriptNode;
+        if (string.IsNullOrEmpty(address))
+            return "Address must be provided.";
 
-        if (address != null)
-            scriptNode = await _mcpService.GetScriptByAddressAsync(address);
-        else if (sha != null)
-            scriptNode = await _mcpService.GetScriptBySHA256Async(sha);
-        else
-            return "Either address or SHA256 hash must be provided.";
+        var scriptNode = await _mcpService.GetScriptByAddressAsync(address);
 
         if (scriptNode == null)
             return $"Did not find a script with given address: {address}";
 
         var responsePayload = new Dictionary<string, object>
         {
-            { "ScriptType", scriptNode.ScriptType.ToString() },
-            { "SHA256Hash", scriptNode.SHA256Hash }
+            { "ScriptType", scriptNode.ScriptType.ToString() }
         };
 
         if (includeBalance)
         {
-            var balance = await _mcpService.GetScriptBalanceAsync(scriptNode.SHA256Hash, block ?? long.MaxValue);
+            var balance = await _mcpService.GetScriptBalanceAsync(scriptNode.Address, block ?? long.MaxValue);
             responsePayload.Add("Balance", balance);
         }
 
@@ -48,25 +42,20 @@ public class BitcoinScriptTools(BitcoinMcpService mcpService)
 
     [McpServerTool, Description("Get detailed info about a script's transactions.")]
     public async Task<string> GetScriptTxInfo(
-        [Description("The address of the bitcoin script")] string? address = null,
-        [Description("The SHA256 hash of the bitcoin script")] string? sha = null)
+        [Description("The address of the bitcoin script")] string address)
     {
-        ScriptNode? scriptNode;
+        if (string.IsNullOrEmpty(address))
+            return "Address must be provided.";
 
-        if (address != null)
-            scriptNode = await _mcpService.GetScriptByAddressAsync(address);
-        else if (sha != null)
-            scriptNode = await _mcpService.GetScriptBySHA256Async(sha);
-        else
-            return "Either address or SHA256 hash must be provided.";
+        var scriptNode = await _mcpService.GetScriptByAddressAsync(address);
 
         if (scriptNode == null)
             return $"Did not find a script with given address: {address}";
 
-        var stats = await _mcpService.GetScriptTxSummaryStatsAsync(sha);
+        var stats = await _mcpService.GetScriptTxSummaryStatsAsync(address);
 
         if (stats == null)
-            return $"No transactions found for script with SHA256 hash: {sha}";
+            return $"No transactions found for script with address: {address}";
 
         return JsonSerializer.Serialize(stats, McpJsonOptions.Default);
     }
@@ -76,19 +65,18 @@ public class BitcoinScriptTools(BitcoinMcpService mcpService)
         "* Transactions where the script was referenced in the input (i.e., redeeming UTxO) with value, txid, and block height; " +
         "* Transactions where the script was referenced in the output (i.e., rewarding UTxO) with value, txid, and block height. ")]
     public async Task<string> GetScriptNeighbors(
-        [Description("The SHA256 hash of the bitcoin script (optional; require SHA256 or address)")] string? sha = null,
-        [Description("The address of the bitcoin script (optional; require SHA256 or address)")] string? address = null,
+        [Description("The address of the bitcoin script")] string address,
         [Description("Maximum number of spent UTxOs to return (default 10--do not increase unless asked specifically)")] int maxRedeemedIn = 10,
         [Description("Maximum number of created UTxOs to return (default 10--do not increase unless asked specifically)")] int maxRewardedIn = 10)
     {
-        if (string.IsNullOrEmpty(sha) && string.IsNullOrEmpty(address))
-            return "Either address or SHA256 hash must be provided.";
+        if (string.IsNullOrEmpty(address))
+            return "Address must be provided.";
 
         // This gets neighbors at 0 hop, so immediate neighbors only
-        var neighborhood = await _mcpService.GetScriptNodeNeighbors(sha: sha, address: address);
+        var neighborhood = await _mcpService.GetScriptNodeNeighbors(address: address);
 
         if (neighborhood.NodeCount == 0 || neighborhood.EdgeCount == 0)
-            return $"Script not found: {sha ?? address}";
+            return $"Script not found: {address}";
 
         var counter = 0;
         var redeemedIn = new List<Dictionary<string, object>>();

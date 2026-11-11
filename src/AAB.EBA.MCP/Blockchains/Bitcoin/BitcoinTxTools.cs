@@ -60,13 +60,13 @@ public class BitcoinTxTools(BitcoinMcpService mcpService)
     [McpServerTool, Description(
         "Given a bitcoin Tx ID returns the following information about its neighboring transactions (limited to max 10 spent and max 10 created Txo): " +
         "* For each spent UTxO (i.e., Tx input):" +
-        "  ** Script address (or SHA256 hash if address is not available), " +
+        "  ** Script address, " +
         "  ** value, " +
         "  ** Txid and vout of the UTxO, " +
         "  ** height that created the UTxO, and " +
         "  ** age of the UTxO at spending (i.e., difference between height that created the UTxO and height that spends it); " +
         "* For each created UTxO (i.e., Tx output): " +
-        "  ** Script address (or SHA256 hash if address is not available), " +
+        "  ** Script address, " +
         "  ** value, " +
         "  ** height that created the UTxO, and " +
         "  ** if the UTxO is spent as of the cut-off block height, the height that spent it. ")]
@@ -101,7 +101,6 @@ public class BitcoinTxTools(BitcoinMcpService mcpService)
 
                 var utxo = new Dictionary<string, object>
                 {
-                    ["ScriptSHA256"] = scriptNode.SHA256Hash,
                     ["ScriptAddress"] = string.IsNullOrEmpty(scriptNode.Address) ? "Undefined" : scriptNode.Address,
                     ["Value"] = edge.Value,
                     ["TxCreatingTxo_Txid"] = edge.Txid,
@@ -132,7 +131,6 @@ public class BitcoinTxTools(BitcoinMcpService mcpService)
 
                 var txo = new Dictionary<string, object>
                 {
-                    ["ScriptSHA256"] = scriptNode.SHA256Hash,
                     ["ScriptAddress"] = string.IsNullOrEmpty(scriptNode.Address) ? "Undefined" : scriptNode.Address,
                     ["Value"] = edge.Value,
                     ["CreationHeight"] = edge.CreationHeight,

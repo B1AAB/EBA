@@ -15,6 +15,8 @@ public class TxNodeDescriptor : IElementDescriptor<TxNode>
             .Map(n => n.VSize)
             .Map(n => n.Weight)
             .Map(n => n.LockTime)
+            .Map(n => n.TotalInputValue)
+            .Map(n => n.TotalOutputValue)
             .MapLabel(_ => TxNode.Kind)
             .ToArray());
 
@@ -32,6 +34,8 @@ public class TxNodeDescriptor : IElementDescriptor<TxNode>
             vSize: _mapper.GetValue(n => n.VSize, props),
             weight: _mapper.GetValue(n => n.Weight, props),
             lockTime: _mapper.GetValue(n => n.LockTime, props),
+            totalInputValue: _mapper.GetValue(n => n.TotalInputValue, props),
+            totalOutputValue: _mapper.GetValue(n => n.TotalOutputValue, props),
             originalIndegree: originalIndegree,
             originalOutdegree: originalOutdegree,
             hopsFromRoot: hopsFromRoot,

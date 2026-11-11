@@ -18,7 +18,6 @@ public class BitcoinMcpService(IGraphDb db, IGraphDb<BitcoinGraph>? bitcoinGraph
 
     private static readonly ScriptNodeDescriptor _scriptNodeDescriptor = new();
     private static readonly Property _addressProp = _scriptNodeDescriptor.Mapper.GetMapping(x => x.Address).Property;
-    private static readonly Property _sha256Prop = _scriptNodeDescriptor.Mapper.GetMapping(x => x.SHA256Hash).Property;
 
     private static readonly TxNodeDescriptor _txNodeDescriptor = new();
     private static readonly Property _txidProp = _txNodeDescriptor.Mapper.GetMapping(x => x.Txid).Property;    
@@ -40,24 +39,12 @@ public class BitcoinMcpService(IGraphDb db, IGraphDb<BitcoinGraph>? bitcoinGraph
         return ScriptNodeDescriptor.Deserialize(node.Properties, null, null, null, null);
     }
 
-    public async Task<ScriptNode?> GetScriptBySHA256Async(
-        string sha,
-        CancellationToken ct = default)
-    {
-        var node = await _db.GetNodeAsync(NodeKind.Script, _sha256Prop.Name, sha, ct);
-
-        if (node == null)
-            return null;
-
-        return ScriptNodeDescriptor.Deserialize(node.Properties, null, null, null, null);
-    }
-
     public async Task<long?> GetScriptBalanceAsync(
-        string sha,
+        string address,
         long height = long.MaxValue,
         CancellationToken ct = default)
     {
-        var edges = await _db.GetEdgesAsync(NodeKind.Script, _sha256Prop.Name, sha, ct);
+        var edges = await _db.GetEdgesAsync(NodeKind.Script, _addressProp.Name, address, ct);
 
         if (edges == null || edges.Count == 0)
             return null;
@@ -83,10 +70,10 @@ public class BitcoinMcpService(IGraphDb db, IGraphDb<BitcoinGraph>? bitcoinGraph
     }
 
     public async Task<ScriptTxSummaryStats?> GetScriptTxSummaryStatsAsync(
-        string sha,
+        string address,
         CancellationToken ct = default)
     {
-        var edges = await _db.GetEdgesAsync(NodeKind.Script, _sha256Prop.Name, sha, ct);
+        var edges = await _db.GetEdgesAsync(NodeKind.Script, _addressProp.Name, address, ct);
 
         if (edges == null || edges.Count == 0)
             return null;
@@ -293,17 +280,13 @@ public class BitcoinMcpService(IGraphDb db, IGraphDb<BitcoinGraph>? bitcoinGraph
     }
 
     public async Task<BitcoinGraph> GetScriptNodeNeighbors(
-        string? sha = null,
-        string? address = null,
+        string address,
         CancellationToken ct = default)
     {
-        if (sha == null && address == null)
-            throw new ArgumentException("Either sha or address must be provided.");
+        if (string.IsNullOrEmpty(address))
+            throw new ArgumentException("Address must be provided.", nameof(address));
 
-        if (sha != null)
-            return await GetNodeNeighborsAsync(NodeKind.Script, _sha256Prop.Name, sha, ct: ct);
-        else
-            return await GetNodeNeighborsAsync(NodeKind.Script, _addressProp.Name, address!, ct: ct);
+        return await GetNodeNeighborsAsync(NodeKind.Script, _addressProp.Name, address, ct: ct);
     }
 
     public async Task<BitcoinGraph> GetNodeNeighborsAsync(
