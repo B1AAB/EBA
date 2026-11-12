@@ -303,7 +303,8 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
                     _batches.Count.ToString(),
                     _options.WorkingDir,
                     _strategyFactory.NodeStrategies,
-                    _strategyFactory.EdgeStrategies));
+                    _strategyFactory.EdgeStrategies,
+                    _batches.Count > 0 ? _batches[^1] : null));
 
                 await Batch.SerializeBatchesAsync(_options.Neo4j.BatchesFilename, _batches);
             }
