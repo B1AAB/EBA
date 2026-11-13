@@ -74,6 +74,17 @@ public class BlockGraph : BitcoinGraph, IEquatable<BlockGraph>
         var v = _coinbaseTxGraph.TxNode;
         var h = Block.Height;
 
+        // TryGetOrAddEdge will add the node if it does not exist, 
+        // but for some cases where the input Tx is in the same block,
+        // and is not added before the Tx referencing that input Tx, 
+        // it will lead to adding the Tx node referenced in the input,
+        // which will have minimal info,
+        // and Tx node itself with complete info will not be added and missed.
+        // the following ensure Tx nodes defined in this blocked are added first.
+        TryAddNode(v);
+        foreach (var txGraph in _txGraphsQueue)
+            TryAddNode(txGraph.TxNode);
+
         Parallel.ForEach(_txGraphsQueue,
             #if (DEBUG)
             parallelOptions: new ParallelOptions() { MaxDegreeOfParallelism = 1 },

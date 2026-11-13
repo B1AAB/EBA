@@ -286,7 +286,7 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
                     _loopCancellationToken.ThrowIfCancellationRequested();
                 });
 
-            await gBuffer.WaitForBufferToEmptyAsync();
+            await gBuffer.WaitForBufferToEmptyAsync(cT);
         }
         catch (Exception)
         {
@@ -300,6 +300,12 @@ public class BitcoinOrchestrator : IBlockchainOrchestrator
             #pragma warning disable CA2016 // Forward the 'CancellationToken' parameter to methods
             await JsonSerializer<Options>.SerializeAsync(options, options.StatusFile);
             #pragma warning restore CA2016 // Forward the 'CancellationToken' parameter to methods
+
+            // Wait for the block currently being written (if any) to finish
+            // before taking the list of unfinished blocks. Otherwise, a block
+            // that is mid-write would be re-queued and also finish writing,
+            // so the next run would write it again into another batch.
+            gBuffer.Dispose();
 
             var canceledBlocks = gBuffer.BlocksHeightInBuffer;
             if (canceledBlocks.Count > 0)
