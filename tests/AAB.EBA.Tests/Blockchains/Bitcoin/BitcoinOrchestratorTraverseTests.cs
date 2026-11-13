@@ -94,6 +94,10 @@ public class BitcoinOrchestratorTraverseTests : TestsBase
             new GraphCsvComparison().OnlyColumns(BitcoinGraphColumns.ScriptTypeProfile), "nodes_Block");
     }
 
+    // DEBUG limits transaction processing and graph merging to one worker. Release
+    // allows parallel execution: an in-block spender can register an ID-only source
+    // TxNode before that transaction's full node. TryAddNode keeps the first node,
+    // so all node IDs exist but features can be missing. Run this test in both builds.
     [Theory]
     [InlineData(71036)]
     [InlineData(132317)]

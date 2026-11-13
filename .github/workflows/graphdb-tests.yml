@@ -8,10 +8,15 @@ on:
 
 jobs:
   build-and-test:
-    name: Build and Test
+    name: Build and Test (${{ matrix.configuration }})
     # ubuntu-latest has Docker daemon pre-installed, 
     # which is essential for Testcontainers to run Neo4j db.    
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
 
     steps:
     - name: Checkout Code
@@ -26,7 +31,7 @@ jobs:
       run: dotnet restore tests/AAB.EBA.GraphDb.Tests
 
     - name: Build
-      run: dotnet build tests/AAB.EBA.GraphDb.Tests --no-restore --configuration Release
+      run: dotnet build tests/AAB.EBA.GraphDb.Tests --no-restore --configuration ${{ matrix.configuration }}
 
     - name: Test
-      run: dotnet test tests/AAB.EBA.GraphDb.Tests --no-build --configuration Release --verbosity normal
+      run: dotnet test tests/AAB.EBA.GraphDb.Tests --no-build --configuration ${{ matrix.configuration }} --verbosity normal
