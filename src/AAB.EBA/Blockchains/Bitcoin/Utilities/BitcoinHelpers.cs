@@ -33,7 +33,9 @@ public static class BitcoinHelpers
                         "this block is defined at least twice, in batches with names {b1} and {b2}.",
                         h, concBlockToBatch[h].Name, batch.Name);
 
-                    throw new InvalidDataException();
+                    throw new InvalidDataException(
+                        $"Block height {h} is defined at least twice, " +
+                        $"in batches with names {concBlockToBatch[h].Name} and {batch.Name}.");
                 }
 
                 concBlockNodes.TryAdd(h, blockNode);
