@@ -67,6 +67,11 @@ public class BitcoinChainAgent : IDisposable
 
             return (response.IsSuccessStatusCode, chainInfo);
         }
+        catch (OperationCanceledException) when (cT.IsCancellationRequested)
+        {
+            // Canceled by the caller; this is not a communication failure.
+            throw;
+        }
         catch (Exception ex)
         {
             _logger.LogWarning(
