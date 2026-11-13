@@ -19,10 +19,13 @@ public class Neo4jOptions
     public bool CompressOutput { init; get; } = true;
 
     /// <summary>
-    /// Neo4j docs suggest between 10,000 and 100,000 updates 
-    /// per transaction as a good target. 
-    /// 
-    /// Ref: https://neo4j.com/blog/bulk-data-import-neo4j-3-0/
+    /// increasing this will result in fewer and larger batches, 
+    /// generally no issue with neo4j admin.
+    /// But given SetTxoSpentHeight reads each batch into memory, 
+    /// you should keep this low enough to avoid running out of memory.
+    /// You can assume: 
+    ///     - 1M entries: about 200–250 MB
+    ///     - 5M entries: about 1–1.3 GB
     /// </summary>
-    public int MaxEntitiesPerBatch { init; get; } = 80000;
+    public int MaxEntitiesPerBatch { init; get; } = 2_000_000;
 }

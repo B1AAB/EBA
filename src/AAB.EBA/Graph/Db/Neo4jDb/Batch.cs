@@ -27,11 +27,12 @@ public class Batch
         string name,
         string defaultDirectory,
         IReadOnlyDictionary<NodeKind, IElementCodec> nodeStrategies,
-        IReadOnlyDictionary<EdgeKind, IElementCodec> edgeStrategies)
+        IReadOnlyDictionary<EdgeKind, IElementCodec> edgeStrategies,
+        Batch? previousBatch = null)
     {
         Name = name;
         DefaultDirectory = defaultDirectory;
-        FilenamePrefix = $"{Helpers.GetUnixTimeSeconds()}_{name}";
+        FilenamePrefix = GetUniqueFilenamePrefix(previousBatch);
 
         TypesInfo = [];
         foreach (var strategy in nodeStrategies)
@@ -51,6 +52,24 @@ public class Batch
                     Path.Join(DefaultDirectory, $"{FilenamePrefix}_{strategy.Value.DefaultFilename}"),
                     0));
         }
+    }
+
+    /// <summary>
+    /// The prefix is a Unix timestamp in seconds. When a batch fills up
+    /// in under a second (e.g., a block whose graph alone exceeds
+    /// MaxEntitiesPerBatch), two consecutive batches would get the same
+    /// prefix, hence the same filenames; both batches would then write to
+    /// (and be read back from) the same files, so every element of those
+    /// files appears in two batches. To avoid this, the prefix is forced
+    /// to be strictly greater than the previous batch's prefix.
+    /// </summary>
+    private static string GetUniqueFilenamePrefix(Batch? previousBatch)
+    {
+        var prefix = long.Parse(Helpers.GetUnixTimeSeconds());
+        if (previousBatch != null && long.TryParse(previousBatch.FilenamePrefix, out var previousPrefix))
+            prefix = Math.Max(prefix, previousPrefix + 1);
+
+        return prefix.ToString();
     }
 
     public void Update(NodeKind kind, int count)
