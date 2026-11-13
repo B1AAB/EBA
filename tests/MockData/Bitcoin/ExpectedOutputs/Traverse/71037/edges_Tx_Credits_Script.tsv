@@ -1,0 +1,2 @@
+:START_ID(Tx)	:END_ID(Script)	Value:long	Vout:int	CreationHeight:long	SpentHeight:long	:TYPE
+56dee62283a06e85e182e2d0b421aceb0eadec3d5f86cdadf9688fc095b72510	1Df2KxsxU6v8q6DuuaTuYvjHSiRBLgPzPB	5000000000	0	71037	9223372036854775807	Credits

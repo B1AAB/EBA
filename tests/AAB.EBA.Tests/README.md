@@ -1,5 +1,29 @@
 **This file contains references for extending testing to more comprehensive cases.**
 
+## Recorded traverse tests
+
+`BitcoinOrchestratorTraverseTests`, `BitcoinOrchestratorTraverseConsistencyTests`,
+and `BitcoinChainAgentGetGraphTests` replay committed mainnet REST responses in
+process. They require no Bitcoin Core, sockets, or child process. The fixtures
+cover heights 71036, 71037 (coinbase only), 132317, and 717531.
+
+Run with `dotnet test tests/AAB.EBA.Tests -c Debug --filter "Category=Unit"`
+(also run in Release to exercise parallel transaction processing).
+
+To intentionally regenerate the complete sorted TSV baselines, set
+`EBA_UPDATE_EXPECTED=1` and run the Debug tests filtered by
+`FullyQualifiedName~TraverseAsync_SingleBlock_WritesExpectedGraph`. Update runs
+write to `tests/MockData/Bitcoin/ExpectedOutputs/Traverse/{height}` and fail with
+"Expected output updated"; Release updates are refused. Unset the variable,
+review the diff, and run normally. Do not generate baselines from live-node
+traversals: confirmations must match the recordings.
+
+`IntegrationTests` remains separate: it starts the executable with a mock HTTP
+server on a free port and checks the legacy output directory's file/line counts.
+It supplies the range and mock URI through the supported `--status-filename`
+JSON configuration. Direct `--client-uri` argument conversion is not covered
+by this output integration test.
+
 ## Fee
 Transaction fee is paid by the requester; for instance, see:
 

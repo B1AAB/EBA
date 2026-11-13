@@ -1,4 +1,6 @@
+using AAB.EBA.CLI.Config;
 using AAB.EBA.TestDataGenerator;
+using AAB.EBA.Tests.TestKit.Traverse;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,7 +8,9 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -15,7 +19,7 @@ namespace AAB.EBA.Tests;
 public class IntegrationTests : IDisposable
 {
     private readonly HttpListener _httpListener;
-    private readonly int _port = 8332;
+    private readonly int _port = GetFreePort();
     private readonly string _mockDataPath;
     private readonly Dictionary<long, string> _heightToHashMap;
 
@@ -31,6 +35,13 @@ public class IntegrationTests : IDisposable
             ?? [];
 
         Task.Run(RunMockServer);
+    }
+
+    private static int GetFreePort()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        return ((IPEndPoint)listener.LocalEndpoint).Port;
     }
 
     private async Task RunMockServer()
@@ -104,11 +115,17 @@ public class IntegrationTests : IDisposable
     [InlineData(71036, 71036)]
     public void RunBitcoinTraverseCommand_ShouldProduceCorrectOutput_ForHeight(int startHeight, int endHeight)
     {
-        var tempDir = Path.Combine(Path.GetTempPath(), "EBA_CLI_IntegrationTests", Guid.NewGuid().ToString());
+        var tempDir = Path.Combine(Path.GetTempPath(), "EBA CLI IntegrationTests", Guid.NewGuid().ToString());
         Directory.CreateDirectory(tempDir);
 
         try
         {
+            var options = TraverseOptionsBuilder.ForWorkingDir(tempDir)
+                .WithRange(startHeight, endHeight)
+                .WithClientUri(new Uri($"http://localhost:{_port}/rest/"))
+                .Build();
+            File.WriteAllText(options.StatusFile, JsonSerializer.Serialize(options, Options.JsonSerializationOptions));
+
             var executable = Path.Combine(
                 AppContext.BaseDirectory, 
                 "aab.eba" + (OperatingSystem.IsWindows() ? ".exe" : ""));
@@ -116,16 +133,16 @@ public class IntegrationTests : IDisposable
             var processStartInfo = new ProcessStartInfo
             {
                 FileName = executable,
-                Arguments = $"bitcoin traverse --from {startHeight} --to {endHeight} --working-dir {tempDir}",
+                ArgumentList = { "bitcoin", "traverse", "--status-filename", options.StatusFile },
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
 
-            var process = Process.Start(processStartInfo);
-            if (process ==null || process.HasExited)
-                throw new InvalidOperationException("Failed to start the process or it has already exited.");
+            using var process = Process.Start(processStartInfo);
+            if (process == null)
+                throw new InvalidOperationException("Failed to start the process.");
 
             var output = process.StandardOutput.ReadToEnd();
             var error = process.StandardError.ReadToEnd();
@@ -136,6 +153,9 @@ public class IntegrationTests : IDisposable
 
             Console.WriteLine($"EBA stderr:\n{error}");
             Console.WriteLine("-----------------------------");
+
+            Assert.True(process.ExitCode == 0,
+                $"EBA exited with code {process.ExitCode}.\nstdout:\n{output}\nstderr:\n{error}");
 
             var actualFiles = Directory.GetFiles(tempDir);
             Console.WriteLine("Actual files generated:\n");
@@ -164,18 +184,13 @@ public class IntegrationTests : IDisposable
         var expectedFiles = Directory.GetFiles(expectedDir).Select(Path.GetFileName).ToList();
         var actualFiles = Directory.GetFiles(actualDir).Select(Path.GetFileName).ToList();
 
-        // Need to clean up prefixes consisting of timestamp e.g. 1779561113_ 
-        // A timestamp is typically 10 digits followed by an underscore
+        // Remove the timestamp and optional batch number to compare legacy and current output.
         static string CleanFileName(string? file)
         {
             if (file == null)
                 return string.Empty;
 
-            var parts = file.Split('_', 2);
-            if (parts.Length > 1 && parts[0].Length == 10 && long.TryParse(parts[0], out _))
-                return parts[1];
-            
-            return file;
+            return Regex.Replace(file, @"^[0-9]+(?:_[0-9]+)?_", "");
         }
 
         var expectedCleanFiles = expectedFiles.Select(CleanFileName).ToList();

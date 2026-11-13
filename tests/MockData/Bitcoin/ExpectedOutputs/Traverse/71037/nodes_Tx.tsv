@@ -1,0 +1,2 @@
+Txid:ID(Tx)	Version:long	Size:int	VSize:int	Weight:int	LockTime:long	TotalInputValue:long	TotalOutputValue:long	:LABEL
+56dee62283a06e85e182e2d0b421aceb0eadec3d5f86cdadf9688fc095b72510	1	135	135	540	0	0	5000000000	Tx
