@@ -21,7 +21,7 @@ public class BatchTests : TestsBase
 
         // Act
         var first = new Batch("0", TempExeDir, strategies.NodeStrategies, strategies.EdgeStrategies);
-        var second = new Batch("1", TempExeDir, strategies.NodeStrategies, strategies.EdgeStrategies);
+        var second = new Batch("1", TempExeDir, strategies.NodeStrategies, strategies.EdgeStrategies, previousBatch: first);
 
         // Assert
         Assert.Empty(first.TypesInfo.Values.Select(x => x.Filename)
@@ -29,7 +29,7 @@ public class BatchTests : TestsBase
     }
 
     [Fact]
-    public void Constructor_NewBatch_FilenamesStartWithADigit()
+    public void Constructor_NewBatch_FilenamesUseTimestampOnlyPrefix()
     {
         // Arrange
         using var strategies = new BitcoinStrategyFactory(new Options(TempExeDir));
@@ -38,16 +38,34 @@ public class BatchTests : TestsBase
         var batch = new Batch("0", TempExeDir, strategies.NodeStrategies, strategies.EdgeStrategies);
 
         // Assert
-        Assert.All(batch.TypesInfo.Values, x => Assert.Matches("^[0-9]", Path.GetFileName(x.Filename)));
+        Assert.Matches("^[0-9]+$", batch.FilenamePrefix);
+        Assert.All(batch.TypesInfo.Values, x => Assert.Matches("^[0-9]+_(nodes|edges)_", Path.GetFileName(x.Filename)));
     }
 
     [Fact]
-    public async Task DeserializeBatchesAsync_ManifestWithTimestampOnlyPrefixes_KeepsStoredFilenames()
+    public void Constructor_PreviousBatchPrefixAheadOfClock_AdvancesPrefix()
+    {
+        // Arrange
+        using var strategies = new BitcoinStrategyFactory(new Options(TempExeDir));
+        var previous = StoredBatch("0", "9999999999", Path.Join(TempExeDir, "9999999999_nodes_Block.csv.gz"));
+
+        // Act
+        var batch = new Batch("1", TempExeDir, strategies.NodeStrategies, strategies.EdgeStrategies, previousBatch: previous);
+
+        // Assert
+        Assert.Equal("10000000000", batch.FilenamePrefix);
+        Assert.All(batch.TypesInfo.Values, x => Assert.StartsWith("10000000000_", Path.GetFileName(x.Filename)));
+    }
+
+    [Theory]
+    [InlineData("1794456334")]
+    [InlineData("1794456334_0")]
+    public async Task DeserializeBatchesAsync_ManifestWithStoredPrefix_KeepsStoredFilenames(string prefix)
     {
         // Arrange
         var manifest = Path.Join(TempExeDir, "batches.json");
-        var filename = Path.Join(TempExeDir, "1794456334_nodes_Block.csv.gz");
-        var batch = StoredBatch("0", "1794456334", filename);
+        var filename = Path.Join(TempExeDir, $"{prefix}_nodes_Block.csv.gz");
+        var batch = StoredBatch("0", prefix, filename);
         await Batch.SerializeBatchesAsync(manifest, [batch]);
 
         // Act
