@@ -568,8 +568,10 @@ internal class Cli
         var rootNodesFileOption = new Option<string?>("--root-nodes-filename")
         {
             Description =
-                "A TSV file listing the Script nodes to use as root nodes, one per line, " +
-                "with the Script address in the first column. " +
+                "A TSV file listing root nodes, one per line, with NodeKind in the first column " +
+                "and the identifying property value in the second column. " +
+                "Kinds are Coinbase (1), Script (2), Block (3), and Tx (4); names are case-insensitive. " +
+                "Values are Coinbase, Script Address, Block Height, or Tx Txid, respectively. " +
                 "If provided, these root nodes are expanded in the given order instead of randomly selected ones, " +
                 "and --root-node-select-prob is ignored. " +
                 "If not provided, root nodes are selected randomly."

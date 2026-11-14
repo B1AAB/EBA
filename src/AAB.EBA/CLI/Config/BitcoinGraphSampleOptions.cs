@@ -30,7 +30,8 @@ public class BitcoinGraphSampleOptions
     private double _rootNodeSelectProb = 0.3;
 
     /// <summary>
-    /// TSV file whose first column lists the addresses of the Script nodes to use as roots.
+    /// TSV file whose first column is NodeKind and second column is the identifying property value.
+    /// Supported kinds are Coinbase (1), Script (2), Block (3), and Tx (4).
     /// When null, roots are selected at random from the database.
     /// </summary>
     public string? RootNodesFilename { init; get; }

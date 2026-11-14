@@ -160,15 +160,15 @@ public class Panorama : ITraversalAlgorithm
             foreach (var rootNode in rndRootNodes)
             {
                 ct.ThrowIfCancellationRequested();
-                var rootNodeLabelInLogs = $"({ScriptNode.Kind} {{{rootNode.GetIdPropertyName()}={rootNode.Id}}})";
+                var rootNodeLabelInLogs = $"({rootNode.Kind} {{{rootNode.IdProperty}={rootNode.Id}}})";
 
                 _logger.LogInformation(
                     "Sampling neighbors for root {Index:N0}/{Total:N0}. {rootNodeTag}",
                     ++counter, rndRootNodes.Count, rootNodeLabelInLogs);
 
                 var graph = await GetNeighborsAsync(
-                    rootNodeLabel: ScriptNode.Kind,
-                    rootNodeIdProperty: rootNode.GetIdPropertyName(),
+                    rootNodeLabel: rootNode.Kind,
+                    rootNodeIdProperty: rootNode.IdProperty,
                     rootNodeId: rootNode.Id,
                     ct: ct);
 
@@ -836,46 +836,77 @@ public class Panorama : ITraversalAlgorithm
     /// <summary>
     /// Returns up to count root nodes from the beginning of the user-provided file on each
     /// attempt when one is configured, otherwise randomly selected from the database.
+    /// 
+    /// TODO: an alternative return type option is to return a list of Node objects instead of tuples, but that would require
+    /// some updates to the strategy factory to support creating nodes from tsv files. 
+    /// Then, you couuld only return a generic list of Node objects, and the caller could use the GetIdPropertyName() method to get the property name for each node.
+    /// That could simplify this method, the parser that reads list of root nodes from the tsv file, and the methods that cosume the list of root nodes.
     /// </summary>
-    private async Task<List<ScriptNode>> GetRootNodesAsync(int count, CancellationToken ct)
+    private async Task<List<(NodeKind Kind, string IdProperty, string Id)>> GetRootNodesAsync(int count, CancellationToken ct)
     {
         if (_options.Bitcoin.GraphSample.RootNodesFilename == null)
-            return await GetRandomScriptNodes(count, ct);
+        {
+            var randomRoots = await GetRandomScriptNodes(count, ct);
+            return randomRoots.Select(root => (root.NodeKind, root.GetIdPropertyName(), root.Id)).ToList();
+        }
 
         var roots = ReadRootNodesFile(_options.Bitcoin.GraphSample.RootNodesFilename);
         return roots.GetRange(0, Math.Min(count, roots.Count));
     }
 
-    private List<ScriptNode> ReadRootNodesFile(string filename)
+    private List<(NodeKind Kind, string IdProperty, string Id)> ReadRootNodesFile(string filename)
     {
-        var roots = new List<ScriptNode>();
-        var addresses = new HashSet<string>(StringComparer.Ordinal);
+        var roots = new List<(NodeKind Kind, string IdProperty, string Id)>();
+        var identifiers = new HashSet<(NodeKind Kind, string Id)>();
         var duplicates = 0;
-        var firstLine = true;
+        var lineNumber = 0;
 
         foreach (var line in File.ReadLines(filename))
         {
-            var address = line.Split('\t')[0].Trim();
-            var isHeader = firstLine && address.Equals("Address", StringComparison.OrdinalIgnoreCase);
-            firstLine = false;
-
-            if (address.Length == 0 || line.StartsWith('#') || isHeader)
+            lineNumber++;
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
                 continue;
 
-            if (!addresses.Add(address))
+            var columns = line.Split('\t');
+            var kindText = columns[0].Trim();
+            if (lineNumber == 1 &&
+                (kindText.Equals("NodeKind", StringComparison.OrdinalIgnoreCase) ||
+                 kindText.Equals("Kind", StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            if (columns.Length < 2 || string.IsNullOrWhiteSpace(columns[1]))
+                throw new InvalidOperationException(
+                    $"Invalid root node at '{filename}', line {lineNumber}: expected a node kind and identifying property value separated by a tab.");
+
+            if (kindText.Contains(',') || !Enum.TryParse<NodeKind>(kindText, true, out var kind) ||
+                !Enum.IsDefined(kind) || kind == NodeKind.Undefined)
+                throw new InvalidOperationException(
+                    $"Invalid node kind '{kindText}' at '{filename}', line {lineNumber}: expected Coinbase (1), Script (2), Block (3), or Tx (4).");
+
+            var id = columns[1].Trim();
+            var idProperty = kind switch
+            {
+                NodeKind.Coinbase => CoinbaseNode.Kind.ToString(),
+                NodeKind.Script => nameof(ScriptNode.Address),
+                NodeKind.Block => nameof(BlockMetadata.Height),
+                NodeKind.Tx => nameof(TxNode.Txid),
+                _ => throw new InvalidOperationException($"Unsupported node kind '{kind}'.")
+            };
+
+            if (!identifiers.Add((kind, id)))
             {
                 duplicates++;
                 continue;
             }
 
-            roots.Add(new ScriptNode(address, ScriptType.Unknown));
+            roots.Add((kind, idProperty, id));
         }
 
         if (roots.Count == 0)
-            throw new InvalidOperationException($"No root Script addresses were read from '{filename}'.");
+            throw new InvalidOperationException($"No root nodes were read from '{filename}'.");
 
         _logger.LogInformation(
-            "Read {RootCount:N0} root Script node(s) from {File}; skipped {DuplicateCount:N0} duplicate(s).",
+            "Read {RootCount:N0} root node(s) from {File}; skipped {DuplicateCount:N0} duplicate(s).",
             roots.Count, filename, duplicates);
 
         if (roots.Count < _options.Bitcoin.GraphSample.Count)
