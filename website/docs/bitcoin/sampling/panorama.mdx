@@ -106,6 +106,29 @@ FFS-specific arguments are documented below.
 | [`queryLimit`](#query-limit)                | `int`    | `1000`  | Maximum number of neighbors to query from the database before sampling. |
 | [`nodeCountAtRoot`](#count-at-root)         | `int`    | `100`   | Maximum number of neighbors to sample from the root node. |
 | [`reductionFactor`](#reduction-factor)      | `double` | `4.0`   | Factor controlling the reduction of sampled neighbors as hop depth increases. |
+| [`deterministicSampling`](#deterministic-sampling) | `bool` | `false` | Use a fixed seed for neighbor sampling. |
+
+
+### `deterministicSampling` {#deterministic-sampling}
+
+By default, neighbor sampling is non-deterministic (`false`), which is useful in production
+for exploring multiple sampled versions of the neighborhood around the same important transaction.
+Provide that transaction as a `Tx` root in a [root nodes file](#root-nodes-file) and sample it repeatedly;
+individual samples can still coincide.
+
+Set `"deterministicSampling": true` in `PanoramaOptions` (or in the JSON passed to
+`--method-options`) to use a fixed seed for each neighbor shuffle. This is primarily useful
+during development and debugging: the same ordered candidates produce the same selection.
+For example:
+
+```powershell
+.\aab.eba.exe bitcoin sample --count 1 --method panorama --root-nodes-filename roots.tsv `
+    --method-options '{\"deterministicSampling\": true}'
+```
+
+This option does not seed Neo4j's random root selection. Use a root nodes file to choose a
+specific root. Even then, results can differ if the database changes or returns candidates
+or relationships in a different order, including when `queryLimit` restricts the candidate pool.
 
 
 ### `maxHops` {#max-hops}

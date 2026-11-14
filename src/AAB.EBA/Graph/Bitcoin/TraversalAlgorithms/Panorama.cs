@@ -322,8 +322,6 @@ public class Panorama : ITraversalAlgorithm
 
         ct.ThrowIfCancellationRequested();
 
-        var rnd = new Random(31);
-
         var parentNodeDegree = (parentNode.OriginalInDegree ?? 0) + (parentNode.OriginalOutDegree ?? 0);
         var samplingPercentage =
             _options.Bitcoin.GraphSample.PanoramaOptions.NodeSamplingPercentageAtRoot -
@@ -333,7 +331,7 @@ public class Panorama : ITraversalAlgorithm
             _options.Bitcoin.GraphSample.PanoramaOptions.MaxNeighborsPerNode,
             neighborsToKeep - nodesInThisHopAlreadyInGraph.Count);
 
-        var shuffled = nodesUniqueToThisHop.Keys.OrderBy(x => rnd.Next()).ToList();
+        var shuffled = ShuffleCandidates(nodesUniqueToThisHop.Keys);
 
         HashSet<string> nodesToKeep;
         if (!_hasActivityWindow)
@@ -409,6 +407,14 @@ public class Panorama : ITraversalAlgorithm
         }
 
         return nodesAddedToGraph;
+    }
+
+    private List<string> ShuffleCandidates(IEnumerable<string> candidates)
+    {
+        var random = _options.Bitcoin.GraphSample.PanoramaOptions.DeterministicSampling
+            ? new Random(31)
+            : new Random();
+        return candidates.OrderBy(_ => random.Next()).ToList();
     }
 
     private async Task<bool> ProcessHopsBFS(
