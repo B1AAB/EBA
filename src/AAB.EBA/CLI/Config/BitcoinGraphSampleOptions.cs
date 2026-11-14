@@ -29,6 +29,12 @@ public class BitcoinGraphSampleOptions
     }
     private double _rootNodeSelectProb = 0.3;
 
+    /// <summary>
+    /// TSV file whose first column lists the addresses of the Script nodes to use as roots.
+    /// When null, roots are selected at random from the database.
+    /// </summary>
+    public string? RootNodesFilename { init; get; }
+
     // you can combine multiple like this: {ScriptNodeStrategy.Labels}|{TxNodeStrategy.Labels}|{BlockNodeStrategy.Labels}
     // blacklist with -
     // whitelist with +

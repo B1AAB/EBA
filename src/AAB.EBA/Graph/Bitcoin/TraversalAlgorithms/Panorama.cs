@@ -150,7 +150,7 @@ public class Panorama : ITraversalAlgorithm
                 "Attempt {Attempt}/{MaxAttempts}: querying {remaining:N0} random root node(s) for sampling.",
                 attempts, _options.Bitcoin.GraphSample.MaxAttempts, remaining);
 
-            var rndRootNodes = await GetRandomScriptNodes(remaining, ct);
+            var rndRootNodes = await GetRootNodesAsync(remaining, ct);
 
             _logger.LogInformation(
                 "Attempt {Attempt}: Selected {r:N0} random root node(s).",
@@ -831,6 +831,59 @@ public class Panorama : ITraversalAlgorithm
 
             current = neighbor;
         }
+    }
+
+    /// <summary>
+    /// Returns up to count root nodes from the beginning of the user-provided file on each
+    /// attempt when one is configured, otherwise randomly selected from the database.
+    /// </summary>
+    private async Task<List<ScriptNode>> GetRootNodesAsync(int count, CancellationToken ct)
+    {
+        if (_options.Bitcoin.GraphSample.RootNodesFilename == null)
+            return await GetRandomScriptNodes(count, ct);
+
+        var roots = ReadRootNodesFile(_options.Bitcoin.GraphSample.RootNodesFilename);
+        return roots.GetRange(0, Math.Min(count, roots.Count));
+    }
+
+    private List<ScriptNode> ReadRootNodesFile(string filename)
+    {
+        var roots = new List<ScriptNode>();
+        var addresses = new HashSet<string>(StringComparer.Ordinal);
+        var duplicates = 0;
+        var firstLine = true;
+
+        foreach (var line in File.ReadLines(filename))
+        {
+            var address = line.Split('\t')[0].Trim();
+            var isHeader = firstLine && address.Equals("Address", StringComparison.OrdinalIgnoreCase);
+            firstLine = false;
+
+            if (address.Length == 0 || line.StartsWith('#') || isHeader)
+                continue;
+
+            if (!addresses.Add(address))
+            {
+                duplicates++;
+                continue;
+            }
+
+            roots.Add(new ScriptNode(address, ScriptType.Unknown));
+        }
+
+        if (roots.Count == 0)
+            throw new InvalidOperationException($"No root Script addresses were read from '{filename}'.");
+
+        _logger.LogInformation(
+            "Read {RootCount:N0} root Script node(s) from {File}; skipped {DuplicateCount:N0} duplicate(s).",
+            roots.Count, filename, duplicates);
+
+        if (roots.Count < _options.Bitcoin.GraphSample.Count)
+            _logger.LogWarning(
+                "The root nodes file {File} contains {RootCount:N0} roots, fewer than the requested {Count:N0} graphs.",
+                filename, roots.Count, _options.Bitcoin.GraphSample.Count);
+
+        return roots;
     }
 
     private async Task<List<ScriptNode>> GetRandomScriptNodes(int count, CancellationToken ct)

@@ -565,6 +565,16 @@ internal class Cli
                 "invalid inputs are replaced by the default configuration."
         };
 
+        var rootNodesFileOption = new Option<string?>("--root-nodes-filename")
+        {
+            Description =
+                "A TSV file listing the Script nodes to use as root nodes, one per line, " +
+                "with the Script address in the first column. " +
+                "If provided, these root nodes are expanded in the given order instead of randomly selected ones, " +
+                "and --root-node-select-prob is ignored. " +
+                "If not provided, root nodes are selected randomly."
+        };
+
         var cmd = new Command(
             name: "sample",
             description:
@@ -578,6 +588,7 @@ internal class Cli
             minEdgeCountOption,
             maxEdgeCountOption,
             rootNodeSelectProbOption,
+            rootNodesFileOption,
             methodOption,
             methodOptionsOption,
         };
@@ -592,6 +603,10 @@ internal class Cli
                 if (commandResult.GetResult(methodOption) == null)
                     commandResult.AddError($"Option '--{methodOption.Name}' is required when --status-filename is not used.");
             }
+
+            var rootNodesFile = commandResult.GetValue(rootNodesFileOption);
+            if (rootNodesFile != null && !File.Exists(rootNodesFile))
+                commandResult.AddError($"The file given for '--root-nodes-file' does not exist: '{rootNodesFile}'.");
 
             var methodOptionsJson = commandResult.GetValue(methodOptionsOption);
             if (commandResult.GetValue(methodOption) == GraphTraversal.Panorama
@@ -648,6 +663,7 @@ internal class Cli
                 graphSampleMethodOption: methodOption,
                 graphSampleMethodOptionsOption: methodOptionsOption,
                 graphSampleRootNodeSelectProb: rootNodeSelectProbOption,
+                graphSampleRootNodesFile: rootNodesFileOption,
                 workingDirOption: _workingDirOption,
                 statusFilenameOption: _statusFilenameOption);
 

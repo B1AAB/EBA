@@ -17,6 +17,7 @@ internal class OptionsBinder
         Option<GraphTraversal>? graphSampleMethodOption = null,
         Option<string> graphSampleMethodOptionsOption = null,
         Option<double>? graphSampleRootNodeSelectProb = null,
+        Option<string?>? graphSampleRootNodesFile = null,
         Option<string>? workingDirOption = null,
         Option<string>? statusFilenameOption = null,
         Option<string>? batchFilenameOption = null,
@@ -81,7 +82,8 @@ internal class OptionsBinder
             MaxNodeCount = GetValue(defs.Bitcoin.GraphSample.MaxNodeCount, graphSampleMaxNodeCount, c),
             MinEdgeCount = GetValue(defs.Bitcoin.GraphSample.MinEdgeCount, graphSampleMinEdgeCount, c),
             MaxEdgeCount = GetValue(defs.Bitcoin.GraphSample.MaxEdgeCount, graphSampleMaxEdgeCount, c),
-            RootNodeSelectProb = GetValue(defs.Bitcoin.GraphSample.RootNodeSelectProb, graphSampleRootNodeSelectProb, c)
+            RootNodeSelectProb = GetValue(defs.Bitcoin.GraphSample.RootNodeSelectProb, graphSampleRootNodeSelectProb, c),
+            RootNodesFilename = GetValue(defs.Bitcoin.GraphSample.RootNodesFilename, graphSampleRootNodesFile, c)
         };
 
         var neo4jOps = new Neo4jOptions()
