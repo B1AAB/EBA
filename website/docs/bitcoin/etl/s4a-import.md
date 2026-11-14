@@ -114,6 +114,12 @@ meaning it does not support incremental updates to an existing graph.
     </TabItem>
     </Tabs>
 
+    :::warning
+    Do not end `GDIR` with a trailing path separator.
+    `neo4j-admin` interprets the input file paths as regular expressions, and the resulting
+    doubled separator (`\\`) is parsed as an escape sequence.
+    :::
+
 5. [Optional] Verify that your data directory contains the correctly batched files. 
 
     <details>
@@ -205,9 +211,9 @@ meaning it does not support incremental updates to an existing graph.
     sudo -u neo4j HEAP_SIZE=4G neo4j-admin database import full \
         --overwrite-destination neo4j \
         --nodes="$GDIR/Coinbase.csv.gz" \
-        --nodes="$GDIR/header_nodes_Block.csv.gz.gz,$GDIR/[0-9].*_nodes_Block.csv.gz" \
+        --nodes="$GDIR/header_nodes_Block.csv.gz,$GDIR/[0-9].*_nodes_Block.csv.gz" \
         --nodes="$GDIR/header_nodes_Script.csv.gz,$GDIR/unique_nodes_Script.csv.gz" \
-        --nodes="$GDIR/header_nodes_Tx.csv.gz,$GDIR/unique_nodes_Tx.tsv.gz" \
+        --nodes="$GDIR/header_nodes_Tx.csv.gz,$GDIR/unique_nodes_Tx.csv.gz" \
         --relationships="$GDIR/header_edges_Block_Confirms_Tx.csv.gz,$GDIR/[0-9].*_edges_Block_Confirms_Tx.csv.gz" \
         --relationships="$GDIR/header_edges_Coinbase_Mints_Tx.csv.gz,$GDIR/[0-9].*_edges_Coinbase_Mints_Tx.csv.gz" \
         --relationships="$GDIR/header_edges_Tx_Credits_Script.csv.gz,$GDIR/[0-9].*_edges_Tx_Credits_Script.csv.gz" \
@@ -247,7 +253,9 @@ meaning it does not support incremental updates to an existing graph.
 
 9.  [Update Neo4j database configuration](./db-conf).
 
-10. Create indexes and apply constraints.
+10. Start the database.
+
+11. Create indexes and apply constraints.
 
     <Tabs
         groupId="os"
