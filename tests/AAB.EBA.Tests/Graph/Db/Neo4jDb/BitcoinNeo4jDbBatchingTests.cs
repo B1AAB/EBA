@@ -5,6 +5,7 @@ using AAB.EBA.Graph.Db.Neo4jDb;
 using AAB.EBA.Graph.Model;
 using AAB.EBA.Tests.TestKit;
 using AAB.EBA.Tests.TestKit.BitcoinCore;
+using AAB.EBA.Tests.TestKit.Graph;
 using AAB.EBA.Tests.TestKit.Traverse;
 
 using Microsoft.Extensions.Logging.Abstractions;
@@ -68,7 +69,7 @@ public class BitcoinNeo4jDbBatchingTests : TestsBase
         var options = CreateOptions();
         await SerializeEarlierRunAsync(options);
         var graph = await SyntheticBlockGraph.CreateAsync(Second, options);
-        using var db = CreateDb(options);
+        using var db = TestGraphDb.Create(options);
 
         // Act
         await db.SerializeAsync(graph, CancellationToken.None);
@@ -85,7 +86,7 @@ public class BitcoinNeo4jDbBatchingTests : TestsBase
         await SerializeEarlierRunAsync(options);
         var before = await TraverseOutput.ReadAsync(options);
         var graph = await SyntheticBlockGraph.CreateAsync(Second, options);
-        var db = CreateDb(options);
+        var db = TestGraphDb.Create(options);
 
         // Act
         await db.SerializeAsync(graph, CancellationToken.None);
@@ -103,7 +104,7 @@ public class BitcoinNeo4jDbBatchingTests : TestsBase
         var options = CreateOptions();
         var first = await SyntheticBlockGraph.CreateAsync(First, options);
         var second = await SyntheticBlockGraph.CreateAsync(Second, options);
-        var db = CreateDb(options);
+        var db = TestGraphDb.Create(options);
 
         // Act
         await db.SerializeAsync(first, CancellationToken.None);
@@ -121,7 +122,7 @@ public class BitcoinNeo4jDbBatchingTests : TestsBase
         // Arrange
         var options = CreateOptions();
         var graph = await SyntheticBlockGraph.CreateAsync(First, options);
-        var db = CreateDb(options);
+        var db = TestGraphDb.Create(options);
         await db.SerializeAsync(graph, CancellationToken.None);
 
         // Act
@@ -138,20 +139,14 @@ public class BitcoinNeo4jDbBatchingTests : TestsBase
 
     private static async Task SerializeFiveGraphsAsync(Options options)
     {
-        using var db = CreateDb(options);
-        for (var height = First; height < First + 5; height++)
-            await db.SerializeAsync(await SyntheticBlockGraph.CreateAsync(height, options), CancellationToken.None);
+        using var db = TestGraphDb.Create(options);
+        await SyntheticBlockGraph.SerializeAsync(db, options, Enumerable.Range((int)First, 5).Select(x => (long)x).ToArray());
     }
 
     private static async Task SerializeEarlierRunAsync(Options options)
     {
         var graph = await SyntheticBlockGraph.CreateAsync(First, options);
-        using (var db = CreateDb(options))
+        using (var db = TestGraphDb.Create(options))
             await db.SerializeAsync(graph, CancellationToken.None);
-    }
-
-    private static BitcoinNeo4jDb CreateDb(Options options)
-    {
-        return new BitcoinNeo4jDb(options, NullLogger<Neo4jDb<BitcoinGraph>>.Instance);
     }
 }

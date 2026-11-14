@@ -17,6 +17,11 @@ This adds block JSON and height-to-hash mappings without downloading `tx_*.json`
 or replacing the existing chain-info recording. The older `api_mock` and `all`
 commands continue to record individual transactions as well.
 
+The tests read sorted TSV baselines from `ExpectedOutputs/Traverse/{height}`.
+The generator's legacy `all` command still writes range-named output directories;
+those are not the baselines used by the tests. Use the Debug-only update procedure
+in `tests/AAB.EBA.Tests/README.md` to update the TSV baselines.
+
 good blocks for testing:
 700000-700005
 300000-300001

@@ -10,7 +10,10 @@ using Xunit;
 
 namespace AAB.EBA.Tests.Blockchains.Bitcoin;
 
-[Trait("Category", "Unit")]
+/// <summary>
+/// Run these tests in Release too, because Release processes transactions in parallel.
+/// </summary>
+[Trait("Category", "Functional")]
 public class BitcoinOrchestratorTraverseTests : TestsBase
 {
     [Theory]
@@ -27,20 +30,31 @@ public class BitcoinOrchestratorTraverseTests : TestsBase
         var output = await TraverseGraphOutput.ReadAsync(options);
 
         // Assert
-        ExpectedGraphStore.Compare(height, output, BitcoinGraphColumns.Stable);
+        ExpectedGraphStore.Compare(height, output);
     }
 
-    [Fact]
-    public async Task TraverseAsync_BlockRange_WritesGraphOfEveryBlock()
+    [Theory]
+    [InlineData(false, 1, 0)]
+    [InlineData(true, 4, 0)]
+    [InlineData(true, 1, 1)]
+    public async Task TraverseAsync_BlockRange_WritesGraphOfEveryBlock(bool listedBlocks, int concurrency, int batchSize)
     {
         // Arrange
-        var options = await RecordedTraverse.RunAsync(TempExeDir, 71036, 71037);
+        var heights = listedBlocks ? new long[] { 71036, 71037, 132317, 717531 } : [71036, 71037];
+        var builder = TraverseOptionsBuilder.ForWorkingDir(TempExeDir).WithRange(71036, 71037)
+            .WithMaxConcurrentBlocks(concurrency);
+        if (batchSize > 0)
+            builder.WithMaxEntitiesPerBatch(batchSize);
+        if (listedBlocks)
+            builder.WithBlocksListFile(heights);
+        var options = builder.Build();
 
         // Act
+        await RecordedTraverse.RunAsync(options);
         var output = await TraverseGraphOutput.ReadAsync(options);
 
         // Assert
-        GraphCsvAssert.Equal(ExpectedGraphStore.Union(71036, 71037).Tables, output.Tables, BitcoinGraphColumns.Stable);
+        GraphCsvAssert.Equal(ExpectedGraphStore.Union(heights).Tables, output.Tables);
     }
 
     [Fact]
@@ -77,40 +91,4 @@ public class BitcoinOrchestratorTraverseTests : TestsBase
         Assert.Empty(node.UnexpectedRequests);
     }
 
-    [Theory]
-    [InlineData(71036)]
-    [InlineData(132317)]
-    [InlineData(717531)]
-    public async Task TraverseAsync_SingleBlock_WritesExpectedScriptTypeProfile(int height)
-    {
-        // Arrange
-        var options = await RecordedTraverse.RunAsync(TempExeDir, height, height);
-
-        // Act
-        var output = await TraverseGraphOutput.ReadAsync(options);
-
-        // Assert
-        ExpectedGraphStore.Compare(height, output,
-            new GraphCsvComparison().OnlyColumns(BitcoinGraphColumns.ScriptTypeProfile), "nodes_Block");
-    }
-
-    // DEBUG limits transaction processing and graph merging to one worker. Release
-    // allows parallel execution: an in-block spender can register an ID-only source
-    // TxNode before that transaction's full node. TryAddNode keeps the first node,
-    // so all node IDs exist but features can be missing. Run this test in both builds.
-    [Theory]
-    [InlineData(71036)]
-    [InlineData(132317)]
-    [InlineData(717531)]
-    public async Task TraverseAsync_SingleBlock_WritesFeaturesOfEveryTransaction(int height)
-    {
-        // Arrange
-        var options = await RecordedTraverse.RunAsync(TempExeDir, height, height);
-
-        // Act
-        var output = await TraverseGraphOutput.ReadAsync(options);
-
-        // Assert
-        ExpectedGraphStore.Compare(height, output, onlyType: "nodes_Tx");
-    }
 }

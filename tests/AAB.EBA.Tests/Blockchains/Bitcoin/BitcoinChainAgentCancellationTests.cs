@@ -24,7 +24,7 @@ public class BitcoinChainAgentCancellationTests
     {
         // Arrange
         using var node = SyntheticBitcoinNode.FromMockData();
-        using var agent = CreateAgent(node);
+        using var agent = TestBitcoinAgent.Create(node);
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
@@ -43,7 +43,7 @@ public class BitcoinChainAgentCancellationTests
     {
         // Arrange
         using var node = SyntheticBitcoinNode.FromMockData();
-        using var agent = CreateAgent(node);
+        using var agent = TestBitcoinAgent.Create(node);
         using var cts = new CancellationTokenSource();
         var stall = node.On(endpoint).Stall();
         _ = stall.Received.ContinueWith(_ => cts.Cancel(), TaskScheduler.Default);
@@ -60,7 +60,7 @@ public class BitcoinChainAgentCancellationTests
     {
         // Arrange
         using var node = SyntheticBitcoinNode.FromMockData();
-        using var agent = CreateAgent(node);
+        using var agent = TestBitcoinAgent.Create(node);
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
@@ -77,7 +77,7 @@ public class BitcoinChainAgentCancellationTests
         // Arrange
         using var node = SyntheticBitcoinNode.FromMockData();
         var stall = node.On(BitcoinCoreEndpoint.ChainInfo).Stall();
-        using var agent = CreateAgent(node);
+        using var agent = TestBitcoinAgent.Create(node);
         using var cts = new CancellationTokenSource();
         _ = stall.Received.ContinueWith(_ => cts.Cancel(), TaskScheduler.Default);
 
@@ -94,7 +94,7 @@ public class BitcoinChainAgentCancellationTests
         // Arrange
         using var node = SyntheticBitcoinNode.FromMockData();
         node.On(BitcoinCoreEndpoint.ChainInfo).Fail(1);
-        using var agent = CreateAgent(node);
+        using var agent = TestBitcoinAgent.Create(node);
 
         // Act
         var (isConnected, chainInfo) = await agent.IsConnectedAsync(CancellationToken.None);
@@ -102,15 +102,5 @@ public class BitcoinChainAgentCancellationTests
         // Assert
         Assert.False(isConnected);
         Assert.Null(chainInfo);
-    }
-
-    private static BitcoinChainAgent CreateAgent(SyntheticBitcoinNode node)
-    {
-        return new BitcoinChainAgent(
-            new HttpClient(node, disposeHandler: false)
-            {
-                BaseAddress = new BitcoinTraverseOptions().ClientUri
-            },
-            NullLogger<BitcoinChainAgent>.Instance);
     }
 }

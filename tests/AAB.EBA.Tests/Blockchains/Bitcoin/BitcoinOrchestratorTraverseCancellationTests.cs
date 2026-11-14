@@ -4,6 +4,7 @@ using AAB.EBA.Tests.TestKit.Traverse;
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -26,10 +27,13 @@ namespace AAB.EBA.Tests.Blockchains.Bitcoin;
 ///   path as the fetch cases.
 /// </summary>
 [Trait("Category", "Functional")]
-public class BitcoinOrchestratorTraverseCancellationTests : TestsBase
+public class BitcoinOrchestratorTraverseCancellationTests : TestsBase, IClassFixture<BaselineTraverseFixture>
 {
     private const long From = TraverseOptionsBuilder.DefaultFromHeight;
     private const long To = TraverseOptionsBuilder.DefaultToHeight;
+    private readonly BaselineTraverseFixture _baseline;
+
+    public BitcoinOrchestratorTraverseCancellationTests(BaselineTraverseFixture baseline) => _baseline = baseline;
 
     [Fact]
     public async Task TraverseAsync_CanceledWhileWritingSecondBatch_AccountsForEveryBlockExactlyOnce()
@@ -60,30 +64,7 @@ public class BitcoinOrchestratorTraverseCancellationTests : TestsBase
     [InlineData(Point.WhileWritingBlockWithBufferedBlocks)]
     [InlineData(Point.WhileFetchingSeveralBlocks)]
     [InlineData(Point.WhileRetryingBlock)]
-    public async Task TraverseAsync_Canceled_ThrowsOperationCanceledException(Point point)
-    {
-        // Arrange
-        using var scenario = TraverseCancellationScenario.Create(point, TempExeDir);
-
-        // Act
-        var act = scenario.RunAsync;
-
-        // Assert
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(act);
-    }
-
-    [Theory]
-    [InlineData(Point.AfterQueuesPersisted)]
-    [InlineData(Point.WhileBufferIsFull)]
-    [InlineData(Point.WhileFetchingBlockHash)]
-    [InlineData(Point.WhileFetchingBlockBody)]
-    [InlineData(Point.BlockHashDeliveredAfterCancellation)]
-    [InlineData(Point.BlockBodyDeliveredAfterCancellation)]
-    [InlineData(Point.WhileWritingBlock)]
-    [InlineData(Point.WhileWritingBlockWithBufferedBlocks)]
-    [InlineData(Point.WhileFetchingSeveralBlocks)]
-    [InlineData(Point.WhileRetryingBlock)]
-    public async Task TraverseAsync_Canceled_AccountsForEveryBlockExactlyOnce(Point point)
+    public async Task TraverseAsync_Canceled_LeavesConsistentState(Point point)
     {
         // Arrange
         using var scenario = TraverseCancellationScenario.Create(point, TempExeDir);
@@ -92,98 +73,12 @@ public class BitcoinOrchestratorTraverseCancellationTests : TestsBase
         await scenario.RunUntilCanceledAsync();
 
         // Assert
-        TraverseAssert.EveryBlockAccountedExactlyOnce(
-            scenario.RequestedHeights, await TraverseOutput.ReadAsync(scenario.Options));
-    }
-
-    [Theory]
-    [InlineData(Point.AfterQueuesPersisted)]
-    [InlineData(Point.WhileBufferIsFull)]
-    [InlineData(Point.WhileFetchingBlockHash)]
-    [InlineData(Point.WhileFetchingBlockBody)]
-    [InlineData(Point.BlockHashDeliveredAfterCancellation)]
-    [InlineData(Point.BlockBodyDeliveredAfterCancellation)]
-    [InlineData(Point.WhileWritingBlock)]
-    [InlineData(Point.WhileWritingBlockWithBufferedBlocks)]
-    [InlineData(Point.WhileFetchingSeveralBlocks)]
-    [InlineData(Point.WhileRetryingBlock)]
-    public async Task TraverseAsync_Canceled_RegistersNoBlockAsFailed(Point point)
-    {
-        // Arrange
-        using var scenario = TraverseCancellationScenario.Create(point, TempExeDir);
-
-        // Act
-        await scenario.RunUntilCanceledAsync();
-
-        // Assert
-        Assert.Empty((await TraverseOutput.ReadAsync(scenario.Options)).FailedBlockHeights);
-    }
-
-    [Theory]
-    [InlineData(Point.WhileBufferIsFull)]
-    [InlineData(Point.WhileFetchingBlockHash)]
-    [InlineData(Point.WhileFetchingBlockBody)]
-    [InlineData(Point.BlockHashDeliveredAfterCancellation)]
-    [InlineData(Point.BlockBodyDeliveredAfterCancellation)]
-    [InlineData(Point.WhileWritingBlock)]
-    [InlineData(Point.WhileWritingBlockWithBufferedBlocks)]
-    [InlineData(Point.WhileFetchingSeveralBlocks)]
-    [InlineData(Point.WhileRetryingBlock)]
-    public async Task TraverseAsync_Canceled_WrittenBlocksEqualUncanceledTraverse(Point point)
-    {
-        // Arrange
-        var expected = await UncanceledTraverse.RunBaselineAsync(TempExeDir);
-        using var scenario = TraverseCancellationScenario.Create(point, Path.Join(TempExeDir, "canceled"));
-
-        // Act
-        await scenario.RunUntilCanceledAsync();
-
-        // Assert
-        var actual = await TraverseOutput.ReadAsync(scenario.Options);
-        TraverseAssert.BlocksEqual(expected, actual, actual.WrittenBlockHeights);
-    }
-
-    [Theory]
-    [InlineData(Point.WhileBufferIsFull)]
-    [InlineData(Point.WhileFetchingBlockHash)]
-    [InlineData(Point.WhileFetchingBlockBody)]
-    [InlineData(Point.BlockHashDeliveredAfterCancellation)]
-    [InlineData(Point.BlockBodyDeliveredAfterCancellation)]
-    [InlineData(Point.WhileWritingBlock)]
-    [InlineData(Point.WhileWritingBlockWithBufferedBlocks)]
-    [InlineData(Point.WhileFetchingSeveralBlocks)]
-    [InlineData(Point.WhileRetryingBlock)]
-    public async Task TraverseAsync_Canceled_WritesSharedNodesOfEveryWrittenBlock(Point point)
-    {
-        // Arrange
-        var expected = await UncanceledTraverse.RunBaselineAsync(TempExeDir);
-        using var scenario = TraverseCancellationScenario.Create(point, Path.Join(TempExeDir, "canceled"));
-
-        // Act
-        await scenario.RunUntilCanceledAsync();
-
-        // Assert
-        Assert.Equal(
-            expected.GetSharedNodeRowCountsPerWrittenBlock(),
-            (await TraverseOutput.ReadAsync(scenario.Options)).GetSharedNodeRowCountsPerWrittenBlock());
+        TraverseAssert.CanceledStateIsConsistent(
+            scenario.RequestedHeights, await TraverseOutput.ReadAsync(scenario.Options), _baseline.Output);
     }
 
     [Fact]
-    public async Task TraverseAsync_CanceledBeforeFirstBlock_RequestsNoBlock()
-    {
-        // Arrange
-        using var scenario = TraverseCancellationScenario.Create(Point.AfterQueuesPersisted, TempExeDir);
-
-        // Act
-        await scenario.RunUntilCanceledAsync();
-
-        // Assert
-        Assert.Empty(scenario.Node.GetRequests(BitcoinCoreEndpoint.BlockHashByHeight));
-        Assert.Empty(scenario.Node.GetRequests(BitcoinCoreEndpoint.Block));
-    }
-
-    [Fact]
-    public async Task TraverseAsync_CanceledBeforeFirstBlock_LeavesEveryBlockPending()
+    public async Task TraverseAsync_CanceledBeforeFirstBlock_RequestsNothingAndLeavesEveryBlockPending()
     {
         // Arrange
         using var scenario = TraverseCancellationScenario.Create(Point.AfterQueuesPersisted, TempExeDir);
@@ -193,8 +88,11 @@ public class BitcoinOrchestratorTraverseCancellationTests : TestsBase
 
         // Assert
         var output = await TraverseOutput.ReadAsync(scenario.Options);
-        Assert.Empty(output.WrittenBlockHeights);
-        Assert.Equal(scenario.RequestedHeights, output.GetAccountedHeights());
+        Assert.Multiple(
+            () => Assert.Empty(scenario.Node.GetRequests(BitcoinCoreEndpoint.BlockHashByHeight)),
+            () => Assert.Empty(scenario.Node.GetRequests(BitcoinCoreEndpoint.Block)),
+            () => Assert.Empty(output.WrittenBlockHeights),
+            () => Assert.Equal(scenario.RequestedHeights, output.GetAccountedHeights()));
     }
 
     [Fact]
@@ -224,7 +122,7 @@ public class BitcoinOrchestratorTraverseCancellationTests : TestsBase
         // Assert
         var output = await TraverseOutput.ReadAsync(scenario.Options);
         Assert.Equal([From, From + 1], output.WrittenBlockHeights);
-        Assert.Equal([From + 2, From + 3, From + 4, To], output.ToProcessBlockHeights.Sorted());
+        Assert.Equal([From + 2, From + 3, From + 4, To], output.ToProcessBlockHeights.Order());
     }
 
     [Fact]
@@ -252,7 +150,7 @@ public class BitcoinOrchestratorTraverseCancellationTests : TestsBase
         // Assert
         var output = await TraverseOutput.ReadAsync(scenario.Options);
         Assert.Equal([From, From + 1, From + 2], output.WrittenBlockHeights);
-        Assert.Equal([From + 3, From + 4, To], output.PendingBlockHeights.Sorted());
+        Assert.Equal([From + 3, From + 4, To], output.PendingBlockHeights.Order());
     }
 
     [Fact]
@@ -270,7 +168,7 @@ public class BitcoinOrchestratorTraverseCancellationTests : TestsBase
         // Assert
         var output = await TraverseOutput.ReadAsync(scenario.Options);
         Assert.Equal([From], output.WrittenBlockHeights);
-        Assert.Equal([From + 1, From + 2, From + 3, From + 4, To], output.PendingBlockHeights.Sorted());
+        Assert.Equal([From + 1, From + 2, From + 3, From + 4, To], output.PendingBlockHeights.Order());
     }
 
     [Fact]
@@ -286,7 +184,7 @@ public class BitcoinOrchestratorTraverseCancellationTests : TestsBase
 
         // Assert
         var output = await TraverseOutput.ReadAsync(scenario.Options);
-        Assert.Equal(scenario.RequestedHeights, output.WrittenBlockHeights.Sorted());
+        Assert.Equal(scenario.RequestedHeights, output.WrittenBlockHeights.Order());
         Assert.Empty(output.PendingBlockHeights);
     }
 
@@ -340,7 +238,7 @@ public class BitcoinOrchestratorTraverseCancellationTests : TestsBase
 
         // Assert
         Assert.Equal(
-            scenario.RequestedHeights.Sorted(),
+            scenario.RequestedHeights.Order(),
             (await TraverseOutput.ReadAsync(scenario.Options)).GetAccountedHeights());
     }
 
@@ -392,31 +290,18 @@ public class BitcoinOrchestratorTraverseCancellationTests : TestsBase
     [Theory]
     [InlineData(Point.BeforeStart)]
     [InlineData(Point.WhileRequestingChainInfo)]
-    public async Task TraverseAsync_CanceledBeforeStart_CreatesNoFiles(Point point)
+    public async Task TraverseAsync_CanceledBeforeStart_ThrowsAndCreatesNoFiles(Point point)
     {
         // Arrange
         using var scenario = TraverseCancellationScenario.Create(point, TempExeDir);
 
         // Act
-        await Record.ExceptionAsync(scenario.RunAsync);
+        var exception = await Record.ExceptionAsync(scenario.RunAsync);
 
         // Assert
-        Assert.Empty(new TraverseWorkingDir(scenario.Options).FileKinds());
-    }
-
-    [Theory]
-    [InlineData(Point.BeforeStart)]
-    [InlineData(Point.WhileRequestingChainInfo)]
-    public async Task TraverseAsync_CanceledBeforeStart_ThrowsOperationCanceledException(Point point)
-    {
-        // Arrange
-        using var scenario = TraverseCancellationScenario.Create(point, TempExeDir);
-
-        // Act
-        var act = scenario.RunAsync;
-
-        // Assert
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(act);
+        Assert.Multiple(
+            () => Assert.IsAssignableFrom<OperationCanceledException>(exception),
+            () => Assert.Empty(new TraverseWorkingDir(scenario.Options).FileKinds()));
     }
 
     [Fact]

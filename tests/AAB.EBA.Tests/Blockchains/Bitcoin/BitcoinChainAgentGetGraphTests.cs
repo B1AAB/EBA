@@ -21,68 +21,29 @@ public class BitcoinChainAgentGetGraphTests
 {
     [Theory]
     [InlineData(71036)]
-    [InlineData(132317)]
-    [InlineData(717531)]
-    public async Task GetGraph_RecordedBlock_BuildsOneEdgePerInputOutputAndTransaction(int height)
-    {
-        // Arrange
-        using var node = RecordedBitcoinNode.FromMockData();
-        using var agent = CreateAgent(node);
-        var block = RecordedBlock.FromMockData(height);
-
-        // Act
-        using var graph = await agent.GetGraph(height, new BitcoinOptions(), CancellationToken.None);
-
-        // Assert
-        Assert.Equal(block.Height, graph.Block.Height);
-        Assert.Equal(block.Hash, graph.Block.Hash);
-        Assert.Equal(ExpectedCounts(block).OrderBy(x => x.Key),
-            graph.EdgesByType.ToDictionary(x => x.Key.ToString(), x => x.Value.Count).OrderBy(x => x.Key));
-    }
-
-    [Theory]
-    [InlineData(71036)]
     [InlineData(71037)]
     [InlineData(132317)]
     [InlineData(717531)]
-    public async Task GetGraph_RecordedBlock_AddsCoinbaseTransactionNode(int height)
+    public async Task GetGraph_RecordedBlock_MatchesRecordedBlock(int height)
     {
         // Arrange
         using var node = RecordedBitcoinNode.FromMockData();
-        using var agent = CreateAgent(node);
+        using var agent = TestBitcoinAgent.Create(node);
         var block = RecordedBlock.FromMockData(height);
 
         // Act
         using var graph = await agent.GetGraph(height, new BitcoinOptions(), CancellationToken.None);
 
         // Assert
-        Assert.Single(graph.NodesByType[TxNode.Kind].OfType<TxNode>(), tx => tx.Txid == block.Coinbase.Id);
+        Assert.Multiple(
+            () => Assert.Equal(block.Height, graph.Block.Height),
+            () => Assert.Equal(block.Hash, graph.Block.Hash),
+            () => Assert.Equal(ExpectedCounts(block).Where(x => x.Value > 0).OrderBy(x => x.Key),
+                graph.EdgesByType.ToDictionary(x => x.Key.ToString(), x => x.Value.Count).OrderBy(x => x.Key)),
+            () => Assert.Single(graph.NodesByType[TxNode.Kind].OfType<TxNode>(), tx => tx.Txid == block.Coinbase.Id),
+            () => Assert.Equal(ExpectedTransactionIds(block), graph.NodesByType[TxNode.Kind]
+                .Select(node => Assert.IsType<TxNode>(node).Txid).Order(StringComparer.Ordinal)));
     }
-
-    [Theory]
-    [InlineData(71036)]
-    [InlineData(132317)]
-    [InlineData(717531)]
-    public async Task GetGraph_RecordedBlock_AddsBlockAndReferencedTransactionNodes(int height)
-    {
-        // Arrange
-        using var node = RecordedBitcoinNode.FromMockData();
-        using var agent = CreateAgent(node);
-        var block = RecordedBlock.FromMockData(height);
-
-        // Act
-        using var graph = await agent.GetGraph(height, new BitcoinOptions(), CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ExpectedTransactionIds(block), graph.NodesByType[TxNode.Kind]
-            .Select(node => Assert.IsType<TxNode>(node).Txid).Order(StringComparer.Ordinal));
-    }
-
-    private static BitcoinChainAgent CreateAgent(RecordedBitcoinNode node) => new(
-        new HttpClient(node, disposeHandler: false)
-        {
-            BaseAddress = new BitcoinTraverseOptions().ClientUri
-        }, NullLogger<BitcoinChainAgent>.Instance);
 
     private static IEnumerable<string> ExpectedTransactionIds(RecordedBlock block) =>
         block.Transactions.Select(tx => tx.Id)

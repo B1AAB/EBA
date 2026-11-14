@@ -1,8 +1,7 @@
 namespace AAB.EBA.Tests.TestKit.Traverse;
 
 /// <summary>
-/// The points at which a Bitcoin traverse can be canceled; see the case table
-/// of TRAVERSE_CANCELLATION_TEST_PLAN.md (the case ID is given per member).
+/// The points at which a Bitcoin traverse can be canceled (case IDs per member).
 /// "K" is the height of the block the cancellation is about.
 /// </summary>
 public enum TraverseCancellationPoint

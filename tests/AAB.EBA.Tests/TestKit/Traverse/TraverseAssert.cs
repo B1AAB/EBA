@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
 
+using AAB.EBA.Tests.TestKit.Graph;
 using Xunit;
 
 namespace AAB.EBA.Tests.TestKit.Traverse;
@@ -11,6 +14,45 @@ namespace AAB.EBA.Tests.TestKit.Traverse;
 /// </summary>
 public static class TraverseAssert
 {
+    public static void CanceledStateIsConsistent(IEnumerable<long> requested, TraverseOutput actual, TraverseOutput baseline)
+    {
+        Assert.Multiple(
+            () => EveryBlockAccountedExactlyOnce(requested, actual),
+            () => Assert.Empty(actual.FailedBlockHeights),
+            () => BlocksEqual(baseline, actual, actual.WrittenBlockHeights),
+            () =>
+            {
+                if (actual.WrittenBlockHeights.Count > 0)
+                    Assert.Equal(baseline.GetSharedNodeRowCountsPerWrittenBlock(), actual.GetSharedNodeRowCountsPerWrittenBlock());
+            });
+    }
+
+    public static void ResumedOutputIsComplete(IEnumerable<long> requested, TraverseOutput actual, TraverseOutput baseline)
+    {
+        Assert.Multiple(
+            () => Assert.Equal(requested.Order(), actual.WrittenBlockHeights.Order()),
+            () => Assert.Empty(actual.PendingBlockHeights),
+            () => OutputsEqual(baseline, actual));
+    }
+
+    public static async Task CanceledArtifactsAreWellFormed(TraverseWorkingDir workingDir, TraverseWorkingDir baselineDir)
+    {
+        var unreadable = await workingDir.UnreadableBatchFilesAsync();
+        var expectedTypes = await baselineDir.BatchTypesAsync();
+        var actualTypes = await workingDir.BatchTypesAsync();
+        Assert.Multiple(
+            () =>
+            {
+                using var status = workingDir.StatusFileJson();
+                Assert.Equal(JsonValueKind.Object, status.RootElement.ValueKind);
+            },
+            () => Assert.Empty(unreadable),
+            () => Assert.Equal(expectedTypes, actualTypes),
+            () => Assert.Equal(baselineDir.ConstantFiles().OrderBy(x => x.Key), workingDir.ConstantFiles().OrderBy(x => x.Key)),
+            () => Assert.Empty(workingDir.FilesThatCannotBeOpenedExclusively()),
+            () => Assert.Subset(baselineDir.FileKinds().ToHashSet(), workingDir.FileKinds().ToHashSet()));
+    }
+
     /// <summary>
     /// Every requested block is either written or pending, and none is
     /// written or pending more than once.
@@ -32,9 +74,7 @@ public static class TraverseAssert
     public static void BlocksEqual(TraverseOutput expected, TraverseOutput actual, IEnumerable<long> heights)
     {
         foreach (var height in heights)
-            Assert.True(
-                expected.GetBlockRows(height).SequenceEqual(actual.GetBlockRows(height)),
-                $"The rows written for block {height} differ from the expected rows.");
+            GraphCsvAssert.Equal(expected.BlockTables(height), actual.BlockTables(height));
     }
 
     /// <summary>
@@ -42,6 +82,6 @@ public static class TraverseAssert
     /// </summary>
     public static void OutputsEqual(TraverseOutput expected, TraverseOutput actual)
     {
-        Assert.Equal(expected.GetAllRows(), actual.GetAllRows());
+        GraphCsvAssert.Equal(expected.Tables, actual.Tables);
     }
 }

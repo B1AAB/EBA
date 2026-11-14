@@ -5,6 +5,7 @@ using AAB.EBA.Graph.Bitcoin.Descriptors;
 using AAB.EBA.Graph.Db.Neo4jDb;
 using AAB.EBA.Graph.Model;
 using AAB.EBA.Serializers;
+using AAB.EBA.Tests.TestKit.Graph;
 
 using System;
 using System.Collections.Generic;
@@ -24,9 +25,7 @@ namespace AAB.EBA.Tests.TestKit.Traverse;
 /// to (e.g., Block nodes and the edges created by a block) are attributed to
 /// their block, so the output of a single block can be inspected and compared.
 ///
-/// Rows are kept in a form that is comparable between traverses: Block and Tx
-/// node rows are reduced to their ID (see <see cref="_typesComparedById"/>),
-/// and rows of all the other types are kept as written.
+/// Full rows are preserved; comparisons use GraphCsvAssert's double tolerance.
 /// </summary>
 public sealed class TraverseOutput
 {
@@ -47,27 +46,6 @@ public sealed class TraverseOutput
         [S2TEdge.Kind.ToString()] = nameof(S2TEdge.SpentHeight),
     };
 
-    /// <summary>
-    /// The element types whose rows are reduced to their ID, because the other
-    /// columns of their rows depend on the order in which the transactions of
-    /// a block are processed, which is not deterministic when they are
-    /// processed in parallel; hence, these columns can differ between two
-    /// traverses of the same block:
-    ///
-    /// - Block nodes carry aggregate statistics of their transactions (e.g.,
-    ///   variance, skewness, counts per script type), and, for instance,
-    ///   floating-point rounding depends on the order of summation.
-    ///
-    /// - A transaction that is spent by another transaction of the same block
-    ///   is written either with or without its features, depending on which
-    ///   of the two transactions is processed first.
-    /// </summary>
-    private static readonly HashSet<string> _typesComparedById =
-    [
-        BlockNode.Kind.ToString(),
-        TxNode.Kind.ToString()
-    ];
-
     private static readonly string _blockNodeType = BlockNode.Kind.ToString();
 
     // element type -> all the rows of that type.
@@ -76,6 +54,17 @@ public sealed class TraverseOutput
     // element type -> block height -> rows of that block;
     // only for the types that are attributable to a block.
     private readonly Dictionary<string, Dictionary<long, List<string>>> _rowsByBlock;
+
+    private readonly TraverseGraphOutput _graph;
+
+    public IReadOnlyDictionary<string, GraphCsv> Tables => _graph.Tables
+        .Where(x => x.Key != "Coinbase" && x.Value.Rows.Count > 0)
+        .ToDictionary(x => KindName(x.Key), x => x.Value);
+
+    public IReadOnlyDictionary<string, GraphCsv> BlockTables(long height) => _graph.Tables
+        .Where(x => _blockHeightColumns.ContainsKey(KindName(x.Key)))
+        .ToDictionary(x => KindName(x.Key), x => x.Value.Where(
+            _blockHeightColumns[KindName(x.Key)], height.ToString(CultureInfo.InvariantCulture)));
 
     /// <summary>
     /// The element types that have at least one row in the output.
@@ -106,11 +95,13 @@ public sealed class TraverseOutput
     public IReadOnlyList<long> FailedBlockHeights { get; }
 
     private TraverseOutput(
+        TraverseGraphOutput graph,
         Dictionary<string, List<string>> rowsByType,
         Dictionary<string, Dictionary<long, List<string>>> rowsByBlock,
         IReadOnlyList<long> toProcessBlockHeights,
         IReadOnlyList<long> failedBlockHeights)
     {
+        _graph = graph;
         _rowsByType = rowsByType;
         _rowsByBlock = rowsByBlock;
         ToProcessBlockHeights = toProcessBlockHeights;
@@ -128,46 +119,32 @@ public sealed class TraverseOutput
     /// </summary>
     public static async Task<TraverseOutput> ReadAsync(Options options)
     {
-        var heightColumnIndexes = GetColumnIndexes(
-            options,
-            _blockHeightColumns.Keys,
-            (type, field) => field.Split(':')[0] == _blockHeightColumns[type]);
-
-        var idColumnIndexes = GetColumnIndexes(
-            options,
-            _typesComparedById,
-            (_, field) => field.Contains(":ID(", StringComparison.Ordinal));
         var rowsByType = new Dictionary<string, List<string>>();
         var rowsByBlock = new Dictionary<string, Dictionary<long, List<string>>>();
 
-        foreach (var batch in await ReadBatchesAsync(options.Neo4j.BatchesFilename))
+        var graph = await TraverseGraphOutput.ReadAsync(options);
+
+        foreach (var table in graph.Tables.Values.Where(x => x.Type != "Coinbase"))
         {
-            foreach (var (type, info) in batch.TypesInfo)
+            var type = KindName(table.Type);
+
+            var attributable = _blockHeightColumns.TryGetValue(type, out var column);
+
+            foreach (var fields in table.Rows)
             {
-                // A batch only has files for the types that it has rows for.
-                if (!File.Exists(info.Filename))
-                    continue;
+                var row = string.Join(Options.CsvDelimiter, fields);
+                GetOrAdd(rowsByType, type).Add(row);
 
-                var isAttributable = heightColumnIndexes.TryGetValue(type, out var heightIndex);
-                var isComparedById = idColumnIndexes.TryGetValue(type, out var idIndex);
-
-                foreach (var fields in IElementCodec.ReadCsv(info.Filename))
+                if (attributable)
                 {
-                    var row = isComparedById
-                        ? fields[idIndex]
-                        : string.Join(Options.CsvDelimiter, fields);
-                    GetOrAdd(rowsByType, type).Add(row);
-
-                    if (isAttributable)
-                    {
-                        var height = long.Parse(fields[heightIndex], CultureInfo.InvariantCulture);
-                        GetOrAdd(GetOrAdd(rowsByBlock, type), height).Add(row);
-                    }
+                    var height = long.Parse(fields[table.Column(column!)], CultureInfo.InvariantCulture);
+                    GetOrAdd(GetOrAdd(rowsByBlock, type), height).Add(row);
                 }
             }
         }
 
         return new TraverseOutput(
+            graph,
             rowsByType,
             rowsByBlock,
             ReadHeights(options.Bitcoin.Traverse.BlocksToProcessListFilename),
@@ -244,8 +221,8 @@ public sealed class TraverseOutput
 
     /// <summary>
     /// Returns all the rows in the output, across all element types, as sorted
-    /// lines formatted as `{element type}|{row}`. Two outputs contain the same
-    /// data (in the comparable form described above) if and only if this
+    /// lines formatted as `{element type}|{row}`. Two outputs contain the same data
+    /// (in the comparable form described above) if and only if this
     /// returns the same lines for both.
     /// </summary>
     public IReadOnlyList<string> GetAllRows()
@@ -277,38 +254,6 @@ public sealed class TraverseOutput
         ];
     }
 
-    /// <summary>
-    /// Returns the index of a column in the CSV header of each of the given
-    /// types, where the column is the first header field for which
-    /// <paramref name="isColumn"/> returns true given the type and the field.
-    /// Header fields are formatted as `{name}:{type}` (e.g., `Height:long`
-    /// or `Txid:ID(Tx)`), where name is empty for some fields (e.g., `:ID(Block)`).
-    /// </summary>
-    private static Dictionary<string, int> GetColumnIndexes(
-        Options options,
-        IEnumerable<string> types,
-        Func<string, string, bool> isColumn)
-    {
-        using var strategies = new BitcoinStrategyFactory(options);
-
-        var headers = strategies.NodeStrategies.Select(x => (Type: x.Key.ToString(), Codec: x.Value))
-            .Concat(strategies.EdgeStrategies.Select(x => (Type: x.Key.ToString(), Codec: x.Value)))
-            .ToDictionary(x => x.Type, x => x.Codec.GetCsvHeader().Split(Options.CsvDelimiter));
-
-        var indexes = new Dictionary<string, int>();
-        foreach (var type in types)
-        {
-            var index = Array.FindIndex(headers[type], field => isColumn(type, field));
-            if (index < 0)
-                throw new InvalidOperationException(
-                    $"Column not found in the header of `{type}`.");
-
-            indexes[type] = index;
-        }
-
-        return indexes;
-    }
-
     private static TValue GetOrAdd<TKey, TValue>(Dictionary<TKey, TValue> dictionary, TKey key)
         where TKey : notnull
         where TValue : new()
@@ -318,17 +263,15 @@ public sealed class TraverseOutput
         return value;
     }
 
-    private static async Task<List<Batch>> ReadBatchesAsync(string filename)
-    {
-        // Check before deserializing, because deserializing
-        // a file that does not exist creates that file.
-        return File.Exists(filename)
-            ? await Batch.DeserializeBatchesAsync(filename)
-            : [];
-    }
-
     private static long[] ReadHeights(string filename)
     {
         return File.Exists(filename) ? ArraySerializer.Deserialize<long>(filename) : [];
+    }
+
+    private static string KindName(string table)
+    {
+        return table.StartsWith("nodes_", StringComparison.Ordinal) ? table["nodes_".Length..] :
+               table.StartsWith("edges_", StringComparison.Ordinal) ? table["edges_".Length..].Replace('_', '-') :
+               table;
     }
 }

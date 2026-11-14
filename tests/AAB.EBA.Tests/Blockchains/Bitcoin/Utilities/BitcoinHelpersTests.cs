@@ -4,6 +4,7 @@ using AAB.EBA.Blockchains.Bitcoin.Utilities;
 using AAB.EBA.CLI.Config;
 using AAB.EBA.Graph.Db.Neo4jDb;
 using AAB.EBA.Tests.TestKit.BitcoinCore;
+using AAB.EBA.Tests.TestKit.Graph;
 using AAB.EBA.Tests.TestKit.Traverse;
 
 using Microsoft.Extensions.Logging.Abstractions;
@@ -26,10 +27,9 @@ public class BitcoinHelpersTests : TestsBase
     {
         // Arrange
         var options = TraverseOptionsBuilder.ForWorkingDir(TempExeDir).WithMaxEntitiesPerBatch(1).Build();
-        using (var db = CreateDb(options))
+        using (var db = TestGraphDb.Create(options))
         {
-            for (var height = First; height < First + 5; height++)
-                await db.SerializeAsync(await SyntheticBlockGraph.CreateAsync(height, options), CancellationToken.None);
+            await SyntheticBlockGraph.SerializeAsync(db, options, Enumerable.Range((int)First, 5).Select(x => (long)x).ToArray());
         }
         var batches = await Batch.DeserializeBatchesAsync(options.Neo4j.BatchesFilename);
 
@@ -50,10 +50,10 @@ public class BitcoinHelpersTests : TestsBase
         // Arrange
         var firstOptions = TraverseOptionsBuilder.ForWorkingDir(Path.Join(TempExeDir, "first")).Build();
         var secondOptions = TraverseOptionsBuilder.ForWorkingDir(Path.Join(TempExeDir, "second")).Build();
-        using (var db = CreateDb(firstOptions))
-            await db.SerializeAsync(await SyntheticBlockGraph.CreateAsync(First, firstOptions), CancellationToken.None);
-        using (var db = CreateDb(secondOptions))
-            await db.SerializeAsync(await SyntheticBlockGraph.CreateAsync(First, secondOptions), CancellationToken.None);
+        using (var db = TestGraphDb.Create(firstOptions))
+            await SyntheticBlockGraph.SerializeAsync(db, firstOptions, new[] { First });
+        using (var db = TestGraphDb.Create(secondOptions))
+            await SyntheticBlockGraph.SerializeAsync(db, secondOptions, new[] { First });
         var first = Assert.Single(await Batch.DeserializeBatchesAsync(firstOptions.Neo4j.BatchesFilename));
         var storedSecond = Assert.Single(await Batch.DeserializeBatchesAsync(secondOptions.Neo4j.BatchesFilename));
         var second = new Batch("1", storedSecond.DefaultDirectory, storedSecond.FilenamePrefix, storedSecond.TypesInfo);
@@ -65,10 +65,5 @@ public class BitcoinHelpersTests : TestsBase
         // Assert
         Assert.Contains(First.ToString(), error.Message);
         Assert.Matches(@"names (0 and 1|1 and 0)", error.Message);
-    }
-
-    private static BitcoinNeo4jDb CreateDb(Options options)
-    {
-        return new BitcoinNeo4jDb(options, NullLogger<Neo4jDb<BitcoinGraph>>.Instance);
     }
 }

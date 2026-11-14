@@ -15,28 +15,14 @@ namespace AAB.EBA.Tests.Blockchains.Bitcoin;
 /// (new host) in the working directory of the canceled one.
 /// </summary>
 [Trait("Category", "Functional")]
-public class BitcoinOrchestratorTraverseResumeTests : TestsBase
+public class BitcoinOrchestratorTraverseResumeTests : TestsBase, IClassFixture<BaselineTraverseFixture>
 {
     private const long From = TraverseOptionsBuilder.DefaultFromHeight;
+    private readonly BaselineTraverseFixture _baseline;
 
-    [Theory]
-    [InlineData(Point.AfterQueuesPersisted)]
-    [InlineData(Point.WhileBufferIsFull)]
-    [InlineData(Point.WhileFetchingBlockHash)]
-    [InlineData(Point.WhileWritingBlock)]
-    [InlineData(Point.WhileWritingBlockWithBufferedBlocks)]
-    public async Task TraverseAsync_ResumedAfterCancellation_WritesEveryBlockExactlyOnce(Point point)
+    public BitcoinOrchestratorTraverseResumeTests(BaselineTraverseFixture baseline)
     {
-        // Arrange
-        var canceled = await RunCanceledAsync(point, TempExeDir);
-
-        // Act
-        await UncanceledTraverse.RunAsync(canceled.Options);
-
-        // Assert
-        Assert.Equal(
-            canceled.RequestedHeights.Sorted(),
-            (await TraverseOutput.ReadAsync(canceled.Options)).WrittenBlockHeights.Sorted());
+        _baseline = baseline;
     }
 
     [Theory]
@@ -45,43 +31,7 @@ public class BitcoinOrchestratorTraverseResumeTests : TestsBase
     [InlineData(Point.WhileFetchingBlockHash)]
     [InlineData(Point.WhileWritingBlock)]
     [InlineData(Point.WhileWritingBlockWithBufferedBlocks)]
-    public async Task TraverseAsync_ResumedAfterCancellation_LeavesNoBlockPending(Point point)
-    {
-        // Arrange
-        var canceled = await RunCanceledAsync(point, TempExeDir);
-
-        // Act
-        await UncanceledTraverse.RunAsync(canceled.Options);
-
-        // Assert
-        Assert.Empty((await TraverseOutput.ReadAsync(canceled.Options)).PendingBlockHeights);
-    }
-
-    [Theory]
-    [InlineData(Point.AfterQueuesPersisted)]
-    [InlineData(Point.WhileBufferIsFull)]
-    [InlineData(Point.WhileFetchingBlockHash)]
-    [InlineData(Point.WhileWritingBlock)]
-    [InlineData(Point.WhileWritingBlockWithBufferedBlocks)]
-    public async Task TraverseAsync_ResumedAfterCancellation_OutputEqualsUncanceledTraverse(Point point)
-    {
-        // Arrange
-        var expected = await UncanceledTraverse.RunBaselineAsync(TempExeDir);
-        var canceled = await RunCanceledAsync(point, Path.Join(TempExeDir, "canceled"));
-
-        // Act
-        await UncanceledTraverse.RunAsync(canceled.Options);
-
-        // Assert
-        TraverseAssert.OutputsEqual(expected, await TraverseOutput.ReadAsync(canceled.Options));
-    }
-
-    [Theory]
-    [InlineData(Point.WhileBufferIsFull)]
-    [InlineData(Point.WhileFetchingBlockHash)]
-    [InlineData(Point.WhileWritingBlock)]
-    [InlineData(Point.WhileWritingBlockWithBufferedBlocks)]
-    public async Task TraverseAsync_ResumedAfterCancellation_LeavesEarlierBatchFilesUnchanged(Point point)
+    public async Task TraverseAsync_ResumedAfterCancellation_CompletesTheTraverse(Point point)
     {
         // Arrange
         var canceled = await RunCanceledAsync(point, TempExeDir);
@@ -91,18 +41,20 @@ public class BitcoinOrchestratorTraverseResumeTests : TestsBase
 
         // Act
         await UncanceledTraverse.RunAsync(canceled.Options);
+        var actual = await TraverseOutput.ReadAsync(canceled.Options);
 
         // Assert
-        Assert.Subset(
-            workingDir.Snapshot().ToHashSet(),
-            before.FilteredTo(batchFiles).ToHashSet());
+        Assert.Multiple(
+            () => TraverseAssert.ResumedOutputIsComplete(canceled.RequestedHeights, actual, _baseline.Output),
+            () => Assert.Subset(
+                workingDir.Snapshot().ToHashSet(),
+                before.FilteredTo(batchFiles).ToHashSet()));
     }
 
     [Fact]
     public async Task TraverseAsync_ResumedAfterTwoCancellations_OutputEqualsUncanceledTraverse()
     {
         // Arrange
-        var expected = await UncanceledTraverse.RunBaselineAsync(TempExeDir);
         var dir = Path.Join(TempExeDir, "canceled");
         await RunCanceledAsync(Point.WhileWritingBlock, dir, From);
         var canceled = await RunCanceledAsync(Point.WhileWritingBlock, dir, From + 2);
@@ -111,7 +63,7 @@ public class BitcoinOrchestratorTraverseResumeTests : TestsBase
         await UncanceledTraverse.RunAsync(canceled.Options);
 
         // Assert
-        TraverseAssert.OutputsEqual(expected, await TraverseOutput.ReadAsync(canceled.Options));
+        TraverseAssert.OutputsEqual(_baseline.Output, await TraverseOutput.ReadAsync(canceled.Options));
     }
 
     [Fact]

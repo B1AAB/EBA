@@ -10,9 +10,10 @@ public static class RecordedTraverse
 {
     public static async Task<Options> RunAsync(string workingDir, int from, int to)
     {
-        using var node = RecordedBitcoinNode.FromMockData();
         var options = TraverseOptionsBuilder.ForWorkingDir(workingDir).WithRange(from, to).Build();
-        await new TraverseRunner(options, node).RunAsync(CancellationToken.None);
+        await TestTraverse.RunRecordedAsync(options);
         return options;
     }
+
+    public static Task RunAsync(Options options) => TestTraverse.RunRecordedAsync(options);
 }

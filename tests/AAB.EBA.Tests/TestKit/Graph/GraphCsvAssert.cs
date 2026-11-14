@@ -7,47 +7,24 @@ using Xunit;
 
 namespace AAB.EBA.Tests.TestKit.Graph;
 
-public sealed class GraphCsvComparison
-{
-    private Func<string, string, bool> _include = (_, _) => true;
-
-    public GraphCsvComparison IgnoringColumns(Func<string, string, bool> predicate)
-    {
-        var previous = _include;
-        _include = (type, column) => previous(type, column) && !predicate(type, column);
-        return this;
-    }
-
-    public GraphCsvComparison OnlyColumns(Func<string, string, bool> predicate)
-    {
-        var previous = _include;
-        _include = (type, column) => previous(type, column) && predicate(type, column);
-        return this;
-    }
-
-    internal bool Includes(string type, string column) => _include(type, column);
-}
-
 public static class GraphCsvAssert
 {
     public static void Equal(IReadOnlyDictionary<string, GraphCsv> expected,
-        IReadOnlyDictionary<string, GraphCsv> actual, GraphCsvComparison? options = null)
+        IReadOnlyDictionary<string, GraphCsv> actual)
     {
         Assert.Equal(expected.Keys.Order(StringComparer.Ordinal), actual.Keys.Order(StringComparer.Ordinal));
         foreach (var type in expected.Keys.Order(StringComparer.Ordinal))
-            Equal(expected[type], actual[type], options);
+            Equal(expected[type], actual[type]);
     }
 
-    public static void Equal(GraphCsv expected, GraphCsv actual, GraphCsvComparison? options = null)
+    public static void Equal(GraphCsv expected, GraphCsv actual)
     {
         Assert.True(expected.Columns.SequenceEqual(actual.Columns),
             $"{expected.Type}: schema changed; regenerate expected output");
-        var columns = expected.Columns.Where(x => options?.Includes(expected.Type, x) ?? true).ToArray();
-        var left = expected.Project(columns);
-        var right = actual.Project(columns);
-        var remaining = right.Rows.ToList();
+        var columns = expected.Columns.ToArray();
+        var remaining = actual.Rows.ToList();
         var missing = new List<string[]>();
-        foreach (var row in left.Rows)
+        foreach (var row in expected.Rows)
         {
             var match = remaining.FindIndex(candidate => RowsEqual(columns, row, candidate));
             if (match < 0)
@@ -57,7 +34,20 @@ public static class GraphCsvAssert
         }
         Assert.True(missing.Count == 0 && remaining.Count == 0,
             $"{expected.Type}: {missing.Count} missing, {remaining.Count} unexpected rows.\n"
-            + $"Missing:\n{Format(missing)}\nUnexpected:\n{Format(remaining)}");
+            + $"Missing:\n{Format(missing)}\nUnexpected:\n{Format(remaining)}\n"
+            + string.Join("\n", missing.Select(row => DifferingColumns(columns, row, remaining))));
+    }
+
+    private static string DifferingColumns(string[] columns, string[] row, List<string[]> unexpected)
+    {
+        var candidates = unexpected.Where(candidate => candidate[0] == row[0]).ToArray();
+        if (candidates.Length != 1)
+            return string.Empty;
+        var candidate = candidates[0];
+        var differing = Enumerable.Range(0, columns.Length)
+            .Where(i => !RowsEqual([columns[i]], [row[i]], [candidate[i]]))
+            .Select(i => columns[i]);
+        return $"{row[0]}: differing columns: {string.Join(", ", differing)}";
     }
 
     private static string Format(IEnumerable<string[]> rows) =>

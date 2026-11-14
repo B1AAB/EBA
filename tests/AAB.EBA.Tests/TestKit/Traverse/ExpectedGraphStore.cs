@@ -1,5 +1,6 @@
 using AAB.EBA.TestDataGenerator;
 using AAB.EBA.Tests.TestKit.Graph;
+using AAB.EBA.Tests.TestKit.BitcoinCore;
 
 using System;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ public static class ExpectedGraphStore
 {
     public static TraverseGraphOutput Load(long height)
     {
-        var directory = Path.Combine(ClientFixture.BitcoinExpectedOutputsDir, "Traverse", height.ToString(CultureInfo.InvariantCulture));
+        var directory = Path.Combine(MockData.ExpectedOutputsDir, "Traverse", height.ToString(CultureInfo.InvariantCulture));
         Assert.True(Directory.Exists(directory), $"Missing expected output for {height}; generate it in Debug with EBA_UPDATE_EXPECTED=1.");
         return new(Directory.GetFiles(directory, "*.tsv").ToDictionary(path => Path.GetFileNameWithoutExtension(path)!,
             path =>
@@ -40,14 +41,11 @@ public static class ExpectedGraphStore
         return new(tables);
     }
 
-    public static void Compare(long height, TraverseGraphOutput actual, GraphCsvComparison? options = null, string? onlyType = null)
+    public static void Compare(long height, TraverseGraphOutput actual)
     {
         UpdateIfRequested(height, actual);
         var expected = Load(height);
-        if (onlyType is null)
-            GraphCsvAssert.Equal(expected.Tables, actual.Tables, options);
-        else
-            GraphCsvAssert.Equal(expected[onlyType], actual[onlyType], options);
+        GraphCsvAssert.Equal(expected.Tables, actual.Tables);
     }
 
     private static void UpdateIfRequested(long height, TraverseGraphOutput actual)

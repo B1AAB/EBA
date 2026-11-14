@@ -20,8 +20,7 @@ public static class UncanceledTraverse
     /// </summary>
     public static async Task RunAsync(Options options)
     {
-        using var node = SyntheticBitcoinNode.FromMockData();
-        await new TraverseRunner(options, node).RunAsync(CancellationToken.None);
+        await TestTraverse.RunSyntheticAsync(options);
     }
 
     /// <summary>

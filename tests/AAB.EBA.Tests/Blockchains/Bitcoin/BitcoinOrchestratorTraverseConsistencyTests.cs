@@ -8,14 +8,14 @@ using Xunit;
 
 namespace AAB.EBA.Tests.Blockchains.Bitcoin;
 
-[Trait("Category", "Unit")]
+[Trait("Category", "Functional")]
 public class BitcoinOrchestratorTraverseConsistencyTests : TestsBase
 {
     [Theory]
     [InlineData(71036)]
     [InlineData(132317)]
     [InlineData(717531)]
-    public async Task TraverseAsync_SingleBlock_WritesEveryInputAndOutputOfEveryTransaction(int height)
+    public async Task TraverseAsync_SingleBlock_MatchesRecordedBlock(int height)
     {
         // Arrange
         var block = RecordedBlock.FromMockData(height);
@@ -25,41 +25,10 @@ public class BitcoinOrchestratorTraverseConsistencyTests : TestsBase
         var output = await TraverseGraphOutput.ReadAsync(options);
 
         // Assert
-        AssertTransactionCounts(block, output);
-    }
-
-    [Theory]
-    [InlineData(71036)]
-    [InlineData(132317)]
-    [InlineData(717531)]
-    public async Task TraverseAsync_SingleBlock_BalancesEveryTransaction(int height)
-    {
-        // Arrange
-        var block = RecordedBlock.FromMockData(height);
-        var options = await RecordedTraverse.RunAsync(TempExeDir, height, height);
-
-        // Act
-        var output = await TraverseGraphOutput.ReadAsync(options);
-
-        // Assert
-        AssertTransactionBalances(block, output);
-    }
-
-    [Theory]
-    [InlineData(71036)]
-    [InlineData(132317)]
-    [InlineData(717531)]
-    public async Task TraverseAsync_SingleBlock_MintsCoinbaseOutputsMinusFees(int height)
-    {
-        // Arrange
-        var block = RecordedBlock.FromMockData(height);
-        var options = await RecordedTraverse.RunAsync(TempExeDir, height, height);
-
-        // Act
-        var output = await TraverseGraphOutput.ReadAsync(options);
-
-        // Assert
-        AssertMintedValue(block, output);
+        Assert.Multiple(
+            () => AssertTransactionCounts(block, output),
+            () => AssertTransactionBalances(block, output),
+            () => AssertMintedValue(block, output));
     }
 
     private static void AssertTransactionCounts(RecordedBlock block, TraverseGraphOutput output)

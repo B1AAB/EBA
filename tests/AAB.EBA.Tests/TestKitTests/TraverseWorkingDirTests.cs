@@ -1,7 +1,9 @@
+using AAB.EBA.Tests.TestKit.Traverse;
+
 using System.IO;
 using Xunit;
 
-namespace AAB.EBA.Tests.TestKit.Traverse;
+namespace AAB.EBA.Tests.TestKitTests;
 
 [Trait("Category", "Unit")]
 public class TraverseWorkingDirTests : TestsBase
