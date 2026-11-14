@@ -33,15 +33,15 @@ public class ClientFixture
 
     public static string MockDataDir
     {
-        get { return Path.Combine(AppContext.BaseDirectory, Dirs.MockData); }
+        get { return TestKit.BitcoinCore.MockData.DirectoryPath; }
     }    
     public static string BitcoinCoreResourcesDir
     {
-        get { return Path.Combine(MockDataDir, Dirs.Bitcoin, Dirs.BitcoinCoreResponses); }
+        get { return TestKit.BitcoinCore.MockData.BitcoinCoreResponsesDir; }
     }
     public static string BitcoinExpectedOutputsDir
     {
-        get { return Path.Combine(MockDataDir, Dirs.Bitcoin, Dirs.ExpectedOutputs); }
+        get { return TestKit.BitcoinCore.MockData.ExpectedOutputsDir; }
     }
 
     public ClientFixture()

@@ -8,16 +8,16 @@ public class CLI
         {
             Console.Error.WriteLine("Missing args. Usage:");
             Console.Error.WriteLine("  AAB.EBA.TestDataGenerator <command> <intervals>");
-            Console.Error.WriteLine("Commands: all, expected_data, api_mock");
+            Console.Error.WriteLine("Commands: all, expected_data, api_mock, api_mock_blocks");
             Console.Error.WriteLine("Example : all 0-10,10-20");
             Environment.Exit(1);
             return null;
         }
 
         var cmd = args[0].ToLower();
-        if (cmd != "all" && cmd != "expected_data" && cmd != "api_mock")
+        if (cmd != "all" && cmd != "expected_data" && cmd != "api_mock" && cmd != "api_mock_blocks")
         {
-            Console.Error.WriteLine($"Invalid command '{cmd}'; expected: all, expected_data, api_mock");
+            Console.Error.WriteLine($"Invalid command '{cmd}'; expected: all, expected_data, api_mock, api_mock_blocks");
             Environment.Exit(1);
             return null;
         }

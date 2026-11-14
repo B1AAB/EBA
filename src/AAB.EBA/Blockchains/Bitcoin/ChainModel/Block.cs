@@ -79,8 +79,8 @@ public class Block : BlockMetadata
         }
 
         _inputValues.Add(sumValues);
-        _inputScriptTypeCount[scriptPubKey.ScriptType] += 1;
-        _inputScriptTypeValue[scriptPubKey.ScriptType] += sumValues;
+        _inputScriptTypeCount.AddOrUpdate(scriptPubKey.ScriptType, 1, (_, old) => old + 1);
+        _inputScriptTypeValue.AddOrUpdate(scriptPubKey.ScriptType, sumValues, (_, old) => old + sumValues);
     }
 
     public void ProfileSpentOutput(Input input)
@@ -88,15 +88,15 @@ public class Block : BlockMetadata
         _spentOutputsAge.Add(Height - input.PrevOut.Height);
 
         _inputValues.Add(input.PrevOut.Value);
-        _inputScriptTypeCount[input.PrevOut.ScriptPubKey.ScriptType] += 1;
-        _inputScriptTypeValue[input.PrevOut.ScriptPubKey.ScriptType] += input.PrevOut.Value;
+        _inputScriptTypeCount.AddOrUpdate(input.PrevOut.ScriptPubKey.ScriptType, 1, (_, old) => old + 1);
+        _inputScriptTypeValue.AddOrUpdate(input.PrevOut.ScriptPubKey.ScriptType, input.PrevOut.Value, (_, old) => old + input.PrevOut.Value);
     }
 
     public void ProfileCreatedOutput(Output output)
     {
         _outputValues.Add(output.Value);
-        _outputScriptTypeCount[output.ScriptPubKey.ScriptType] += 1;
-        _outputScriptTypeValue[output.ScriptPubKey.ScriptType] += output.Value;
+        _outputScriptTypeCount.AddOrUpdate(output.ScriptPubKey.ScriptType, 1, (_, old) => old + 1);
+        _outputScriptTypeValue.AddOrUpdate(output.ScriptPubKey.ScriptType, output.Value, (_, old) => old + output.Value);
     }
 
     public void ProfileCreatedOutput(ScriptPubKey scriptPubKey, List<Output> outputs)
@@ -104,8 +104,8 @@ public class Block : BlockMetadata
         long sumValues = outputs.Sum(x => x.Value);
 
         _outputValues.Add(sumValues);
-        _outputScriptTypeCount[scriptPubKey.ScriptType] += 1;
-        _outputScriptTypeValue[scriptPubKey.ScriptType] += sumValues;
+        _outputScriptTypeCount.AddOrUpdate(scriptPubKey.ScriptType, 1, (_, old) => old + 1);
+        _outputScriptTypeValue.AddOrUpdate(scriptPubKey.ScriptType, sumValues, (_, old) => old + sumValues);
     }
 
     public void ProfileTxes(int inputsCount, int outputsCount)

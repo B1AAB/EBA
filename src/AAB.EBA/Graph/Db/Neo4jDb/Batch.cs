@@ -105,6 +105,35 @@ public class Batch
 
     public static async Task<List<Batch>> DeserializeBatchesAsync(string filename)
     {
-        return await JsonSerializer<List<Batch>>.DeserializeAsync(filename);
+        var batches = await JsonSerializer<List<Batch>>.DeserializeAsync(filename);
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        var files = new Dictionary<string, string>(
+            OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
+
+        foreach (var batch in batches)
+        {
+            if (!names.Add(batch.Name))
+            {
+                throw new InvalidDataException(
+                    $"Batch name '{batch.Name}' is listed more than once in manifest '{filename}'. " +
+                    "The manifest may have been produced by a version with the same-second filename defect.");
+            }
+
+            foreach (var info in batch.TypesInfo.Values)
+            {
+                var path = Path.GetFullPath(info.Filename);
+                if (files.TryGetValue(path, out var previousName) && previousName != batch.Name)
+                {
+                    throw new InvalidDataException(
+                        $"Batches with names '{previousName}' and '{batch.Name}' share file '{info.Filename}' " +
+                        $"in manifest '{filename}'. The manifest was produced by a version with the " +
+                        "same-second filename defect.");
+                }
+
+                files[path] = batch.Name;
+            }
+        }
+
+        return batches;
     }
 }

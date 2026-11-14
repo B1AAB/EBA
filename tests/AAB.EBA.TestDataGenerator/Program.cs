@@ -23,9 +23,10 @@ if (config.Command == "expected_data" || config.Command == "all")
     }
 }
 
-if (config.Command == "api_mock" || config.Command == "all")
+if (config.Command == "api_mock" || config.Command == "api_mock_blocks" || config.Command == "all")
 {
-    await apiMockGenerator.GenerateChainInfoAsync(config.BitcoinCoreReponses);
+    if (config.Command != "api_mock_blocks")
+        await apiMockGenerator.GenerateChainInfoAsync(config.BitcoinCoreReponses);
 
     foreach (var interval in config.Intervals)
     {
@@ -33,7 +34,10 @@ if (config.Command == "api_mock" || config.Command == "all")
 
         for (int i = interval.From; i <= interval.To; i++)
         {
-            await apiMockGenerator.GenerateAsync(config.BitcoinCoreReponses, i);
+            if (config.Command == "api_mock_blocks")
+                await apiMockGenerator.GenerateBlockAsync(config.BitcoinCoreReponses, i);
+            else
+                await apiMockGenerator.GenerateAsync(config.BitcoinCoreReponses, i);
         }
     }
 }

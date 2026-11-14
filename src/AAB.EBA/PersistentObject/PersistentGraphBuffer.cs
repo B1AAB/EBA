@@ -43,7 +43,10 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         BlockGraph obj,
         CancellationToken cT)
     {
-        cT.ThrowIfCancellationRequested();
+        // cT.ThrowIfCancellationRequested();
+        // once a block is taken from the buffer it should be written completely
+        // So throwing here would make the listener terminate the process
+        // (see PersistentObjectBase) before the list of blocks to process is persisted.
 
         // Using `default` as a cancellation token in the following
         // because the two serialization methods need to conclude before
@@ -77,12 +80,18 @@ public class PersistentGraphBuffer : PersistentObjectBase<BlockGraph>, IDisposab
         return _blocksHeightsInBuffer.Count;
     }
 
-    public async Task WaitForBufferToEmptyAsync()
+    /// <summary>
+    /// Waits until every block in the buffer is written. Once 
+    /// <paramref name="cT"/> is canceled, the listener stops taking 
+    /// blocks from the buffer, so the buffer may never become empty; 
+    /// hence, the wait ends with an <see cref="OperationCanceledException"/>.
+    /// </summary>
+    public async Task WaitForBufferToEmptyAsync(CancellationToken cT = default)
     {
         // TODO: this is a naive implementation and
         // need a more efficient re-implementation. 
         while (GetBufferSize() > 0)
-            await Task.Delay(50);
+            await Task.Delay(50, cT);
     }
 
     public new void Dispose()

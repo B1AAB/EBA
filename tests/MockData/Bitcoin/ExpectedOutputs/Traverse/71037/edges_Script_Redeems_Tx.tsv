@@ -1,0 +1,1 @@
+:START_ID(Script)	:END_ID(Tx)	Value:long	SpentHeight:long	Txid:string	Vout:int	Generated:boolean	CreationHeight:long	:TYPE

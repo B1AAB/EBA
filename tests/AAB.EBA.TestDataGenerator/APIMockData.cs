@@ -6,6 +6,7 @@ public interface IApiMockDataGenerator
 {
     Task GenerateChainInfoAsync(string outputDir);
     Task GenerateAsync(string outputDir, int blockHeight);
+    Task GenerateBlockAsync(string outputDir, int blockHeight);
 }
 
 public class ApiMockDataGenerator(HttpClient client) : IApiMockDataGenerator
@@ -44,6 +45,16 @@ public class ApiMockDataGenerator(HttpClient client) : IApiMockDataGenerator
 
     public async Task GenerateAsync(string outputDir, int blockHeight)
     {
+        await GenerateAsync(outputDir, blockHeight, includeTransactions: true);
+    }
+
+    public Task GenerateBlockAsync(string outputDir, int blockHeight)
+    {
+        return GenerateAsync(outputDir, blockHeight, includeTransactions: false);
+    }
+
+    private async Task GenerateAsync(string outputDir, int blockHeight, bool includeTransactions)
+    {
         var responseDir = GetMockDataDirectory(Dirs.BitcoinCoreResponses);
         Directory.CreateDirectory(responseDir);
 
@@ -70,6 +81,9 @@ public class ApiMockDataGenerator(HttpClient client) : IApiMockDataGenerator
         await File.WriteAllTextAsync(
             Path.Combine(responseDir, Files.GetMockBlockFilename(blockHash)),
             FormattedJson(blockJson));
+
+        if (!includeTransactions)
+            return;
 
         var allTxIds = block.Transactions
             .Where(tx => !string.IsNullOrEmpty(tx.Txid))

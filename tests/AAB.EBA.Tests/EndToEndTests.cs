@@ -9,6 +9,7 @@ using Xunit;
 
 namespace AAB.EBA.Tests;
 
+[Trait("Category", "Unit")]
 public class EndToEndTests : TestsBase, IClassFixture<ClientFixture>
 {
     private readonly HttpClient _client;

@@ -1,0 +1,2 @@
+:START_ID(Coinbase)	:END_ID(Tx)	Value:long	Height:long	:TYPE
+Coinbase	cfd753d7f3d168d88c4f7f23172a91ab089b3fadc841fe078a1e79ed6e2808e5	5000000000	71036	Mints

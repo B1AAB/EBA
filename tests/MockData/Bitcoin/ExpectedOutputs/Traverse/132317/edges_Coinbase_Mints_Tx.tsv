@@ -1,0 +1,2 @@
+:START_ID(Coinbase)	:END_ID(Tx)	Value:long	Height:long	:TYPE
+Coinbase	2f2e6b5d8040d4a8dd7c62fde8120c2447880eb78f0d23860c37a45c7ccd8510	5000000000	132317	Mints

@@ -1,5 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.11.12328.437 stable
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AAB.EBA", "src\AAB.EBA\AAB.EBA.csproj", "{0B89033E-FA0B-4FA8-9668-688C5E30E410}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AAB.EBA.MCP", "src\AAB.EBA.MCP\AAB.EBA.MCP.csproj", "{86E5CBD9-A3CB-4AC4-8ED3-CEF22D9558AC}"
@@ -44,8 +47,8 @@ Global
 		{3FD7138E-1F92-78B1-EF3E-A159810AB28A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3FD7138E-1F92-78B1-EF3E-A159810AB28A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3FD7138E-1F92-78B1-EF3E-A159810AB28A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{10C7328D-E149-737D-E62E-43BEB9BC2DFF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{10C7328D-E149-737D-E62E-43BEB9BC2DFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10C7328D-E149-737D-E62E-43BEB9BC2DFF}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{10C7328D-E149-737D-E62E-43BEB9BC2DFF}.Debug|Any CPU.Build.0 = Release|Any CPU
 		{10C7328D-E149-737D-E62E-43BEB9BC2DFF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{10C7328D-E149-737D-E62E-43BEB9BC2DFF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection

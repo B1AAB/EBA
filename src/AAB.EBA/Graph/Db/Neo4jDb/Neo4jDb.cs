@@ -14,6 +14,7 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
     private readonly IStrategyFactory _strategyFactory;
 
     private List<Batch> _batches = [];
+    private bool _batchesLoaded = false;
 
     private bool _disposed = false;
     private readonly ILogger<Neo4jDb<T>> _logger;
@@ -294,10 +295,21 @@ public class Neo4jDb<T> : IGraphDb<T> where T : GraphBase
         await _batchLock.WaitAsync();
         try
         {
-            if (_batches.Count == 0)
+            // On the first call of this run, load the batches persisted by previous
+            // runs (if any) and always start a new batch. A batch from a previous run
+            // must never be reused, because the CSV writers open their files in
+            // create (truncate) mode; reusing the last batch of a canceled run would
+            // overwrite its files and silently lose every block written to it.
+            var isFirstCallInThisRun = !_batchesLoaded;
+            if (isFirstCallInThisRun)
+            {
                 _batches = await Batch.DeserializeBatchesAsync(_options.Neo4j.BatchesFilename);
+                _batchesLoaded = true;
+            }
 
-            if (_batches.Count == 0 || _batches[^1].GetMaxCount() >= _options.Neo4j.MaxEntitiesPerBatch)
+            if (isFirstCallInThisRun ||
+                _batches.Count == 0 ||
+                _batches[^1].GetMaxCount() >= _options.Neo4j.MaxEntitiesPerBatch)
             {
                 _batches.Add(new Batch(
                     _batches.Count.ToString(),
