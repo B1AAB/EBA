@@ -69,6 +69,34 @@ Alternatively, you may set the options using a JSON file as the following.
 > .\aab.eba.exe bitcoin sample --status-filename inputs.json
 ```
 
+## Provide root nodes from a TSV file {#root-nodes-file}
+
+Use `--root-nodes-filename` instead of randomly selected Script roots:
+
+```powershell
+.\aab.eba.exe bitcoin sample --count 4 --method panorama --root-nodes-filename roots.tsv
+```
+
+Each TSV row contains **node kind**, then its **identifying value** (not the property name).
+Kind names are case-insensitive; numeric values are also accepted:
+
+| Kind | Identifying value |
+| ---- | ----------------- |
+| `Coinbase` / `1` | `Coinbase` |
+| `Script` / `2` | Address |
+| `Block` / `3` | Height |
+| `Tx` / `4` | Txid |
+
+Blank lines, `#` comments, and a first-line `NodeKind` or `Kind` header are skipped.
+Duplicate kind/value pairs are removed; `Undefined` (`0`), invalid kinds, and missing values are rejected.
+
+`--root-node-select-prob` is ignored; `--count` still limits successfully serialized graphs.
+Each retry starts at the file's beginning, so rejected and successful roots may be sampled again, up to `MaxAttempts`.
+
+For JSON configuration, set `Bitcoin.GraphSample.RootNodesFilename` (outside `PanoramaOptions`).
+
+## Panorama options
+
 FFS-specific arguments are documented below.
 
 
