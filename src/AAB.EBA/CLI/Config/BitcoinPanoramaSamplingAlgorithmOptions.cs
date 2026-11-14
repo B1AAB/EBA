@@ -12,7 +12,14 @@ public class BitcoinPanoramaSamplingAlgorithmOptions
     public double NeighborhoodSamplePercentagePerHop { init; get; } = 10.0;
 
     /// <summary>
-    /// Sets the percentage of the immediate neighbors of the root node 
+    /// Use a fixed seed when sampling neighbors. Database root selection and query
+    /// ordering are not controlled by this option.
+    /// </summary>
+    [JsonPropertyName("deterministicSampling")]
+    public bool DeterministicSampling { init; get; } = false;
+
+    /// <summary>
+    /// Sets the percentage of the immediate neighbors of the root node
     /// to be included in the sampled community.
     /// The value should be between 0 and 100, 
     /// where 100 means all immediate neighbors of the root node will be included.
