@@ -34,6 +34,13 @@ public class Panorama : ITraversalAlgorithm
         T2TEdgeDescriptor.StaticMapper.GetMapping(x => x.Height).Property.Name,
     ];
 
+    // Relationship property that holds the value of a Credits (T2S) edge.
+    private static readonly string _creditsValueProperty =
+        T2SEdgeDescriptor.StaticMapper.GetMapping(x => x.Value).Property.Name;
+
+    // Graph label that ProcessNeighborhoodAsync sets to the id of the root node.
+    private const string _rootNodeIdLabel = "RootNodeId";
+
     // T2SEdge stores this sentinel as SpentHeight while the output is unspent.
     private const long _unspentSentinel = long.MaxValue;
 
@@ -87,6 +94,7 @@ public class Panorama : ITraversalAlgorithm
     private int _activityRejections = 0;
     private int _activityPartialScans = 0;
     private int _scriptTerminalPrunes = 0;
+    private int _txSidesAdded = 0;
 
     public Panorama(Options options, IGraphDb<BitcoinGraph> graphDb, ILogger<BitcoinGraphOrchestrator> logger)
     {
@@ -134,6 +142,11 @@ public class Panorama : ITraversalAlgorithm
         if (_options.Bitcoin.GraphSample.PanoramaOptions.EnsureScriptTerminalNodes)
             _logger.LogInformation(
                 "Pruning expansions that cannot reach a Script node on the final layer (ensureScriptTerminalNodes).");
+
+        if (_options.Bitcoin.GraphSample.PanoramaOptions.EnsureTxSendersAndReceivers)
+            _logger.LogInformation(
+                "Keeping a sender and a receiver of every expanded Tx, and rejecting communities " +
+                "whose root Script has no counterparty (ensureTxSendersAndReceivers).");
 
         JsonSerializer<FeaturesSchema>.Serialize(new FeaturesSchema(), Path.Combine(_options.WorkingDir, "schema.json"));
 
@@ -187,6 +200,14 @@ public class Panorama : ITraversalAlgorithm
                         graph.EdgeCount,
                         _options.Bitcoin.GraphSample.MinEdgeCount,
                         _options.Bitcoin.GraphSample.MaxEdgeCount);
+                }
+                else if (_options.Bitcoin.GraphSample.PanoramaOptions.EnsureTxSendersAndReceivers &&
+                         !RootHasCounterparty(graph))
+                {
+                    _logger.LogWarning(
+                        "Sampled neighborhood of the root {rootNodeTag} is rejected because the root Script has no " +
+                        "counterparty: no Tx in the sampled graph links it to another Script as sender and receiver.",
+                        rootNodeLabelInLogs);
                 }
                 else
                 {
@@ -367,6 +388,23 @@ public class Panorama : ITraversalAlgorithm
             }
         }
 
+        // this ensures that some scripts on both sides of a Tx node are kept
+        // so it avoids adding a Tx that only its created utxo is sampled, or
+        // adding a tx that only the redeemed utxo is sampled. 
+        if (_options.Bitcoin.GraphSample.PanoramaOptions.EnsureTxSendersAndReceivers &&
+            parentNode.NodeKind == NodeKind.Tx &&
+            parentNode.IdInGraphDb != null)
+        {
+            var (senders, receivers) = GetSendersAndReceivers(parentNode.IdInGraphDb, edges);
+            foreach (var side in new[] { senders, receivers })
+            {
+                var id = await FindMissingSideAsync(
+                    side, shuffled, nodesUniqueToThisHop, nodesInThisHopAlreadyInGraph, nodesToKeep, ct);
+                if (id != null && nodesToKeep.Add(id))
+                    _txSidesAdded++;
+            }
+        }
+
         foreach (var edge in edges)
         {
             if (g.NodeCount >= _options.Bitcoin.GraphSample.MaxNodeCount
@@ -407,6 +445,114 @@ public class Panorama : ITraversalAlgorithm
         }
 
         return nodesAddedToGraph;
+    }
+
+
+    private static (HashSet<string> Senders, HashSet<string> Receivers) GetSendersAndReceivers(
+        string txIdInGraphDb,
+        IEnumerable<IRelationship> edges)
+    {
+        var senders = new HashSet<string>();
+        var paid = new HashSet<string>();
+        foreach (var edge in edges)
+        {
+            if (!Enum.TryParse<RelationType>(edge.Type, ignoreCase: true, out var relation))
+                continue;
+
+            if (relation == RelationType.Redeems && edge.EndNodeElementId == txIdInGraphDb)
+                senders.Add(edge.StartNodeElementId);
+            else if (relation == RelationType.Credits &&
+                     edge.StartNodeElementId == txIdInGraphDb &&
+                     HasPositiveValue(edge))
+                paid.Add(edge.EndNodeElementId);
+        }
+
+        paid.ExceptWith(senders);
+        return (senders, paid);
+    }
+
+    private static bool HasPositiveValue(IRelationship edge)
+    {
+        if (!edge.Properties.TryGetValue(_creditsValueProperty, out var raw) || raw is null)
+            return false;
+
+        try
+        {
+            return Convert.ToInt64(raw) > 0;
+        }
+        catch (Exception e) when (e is FormatException || e is InvalidCastException || e is OverflowException)
+        {
+            return false;
+        }
+    }
+
+    private async Task<string?> FindMissingSideAsync(
+        IReadOnlySet<string> side,
+        IReadOnlyList<string> shuffledCandidates,
+        IReadOnlyDictionary<string, Model.INode> candidates,
+        IReadOnlyDictionary<string, Model.INode> neighborsInGraph,
+        IReadOnlySet<string> nodesToKeep,
+        CancellationToken ct)
+    {
+        foreach (var id in side)
+            if (nodesToKeep.Contains(id) || neighborsInGraph.ContainsKey(id))
+                return null;
+
+        foreach (var id in shuffledCandidates)
+        {
+            if (!side.Contains(id))
+                continue;
+
+            ct.ThrowIfCancellationRequested();
+
+            if (!_hasActivityWindow || await CheckScriptActivityAsync(candidates[id], ct))
+                return id;
+        }
+
+        return null;
+    }
+
+    private static bool RootHasCounterparty(GraphBase g)
+    {
+        if (!g.Labels.TryGetValue(_rootNodeIdLabel, out var rootId) ||
+            !g.TryGetNode(rootId, out var root) ||
+            root == null ||
+            root.NodeKind != NodeKind.Script)
+            return true;
+
+        foreach (var edge in root.OutgoingEdges)
+            if (edge.Relation == RelationType.Redeems && HasReceiver(edge.Target))
+                return true;
+
+        foreach (var edge in root.IncomingEdges)
+        {
+            if (edge.Relation != RelationType.Credits || edge.Value <= 0)
+                continue;
+
+            var senders = GetSenderIds(edge.Source);
+            if (senders.Count > 0 && !senders.Contains(root.Id))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool HasReceiver(Model.INode tx)
+    {
+        var senders = GetSenderIds(tx);
+        foreach (var edge in tx.OutgoingEdges)
+            if (edge.Relation == RelationType.Credits && edge.Value > 0 && !senders.Contains(edge.Target.Id))
+                return true;
+        return false;
+    }
+
+    private static HashSet<string> GetSenderIds(Model.INode tx)
+    {
+        var senders = new HashSet<string>();
+        foreach (var edge in tx.IncomingEdges)
+            if (edge.Relation == RelationType.Redeems)
+                senders.Add(edge.Source.Id);
+        return senders;
     }
 
     private List<string> ShuffleCandidates(IEnumerable<string> candidates)
@@ -628,6 +774,7 @@ public class Panorama : ITraversalAlgorithm
         _activityRejections = 0;
         _activityPartialScans = 0;
         _scriptTerminalPrunes = 0;
+        _txSidesAdded = 0;
 
         lock (_stepLock)
         {
@@ -680,6 +827,11 @@ public class Panorama : ITraversalAlgorithm
             _logger.LogInformation(
                 "Script-terminal pruning for root node {rootNodeTag}: skipped {Count:N0} expansion(s).",
                 rootNodeLabelInLogs, _scriptTerminalPrunes);
+
+        if (_options.Bitcoin.GraphSample.PanoramaOptions.EnsureTxSendersAndReceivers)
+            _logger.LogInformation(
+                "Tx senders and receivers for root node {rootNodeTag}: added {Count:N0} Script(s) to complete a Tx side.",
+                rootNodeLabelInLogs, _txSidesAdded);
 
         if (_hasActivityWindow)
             _logger.LogInformation(
