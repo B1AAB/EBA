@@ -59,12 +59,17 @@ public class BitcoinPanoramaSamplingAlgorithmOptions
     public int MaxNeighborsPerNode { init; get; } = 100;
 
     /// <summary>
-    /// This ensures a block context for each transaction is 
-    /// also included in the sampled communities. 
-    /// This can provide more macro context for transactions. 
+    /// This ensures a block context for each transaction is
+    /// also included in the sampled communities.
+    /// This can provide more macro context for transactions.
     /// </summary>
+    /// <remarks>
+    /// The default is <c>true</c>. Without this option, a community gets a block only when the random draw picks the
+    /// block as a neighbor of a Tx. A small community can then end up with no block at all, and the windows of
+    /// earlier and later blocks add nothing, because they grow only from blocks that the community already holds.
+    /// </remarks>
     [JsonPropertyName("includeBlockTxEdges")]
-    public bool IncludeB2TEdges { init; get; } = false;
+    public bool IncludeB2TEdges { init; get; } = true;
 
     /// <summary>
     /// For every Block node in the sampled community, also include this many
