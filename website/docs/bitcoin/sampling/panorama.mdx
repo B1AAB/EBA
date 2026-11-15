@@ -107,6 +107,7 @@ FFS-specific arguments are documented below.
 | [`nodeCountAtRoot`](#count-at-root)         | `int`    | `100`   | Maximum number of neighbors to sample from the root node. |
 | [`reductionFactor`](#reduction-factor)      | `double` | `4.0`   | Factor controlling the reduction of sampled neighbors as hop depth increases. |
 | [`deterministicSampling`](#deterministic-sampling) | `bool` | `false` | Use a fixed seed for neighbor sampling. |
+| [`ensureTxSendersAndReceivers`](#ensure-tx-senders-and-receivers) | `bool` | `true` | Keep a sender and a receiver of every expanded Tx, and reject communities whose root Script has no counterparty. |
 
 
 ### `deterministicSampling` {#deterministic-sampling}
@@ -129,6 +130,29 @@ For example:
 This option does not seed Neo4j's random root selection. Use a root nodes file to choose a
 specific root. Even then, results can differ if the database changes or returns candidates
 or relationships in a different order, including when `queryLimit` restricts the candidate pool.
+
+
+### `ensureTxSendersAndReceivers` {#ensure-tx-senders-and-receivers}
+
+A Tx links two Scripts only when the community holds a Script that the Tx spends from (a sender)
+and a Script that the Tx pays more than 0 and that is not also a sender (a receiver).
+The random selection of neighbors does not look at the direction of an edge,
+so without this option a Tx can end up with Scripts on one side only, or with none at all.
+A community whose root has only such Tx is of no use to a script-to-script model,
+because no Script sends to the root or receives from it.
+
+With this option on (the default), Panorama does two things:
+
+1. When it expands a Tx and the community holds no sender of that Tx,
+   it also keeps the first sender in the shuffled candidate order, and the same for the receivers.
+   So the choice stays random, and each expanded Tx gains at most two Scripts.
+   When activity windows are set, the added Script must satisfy them.
+2. After the walk, it rejects a community whose root Script has no counterparty:
+   no Tx of the community links the root to another Script as sender and receiver.
+   The rejection works like the rejection of a community that is too small.
+
+The [edge activity window](#activity-windows) applies first, so a Tx whose senders all lie outside it
+still has one side only. Set `"ensureTxSendersAndReceivers": false` to get the selection of earlier versions.
 
 
 ### `maxHops` {#max-hops}

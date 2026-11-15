@@ -59,12 +59,17 @@ public class BitcoinPanoramaSamplingAlgorithmOptions
     public int MaxNeighborsPerNode { init; get; } = 100;
 
     /// <summary>
-    /// This ensures a block context for each transaction is 
-    /// also included in the sampled communities. 
-    /// This can provide more macro context for transactions. 
+    /// This ensures a block context for each transaction is
+    /// also included in the sampled communities.
+    /// This can provide more macro context for transactions.
     /// </summary>
+    /// <remarks>
+    /// The default is <c>true</c>. Without this option, a community gets a block only when the random draw picks the
+    /// block as a neighbor of a Tx. A small community can then end up with no block at all, and the windows of
+    /// earlier and later blocks add nothing, because they grow only from blocks that the community already holds.
+    /// </remarks>
     [JsonPropertyName("includeBlockTxEdges")]
-    public bool IncludeB2TEdges { init; get; } = false;
+    public bool IncludeB2TEdges { init; get; } = true;
 
     /// <summary>
     /// For every Block node in the sampled community, also include this many
@@ -216,6 +221,29 @@ public class BitcoinPanoramaSamplingAlgorithmOptions
     /// </summary>
     [JsonPropertyName("ensureScriptTerminalNodes")]
     public bool EnsureScriptTerminalNodes { init; get; } = true;
+
+    /// <summary>
+    /// When true (default), the sampled community holds at least one sender and at least one
+    /// receiver of every Tx that the walk expands, when the database has them. A sender is a
+    /// Script that the Tx redeems; a receiver is a Script that the Tx credits with a value above
+    /// 0 and that is not also a sender (a sender that is credited only gets its change back).
+    /// Without both sides, a Tx gives no script-to-script transfer.
+    ///
+    /// The option has two effects:
+    /// 1. After the random selection of a Tx's neighbors, if the community holds no sender
+    ///    (or no receiver) of that Tx, the first sender (or receiver) in the shuffled candidate
+    ///    order is added too. This adds at most two Scripts per expanded Tx, and keeps the
+    ///    choice random. When activity windows are set, the added Script must satisfy them.
+    /// 2. A sampled community whose root Script has no counterparty is rejected, like a
+    ///    community that is too small. A counterparty is another Script that the root sends
+    ///    to or receives from through one Tx of the community.
+    ///
+    /// The edge activity window applies before the senders and receivers are found, so a Tx
+    /// whose senders all lie outside the window still has one side only; the root check
+    /// catches that case for the root.
+    /// </summary>
+    [JsonPropertyName("ensureTxSendersAndReceivers")]
+    public bool EnsureTxSendersAndReceivers { init; get; } = true;
 }
 
 /// <summary>
