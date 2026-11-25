@@ -427,3 +427,6 @@ builds/
 
 
 /src/AAB.EBA/Properties/launchSettings.json
+
+# Claude Code local settings
+.claude/
